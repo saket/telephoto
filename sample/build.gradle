@@ -24,8 +24,9 @@ dependencies {
   implementation project(':zoomable')
   implementation "androidx.appcompat:appcompat:$versions.appCompat"
   implementation "androidx.core:core-ktx:1.9.0"
-
   implementation "androidx.activity:activity-compose:1.6.1"
   implementation "androidx.compose.material3:material3:$versions.composeUiMaterial3"
   implementation "androidx.compose.material:material-icons-extended:$versions.composeUi"
+
+  implementation "io.coil-kt:coil-compose:2.2.2"
 }
