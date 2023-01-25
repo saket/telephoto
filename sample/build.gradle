@@ -1,0 +1,31 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+android {
+  namespace "me.saket.telephoto.sample"
+
+  defaultConfig {
+    applicationId namespace
+    applicationId "me.saket.telephoto.sample"
+    minSdkVersion 31
+    targetSdkVersion versions.compileSdk
+    versionCode 1
+    versionName "1.0"
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled true
+    }
+  }
+}
+
+dependencies {
+  implementation project(':zoomable')
+  implementation "androidx.appcompat:appcompat:$versions.appCompat"
+  implementation "androidx.core:core-ktx:1.9.0"
+
+  implementation "androidx.activity:activity-compose:1.6.1"
+  implementation "androidx.compose.material3:material3:$versions.composeUiMaterial3"
+  implementation "androidx.compose.material:material-icons-extended:$versions.composeUi"
+}
