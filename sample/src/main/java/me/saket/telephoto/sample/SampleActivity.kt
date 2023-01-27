@@ -39,13 +39,13 @@ class SampleActivity : AppCompatActivity() {
         ) { contentPadding ->
           Box(Modifier.padding(contentPadding)) {
             val state = rememberZoomableState()
-            ZoomableBox(state = state) {
+            ZoomableBox(state) {
               AsyncImage(
                 modifier = Modifier
                   .graphicsLayer(state.transformations)
+                  .padding(16.dp)
                   .fillMaxWidth()
                   .height(400.dp)
-                  .padding(16.dp)
                   .clip(RoundedCornerShape(8.dp)),
                 model = "https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1000",
                 contentDescription = null,

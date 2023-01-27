@@ -14,17 +14,25 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
+/**
+ * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available space.
+ */
 @Composable
 fun ZoomableBox(
   state: ZoomableState,
   modifier: Modifier = Modifier,
+  clipToBounds: Boolean = true,
   content: @Composable () -> Unit
 ) {
   val transformableState = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
@@ -39,6 +47,7 @@ fun ZoomableBox(
 
   Box(
     modifier = modifier
+      .graphicsLayer { clip = clipToBounds }
       .transformable(transformableState)
       .pointerInput(Unit) {
         forEachGesture {
@@ -70,7 +79,7 @@ fun ZoomableBox(
  * is `3f`, zoom will be increased 3 fold from the current value.
  * @param animationSpec [AnimationSpec] to be used for animation
  */
-suspend fun TransformableState.animateRotateAndZoomBy(
+internal suspend fun TransformableState.animateRotateAndZoomBy(
   degrees: Float,
   zoomFactor: Float,
   animationSpec: AnimationSpec<Float> = spring()
