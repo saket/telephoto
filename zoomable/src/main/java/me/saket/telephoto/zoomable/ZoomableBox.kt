@@ -7,12 +7,13 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.TransformableState
 import androidx.compose.foundation.gestures.animateRotateBy
 import androidx.compose.foundation.gestures.animateZoomBy
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.scale
@@ -45,23 +46,25 @@ fun ZoomableBox(
     }
   }
 
+  val scope = rememberCoroutineScope()
+
   Box(
     modifier = modifier
       .graphicsLayer { clip = clipToBounds }
       .transformable(transformableState)
       .pointerInput(Unit) {
-        forEachGesture {
-          awaitPointerEventScope {
-            awaitFirstDown(requireUnconsumed = false)
-            awaitAllPointersUp()
-          }
-          val by = -state.transformations.rotationZ.rem(360f)
-          val byScale = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f
+        awaitEachGesture {
+          awaitFirstDown(requireUnconsumed = false)
+          awaitAllPointersUp()
 
-          transformableState.animateRotateAndZoomBy(
-            degrees = by,
-            zoomFactor = byScale
-          )
+          // Reset is performed on an independent scope, but the animation will be
+          // canceled if TransformableState#transform() is called from anywhere else.
+          scope.launch {
+            transformableState.animateRotateAndZoomBy(
+              degrees = -state.transformations.rotationZ.rem(360f),
+              zoomFactor = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f,
+            )
+          }
         }
       },
     content = { content() }
