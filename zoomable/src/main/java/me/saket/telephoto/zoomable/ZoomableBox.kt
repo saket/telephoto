@@ -1,10 +1,11 @@
 package me.saket.telephoto.zoomable
 
-import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.TransformableState
+import androidx.compose.foundation.gestures.animatePanBy
 import androidx.compose.foundation.gestures.animateRotateBy
 import androidx.compose.foundation.gestures.animateZoomBy
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -15,13 +16,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -63,6 +62,7 @@ fun ZoomableBox(
             transformableState.animateRotateAndZoomBy(
               degrees = -state.transformations.rotationZ.rem(360f),
               zoomFactor = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f,
+              offset = -state.transformations.offset,
             )
           }
         }
@@ -72,52 +72,51 @@ fun ZoomableBox(
 }
 
 /**
- * Animate rotate by a ratio of [degrees] clockwise and zoom by a ratio of
- * [zoomFactor] over the current size. Suspend until both animations are finished.
+ * Combines [animateRotateBy], [animateZoomBy] and [animatePanBy].
  *
- * Combines from [animateRotateBy] and [animateZoomBy].
- *
- * @param degrees ratio over the current size by which to rotate, in degrees.
- * @param zoomFactor ratio over the current size by which to zoom. For example, if [zoomFactor]
- * is `3f`, zoom will be increased 3 fold from the current value.
- * @param animationSpec [AnimationSpec] to be used for animation
+ * https://issuetracker.google.com/u/1/issues/266807251
  */
 internal suspend fun TransformableState.animateRotateAndZoomBy(
   degrees: Float,
   zoomFactor: Float,
-  animationSpec: AnimationSpec<Float> = spring()
+  offset: Offset,
 ) {
-  if (zoomFactor <= 0) {
-    animateRotateBy(degrees, animationSpec)
-    return
-  }
-
   var previousRotation = 0f
   var previousZoom = 1f
+  var previousPan = Offset.Zero
 
   transform {
     val rotationAnimation = AnimationState(initialValue = previousRotation)
     val zoomAnimation = AnimationState(initialValue = previousZoom)
+    val panAnimation = AnimationState(Offset.VectorConverter, initialValue = previousPan)
 
     coroutineScope {
       launch {
-        rotationAnimation.animateTo(degrees, animationSpec) {
+        rotationAnimation.animateTo(degrees, spring()) {
           val delta = this.value - previousRotation
           transformBy(rotationChange = delta)
           previousRotation = this.value
         }
       }
+      if (zoomFactor > 0f) {
+        launch {
+          zoomAnimation.animateTo(zoomFactor, spring()) {
+            val scaleFactor = if (previousZoom == 0f) 1f else this.value / previousZoom
+            transformBy(zoomChange = scaleFactor)
+            previousZoom = this.value
+          }
+        }
+      }
       launch {
-        zoomAnimation.animateTo(zoomFactor, animationSpec) {
-          val scaleFactor = if (previousZoom == 0f) 1f else this.value / previousZoom
-          transformBy(zoomChange = scaleFactor)
-          previousZoom = this.value
+        panAnimation.animateTo(offset, spring()) {
+          val delta = this.value - previousPan
+          transformBy(panChange = delta)
+          previousPan = this.value
         }
       }
     }
   }
 }
-
 
 /** Waits for all pointers to be up before returning. */
 internal suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
