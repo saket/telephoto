@@ -6,11 +6,20 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 
 data class ZoomableContentTransformations(
-  val scale: Float = 1f,
-  val rotationZ: Float = 0f,
-  val offset: Offset = Offset.Zero,
-  val transformOrigin: TransformOrigin = TransformOrigin.Center,
-)
+  val scale: Float,
+  val rotationZ: Float,
+  val offset: Offset,
+  val transformOrigin: TransformOrigin,
+) {
+  internal companion object {
+    val Empty = ZoomableContentTransformations(
+      scale = 1f,
+      rotationZ = 0f,
+      offset = Offset.Zero,
+      transformOrigin = TransformOrigin.Center
+    )
+  }
+}
 
 fun Modifier.graphicsLayer(transformations: ZoomableContentTransformations): Modifier {
   // todo: optimize these. use graphicsLayer only when necessary.

@@ -59,7 +59,7 @@ fun ZoomableBox(
         // Reset is performed on an independent scope, but the animation will be
         // canceled if TransformableState#transform() is called from anywhere else.
         scope.launch {
-          transformableState.animateRotateAndZoomBy(
+          transformableState.animateResetOfTransformations(
             degrees = -state.transformations.rotationZ.rem(360f),
             zoomFactor = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f,
             // todo: this isn't perfect. pan should only reset if
@@ -100,7 +100,7 @@ internal suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
 }
 
 /** Combines [animateRotateBy], [animateZoomBy] and [animatePanBy]. */
-internal suspend fun TransformableState.animateRotateAndZoomBy(
+internal suspend fun TransformableState.animateResetOfTransformations(
   degrees: Float,
   zoomFactor: Float,
   offset: Offset,

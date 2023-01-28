@@ -22,7 +22,7 @@ fun rememberZoomableState(
 @Stable
 class ZoomableState internal constructor() {
   /** todo: doc */
-  var transformations by mutableStateOf(ZoomableContentTransformations())
+  var transformations by mutableStateOf(ZoomableContentTransformations.Empty)
 
   internal var rotationEnabled: Boolean = false
   internal var unscaledContentSize: Size by mutableStateOf(Size.Unspecified)
