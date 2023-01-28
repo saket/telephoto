@@ -38,7 +38,7 @@ fun ZoomableBox(
   clipToBounds: Boolean = true,
   content: @Composable () -> Unit
 ) {
-  val zoomableModifier = if (state.contentSize.isSpecified) {
+  val zoomableModifier = if (state.unscaledContentSize.isSpecified) {
     val transformableState = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
       state.transformations = state.transformations.let {
         it.copy(

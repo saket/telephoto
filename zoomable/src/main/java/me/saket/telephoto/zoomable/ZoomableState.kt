@@ -25,9 +25,10 @@ class ZoomableState internal constructor() {
   var transformations by mutableStateOf(ZoomableContentTransformations())
 
   internal var rotationEnabled: Boolean = false
-  internal var contentSize: Size by mutableStateOf(Size.Unspecified)
+  internal var unscaledContentSize: Size by mutableStateOf(Size.Unspecified)
 
-  fun setContentSize(size: IntSize) {
-    contentSize = size.toSize()
+  /** todo: doc */
+  fun setUnscaledContentSize(size: IntSize) {
+    unscaledContentSize = size.toSize()
   }
 }
