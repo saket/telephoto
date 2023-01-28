@@ -2,12 +2,14 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 
 data class ZoomableContentTransformations(
   val scale: Float = 1f,
   val rotationZ: Float = 0f,
-  val offset: Offset = Offset.Zero
+  val offset: Offset = Offset.Zero,
+  val transformOrigin: TransformOrigin = TransformOrigin.Center,
 )
 
 fun Modifier.graphicsLayer(transformations: ZoomableContentTransformations): Modifier {
@@ -18,5 +20,6 @@ fun Modifier.graphicsLayer(transformations: ZoomableContentTransformations): Mod
     rotationZ = transformations.rotationZ
     translationX = transformations.offset.x
     translationY = transformations.offset.y
+    transformOrigin = transformations.transformOrigin
   }
 }

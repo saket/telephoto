@@ -16,8 +16,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -26,7 +27,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available space.
+ * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
+ * space. Otherwise, gestures made outside the content's (unscaled) bounds will not be registered.
  */
 @Composable
 fun ZoomableBox(
@@ -40,7 +42,8 @@ fun ZoomableBox(
       it.copy(
         scale = it.scale * zoomChange,
         rotationZ = if (state.rotationEnabled) it.rotationZ + rotationChange else 0f,
-        offset = it.offset + offsetChange
+        offset = it.offset + offsetChange,
+        transformOrigin = TransformOrigin(0.5f, 0f)
       )
     }
   }
@@ -49,35 +52,46 @@ fun ZoomableBox(
 
   Box(
     modifier = modifier
-      .graphicsLayer { clip = clipToBounds }
+      .let { if (clipToBounds) it.clipToBounds() else it }
       .transformable(transformableState)
-      .pointerInput(Unit) {
-        awaitEachGesture {
-          awaitFirstDown(requireUnconsumed = false)
-          awaitAllPointersUp()
-
-          // Reset is performed on an independent scope, but the animation will be
-          // canceled if TransformableState#transform() is called from anywhere else.
-          scope.launch {
-            transformableState.animateRotateAndZoomBy(
-              degrees = -state.transformations.rotationZ.rem(360f),
-              zoomFactor = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f,
-              // todo: this isn't perfect. pan should only reset if
-              //  it's content edges don't overlap with this layout's edges.
-              offset = -state.transformations.offset,
-            )
-          }
+      .onAllPointersUp {
+        // Reset is performed on an independent scope, but the animation will be
+        // canceled if TransformableState#transform() is called from anywhere else.
+        scope.launch {
+          transformableState.animateRotateAndZoomBy(
+            degrees = -state.transformations.rotationZ.rem(360f),
+            zoomFactor = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f,
+            // todo: this isn't perfect. pan should only reset if
+            //  it's content edges don't overlap with this layout's edges.
+            offset = -state.transformations.offset,
+          )
         }
       },
     content = { content() }
   )
 }
 
-/**
- * Combines [animateRotateBy], [animateZoomBy] and [animatePanBy].
- *
- * https://issuetracker.google.com/u/1/issues/266807251
- */
+private fun Modifier.onAllPointersUp(block: () -> Unit): Modifier {
+  return pointerInput(Unit) {
+    awaitEachGesture {
+      awaitFirstDown(requireUnconsumed = false)
+      awaitAllPointersUp()
+      block()
+    }
+  }
+}
+
+/** Waits for all pointers to be up before returning. */
+internal suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
+  val allPointersDown = currentEvent.changes.fastAny { it.pressed }
+  if (allPointersDown) {
+    do {
+      val events = awaitPointerEvent(PointerEventPass.Final)
+    } while (events.changes.fastAny { it.pressed })
+  }
+}
+
+/** Combines [animateRotateBy], [animateZoomBy] and [animatePanBy]. */
 internal suspend fun TransformableState.animateRotateAndZoomBy(
   degrees: Float,
   zoomFactor: Float,
@@ -92,6 +106,7 @@ internal suspend fun TransformableState.animateRotateAndZoomBy(
     val zoomAnimation = AnimationState(initialValue = previousZoom)
     val panAnimation = AnimationState(Offset.VectorConverter, initialValue = previousPan)
 
+    // TODO: reduce three animations into one. Example code in https://issuetracker.google.com/u/1/issues/266807251.
     coroutineScope {
       launch {
         rotationAnimation.animateTo(degrees, spring()) {
@@ -117,15 +132,5 @@ internal suspend fun TransformableState.animateRotateAndZoomBy(
         }
       }
     }
-  }
-}
-
-/** Waits for all pointers to be up before returning. */
-internal suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
-  val allPointersDown = currentEvent.changes.fastAny { it.pressed }
-  if (allPointersDown) {
-    do {
-      val events = awaitPointerEvent(PointerEventPass.Final)
-    } while (events.changes.fastAny { it.pressed })
   }
 }
