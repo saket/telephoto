@@ -18,6 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -37,21 +38,21 @@ fun ZoomableBox(
   clipToBounds: Boolean = true,
   content: @Composable () -> Unit
 ) {
-  val transformableState = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
-    state.transformations = state.transformations.let {
-      it.copy(
-        scale = it.scale * zoomChange,
-        rotationZ = if (state.rotationEnabled) it.rotationZ + rotationChange else 0f,
-        offset = it.offset + offsetChange,
-        transformOrigin = TransformOrigin(0.5f, 0f)
-      )
+  val zoomableModifier = if (state.contentSize.isSpecified) {
+    val transformableState = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
+      state.transformations = state.transformations.let {
+        it.copy(
+          scale = it.scale * zoomChange,
+          rotationZ = if (state.rotationEnabled) it.rotationZ + rotationChange else 0f,
+          offset = it.offset + offsetChange,
+          transformOrigin = TransformOrigin.Center
+        )
+      }
     }
-  }
 
-  val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
-  Box(
-    modifier = modifier
+    Modifier
       .let { if (clipToBounds) it.clipToBounds() else it }
       .transformable(transformableState)
       .onAllPointersUp {
@@ -66,7 +67,14 @@ fun ZoomableBox(
             offset = -state.transformations.offset,
           )
         }
-      },
+      }
+
+  } else {
+    Modifier
+  }
+
+  Box(
+    modifier = modifier.then(zoomableModifier),
     content = { content() }
   )
 }

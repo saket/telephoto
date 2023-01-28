@@ -16,6 +16,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -39,17 +40,20 @@ class SampleActivity : AppCompatActivity() {
           }
         ) { contentPadding ->
           Box(Modifier.padding(contentPadding)) {
-            val state = rememberZoomableState(rotationEnabled = true)
+            val state = rememberZoomableState(
+              rotationEnabled = true
+            )
             ZoomableBox(
               modifier = Modifier.fillMaxSize(),
               state = state
             ) {
               AsyncImage(
                 modifier = Modifier
-                  .graphicsLayer(state.transformations)
                   .padding(16.dp)
                   .fillMaxWidth()
                   .height(400.dp)
+                  .graphicsLayer(state.transformations)
+                  .onSizeChanged(state::setContentSize)
                   .clip(RoundedCornerShape(8.dp)),
                 model = "https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1000",
                 contentDescription = null,
