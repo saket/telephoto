@@ -8,11 +8,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 @Composable
-fun rememberZoomableState(): ZoomableState {
-  return remember { ZoomableState() }
+fun rememberZoomableState(
+  rotationEnabled: Boolean
+): ZoomableState {
+  return remember { ZoomableState() }.apply {
+    this.rotationEnabled = rotationEnabled
+  }
 }
 
 @Stable
-class ZoomableState {
+class ZoomableState internal constructor() {
+  /** todo: doc */
   var transformations by mutableStateOf(ZoomableContentTransformations())
+
+  internal var rotationEnabled: Boolean = false
 }

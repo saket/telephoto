@@ -39,7 +39,7 @@ fun ZoomableBox(
     state.transformations = state.transformations.let {
       it.copy(
         scale = it.scale * zoomChange,
-        rotationZ = it.rotationZ + rotationChange,
+        rotationZ = if (state.rotationEnabled) it.rotationZ + rotationChange else 0f,
         offset = it.offset + offsetChange
       )
     }
@@ -62,6 +62,8 @@ fun ZoomableBox(
             transformableState.animateRotateAndZoomBy(
               degrees = -state.transformations.rotationZ.rem(360f),
               zoomFactor = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f,
+              // todo: this isn't perfect. pan should only reset if
+              //  it's content edges don't overlap with this layout's edges.
               offset = -state.transformations.offset,
             )
           }

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,8 +39,11 @@ class SampleActivity : AppCompatActivity() {
           }
         ) { contentPadding ->
           Box(Modifier.padding(contentPadding)) {
-            val state = rememberZoomableState()
-            ZoomableBox(state) {
+            val state = rememberZoomableState(rotationEnabled = true)
+            ZoomableBox(
+              modifier = Modifier.fillMaxSize(),
+              state = state
+            ) {
               AsyncImage(
                 modifier = Modifier
                   .graphicsLayer(state.transformations)
