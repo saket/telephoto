@@ -54,8 +54,8 @@ fun ZoomableBox(
 
         // Apply elasticity to zoom once content can't zoom any further.
         val elasticZoomChange = when {
-          isFullyZoomedIn && zoomChange > 1f -> 1.005f
-          isFullyZoomedOut && zoomChange < 1f -> 0.995f
+          isFullyZoomedIn && zoomChange > 1f -> 1f + zoomChange / 250
+          isFullyZoomedOut && zoomChange < 1f -> 1f - zoomChange / 250
           else -> zoomChange
         }
 
