@@ -1,7 +1,6 @@
 package me.saket.telephoto.zoomable
 
 import androidx.compose.animation.core.AnimationState
-import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.TransformableState
@@ -14,14 +13,11 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -29,7 +25,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastAny
-import kotlinx.coroutines.coroutineScope
+import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -80,16 +76,19 @@ fun ZoomableBox(
         // Reset is performed on an independent scope, but the animation will be
         // canceled if TransformableState#transform() is called from anywhere else.
         scope.launch {
-          transformableState.animateResetOfTransformations(
-            degrees = -state.transformations.rotationZ.rem(360f),
-            zoomFactor = when {
-              state.transformations.scale < minScale -> minScale / state.transformations.scale
-              state.transformations.scale > maxScale -> maxScale / state.transformations.scale
-              else -> 0f
-            },
-            // todo: this isn't perfect. pan should only reset if
-            //  it's content edges don't overlap with this layout's edges.
-            offset = -state.transformations.offset,
+          state.animateResetOfTransformations(
+            transformableState,
+            target = state.transformations.copy(
+              scale = when {
+                state.transformations.scale < minScale -> minScale
+                state.transformations.scale > maxScale -> maxScale
+                else -> state.transformations.scale
+              },
+              rotationZ = 0f,
+              // todo: this isn't perfect. pan should only reset if
+              //  it's content edges don't overlap with this layout's edges.
+              offset = Offset.Zero,
+            )
           )
         }
       }
@@ -128,45 +127,18 @@ internal suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
 }
 
 /** Combines [animateRotateBy], [animateZoomBy] and [animatePanBy]. */
-internal suspend fun TransformableState.animateResetOfTransformations(
-  degrees: Float,
-  zoomFactor: Float,
-  offset: Offset,
+internal suspend fun ZoomableState.animateResetOfTransformations(
+  transformable: TransformableState,
+  target: ZoomableContentTransformations,
 ) {
-  var previousRotation = 0f
-  var previousZoom = 1f
-  var previousPan = Offset.Zero
-
-  transform {
-    val rotationAnimation = AnimationState(initialValue = previousRotation)
-    val zoomAnimation = AnimationState(initialValue = previousZoom)
-    val panAnimation = AnimationState(Offset.VectorConverter, initialValue = previousPan)
-
-    // TODO: reduce three animations into one. Example code in https://issuetracker.google.com/u/1/issues/266807251.
-    coroutineScope {
-      launch {
-        rotationAnimation.animateTo(degrees, spring()) {
-          val delta = this.value - previousRotation
-          transformBy(rotationChange = delta)
-          previousRotation = this.value
-        }
-      }
-      if (zoomFactor > 0f) {
-        launch {
-          zoomAnimation.animateTo(zoomFactor, spring()) {
-            val scaleFactor = if (previousZoom == 0f) 1f else this.value / previousZoom
-            transformBy(zoomChange = scaleFactor)
-            previousZoom = this.value
-          }
-        }
-      }
-      launch {
-        panAnimation.animateTo(offset, spring()) {
-          val delta = this.value - previousPan
-          transformBy(panChange = delta)
-          previousPan = this.value
-        }
-      }
+  transformable.transform {
+    val current = transformations
+    AnimationState(initialValue = 0f).animateTo(targetValue = 1f, animationSpec = spring()) {
+      transformations = transformations.copy(
+        scale = lerp(start = current.scale, stop = target.scale, fraction = value),
+        rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
+        offset = lerp(start = current.offset, stop = target.offset, fraction = value)
+      )
     }
   }
 }
