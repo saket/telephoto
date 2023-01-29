@@ -14,18 +14,24 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
@@ -38,11 +44,25 @@ fun ZoomableBox(
   clipToBounds: Boolean = true,
   content: @Composable () -> Unit
 ) {
-  val zoomableModifier = if (state.unscaledContentSize.isSpecified) {
+  var contentLayoutSize by remember { mutableStateOf(IntSize.Zero) }
+
+  val zoomableModifier = if (state.unscaledContentSize != IntSize.Zero && contentLayoutSize != IntSize.Zero) {
+    // todo: consider moving all this state management to ZoomableState.
     val transformableState = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
       state.transformations = state.transformations.let {
+        val isFullyZoomedOut = it.scale <= 1f
+        val isFullyZoomedIn =
+          (it.scale * contentLayoutSize.width).roundToInt() >= (state.unscaledContentSize.width * state.maxZoomFactor)
+
+        // Apply elasticity to zoom once content can't zoom any further.
+        val elasticZoomChange = when {
+          isFullyZoomedIn && zoomChange > 1f -> 1.005f
+          isFullyZoomedOut && zoomChange < 1f -> 0.995f
+          else -> zoomChange
+        }
+
         it.copy(
-          scale = it.scale * zoomChange,
+          scale = it.scale * elasticZoomChange,
           rotationZ = if (state.rotationEnabled) it.rotationZ + rotationChange else 0f,
           offset = it.offset + offsetChange,
           transformOrigin = TransformOrigin.Center
@@ -56,27 +76,37 @@ fun ZoomableBox(
       .let { if (clipToBounds) it.clipToBounds() else it }
       .transformable(transformableState)
       .onAllPointersUp {
+        val minScale = 1f
+        val maxScale = state.maxZoomFactor * (state.unscaledContentSize.width / contentLayoutSize.width.toFloat())
+
         // Reset is performed on an independent scope, but the animation will be
         // canceled if TransformableState#transform() is called from anywhere else.
         scope.launch {
           transformableState.animateResetOfTransformations(
             degrees = -state.transformations.rotationZ.rem(360f),
-            zoomFactor = if (state.transformations.scale < 1f) 1f / state.transformations.scale else 0f,
+            zoomFactor = when {
+              state.transformations.scale < minScale -> minScale / state.transformations.scale
+              state.transformations.scale > maxScale -> maxScale / state.transformations.scale
+              else -> 0f
+            },
             // todo: this isn't perfect. pan should only reset if
             //  it's content edges don't overlap with this layout's edges.
             offset = -state.transformations.offset,
           )
         }
       }
-
   } else {
     Modifier
   }
 
   Box(
     modifier = modifier.then(zoomableModifier),
-    content = { content() }
-  )
+  ) {
+    Box(
+      modifier = Modifier.onSizeChanged { contentLayoutSize = it },
+      content = { content() }
+    )
+  }
 }
 
 private fun Modifier.onAllPointersUp(block: () -> Unit): Modifier {

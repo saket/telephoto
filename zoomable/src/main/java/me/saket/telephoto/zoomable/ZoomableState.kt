@@ -8,14 +8,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.toSize
+import kotlin.math.roundToInt
 
 @Composable
 fun rememberZoomableState(
-  rotationEnabled: Boolean
+  rotationEnabled: Boolean = false,
+  maxZoomFactor: Float = 1f,
 ): ZoomableState {
   return remember { ZoomableState() }.apply {
     this.rotationEnabled = rotationEnabled
+    this.maxZoomFactor = maxZoomFactor
   }
 }
 
@@ -25,10 +27,22 @@ class ZoomableState internal constructor() {
   var transformations by mutableStateOf(ZoomableContentTransformations.Empty)
 
   internal var rotationEnabled: Boolean = false
-  internal var unscaledContentSize: Size by mutableStateOf(Size.Unspecified)
+  internal var maxZoomFactor: Float = 1f
+
+  internal var unscaledContentSize: IntSize by mutableStateOf(IntSize.Zero)
 
   /** todo: doc */
-  fun setUnscaledContentSize(size: IntSize) {
-    unscaledContentSize = size.toSize()
+  fun setUnscaledContentSize(size: IntSize?) {
+    unscaledContentSize = size ?: IntSize.Zero
+  }
+
+  /** todo: doc */
+  fun setUnscaledContentSize(size: Size?) {
+    setUnscaledContentSize(size?.let {
+      IntSize(
+        width = it.width.roundToInt(),
+        height = it.height.roundToInt()
+      )
+    })
   }
 }
