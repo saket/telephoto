@@ -22,10 +22,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
 import kotlin.math.roundToInt
 
+/** todo: doc */
 @Composable
 fun rememberZoomableState(
-  rotationEnabled: Boolean = false,
   maxZoomFactor: Float = 1f,
+  rotationEnabled: Boolean = false,
 ): ZoomableState {
   return remember { ZoomableState() }.apply {
     this.rotationEnabled = rotationEnabled
@@ -38,8 +39,8 @@ class ZoomableState internal constructor() {
   /** todo: doc */
   var transformations by mutableStateOf(ZoomableContentTransformations.Empty)
 
-  internal var rotationEnabled: Boolean = false
   internal var maxZoomFactor: Float = 1f
+  internal var rotationEnabled: Boolean = false
 
   private var unscaledContentSize: IntSize by mutableStateOf(IntSize.Zero)
   internal var contentLayoutSize by mutableStateOf(IntSize.Zero)
