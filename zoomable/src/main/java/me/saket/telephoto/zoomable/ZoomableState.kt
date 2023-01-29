@@ -52,26 +52,26 @@ class ZoomableState internal constructor() {
     unscaledContentSize != IntSize.Zero && contentLayoutSize != IntSize.Zero
   }
 
-  internal val transformableState = TransformableState { zoomChange, offsetChange, rotationChange ->
+  internal val transformableState = TransformableState { zoomDelta, offsetDelta, rotationDelta ->
+    val isZoomingOut = zoomDelta < 1f
+    val isFullyZoomedOut = transformations.scale <= 1f
+
+    val isZoomingIn = zoomDelta > 1f
+    val isFullyZoomedIn =
+      (transformations.scale * contentLayoutSize.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
+
+    // Apply elasticity to zoom once content can't zoom any further.
+    val elasticZoomDelta = when {
+      isFullyZoomedIn && isZoomingIn -> 1f + zoomDelta / 250
+      isFullyZoomedOut && isZoomingOut -> 1f - zoomDelta / 250
+      else -> zoomDelta
+    }
+
     transformations = transformations.let {
-      val isZoomingOut = zoomChange < 1f
-      val isFullyZoomedOut = it.scale <= 1f
-
-      val isZoomingIn = zoomChange > 1f
-      val isFullyZoomedIn =
-        (it.scale * contentLayoutSize.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
-
-      // Apply elasticity to zoom once content can't zoom any further.
-      val elasticZoomChange = when {
-        isFullyZoomedIn && isZoomingIn -> 1f + zoomChange / 250
-        isFullyZoomedOut && isZoomingOut -> 1f - zoomChange / 250
-        else -> zoomChange
-      }
-
       it.copy(
-        scale = it.scale * elasticZoomChange,
-        rotationZ = if (rotationEnabled) it.rotationZ + rotationChange else 0f,
-        offset = it.offset + offsetChange,
+        scale = it.scale * elasticZoomDelta,
+        rotationZ = if (rotationEnabled) it.rotationZ + rotationDelta else 0f,
+        offset = it.offset + offsetDelta,
         transformOrigin = TransformOrigin.Center
       )
     }
