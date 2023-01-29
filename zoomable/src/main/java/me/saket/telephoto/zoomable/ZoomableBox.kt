@@ -44,15 +44,13 @@ fun ZoomableBox(
   clipToBounds: Boolean = true,
   content: @Composable () -> Unit
 ) {
-  var contentLayoutSize by remember { mutableStateOf(IntSize.Zero) }
-
-  val zoomableModifier = if (state.unscaledContentSize != IntSize.Zero && contentLayoutSize != IntSize.Zero) {
+  val zoomableModifier = if (state.unscaledContentSize != IntSize.Zero && state.contentLayoutSize != IntSize.Zero) {
     // todo: consider moving all this state management to ZoomableState.
     val transformableState = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
       state.transformations = state.transformations.let {
         val isFullyZoomedOut = it.scale <= 1f
         val isFullyZoomedIn =
-          (it.scale * contentLayoutSize.width).roundToInt() >= (state.unscaledContentSize.width * state.maxZoomFactor)
+          (it.scale * state.contentLayoutSize.width).roundToInt() >= (state.unscaledContentSize.width * state.maxZoomFactor)
 
         // Apply elasticity to zoom once content can't zoom any further.
         val elasticZoomChange = when {
@@ -77,7 +75,7 @@ fun ZoomableBox(
       .transformable(transformableState)
       .onAllPointersUp {
         val minScale = 1f
-        val maxScale = state.maxZoomFactor * (state.unscaledContentSize.width / contentLayoutSize.width.toFloat())
+        val maxScale = state.maxZoomFactor * (state.unscaledContentSize.width / state.contentLayoutSize.width.toFloat())
 
         // Reset is performed on an independent scope, but the animation will be
         // canceled if TransformableState#transform() is called from anywhere else.
@@ -103,7 +101,7 @@ fun ZoomableBox(
     modifier = modifier.then(zoomableModifier),
   ) {
     Box(
-      modifier = Modifier.onSizeChanged { contentLayoutSize = it },
+      modifier = Modifier.onSizeChanged { state.contentLayoutSize = it },
       content = { content() }
     )
   }

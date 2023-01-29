@@ -30,6 +30,7 @@ class ZoomableState internal constructor() {
   internal var maxZoomFactor: Float = 1f
 
   internal var unscaledContentSize: IntSize by mutableStateOf(IntSize.Zero)
+  internal var contentLayoutSize by mutableStateOf(IntSize.Zero)
 
   /** todo: doc */
   fun setUnscaledContentSize(size: IntSize?) {
@@ -38,11 +39,10 @@ class ZoomableState internal constructor() {
 
   /** todo: doc */
   fun setUnscaledContentSize(size: Size?) {
-    setUnscaledContentSize(size?.let {
-      IntSize(
-        width = it.width.roundToInt(),
-        height = it.height.roundToInt()
-      )
-    })
+    setUnscaledContentSize(size?.roundToIntSize())
   }
+}
+
+private fun Size.roundToIntSize(): IntSize {
+  return IntSize(width = width.roundToInt(), height = height.roundToInt())
 }
