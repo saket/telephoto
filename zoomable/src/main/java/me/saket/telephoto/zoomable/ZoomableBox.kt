@@ -29,7 +29,6 @@ fun ZoomableBox(
   val zoomableModifier = if (state.isReadyToInteract) {
     val scope = rememberCoroutineScope()
     Modifier
-      .let { if (clipToBounds) it.clipToBounds() else it }
       .transformable(state.transformableState)
       .onAllPointersUp {
         // Reset is performed on an independent scope, but the animation will be
@@ -42,7 +41,11 @@ fun ZoomableBox(
     Modifier
   }
 
-  Box(modifier.then(zoomableModifier)) {
+  Box(
+    modifier
+      .let { if (clipToBounds) it.clipToBounds() else it }
+      .then(zoomableModifier)
+  ) {
     Box(
       modifier = Modifier.onSizeChanged { state.contentLayoutSize = it },
       content = { content() }

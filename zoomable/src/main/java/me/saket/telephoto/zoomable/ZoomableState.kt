@@ -42,7 +42,10 @@ class ZoomableState internal constructor() {
   internal var maxZoomFactor: Float = 1f
   internal var rotationEnabled: Boolean = false
 
+  /** Full size of the image/video/whatever without any scaling applied due to zoom. */
   private var unscaledContentSize: IntSize by mutableStateOf(IntSize.Zero)
+
+  /** Size of the content composable in the layout hierarchy. */
   internal var contentLayoutSize by mutableStateOf(IntSize.Zero)
 
   internal val isReadyToInteract by derivedStateOf {
