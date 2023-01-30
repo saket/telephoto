@@ -16,6 +16,8 @@ import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -48,6 +50,7 @@ class ZoomableState internal constructor() {
   }
 
   private var gestureTransformations by mutableStateOf(GestureTransformations.Empty)
+  private var cancelResetAnimation: (() -> Unit)? = null
 
   internal var maxZoomFactor: Float = 1f
   internal var rotationEnabled: Boolean = false
@@ -64,6 +67,8 @@ class ZoomableState internal constructor() {
 
   @Suppress("NAME_SHADOWING")
   internal fun onGesture(centroid: Offset, panDelta: Offset, zoomDelta: Float, rotationDelta: Float) {
+    cancelResetAnimation?.invoke()
+
     val isZoomingOut = zoomDelta < 1f
     val isFullyZoomedOut = gestureTransformations.zoom <= 1f
 
@@ -144,15 +149,23 @@ class ZoomableState internal constructor() {
       }
     )
 
-    AnimationState(initialValue = 0f).animateTo(
-      targetValue = 1f,
-      animationSpec = spring()
-    ) {
-      gestureTransformations = gestureTransformations.copy(
-        zoom = lerp(start = current.zoom, stop = target.zoom, fraction = value),
-        rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
-        offset = lerp(start = current.offset, stop = target.offset, fraction = value),
-      )
+    coroutineScope {
+      val animationJob = launch {
+        AnimationState(initialValue = 0f).animateTo(
+          targetValue = 1f,
+          animationSpec = spring()
+        ) {
+          gestureTransformations = gestureTransformations.copy(
+            zoom = lerp(start = current.zoom, stop = target.zoom, fraction = value),
+            rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
+            offset = lerp(start = current.offset, stop = target.offset, fraction = value),
+          )
+        }
+      }
+      cancelResetAnimation = { animationJob.cancel() }
+      animationJob.invokeOnCompletion {
+        cancelResetAnimation = null
+      }
     }
   }
 }
