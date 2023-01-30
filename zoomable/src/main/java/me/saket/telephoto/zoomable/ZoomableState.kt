@@ -3,10 +3,6 @@ package me.saket.telephoto.zoomable
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.gestures.TransformableState
-import androidx.compose.foundation.gestures.animatePanBy
-import androidx.compose.foundation.gestures.animateRotateBy
-import androidx.compose.foundation.gestures.animateZoomBy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -20,7 +16,10 @@ import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 /** todo: doc */
 @Composable
@@ -37,42 +36,70 @@ fun rememberZoomableState(
 @Stable
 class ZoomableState internal constructor() {
   /** todo: doc */
-  var transformations by mutableStateOf(ZoomableContentTransformations.Empty)
+  val contentTransformations by derivedStateOf {
+    gestureTransformations.let {
+      ZoomableContentTransformations(
+        scale = it.zoom,
+        offset = -it.offset * it.zoom,
+        rotationZ = it.rotationZ,
+        transformOrigin = TransformOrigin(0f, 0f)
+      )
+    }
+  }
+
+  private var gestureTransformations by mutableStateOf(GestureTransformations.Empty)
 
   internal var maxZoomFactor: Float = 1f
   internal var rotationEnabled: Boolean = false
 
   /** Full size of the image/video/whatever without any scaling applied due to zoom. */
-  private var unscaledContentSize: IntSize by mutableStateOf(IntSize.Zero)
+  private var unscaledContentSize by mutableStateOf(IntSize.Zero)
 
   /** Size of the content composable in the layout hierarchy. */
   internal var contentLayoutSize by mutableStateOf(IntSize.Zero)
 
-  internal val isReadyToInteract by derivedStateOf {
+  internal val isReadyToInteract: Boolean by derivedStateOf {
     unscaledContentSize != IntSize.Zero && contentLayoutSize != IntSize.Zero
   }
 
-  internal val transformableState = TransformableState { zoomDelta, offsetDelta, rotationDelta ->
+  @Suppress("NAME_SHADOWING")
+  internal fun onGesture(centroid: Offset, panDelta: Offset, zoomDelta: Float, rotationDelta: Float) {
     val isZoomingOut = zoomDelta < 1f
-    val isFullyZoomedOut = transformations.scale <= 1f
+    val isFullyZoomedOut = gestureTransformations.zoom <= 1f
 
     val isZoomingIn = zoomDelta > 1f
     val isFullyZoomedIn =
-      (transformations.scale * contentLayoutSize.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
+      (gestureTransformations.zoom * contentLayoutSize.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
 
     // Apply elasticity to zoom once content can't zoom any further.
-    val elasticZoomDelta = when {
+    val zoomDelta = when {
       isFullyZoomedIn && isZoomingIn -> 1f + zoomDelta / 250
-      isFullyZoomedOut && isZoomingOut -> 1f - zoomDelta / 250
+      isFullyZoomedOut && isZoomingOut -> 1f - zoomDelta / 500
       else -> zoomDelta
     }
 
-    transformations = transformations.let {
+    val oldZoom = gestureTransformations.zoom
+    val newZoom = gestureTransformations.zoom * zoomDelta
+
+    // Copied from androidx samples:
+    // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
+    //
+    // For natural zooming and rotating, the centroid of the gesture
+    // should be the fixed point where zooming and rotating occurs.
+    //
+    // We compute where the centroid was (in the pre-transformed coordinate
+    // space), and then compute where it will be after this delta.
+    //
+    // We then compute what the new offset should be to keep the centroid
+    // visually stationary for rotating and zooming, and also apply the pan.
+    val newOffset = (gestureTransformations.offset + centroid / oldZoom).rotateBy(rotationDelta) -
+      (centroid / newZoom + panDelta / oldZoom)
+
+    gestureTransformations = gestureTransformations.let {
       it.copy(
-        scale = it.scale * elasticZoomDelta,
-        rotationZ = if (rotationEnabled) it.rotationZ + rotationDelta else 0f,
-        offset = it.offset + offsetDelta,
-        transformOrigin = TransformOrigin.Center
+        offset = newOffset,
+        zoom = newZoom,
+        rotationZ = it.rotationZ + rotationDelta,
       )
     }
   }
@@ -87,36 +114,60 @@ class ZoomableState internal constructor() {
     setUnscaledContentSize(size?.roundToIntSize())
   }
 
-  /** Combines [animateRotateBy], [animateZoomBy] and [animatePanBy]. */
-  internal suspend fun animateResetOfTransformations() {
-    val minScale = 1f
-    val maxScale = maxZoomFactor * (unscaledContentSize.width / contentLayoutSize.width.toFloat())
+  /**
+   * Copied from [androidx samples](https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L61).
+   *
+   * Rotates the given offset around the origin by the given angle in degrees.
+   * A positive angle indicates a counterclockwise rotation around the right-handed
+   * 2D Cartesian coordinate system.
+   *
+   * See: [Rotation matrix](https://en.wikipedia.org/wiki/Rotation_matrix)
+   */
+  private fun Offset.rotateBy(angle: Float): Offset {
+    val angleInRadians = angle * PI / 180
+    return Offset(
+      (x * cos(angleInRadians) - y * sin(angleInRadians)).toFloat(),
+      (x * sin(angleInRadians) + y * cos(angleInRadians)).toFloat()
+    )
+  }
 
-    val current = transformations
-    val target = current.copy(
-      scale = when {
-        current.scale < minScale -> minScale
-        current.scale > maxScale -> maxScale
-        else -> current.scale
-      },
-      rotationZ = 0f,
-      // todo: this isn't perfect. pan should only reset if
-      //  it's content edges don't overlap with this layout's edges.
-      offset = Offset.Zero,
+  internal suspend fun animateResetOfTransformations() {
+    val minLayoutZoom = 1f
+    val maxLayoutZoom = (maxZoomFactor * unscaledContentSize.width) / contentLayoutSize.width.toFloat()
+
+    val current = gestureTransformations
+    val target = GestureTransformations.Empty.copy(
+      zoom = when {
+        current.zoom < minLayoutZoom -> minLayoutZoom
+        current.zoom > maxLayoutZoom -> maxLayoutZoom
+        else -> current.zoom
+      }
     )
 
-    transformableState.transform {
-      AnimationState(initialValue = 0f).animateTo(
-        targetValue = 1f,
-        animationSpec = spring()
-      ) {
-        transformations = transformations.copy(
-          scale = lerp(start = current.scale, stop = target.scale, fraction = value),
-          rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
-          offset = lerp(start = current.offset, stop = target.offset, fraction = value)
-        )
-      }
+    AnimationState(initialValue = 0f).animateTo(
+      targetValue = 1f,
+      animationSpec = spring()
+    ) {
+      gestureTransformations = gestureTransformations.copy(
+        zoom = lerp(start = current.zoom, stop = target.zoom, fraction = value),
+        rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
+        offset = lerp(start = current.offset, stop = target.offset, fraction = value),
+      )
     }
+  }
+}
+
+private data class GestureTransformations(
+  val offset: Offset,
+  val zoom: Float,
+  val rotationZ: Float,
+) {
+  companion object {
+    val Empty = GestureTransformations(
+      offset = Offset.Zero,
+      zoom = 1f,
+      rotationZ = 0f
+    )
   }
 }
 

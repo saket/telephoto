@@ -2,7 +2,7 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,10 +29,12 @@ fun ZoomableBox(
   val zoomableModifier = if (state.isReadyToInteract) {
     val scope = rememberCoroutineScope()
     Modifier
-      .transformable(state.transformableState)
+      .pointerInput(Unit) {
+        detectTransformGestures(onGesture = state::onGesture)
+      }
       .onAllPointersUp {
-        // Reset is performed on an independent scope, but the animation will be
-        // canceled if TransformableState#transform() is called from anywhere else.
+        // Reset is performed in a new coroutine. The animation will be canceled
+        // if TransformableState#transform() is called again by Modifier#transformable(). todo: this doc is outdated now.
         scope.launch {
           state.animateResetOfTransformations()
         }
@@ -64,7 +66,7 @@ private fun Modifier.onAllPointersUp(block: () -> Unit): Modifier {
 }
 
 /** Waits for all pointers to be up before returning. */
-internal suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
+private suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
   val allPointersDown = currentEvent.changes.fastAny { it.pressed }
   if (allPointersDown) {
     do {
