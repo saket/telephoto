@@ -42,7 +42,7 @@ class ZoomableState internal constructor() {
     gestureTransformations.let {
       ZoomableContentTransformations(
         scale = it.zoom,
-        offset = -it.offset * it.zoom,
+        offset = it.offsetForContent(),
         rotationZ = it.rotationZ,
         transformOrigin = TransformOrigin(0f, 0f)
       )
@@ -85,6 +85,7 @@ class ZoomableState internal constructor() {
 
     val oldZoom = gestureTransformations.zoom
     val newZoom = gestureTransformations.zoom * zoomDelta
+    val oldOffset = gestureTransformations.offset
 
     // Copied from androidx samples:
     // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
@@ -97,8 +98,23 @@ class ZoomableState internal constructor() {
     //
     // We then compute what the new offset should be to keep the centroid
     // visually stationary for rotating and zooming, and also apply the pan.
-    val newOffset = (gestureTransformations.offset + centroid / oldZoom).rotateBy(rotationDelta) -
-      (centroid / newZoom + panDelta / oldZoom)
+    //
+    // This is comparable to performing a pre-translate + scale + post-translate on a Matrix.
+    //
+    // I found this maths difficult to understand, so here's another explanation in
+    // Ryan Harter's words:
+    //
+    // The basic idea is that to rotate or scale around an arbitrary point, you
+    // translate so that that point is in the center, then you rotate, then scale,
+    // then move everything back.
+    //
+    //              Move the centroid to the center
+    //                           |                                                   Scale
+    //                           |                                                      |                Move back
+    //                           |                                                      |           (+ new translation)
+    //                           |                                                      |                    |
+    //              _____________|_________________                             ________|_________   ________|_________
+    val newOffset = (oldOffset + centroid / oldZoom).rotateBy(rotationDelta) - (centroid / newZoom + panDelta / oldZoom)
 
     gestureTransformations = gestureTransformations.let {
       it.copy(
@@ -170,6 +186,7 @@ class ZoomableState internal constructor() {
   }
 }
 
+// todo: it'd be nice to replace this with a Matrix.
 private data class GestureTransformations(
   val offset: Offset,
   val zoom: Float,
@@ -181,6 +198,10 @@ private data class GestureTransformations(
       zoom = 1f,
       rotationZ = 0f
     )
+  }
+
+  fun offsetForContent(): Offset {
+    return -offset * zoom
   }
 }
 
