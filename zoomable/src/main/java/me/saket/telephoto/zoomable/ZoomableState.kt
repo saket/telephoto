@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
@@ -37,12 +36,16 @@ fun rememberZoomableState(
 
 @Stable
 class ZoomableState internal constructor() {
-  /** todo: doc */
+  /**
+   * Transformations that should be applied by the viewport to its content.
+   *
+   * todo: doc
+   */
   val contentTransformations by derivedStateOf {
     gestureTransformations.let {
       ZoomableContentTransformations(
         scale = it.zoom,
-        offset = it.offsetForContent(),
+        offset = it.offsetForViewportContent(),
         rotationZ = it.rotationZ,
         transformOrigin = TransformOrigin(0f, 0f)
       )
@@ -55,14 +58,17 @@ class ZoomableState internal constructor() {
   internal var maxZoomFactor: Float = 1f
   internal var rotationEnabled: Boolean = false
 
-  /** Full size of the image/video/whatever without any scaling applied due to zoom. */
+  /** Raw size of the image/video/anything without any scaling applied. */
   private var unscaledContentSize by mutableStateOf(IntSize.Zero)
 
-  /** Size of the content composable in the layout hierarchy. */
-  internal var contentLayoutSize by mutableStateOf(IntSize.Zero)
+  /**
+   * Size of the composable in the layout hierarchy that displays the content within its bounds.
+   * This size should be independent of any scaling applied to the content.
+   */
+  internal var viewportSize by mutableStateOf(IntSize.Zero)
 
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    unscaledContentSize != IntSize.Zero && contentLayoutSize != IntSize.Zero
+    unscaledContentSize != IntSize.Zero && viewportSize != IntSize.Zero
   }
 
   @Suppress("NAME_SHADOWING")
@@ -74,7 +80,7 @@ class ZoomableState internal constructor() {
 
     val isZoomingIn = zoomDelta > 1f
     val isFullyZoomedIn =
-      (gestureTransformations.zoom * contentLayoutSize.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
+      (gestureTransformations.zoom * viewportSize.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
 
     // Apply elasticity to zoom once content can't zoom any further.
     val zoomDelta = when {
@@ -109,7 +115,7 @@ class ZoomableState internal constructor() {
     // then move everything back.
     //
     //              Move the centroid to the center
-    //                           |                                                   Scale
+    //                           |                                                    Scale
     //                           |                                                      |                Move back
     //                           |                                                      |           (+ new translation)
     //                           |                                                      |                    |
@@ -154,7 +160,7 @@ class ZoomableState internal constructor() {
 
   internal suspend fun animateResetOfTransformations() {
     val minLayoutZoom = 1f
-    val maxLayoutZoom = (maxZoomFactor * unscaledContentSize.width) / contentLayoutSize.width.toFloat()
+    val maxLayoutZoom = (maxZoomFactor * unscaledContentSize.width) / viewportSize.width.toFloat()
 
     val current = gestureTransformations
     val target = GestureTransformations.Empty.copy(
@@ -174,7 +180,7 @@ class ZoomableState internal constructor() {
           gestureTransformations = gestureTransformations.copy(
             zoom = lerp(start = current.zoom, stop = target.zoom, fraction = value),
             rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
-            offset = lerp(start = current.offset, stop = target.offset, fraction = value),
+            //offset = lerp(start = current.offset, stop = target.offset, fraction = value),
           )
         }
       }
@@ -200,7 +206,7 @@ private data class GestureTransformations(
     )
   }
 
-  fun offsetForContent(): Offset {
+  fun offsetForViewportContent(): Offset {
     return -offset * zoom
   }
 }

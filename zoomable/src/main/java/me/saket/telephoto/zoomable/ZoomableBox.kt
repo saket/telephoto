@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 /**
  * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
- * space. Otherwise, gestures made outside the content's (unscaled) bounds will not be registered.
+ * space. Otherwise, gestures made outside the viewport's (unscaled) bounds will not be registered.
  */
 @Composable
 fun ZoomableBox(
@@ -49,7 +49,7 @@ fun ZoomableBox(
       .then(zoomableModifier)
   ) {
     Box(
-      modifier = Modifier.onSizeChanged { state.contentLayoutSize = it },
+      modifier = Modifier.onSizeChanged { state.viewportSize = it },
       content = { content() }
     )
   }
