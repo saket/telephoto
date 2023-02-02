@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
@@ -49,7 +48,6 @@ class ZoomableState internal constructor() {
         scale = it.zoom,
         offset = -it.offset * it.zoom,
         rotationZ = it.rotationZ,
-        transformOrigin = TransformOrigin(0f, 0f)
       )
     }
   }
@@ -190,7 +188,7 @@ class ZoomableState internal constructor() {
           gestureTransformations = gestureTransformations.copy(
             zoom = lerp(start = current.zoom, stop = target.zoom, fraction = value),
             rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
-            //offset = lerp(start = current.offset, stop = target.offset, fraction = value),
+            //offset = androidx.compose.ui.geometry.lerp(start = current.offset, stop = target.offset, fraction = value),
           )
         }
       }

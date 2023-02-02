@@ -5,12 +5,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 
-/** todo: doc. */
+/**
+ * todo: doc.
+ *
+ * All transformations are done from `0,0`.
+ * */
 data class ZoomableContentTransformations(
   val scale: Float,
   val rotationZ: Float,
   val offset: Offset,
-  val transformOrigin: TransformOrigin,
+  val transformOrigin: TransformOrigin = when {
+    // Center content when it's zoomed out and appears smaller than its viewport.
+    scale < 1f -> TransformOrigin.Center
+    else -> TransformOrigin(0f, 0f)
+  },
 )
 
 fun Modifier.graphicsLayer(transformations: ZoomableContentTransformations): Modifier {
