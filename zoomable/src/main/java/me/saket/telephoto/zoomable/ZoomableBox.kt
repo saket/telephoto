@@ -4,14 +4,20 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.launch
 
@@ -24,7 +30,7 @@ fun ZoomableBox(
   state: ZoomableState,
   modifier: Modifier = Modifier,
   clipToBounds: Boolean = true,
-  content: @Composable () -> Unit
+  content: @Composable BoxScope.() -> Unit
 ) {
   val zoomableModifier = if (state.isReadyToInteract) {
     val scope = rememberCoroutineScope()
@@ -46,11 +52,12 @@ fun ZoomableBox(
   Box(
     modifier
       .let { if (clipToBounds) it.clipToBounds() else it }
+      .onSizeChanged { state.viewportBounds = Rect(Offset.Zero, size = it.toSize()) }
       .then(zoomableModifier)
   ) {
     Box(
-      modifier = Modifier.onSizeChanged { state.viewportSize = it },
-      content = { content() }
+      modifier = Modifier.onGloballyPositioned { state.contentBounds = it.boundsInParent() },
+      content = content
     )
   }
 }

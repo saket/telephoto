@@ -3,6 +3,7 @@ package me.saket.telephoto.sample
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -40,12 +42,16 @@ class SampleActivity : AppCompatActivity() {
         ) { contentPadding ->
           Box(Modifier.padding(contentPadding)) {
             val state = rememberZoomableState(
-              rotationEnabled = true,
+              rotationEnabled = false,
               maxZoomFactor = 1.5f,
             )
             ZoomableBox(
-              modifier = Modifier.fillMaxSize(),
-              state = state
+              modifier = Modifier
+                .padding(80.dp)
+                .fillMaxSize()
+                .border(1.dp, Color.Yellow),
+              state = state,
+              clipToBounds = false
             ) {
               AsyncImage(
                 modifier = Modifier

@@ -11,12 +11,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -45,7 +47,7 @@ class ZoomableState internal constructor() {
     gestureTransformations.let {
       ZoomableContentTransformations(
         scale = it.zoom,
-        offset = it.offsetForViewportContent(),
+        offset = -it.offset * it.zoom,
         rotationZ = it.rotationZ,
         transformOrigin = TransformOrigin(0f, 0f)
       )
@@ -65,22 +67,26 @@ class ZoomableState internal constructor() {
    * Size of the composable in the layout hierarchy that displays the content within its bounds.
    * This size should be independent of any scaling applied to the content.
    */
-  internal var viewportSize by mutableStateOf(IntSize.Zero)
+  internal var contentBounds by mutableStateOf(Rect.Zero)
+
+  internal var viewportBounds by mutableStateOf(Rect.Zero)
 
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    unscaledContentSize != IntSize.Zero && viewportSize != IntSize.Zero
+    unscaledContentSize != IntSize.Zero && contentBounds != Rect.Zero && viewportBounds != Rect.Zero
   }
 
   @Suppress("NAME_SHADOWING")
   internal fun onGesture(centroid: Offset, panDelta: Offset, zoomDelta: Float, rotationDelta: Float) {
     cancelResetAnimation?.invoke()
 
+    val rotationDelta = if (rotationEnabled) rotationDelta else 0f
+
     val isZoomingOut = zoomDelta < 1f
     val isFullyZoomedOut = gestureTransformations.zoom <= 1f
 
     val isZoomingIn = zoomDelta > 1f
     val isFullyZoomedIn =
-      (gestureTransformations.zoom * viewportSize.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
+      (gestureTransformations.zoom * contentBounds.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
 
     // Apply elasticity to zoom once content can't zoom any further.
     val zoomDelta = when {
@@ -115,6 +121,7 @@ class ZoomableState internal constructor() {
     // then move everything back.
     //
     //              Move the centroid to the center
+    //                  of panned content(?)
     //                           |                                                    Scale
     //                           |                                                      |                Move back
     //                           |                                                      |           (+ new translation)
@@ -122,11 +129,14 @@ class ZoomableState internal constructor() {
     //              _____________|_________________                             ________|_________   ________|_________
     val newOffset = (oldOffset + centroid / oldZoom).rotateBy(rotationDelta) - (centroid / newZoom + panDelta / oldZoom)
 
-    gestureTransformations = gestureTransformations.let {
-      it.copy(
-        offset = newOffset,
+    gestureTransformations = gestureTransformations.let { old ->
+      old.copy(
+        offset = newOffset.withZoom(-newZoom) {
+          val newContentBounds = Rect(offset = it, contentBounds.size * newZoom)
+          newContentBounds.topLeftCoercedInside(viewportBounds)
+        },
         zoom = newZoom,
-        rotationZ = it.rotationZ + rotationDelta,
+        rotationZ = old.rotationZ + rotationDelta,
       )
     }
   }
@@ -160,7 +170,7 @@ class ZoomableState internal constructor() {
 
   internal suspend fun animateResetOfTransformations() {
     val minLayoutZoom = 1f
-    val maxLayoutZoom = (maxZoomFactor * unscaledContentSize.width) / viewportSize.width.toFloat()
+    val maxLayoutZoom = (maxZoomFactor * unscaledContentSize.width) / contentBounds.width
 
     val current = gestureTransformations
     val target = GestureTransformations.Empty.copy(
@@ -202,13 +212,14 @@ private data class GestureTransformations(
     val Empty = GestureTransformations(
       offset = Offset.Zero,
       zoom = 1f,
-      rotationZ = 0f
+      rotationZ = 0f,
     )
   }
+}
 
-  fun offsetForViewportContent(): Offset {
-    return -offset * zoom
-  }
+/** This is named along the lines of `Canvas#withTranslate()`. */
+private fun Offset.withZoom(zoom: Float, action: (Offset) -> Offset): Offset {
+  return action(this * zoom) / zoom
 }
 
 private fun Size.roundToIntSize(): IntSize {
