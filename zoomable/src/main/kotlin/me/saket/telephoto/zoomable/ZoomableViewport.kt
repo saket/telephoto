@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  * space. Otherwise, gestures made outside the viewport's (unscaled) bounds will not be registered.
  */
 @Composable
-fun ZoomableBox(
+fun ZoomableViewport(
   state: ZoomableState,
   modifier: Modifier = Modifier,
   clipToBounds: Boolean = true,
