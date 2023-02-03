@@ -21,7 +21,9 @@ android {
 }
 
 dependencies {
+  implementation project(':subsamplingimage')
   implementation project(':zoomable')
+
   implementation "androidx.appcompat:appcompat:$versions.appCompat"
   implementation "androidx.core:core-ktx:1.9.0"
   implementation "androidx.activity:activity-compose:1.6.1"

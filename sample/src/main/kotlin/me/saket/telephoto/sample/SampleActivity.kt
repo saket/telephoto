@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.graphicsLayer
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -38,35 +40,45 @@ class SampleActivity : AppCompatActivity() {
           }
         ) { contentPadding ->
           Box(Modifier.padding(contentPadding)) {
-            val state = rememberZoomableState(
-              rotationEnabled = false,
-              maxZoomFactor = 1.5f,
-            )
-            ZoomableViewport(
-              modifier = Modifier
-                //.padding(80.dp)
-                .fillMaxSize()
-                /*.border(1.dp, Color.Yellow)*/,
-              state = state,
-              clipToBounds = false
-            ) {
-              AsyncImage(
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .wrapContentHeight()
-                  .graphicsLayer(state.contentTransformations),
-                model = ImageRequest.Builder(LocalContext.current)
-                  .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d")
-                  .crossfade(true)
-                  .build(),
-                contentDescription = null,
-                contentScale = ContentScale.FillWidth,
-                onState = { state.setUnscaledContentSize(it.painter?.intrinsicSize) }
-              )
-            }
+            //ZoomableViewportSample()
+            SubSamplingImageSample()
           }
         }
       }
     }
+  }
+
+  @Composable
+  private fun ZoomableViewportSample() {
+    val state = rememberZoomableState(
+      rotationEnabled = false,
+      maxZoomFactor = 1.5f,
+    )
+    ZoomableViewport(
+      modifier = Modifier.fillMaxSize(),
+      state = state,
+      clipToBounds = false
+    ) {
+      AsyncImage(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .graphicsLayer(state.contentTransformations),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d")
+          .crossfade(true)
+          .build(),
+        contentDescription = null,
+        contentScale = ContentScale.FillWidth,
+        onState = { state.setUnscaledContentSize(it.painter?.intrinsicSize) }
+      )
+    }
+  }
+
+  @Composable
+  private fun SubSamplingImageSample() {
+    SubSamplingImage(
+      modifier = Modifier.fillMaxSize()
+    )
   }
 }
