@@ -188,6 +188,7 @@ class ZoomableState internal constructor() {
           gestureTransformations = gestureTransformations.copy(
             zoom = lerp(start = current.zoom, stop = target.zoom, fraction = value),
             rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
+            // todo: uncomment and improve to only reset out-of-bounds offset.
             //offset = androidx.compose.ui.geometry.lerp(start = current.offset, stop = target.offset, fraction = value),
           )
         }
