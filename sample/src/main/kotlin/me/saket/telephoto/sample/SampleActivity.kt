@@ -20,7 +20,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.SubsamplingScaleImageView
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.graphicsLayer
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -29,19 +31,27 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    WindowCompat.setDecorFitsSystemWindows(window, false)
+    WindowCompat.setDecorFitsSystemWindows(window, true)
     super.onCreate(savedInstanceState)
 
-    setContent {
-      TelephotoTheme {
-        Scaffold(
-          topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.app_name)) })
-          }
-        ) { contentPadding ->
-          Box(Modifier.padding(contentPadding)) {
-            //ZoomableViewportSample()
-            SubSamplingImageSample()
+    if (false) {
+      setContentView(
+        SubsamplingScaleImageView(this).also {
+          it.setImage(ImageSource.asset("pahade.jpeg"))
+        }
+      )
+    } else {
+      setContent {
+        TelephotoTheme {
+          Scaffold(
+            topBar = {
+              TopAppBar(title = { Text(stringResource(R.string.app_name)) })
+            }
+          ) { contentPadding ->
+            Box(Modifier.padding(contentPadding)) {
+              //ZoomableViewportSample()
+              SubSamplingImageSample()
+            }
           }
         }
       }
@@ -77,8 +87,18 @@ class SampleActivity : AppCompatActivity() {
 
   @Composable
   private fun SubSamplingImageSample() {
-    SubSamplingImage(
-      modifier = Modifier.fillMaxSize()
+    val state = rememberZoomableState(
+      rotationEnabled = false,
+      maxZoomFactor = 1.5f,
     )
+    ZoomableViewport(
+      modifier = Modifier.fillMaxSize(),
+      state = state,
+      clipToBounds = false
+    ) {
+      SubSamplingImage(
+        modifier = Modifier.fillMaxSize()
+      )
+    }
   }
 }
