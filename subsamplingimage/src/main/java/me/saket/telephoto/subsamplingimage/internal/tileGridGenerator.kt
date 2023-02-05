@@ -9,29 +9,37 @@ internal fun generateBitmapTileGrid(
   viewportSize: Size,
   unscaledImageSize: Size
 ): BitmapTileGrid {
+  // Calculate the sample size for fitting the image inside its viewport.
+  // This will be the base layer. Because it will be fully zoomed out, it
+  // does not need to be loaded at full quality and will be down-sampled.
   val baseSampleSize = sampleSizeFor(
     viewportSize = viewportSize,
     scaledImageSize = unscaledImageSize
   )
-  val tileGridPerSampleLevel = mutableMapOf<BitmapSampleSize, List<BitmapTile>>()
 
-  var sampleSize = baseSampleSize
-  do {
+  // Apart from the base layer, I'm also generating tiles for all possible levels of
+  // sample size ahead of time. This will save some allocation during zoom gestures.
+  val possibleSampleSizes = generateSequence(seed = baseSampleSize) { previous ->
+    if (previous.size == 1) null else previous / 2
+  }
+
+  return possibleSampleSizes.associateWith { sampleSize ->
     val tileSize: IntSize = (unscaledImageSize * (sampleSize.size / baseSampleSize.size.toFloat()))
       // TODO: consider smaller tiles with parallel loading of bitmaps with pooled decoders.
       .coerceAtLeast(viewportSize / 2f)
       .discardFractionalParts()
 
-    // Number of tiles can be fractional. To avoid this, the fractional part is removed and the last tiles on each axis are
+    // Number of tiles can be fractional. To avoid this, the fractional
+    // part is discarded and the last tiles on each axis are stretched
+    // to cover any remaining space of the image.
     val xTileCount: Int = (unscaledImageSize.width / tileSize.width).toInt()
     val yTileCount: Int = (unscaledImageSize.height / tileSize.height).toInt()
 
-    val tileGrid = ArrayList<BitmapTile>(xTileCount * yTileCount)
-    for (x in 0 until xTileCount) {
-      for (y in 0 until yTileCount) {
+    return@associateWith (0 until xTileCount).flatMap { x ->
+      (0 until yTileCount).map { y ->
         val isLastXTile = x == xTileCount - 1
         val isLastYTile = y == yTileCount - 1
-        val tile = BitmapTile(
+        BitmapTile(
           sampleSize = sampleSize,
           bounds = IntRect(
             left = x * tileSize.width,
@@ -40,14 +48,9 @@ internal fun generateBitmapTileGrid(
             bottom = if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height
           )
         )
-        tileGrid.add(tile)
       }
     }
-    tileGridPerSampleLevel[sampleSize] = tileGrid
-    sampleSize /= 2
-  } while (sampleSize.size >= 1)
-
-  return tileGridPerSampleLevel
+  }
 }
 
 private fun Size.coerceAtLeast(other: Size): Size {
@@ -61,6 +64,7 @@ private fun Size.discardFractionalParts(): IntSize {
   return IntSize(width = width.toInt(), height = height.toInt())
 }
 
+/** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
 internal fun sampleSizeFor(
   viewportSize: Size,
   scaledImageSize: Size
@@ -78,5 +82,5 @@ internal fun sampleSizeFor(
   return BitmapSampleSize(sampleSize)
 }
 
-internal operator fun BitmapSampleSize.div(other: BitmapSampleSize) = BitmapSampleSize(size / other.size)
-internal operator fun BitmapSampleSize.div(other: Int) = BitmapSampleSize(size / other)
+private operator fun BitmapSampleSize.div(other: BitmapSampleSize) = BitmapSampleSize(size / other.size)
+private operator fun BitmapSampleSize.div(other: Int) = BitmapSampleSize(size / other)
