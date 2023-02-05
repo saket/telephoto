@@ -2,8 +2,10 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.IntSize
 
 /**
  * todo: doc.
@@ -11,6 +13,7 @@ import androidx.compose.ui.graphics.graphicsLayer
  * All transformations are done from `0,0`.
  * */
 data class ZoomableContentTransformations(
+  val viewportSize: IntSize,
   val scale: Float,
   val rotationZ: Float,
   val offset: Offset,

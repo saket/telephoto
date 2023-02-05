@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubsamplingScaleImageView
+import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.graphicsLayer
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -92,12 +95,20 @@ class SampleActivity : AppCompatActivity() {
       maxZoomFactor = 1.5f,
     )
     ZoomableViewport(
-      modifier = Modifier.fillMaxSize(),
+      modifier = Modifier
+        .padding(vertical = 40.dp, horizontal = 120.dp)
+        .fillMaxSize(),
       state = state,
       clipToBounds = false
     ) {
       SubSamplingImage(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(300.dp),
+        state = rememberSubSamplingImageState(
+          zoomableState = state,
+          imageSource = ImageSource.asset("pahade.jpeg")
+        )
       )
     }
   }

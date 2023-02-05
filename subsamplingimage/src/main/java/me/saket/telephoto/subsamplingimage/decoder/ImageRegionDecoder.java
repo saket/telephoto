@@ -38,7 +38,7 @@ public interface ImageRegionDecoder {
      * is the simplest way to achieve this, but bear in mind the {@link #recycle()} method can be
      * called concurrently.
      * </p><p>
-     * See {@link SkiaImageRegionDecoder} for examples of internal locking and synchronization.
+     * See {@link SkiaImageRegionDecoderOld} for examples of internal locking and synchronization.
      * </p>
      * @param sRect Source image rectangle to decode.
      * @param sampleSize Sample size.

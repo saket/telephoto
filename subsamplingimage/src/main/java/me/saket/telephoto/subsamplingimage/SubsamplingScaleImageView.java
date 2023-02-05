@@ -16,14 +16,13 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
-import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import me.saket.telephoto.subsamplingimage.decoder.ImageRegionDecoder;
-import me.saket.telephoto.subsamplingimage.decoder.SkiaImageRegionDecoder;
+import me.saket.telephoto.subsamplingimage.decoder.SkiaImageRegionDecoderOld;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -167,7 +166,8 @@ public class SubsamplingScaleImageView extends View {
 
         reset(true);
 
-        uri = imageSource.uri;
+        String assetName = ((AssetImageSource) imageSource).getAssetName();
+        uri = Uri.parse("file:///android_asset/" + assetName);
 
         // Load the bitmap using tile decoding.
         TilesInitTask task = new TilesInitTask(this, uri);
@@ -869,7 +869,7 @@ public class SubsamplingScaleImageView extends View {
             try {
                 Context context = view.getContext();
                 view.debug("TilesInitTask.doInBackground");
-                decoder = new SkiaImageRegionDecoder();
+                decoder = new SkiaImageRegionDecoderOld();
                 Point dimensions = decoder.init(context, source);
                 int sWidth = dimensions.x;
                 int sHeight = dimensions.y;

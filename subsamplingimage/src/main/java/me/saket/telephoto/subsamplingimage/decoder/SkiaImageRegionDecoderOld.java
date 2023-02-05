@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * tiles are being loaded before recycling the decoder. In practice, {@link BitmapRegionDecoder} is
  * synchronized internally so this has no real impact on performance.
  */
-public class SkiaImageRegionDecoder implements ImageRegionDecoder {
+public class SkiaImageRegionDecoderOld implements ImageRegionDecoder {
 
   private BitmapRegionDecoder decoder;
   private final ReadWriteLock decoderLock = new ReentrantReadWriteLock(true);

@@ -42,9 +42,10 @@ class ZoomableState internal constructor() {
    *
    * todo: doc
    */
-  val contentTransformations by derivedStateOf {
+  val contentTransformations: ZoomableContentTransformations by derivedStateOf {
     gestureTransformations.let {
       ZoomableContentTransformations(
+        viewportSize = viewportBounds.size.roundToIntSize(),
         scale = it.zoom,
         offset = -it.offset * it.zoom,
         rotationZ = it.rotationZ,
@@ -65,12 +66,17 @@ class ZoomableState internal constructor() {
    * Size of the composable in the layout hierarchy that displays the content within its bounds.
    * This size should be independent of any scaling applied to the content.
    */
+  // todo: should this be an IntRect?
   internal var contentBounds by mutableStateOf(Rect.Zero)
 
+  // todo: should this be an IntRect?
   internal var viewportBounds by mutableStateOf(Rect.Zero)
 
+  /** todo: doc. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    unscaledContentSize != IntSize.Zero && contentBounds != Rect.Zero && viewportBounds != Rect.Zero
+    unscaledContentSize != IntSize.Zero
+      && contentBounds != Rect.Zero
+      && viewportBounds != Rect.Zero
   }
 
   @Suppress("NAME_SHADOWING")
@@ -141,6 +147,7 @@ class ZoomableState internal constructor() {
 
   /** todo: doc */
   fun setUnscaledContentSize(size: IntSize?) {
+    // todo: reset transformations when a new size is received, probably because the image was changed?
     unscaledContentSize = size ?: IntSize.Zero
   }
 
