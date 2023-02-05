@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.Dispatchers
@@ -18,9 +19,9 @@ internal class SkiaImageRegionDecoder(
   private val decoder: BitmapRegionDecoder,
   private val imageSource: ImageSource,
 ) {
-  val imageSize = IntSize(
-    width = decoder.width,
-    height = decoder.height
+  val imageSize = Size(
+    width = decoder.width.toFloat(),
+    height = decoder.height.toFloat()
   )
 
   fun decodeRegion(region: Rect, sampleSize: BitmapSampleSize): Bitmap {

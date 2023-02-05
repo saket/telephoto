@@ -45,7 +45,7 @@ class ZoomableState internal constructor() {
   val contentTransformations: ZoomableContentTransformations by derivedStateOf {
     gestureTransformations.let {
       ZoomableContentTransformations(
-        viewportSize = viewportBounds.size.roundToIntSize(),
+        viewportSize = viewportBounds.size,
         scale = it.zoom,
         offset = -it.offset * it.zoom,
         rotationZ = it.rotationZ,

@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.IntSize
  * All transformations are done from `0,0`.
  * */
 data class ZoomableContentTransformations(
-  val viewportSize: IntSize,
+  val viewportSize: Size,
   val scale: Float,
   val rotationZ: Float,
   val offset: Offset,
