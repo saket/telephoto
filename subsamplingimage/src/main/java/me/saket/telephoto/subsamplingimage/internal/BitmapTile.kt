@@ -14,6 +14,8 @@ internal data class BitmapTile(
 /** See [BitmapFactory.Options.inSampleSize]. */
 @JvmInline
 internal value class BitmapSampleSize(val size: Int) {
+  companion object; // For extensions.
+
   init {
     check(size == 1 || size.rem(2) == 0) {
       "Incorrect size = $size. BitmapRegionDecoder requires values based on powers of 2."

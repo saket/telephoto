@@ -1,6 +1,7 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.geometry.Size
+import com.android.internal.R.attr.top
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
@@ -17,17 +18,19 @@ class BitmapTileGridTest {
     )
 
     val tileGrid = generateBitmapTileGrid(viewportSize, imageSize)
-    assertThat(tileGrid.keys.map { it.size }).containsExactly(8, 4, 2, 1)
 
+    // Verify that the layers are sorted by their sample size.
+    // Base layer with max sampling at the top. Highest quality layer with least sampling at the bottom.
+    assertThat(tileGrid.keys.map { it.size }).containsExactly(8, 4, 2, 1).inOrder()
+
+    // Verify that the number of tiles is correct.
     assertThat(
       tileGrid.map { (sample, tiles) -> sample.size to tiles.size }
-    ).isEqualTo(
-      listOf(
+    ).containsExactly(
         8 to 1,
         4 to 4,
         2 to 8,
         1 to 16,
-      )
     )
 
     tileGrid.forEach { (sampleSize, tiles) ->

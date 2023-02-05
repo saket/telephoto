@@ -15,13 +15,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
 import me.saket.telephoto.zoomable.ZoomableState
 import java.io.IOException
@@ -46,7 +49,7 @@ fun rememberSubSamplingImageState(
     }
   }
 
-  val tileGrids = remember {
+  val visibleTiles = remember {
     MutableStateFlow<BitmapTileGrid>(emptyMap())
   }
 
@@ -54,27 +57,37 @@ fun rememberSubSamplingImageState(
     val decoder = snapshotFlow { decoder }.filterNotNull().first()
     val transformations = snapshotFlow { zoomableState.contentTransformations }
 
-    transformations
+    val tileGrids = transformations
       .map { it.viewportSize }
       .distinctUntilChanged()
-      .collect { viewportSize ->
-        tileGrids.update {
-          generateBitmapTileGrid(
-            viewportSize = viewportSize,
-            unscaledImageSize = decoder.imageSize
-          )
-        }
+      .map { viewportSize ->
+        generateBitmapTileGrid(
+          viewportSize = viewportSize,
+          unscaledImageSize = decoder.imageSize
+        )
       }
+
+    combine(tileGrids, transformations) { tileGrid, transformation ->
+      val sampleSize = BitmapSampleSize.calculateFor(
+        viewportSize = transformation.viewportSize,
+        scaledImageSize = decoder.imageSize * transformation.scale
+      )
+      checkNotNull(tileGrid[sampleSize]) {
+        "No tiles found for $sampleSize"
+      }
+    }.collect {
+      visibleTiles.update { it }
+    }
   }
 
   return remember {
-    SubSamplingImageState(tileGrids)
+    SubSamplingImageState(MutableStateFlow(emptyMap()))
   }
 }
 
 @Stable
 class SubSamplingImageState internal constructor(
-  internal val tileGrids: StateFlow<BitmapTileGrid>,
+  internal val visibleTiles: StateFlow<BitmapTileGrid>,
 )
 
 private operator fun IntSize.times(other: Float): Size =

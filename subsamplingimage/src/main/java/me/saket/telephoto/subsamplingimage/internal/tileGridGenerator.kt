@@ -12,7 +12,7 @@ internal fun generateBitmapTileGrid(
   // Calculate the sample size for fitting the image inside its viewport.
   // This will be the base layer. Because it will be fully zoomed out, it
   // does not need to be loaded at full quality and will be down-sampled.
-  val baseSampleSize = sampleSizeFor(
+  val baseSampleSize = BitmapSampleSize.calculateFor(
     viewportSize = viewportSize,
     scaledImageSize = unscaledImageSize
   )
@@ -65,7 +65,7 @@ private fun Size.discardFractionalParts(): IntSize {
 }
 
 /** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
-internal fun sampleSizeFor(
+internal fun BitmapSampleSize.Companion.calculateFor(
   viewportSize: Size,
   scaledImageSize: Size
 ): BitmapSampleSize {
