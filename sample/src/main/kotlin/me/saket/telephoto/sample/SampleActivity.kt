@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,9 +79,9 @@ class SampleActivity : AppCompatActivity() {
     ) {
       AsyncImage(
         modifier = Modifier
+          .graphicsLayer(state.contentTransformations)
           .fillMaxWidth()
-          .wrapContentHeight()
-          .graphicsLayer(state.contentTransformations),
+          .wrapContentHeight(),
         model = ImageRequest.Builder(LocalContext.current)
           .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d")
           .crossfade(true)
@@ -99,16 +101,16 @@ class SampleActivity : AppCompatActivity() {
     )
     ZoomableViewport(
       modifier = Modifier
+        .fillMaxSize()
         .padding(vertical = 40.dp, horizontal = 120.dp)
-        .fillMaxSize(),
+        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)),
       state = state,
       clipToBounds = false
     ) {
       SubSamplingImage(
         modifier = Modifier
           .fillMaxWidth()
-          .height(300.dp)
-          .background(MaterialTheme.colorScheme.tertiaryContainer),
+          .height(300.dp),
         state = rememberSubSamplingImageState(
           zoomableState = state,
           imageSource = ImageSource.asset("pahade.jpeg")

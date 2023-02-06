@@ -2,13 +2,14 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntRect
 
 internal data class BitmapTile(
   val bitmap: Bitmap? = null,
   val isLoadingBitmap: Boolean = false,
   val sampleSize: BitmapSampleSize,
-  val bounds: IntRect,
+  val bounds: Rect,
 )
 
 /** See [BitmapFactory.Options.inSampleSize]. */

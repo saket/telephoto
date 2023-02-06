@@ -1,19 +1,19 @@
 package me.saket.telephoto.subsamplingimage.internal
 
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.min
 
 internal fun generateBitmapTileGrid(
-  viewportSize: Size,
+  canvasSize: Size,
   unscaledImageSize: Size
 ): BitmapTileGrid {
   // Calculate the sample size for fitting the image inside its viewport.
   // This will be the base layer. Because it will be fully zoomed out, it
   // does not need to be loaded at full quality and will be down-sampled.
   val baseSampleSize = BitmapSampleSize.calculateFor(
-    viewportSize = viewportSize,
+    canvasSize = canvasSize,
     scaledImageSize = unscaledImageSize
   )
 
@@ -26,7 +26,7 @@ internal fun generateBitmapTileGrid(
   return possibleSampleSizes.associateWith { sampleSize ->
     val tileSize: IntSize = (unscaledImageSize * (sampleSize.size / baseSampleSize.size.toFloat()))
       // TODO: consider smaller tiles with parallel loading of bitmaps with pooled decoders.
-      .coerceAtLeast(viewportSize / 2f)
+      .coerceAtLeast(canvasSize / 2f)
       .discardFractionalParts()
 
     // Number of tiles can be fractional. To avoid this, the fractional
@@ -41,11 +41,11 @@ internal fun generateBitmapTileGrid(
         val isLastYTile = y == yTileCount - 1
         BitmapTile(
           sampleSize = sampleSize,
-          bounds = IntRect(
-            left = x * tileSize.width,
-            top = y * tileSize.height,
-            right = if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width,
-            bottom = if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height
+          bounds = Rect(
+            left = x * tileSize.width.toFloat(),
+            top = y * tileSize.height.toFloat(),
+            right = (if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width).toFloat(),
+            bottom = (if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height).toFloat()
           )
         )
       }
@@ -66,12 +66,12 @@ private fun Size.discardFractionalParts(): IntSize {
 
 /** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
 internal fun BitmapSampleSize.Companion.calculateFor(
-  viewportSize: Size,
+  canvasSize: Size,
   scaledImageSize: Size
 ): BitmapSampleSize {
   val zoom = min(
-    viewportSize.width / scaledImageSize.width,
-    viewportSize.height / scaledImageSize.height
+    canvasSize.width / scaledImageSize.width,
+    canvasSize.height / scaledImageSize.height
   )
 
   var sampleSize = 1

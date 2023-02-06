@@ -6,23 +6,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.onStart
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
-import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
+import me.saket.telephoto.subsamplingimage.internal.BitmapTile
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
@@ -49,46 +51,62 @@ fun rememberSubSamplingImageState(
     }
   }
 
-  val visibleTiles = remember {
-    MutableStateFlow<BitmapTileGrid>(emptyMap())
+  val state = remember {
+    SubSamplingImageState()
   }
 
-  LaunchedEffect(zoomableState, decoder) {
-    val decoder = snapshotFlow { decoder }.filterNotNull().first()
-    val transformations = snapshotFlow { zoomableState.contentTransformations }
+  decoder?.let { decoder ->
+    LaunchedEffect(zoomableState, decoder) {
+      val transformations = snapshotFlow { zoomableState.contentTransformations }
+      val canvasSizeChanges = snapshotFlow { state.canvasSize }
 
-    val tileGrids = transformations
-      .map { it.viewportSize }
-      .distinctUntilChanged()
-      .map { viewportSize ->
-        generateBitmapTileGrid(
-          viewportSize = viewportSize,
-          unscaledImageSize = decoder.imageSize
+      val tileGrids = canvasSizeChanges
+        .flowOn(Dispatchers.IO)
+        .map { canvasSize ->
+          generateBitmapTileGrid(
+            canvasSize = canvasSize,
+            unscaledImageSize = decoder.imageSize
+          )
+        }
+
+      combine(tileGrids, transformations, canvasSizeChanges) { tileGrid, transformation, canvasSize ->
+        val sampleSize = BitmapSampleSize.calculateFor(
+          canvasSize = canvasSize * transformation.scale,  // todo: this calculation doesn't look right.
+          scaledImageSize = decoder.imageSize
         )
+        checkNotNull(tileGrid[sampleSize]) {
+          "No tiles found for $sampleSize. This is unexpected. " +
+            "Please file an issue on https://github.com/saket/telephoto?"
+        }
       }
+        .onStart { emit(emptyList()) }  // Reset for new images.
+        .collect { tiles ->
+          state.visibleTiles.clear()
+          state.visibleTiles.addAll(tiles)
+        }
+    }
 
-    combine(tileGrids, transformations) { tileGrid, transformation ->
-      val sampleSize = BitmapSampleSize.calculateFor(
-        viewportSize = transformation.viewportSize,
-        scaledImageSize = decoder.imageSize * transformation.scale
+    LaunchedEffect(state, zoomableState.contentTransformations, state.canvasSize) {
+      val transformation = zoomableState.contentTransformations
+      state.scale = ScaleFactor(
+        scaleX = transformation.scale * (state.canvasSize.width / decoder.imageSize.width),
+        scaleY = transformation.scale * (state.canvasSize.height / decoder.imageSize.height)
       )
-      checkNotNull(tileGrid[sampleSize]) {
-        "No tiles found for $sampleSize"
-      }
-    }.collect {
-      visibleTiles.update { it }
+      state.translation = transformation.offset
     }
   }
 
-  return remember {
-    SubSamplingImageState(MutableStateFlow(emptyMap()))
-  }
+  return state
 }
 
 @Stable
-class SubSamplingImageState internal constructor(
-  internal val visibleTiles: StateFlow<BitmapTileGrid>,
-)
+class SubSamplingImageState internal constructor() {
+  internal val visibleTiles = mutableStateListOf<BitmapTile>()
+  internal var canvasSize by mutableStateOf(Size.Unspecified)
+
+  internal var scale by mutableStateOf(ScaleFactor(1f, 1f))
+  internal var translation by mutableStateOf(Offset.Zero)
+}
 
 private operator fun IntSize.times(other: Float): Size =
   Size(width = width * other, height = height * other)
