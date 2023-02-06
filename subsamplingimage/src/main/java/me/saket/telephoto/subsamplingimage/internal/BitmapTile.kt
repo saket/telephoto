@@ -3,13 +3,15 @@ package me.saket.telephoto.subsamplingimage.internal
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.unit.IntRect
 
 internal data class BitmapTile(
   val bitmap: Bitmap? = null,
-  val isLoadingBitmap: Boolean = false,
   val sampleSize: BitmapSampleSize,
   val bounds: Rect,
+
+  // TODO: when testing is complete and a video has been recorded of
+  //  out-of-bound tiles, remove this in favor of filtering out invisible tiles.
+  val isVisible: Boolean = true
 )
 
 /** See [BitmapFactory.Options.inSampleSize]. */

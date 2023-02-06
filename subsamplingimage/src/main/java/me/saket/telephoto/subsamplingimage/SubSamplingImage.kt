@@ -22,19 +22,15 @@ fun SubSamplingImage(
     modifier.onSizeChanged { state.canvasSize = it.toSize() }
   ) {
     state.visibleTiles.fastForEach { tile ->
-      val transformedBounds = tile.bounds.let {
-        it.copy(
-          left = (it.left * state.scale.scaleX) + state.translation.x,
-          right = (it.right * state.scale.scaleX) + state.translation.x,
-          top = (it.top * state.scale.scaleY) + state.translation.y,
-          bottom = (it.bottom * state.scale.scaleY) + state.translation.y,
-        )
-      }
-
       drawRect(
-        color = Color.Yellow,
-        topLeft = transformedBounds.topLeft,
-        size = transformedBounds.size,
+        color = Color.Yellow.copy(alpha = if (tile.isVisible) 0.9f else 0.1f),
+        topLeft = tile.bounds.topLeft,
+        size = tile.bounds.size,
+      )
+      drawRect(
+        color = Color.Black,
+        topLeft = tile.bounds.topLeft,
+        size = tile.bounds.size,
         style = Stroke(width = density.run { 1.dp.toPx() })
       )
     }

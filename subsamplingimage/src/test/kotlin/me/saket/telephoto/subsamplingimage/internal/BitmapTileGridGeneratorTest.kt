@@ -13,7 +13,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @OptIn(ExperimentalTime::class)
-class BitmapTileGridTest {
+class BitmapTileGridGeneratorTest {
   @Test fun `correctly generate tile grid`() {
     val imageSize = Size(
       width = 9734f,
