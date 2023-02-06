@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -15,12 +14,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -30,7 +29,9 @@ import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
 import me.saket.telephoto.zoomable.ZoomableState
 import java.io.IOException
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun rememberSubSamplingImageState(
   zoomableState: ZoomableState,
@@ -58,16 +59,14 @@ fun rememberSubSamplingImageState(
   decoder?.let { decoder ->
     LaunchedEffect(zoomableState, decoder) {
       val transformations = snapshotFlow { zoomableState.contentTransformations }
-      val canvasSizeChanges = snapshotFlow { state.canvasSize }
+      val canvasSizeChanges = snapshotFlow { state.canvasSize }.filter { it.isSpecified }
 
-      val tileGrids = canvasSizeChanges
-        .flowOn(Dispatchers.IO)
-        .map { canvasSize ->
-          generateBitmapTileGrid(
-            canvasSize = canvasSize,
-            unscaledImageSize = decoder.imageSize
-          )
-        }
+      val tileGrids = canvasSizeChanges.map { canvasSize ->
+        generateBitmapTileGrid(
+          canvasSize = canvasSize,
+          unscaledImageSize = decoder.imageSize
+        )
+      }
 
       combine(tileGrids, transformations, canvasSizeChanges) { tileGrid, transformation, canvasSize ->
         val sampleSize = BitmapSampleSize.calculateFor(
@@ -79,10 +78,9 @@ fun rememberSubSamplingImageState(
             "Please file an issue on https://github.com/saket/telephoto?"
         }
       }
-        .onStart { emit(emptyList()) }  // Reset for new images.
+        .onStart { emit(emptyList()) }  // Reset for new images (i.e., when this LaunchedEffect runs again).
         .collect { tiles ->
-          state.visibleTiles.clear()
-          state.visibleTiles.addAll(tiles)
+          state.visibleTiles = tiles
         }
     }
 
@@ -101,7 +99,7 @@ fun rememberSubSamplingImageState(
 
 @Stable
 class SubSamplingImageState internal constructor() {
-  internal val visibleTiles = mutableStateListOf<BitmapTile>()
+  internal var visibleTiles by mutableStateOf(emptyList<BitmapTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
 
   internal var scale by mutableStateOf(ScaleFactor(1f, 1f))

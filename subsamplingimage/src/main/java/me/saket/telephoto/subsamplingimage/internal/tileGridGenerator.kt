@@ -9,15 +9,12 @@ internal fun generateBitmapTileGrid(
   canvasSize: Size,
   unscaledImageSize: Size
 ): BitmapTileGrid {
-  // Calculate the sample size for fitting the image inside its viewport.
-  // This will be the base layer. Because it will be fully zoomed out, it
-  // does not need to be loaded at full quality and will be down-sampled.
   val baseSampleSize = BitmapSampleSize.calculateFor(
     canvasSize = canvasSize,
     scaledImageSize = unscaledImageSize
   )
 
-  // Apart from the base layer, I'm also generating tiles for all possible levels of
+  // Apart from the base layer, tiles are generated for all possible levels of
   // sample size ahead of time. This will save some allocation during zoom gestures.
   val possibleSampleSizes = generateSequence(seed = baseSampleSize) { previous ->
     if (previous.size == 1) null else previous / 2
@@ -35,21 +32,25 @@ internal fun generateBitmapTileGrid(
     val xTileCount: Int = (unscaledImageSize.width / tileSize.width).toInt()
     val yTileCount: Int = (unscaledImageSize.height / tileSize.height).toInt()
 
-    return@associateWith (0 until xTileCount).flatMap { x ->
-      (0 until yTileCount).map { y ->
+    val tileGrid = ArrayList<BitmapTile>(xTileCount * yTileCount)
+    for (x in 0 until xTileCount) {
+      for (y in 0 until yTileCount) {
         val isLastXTile = x == xTileCount - 1
         val isLastYTile = y == yTileCount - 1
-        BitmapTile(
+        val tile = BitmapTile(
           sampleSize = sampleSize,
           bounds = Rect(
             left = x * tileSize.width.toFloat(),
             top = y * tileSize.height.toFloat(),
+            // Stretch the last tiles to cover any remaining space.
             right = (if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width).toFloat(),
             bottom = (if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height).toFloat()
           )
         )
+        tileGrid.add(tile)
       }
     }
+    return@associateWith tileGrid
   }
 }
 
