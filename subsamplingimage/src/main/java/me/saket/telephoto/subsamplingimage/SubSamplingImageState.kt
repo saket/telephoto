@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.BitmapTile
+import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
@@ -66,7 +67,7 @@ fun rememberSubSamplingImageState(
       val canvasSizeChanges = snapshotFlow { state.canvasSize }.filter { it.isSpecified }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
-        val tileGrid = generateBitmapTileGrid(
+        val tileGrid: BitmapTileGrid = generateBitmapTileGrid(
           canvasSize = canvasSize,
           unscaledImageSize = decoder.imageSize
         )
@@ -85,7 +86,6 @@ fun rememberSubSamplingImageState(
             scaleX = transformation.scale * (state.canvasSize.width / decoder.imageSize.width),
             scaleY = transformation.scale * (state.canvasSize.height / decoder.imageSize.height)
           )
-
           tiles.fastMap {
             val visualBounds = it.bounds.copy(
               left = (it.bounds.left * scale.scaleX) + transformation.offset.x,
@@ -106,16 +106,6 @@ fun rememberSubSamplingImageState(
           state.visibleTiles = tiles
         }
     }
-
-    // todo: should this be folded into BitmapTileGridModel?
-    LaunchedEffect(state, zoomableState.contentTransformations, state.canvasSize) {
-      val transformation = zoomableState.contentTransformations
-      state.scale = ScaleFactor(
-        scaleX = transformation.scale * (state.canvasSize.width / decoder.imageSize.width),
-        scaleY = transformation.scale * (state.canvasSize.height / decoder.imageSize.height)
-      )
-      state.translation = transformation.offset
-    }
   }
 
   return state
@@ -125,9 +115,6 @@ fun rememberSubSamplingImageState(
 class SubSamplingImageState internal constructor() {
   internal var visibleTiles by mutableStateOf(emptyList<BitmapTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
-
-  internal var scale by mutableStateOf(ScaleFactor(1f, 1f))
-  internal var translation by mutableStateOf(Offset.Zero)
 }
 
 private operator fun IntSize.times(other: Float): Size =

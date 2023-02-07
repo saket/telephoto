@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +20,6 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -101,14 +99,14 @@ class SampleActivity : AppCompatActivity() {
       rotationEnabled = false,
       maxZoomFactor = 1.5f,
     )
+
     ZoomableViewport(
       modifier = Modifier
         .fillMaxSize()
         .padding(vertical = 40.dp, horizontal = 120.dp)
-        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
-        .clip(RoundedCornerShape(8.dp)),
+        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)),
       state = state,
-      clipToBounds = true
+      clipToBounds = false
     ) {
       SubSamplingImage(
         modifier = Modifier

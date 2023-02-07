@@ -23,15 +23,15 @@ fun SubSamplingImage(
   ) {
     state.visibleTiles.fastForEach { tile ->
       drawRect(
-        color = Color.Yellow.copy(alpha = if (tile.isVisible) 0.9f else 0.1f),
+        color = Color(0xFF3E9B42).copy(alpha = if (tile.isVisible) 1f else 0.1f),
         topLeft = tile.bounds.topLeft,
         size = tile.bounds.size,
       )
       drawRect(
-        color = Color.Black,
+        color = Color(0xFF292A30),
         topLeft = tile.bounds.topLeft,
         size = tile.bounds.size,
-        style = Stroke(width = density.run { 1.dp.toPx() })
+        style = Stroke(width = density.run { 2.dp.toPx() })
       )
     }
   }

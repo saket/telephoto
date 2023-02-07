@@ -2,10 +2,14 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Rect
 
+internal typealias BitmapTileGrid = Map<BitmapSampleSize, List<BitmapTile>>
+
+@Immutable
 internal data class BitmapTile(
-  val bitmap: Bitmap? = null,
+  val bitmap: Bitmap? = null, // todo: this does not override equals() :S
   val sampleSize: BitmapSampleSize,
   val bounds: Rect,
 
@@ -25,5 +29,3 @@ internal value class BitmapSampleSize(val size: Int) {
     }
   }
 }
-
-internal typealias BitmapTileGrid = Map<BitmapSampleSize, List<BitmapTile>>
