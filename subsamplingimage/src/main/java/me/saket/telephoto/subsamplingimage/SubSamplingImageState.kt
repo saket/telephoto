@@ -50,7 +50,7 @@ fun rememberSubSamplingImageState(
   val decoder by produceState<SkiaImageRegionDecoder?>(initialValue = null, key1 = imageSource) {
     try {
       value = SkiaImageRegionDecoder.create(context, imageSource).also {
-        stateListener.onImageLoaded()
+        stateListener.onImageLoaded(it.imageSize)
         zoomableState.setUnscaledContentSize(it.imageSize)
       }
     } catch (e: IOException) {
