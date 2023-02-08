@@ -14,14 +14,16 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -33,7 +35,6 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
-import me.saket.telephoto.subsamplingimage.internal.overlaps
 import me.saket.telephoto.zoomable.ZoomableState
 import java.io.IOException
 
@@ -71,8 +72,16 @@ fun rememberSubSamplingImageState(
           canvasSize = canvasSize,
           unscaledImageSize = decoder.imageSize
         )
+        val inflatedViewportBounds = transformations
+          .map { it.viewportSize }
+          .distinctUntilChanged()
+          .map { size ->
+            // TODO: inflating the bounds results in a higher number of bitmaps in memory.
+            //  Test if this is worth keeping.
+            Rect(Offset.Zero, size)/*.inflateByPercent(0.1f)*/
+          }
 
-        transformations.map { transformation ->
+        combine(transformations, inflatedViewportBounds) { transformation, viewportBounds ->
           val sampleSize = BitmapSampleSize.calculateFor(
             canvasSize = canvasSize * transformation.scale,  // todo: this calculation doesn't look right.
             scaledImageSize = decoder.imageSize
@@ -95,7 +104,7 @@ fun rememberSubSamplingImageState(
             )
             it.copy(
               bounds = visualBounds,
-              isVisible = visualBounds.overlaps(Offset.Zero, transformation.viewportSize)
+              isVisible = visualBounds.overlaps(viewportBounds)
             )
           }
         }
@@ -117,5 +126,11 @@ class SubSamplingImageState internal constructor() {
   internal var canvasSize by mutableStateOf(Size.Unspecified)
 }
 
-private operator fun IntSize.times(other: Float): Size =
-  Size(width = width * other, height = height * other)
+internal fun Rect.inflateByPercent(percent: Float): Rect {
+  return Rect(
+    left = left - (width * percent),
+    top = top - (height * percent),
+    right = right + (width * percent),
+    bottom = bottom + (height * percent)
+  )
+}
