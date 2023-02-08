@@ -5,15 +5,15 @@ import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toAndroidRect
-import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.AssetImageSource
 import me.saket.telephoto.subsamplingimage.ImageSource
 import java.io.IOException
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 internal class SkiaImageRegionDecoder(
   private val decoder: BitmapRegionDecoder,
@@ -24,12 +24,19 @@ internal class SkiaImageRegionDecoder(
     height = decoder.height.toFloat()
   )
 
-  fun decodeRegion(region: Rect, sampleSize: BitmapSampleSize): Bitmap {
+  @OptIn(ExperimentalTime::class)
+  suspend fun decodeRegion(region: BitmapRegionBounds, sampleSize: BitmapSampleSize): Bitmap {
     val options = BitmapFactory.Options().apply {
       inSampleSize = sampleSize.size
       inPreferredConfig = Bitmap.Config.RGB_565
     }
-    val bitmap = decoder.decodeRegion(region.toAndroidRect(), options)
+    val timed = measureTimedValue {
+      withContext(Dispatchers.IO) {
+        decoder.decodeRegion(region.bounds.toAndroidRect(), options)
+      }
+    }
+    println("Decoded bitmap in ${timed.duration} for $region")
+    val bitmap = timed.value
     return checkNotNull(bitmap) {
       "Skia image decoder returned a null bitmap. Image format may not be supported: $imageSource."
     }

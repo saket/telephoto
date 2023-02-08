@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -28,7 +29,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.BitmapTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
@@ -62,12 +63,23 @@ fun rememberSubSamplingImageState(
     SubSamplingImageState()
   }
 
+  LaunchedEffect(state, decoder) {
+    // Reset tiles for new images.
+    state.visibleTiles = emptyList()
+  }
+
   decoder?.let { decoder ->
+    val scope = rememberCoroutineScope()
     LaunchedEffect(state, zoomableState, decoder) {
+      val bitmapLoader = BitmapLoader(decoder, scope)
       val transformations = snapshotFlow { zoomableState.contentTransformations }
       val canvasSizeChanges = snapshotFlow { state.canvasSize }.filter { it.isSpecified }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
+        val baseSampleSize = BitmapSampleSize.calculateFor(
+          canvasSize = canvasSize,
+          scaledImageSize = decoder.imageSize
+        )
         val tileGrid: BitmapTileGrid = generateBitmapTileGrid(
           canvasSize = canvasSize,
           unscaledImageSize = decoder.imageSize
@@ -81,37 +93,62 @@ fun rememberSubSamplingImageState(
             Rect(Offset.Zero, size)/*.inflateByPercent(0.1f)*/
           }
 
-        combine(transformations, inflatedViewportBounds) { transformation, viewportBounds ->
+        combine(
+          transformations,
+          inflatedViewportBounds,
+          bitmapLoader.bitmaps
+        ) { transformation, viewportBounds, bitmaps ->
           val sampleSize = BitmapSampleSize.calculateFor(
             canvasSize = canvasSize * transformation.scale,  // todo: this calculation doesn't look right.
             scaledImageSize = decoder.imageSize
           )
           val tiles = checkNotNull(tileGrid[sampleSize]) {
-            "No tiles found for $sampleSize among ${tileGrid.keys}. This is unexpected. " +
-              "Please file an issue on https://github.com/saket/telephoto?"
+            "No tiles found for $sampleSize among ${tileGrid.keys}"
           }
 
           val scale = ScaleFactor(
             scaleX = transformation.scale * (state.canvasSize.width / decoder.imageSize.width),
             scaleY = transformation.scale * (state.canvasSize.height / decoder.imageSize.height)
           )
-          tiles.fastMap {
-            val visualBounds = it.bounds.copy(
-              left = (it.bounds.left * scale.scaleX) + transformation.offset.x,
-              right = (it.bounds.right * scale.scaleX) + transformation.offset.x,
-              top = (it.bounds.top * scale.scaleY) + transformation.offset.y,
-              bottom = (it.bounds.bottom * scale.scaleY) + transformation.offset.y,
+          tileGrid[baseSampleSize].orEmpty().fastMap { tile ->
+            val drawBounds = tile.regionBounds.bounds.let {
+              it.copy(
+                left = (it.left * scale.scaleX) + transformation.offset.x,
+                right = (it.right * scale.scaleX) + transformation.offset.x,
+                top = (it.top * scale.scaleY) + transformation.offset.y,
+                bottom = (it.bottom * scale.scaleY) + transformation.offset.y,
+              )
+            }
+            val isVisible = sampleSize == baseSampleSize || drawBounds.overlaps(viewportBounds)
+            tile.copy(
+              drawBounds = drawBounds,
+              isVisible = isVisible,
+              bitmap = bitmaps[tile.regionBounds]
             )
-            it.copy(
-              bounds = visualBounds,
-              isVisible = visualBounds.overlaps(viewportBounds)
-            )
-          }
+          }.plus(
+            tiles.fastMap { tile ->
+              val drawBounds = tile.regionBounds.bounds.let {
+                it.copy(
+                  left = (it.left * scale.scaleX) + transformation.offset.x,
+                  right = (it.right * scale.scaleX) + transformation.offset.x,
+                  top = (it.top * scale.scaleY) + transformation.offset.y,
+                  bottom = (it.bottom * scale.scaleY) + transformation.offset.y,
+                )
+              }
+              val isVisible = sampleSize == baseSampleSize || drawBounds.overlaps(viewportBounds)
+              tile.copy(
+                drawBounds = drawBounds,
+                isVisible = isVisible,
+                bitmap = bitmaps[tile.regionBounds]
+              )
+            }
+          )
         }
       }
         .flowOn(Dispatchers.IO)
-        .onStart { emit(emptyList()) }  // Reset for new images (i.e., when this LaunchedEffect runs again).
+        .distinctUntilChanged()
         .collect { tiles ->
+          bitmapLoader.loadOrUnloadTiles(tiles)
           state.visibleTiles = tiles
         }
     }

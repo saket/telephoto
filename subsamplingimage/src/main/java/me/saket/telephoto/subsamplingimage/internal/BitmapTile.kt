@@ -11,7 +11,11 @@ internal typealias BitmapTileGrid = Map<BitmapSampleSize, List<BitmapTile>>
 internal data class BitmapTile(
   val bitmap: Bitmap? = null, // todo: this does not override equals() :S
   val sampleSize: BitmapSampleSize,
-  val bounds: Rect,
+
+  val regionBounds: BitmapRegionBounds,
+
+  /** [regionBounds] x (scale + pan + rotation). */
+  val drawBounds: Rect = Rect.Zero,
 
   // TODO: when testing is complete and a video has been recorded of
   //  out-of-bound tiles, remove this in favor of filtering out invisible tiles.

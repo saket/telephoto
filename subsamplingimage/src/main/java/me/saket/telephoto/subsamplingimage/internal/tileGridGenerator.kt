@@ -39,12 +39,14 @@ internal fun generateBitmapTileGrid(
         val isLastYTile = y == yTileCount - 1
         val tile = BitmapTile(
           sampleSize = sampleSize,
-          bounds = Rect(
-            left = x * tileSize.width.toFloat(),
-            top = y * tileSize.height.toFloat(),
-            // Stretch the last tiles to cover any remaining space.
-            right = (if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width).toFloat(),
-            bottom = (if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height).toFloat()
+          regionBounds = BitmapRegionBounds(
+            Rect(
+              left = x * tileSize.width.toFloat(),
+              top = y * tileSize.height.toFloat(),
+              // Stretch the last tiles to cover any remaining space.
+              right = (if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width).toFloat(),
+              bottom = (if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height).toFloat()
+            )
           )
         )
         tileGrid.add(tile)

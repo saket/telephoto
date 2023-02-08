@@ -1,5 +1,3 @@
-@file:Suppress("DataClassPrivateConstructor")
-
 package me.saket.telephoto.subsamplingimage
 
 sealed interface ImageSource {

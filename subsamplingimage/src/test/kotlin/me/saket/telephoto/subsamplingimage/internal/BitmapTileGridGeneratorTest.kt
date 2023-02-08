@@ -45,16 +45,16 @@ class BitmapTileGridGeneratorTest {
       val assert = assertWithMessage("Sample size = ${sampleSize.size}")
 
       // Verify that the tiles cover the entire image.
-      assert.that(tiles.minOf { it.bounds.left }).isEqualTo(0f)
-      assert.that(tiles.minOf { it.bounds.top }).isEqualTo(0f)
-      assert.that(tiles.maxOf { it.bounds.right }).isEqualTo(imageSize.width)
-      assert.that(tiles.maxOf { it.bounds.bottom }).isEqualTo(imageSize.height)
-      assert.that(tiles.sumOf { it.bounds.area.toInt() }).isEqualTo(imageSize.area.toInt())
+      assert.that(tiles.minOf { it.regionBounds.bounds.left }).isEqualTo(0f)
+      assert.that(tiles.minOf { it.regionBounds.bounds.top }).isEqualTo(0f)
+      assert.that(tiles.maxOf { it.regionBounds.bounds.right }).isEqualTo(imageSize.width)
+      assert.that(tiles.maxOf { it.regionBounds.bounds.bottom }).isEqualTo(imageSize.height)
+      assert.that(tiles.sumOf { it.regionBounds.bounds.area.toInt() }).isEqualTo(imageSize.area.toInt())
 
       // Verify that the tiles don't have any overlap.
       val overlappingTiles: List<BitmapTile> = tiles.flatMap { tile ->
         tiles.minus(tile).filter { other ->
-          tile.bounds.overlaps(other.bounds)
+          tile.regionBounds.bounds.overlaps(other.regionBounds.bounds)
         }
       }
       assert.that(overlappingTiles).isEmpty()
