@@ -35,7 +35,7 @@ internal class SkiaImageRegionDecoder(
         decoder.decodeRegion(region.bounds.toAndroidRect(), options)
       }
     }
-    println("Decoded bitmap in ${timed.duration} for $region")
+    //println("Decoded bitmap in ${timed.duration} for $region")
     val bitmap = timed.value
     return checkNotNull(bitmap) {
       "Skia image decoder returned a null bitmap. Image format may not be supported: $imageSource."

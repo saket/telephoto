@@ -110,39 +110,22 @@ fun rememberSubSamplingImageState(
             scaleX = transformation.scale * (state.canvasSize.width / decoder.imageSize.width),
             scaleY = transformation.scale * (state.canvasSize.height / decoder.imageSize.height)
           )
-          tileGrid[baseSampleSize].orEmpty().fastMap { tile ->
+          tiles.fastMap { tile ->
             val drawBounds = tile.regionBounds.bounds.let {
               it.copy(
-                left = (it.left * scale.scaleX) + transformation.offset.x,
-                right = (it.right * scale.scaleX) + transformation.offset.x,
-                top = (it.top * scale.scaleY) + transformation.offset.y,
-                bottom = (it.bottom * scale.scaleY) + transformation.offset.y,
+                left = (it.left * scale) + transformation.offset.x,
+                right = (it.right * scale) + transformation.offset.x,
+                top = (it.top * scale) + transformation.offset.y,
+                bottom = (it.bottom * scale) + transformation.offset.y,
               )
             }
-            val isVisible = sampleSize == baseSampleSize || drawBounds.overlaps(viewportBounds)
+            val isVisible = drawBounds.overlaps(viewportBounds)
             tile.copy(
               drawBounds = drawBounds,
               isVisible = isVisible,
               bitmap = bitmaps[tile.regionBounds]
             )
-          }.plus(
-            tiles.fastMap { tile ->
-              val drawBounds = tile.regionBounds.bounds.let {
-                it.copy(
-                  left = (it.left * scale.scaleX) + transformation.offset.x,
-                  right = (it.right * scale.scaleX) + transformation.offset.x,
-                  top = (it.top * scale.scaleY) + transformation.offset.y,
-                  bottom = (it.bottom * scale.scaleY) + transformation.offset.y,
-                )
-              }
-              val isVisible = sampleSize == baseSampleSize || drawBounds.overlaps(viewportBounds)
-              tile.copy(
-                drawBounds = drawBounds,
-                isVisible = isVisible,
-                bitmap = bitmaps[tile.regionBounds]
-              )
-            }
-          )
+          }
         }
       }
         .flowOn(Dispatchers.IO)

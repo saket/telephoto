@@ -21,7 +21,7 @@ internal class BitmapLoader(
       if (tile.isVisible) {
         if (tile.regionBounds !in bitmaps.value && tile.regionBounds !in ongoingDecodes.value) {
           val decodeJob = scope.launch {
-            println("Loading bitmap for tile [${tile.regionBounds}]")
+//            println("Loading bitmap for tile [${tile.regionBounds}]")
             val bitmap = decoder.decodeRegion(tile.regionBounds, tile.sampleSize)
             bitmaps.update { existing -> existing + (tile.regionBounds to bitmap) }
             ongoingDecodes.update { existing -> existing - tile.regionBounds }
@@ -31,7 +31,7 @@ internal class BitmapLoader(
 
       } else {
         if (tile.regionBounds in bitmaps.value) {
-          println("Removing bitmap for tile [${tile.regionBounds}]")
+//          println("Removing bitmap for tile [${tile.regionBounds}]")
           bitmaps.update { existing ->
             existing - tile.regionBounds
           }
@@ -39,7 +39,7 @@ internal class BitmapLoader(
 
         val ongoingDecode = ongoingDecodes.value[tile.regionBounds]
         if (ongoingDecode != null) {
-          println("Canceling bitmap load for tile [${tile.regionBounds}]")
+//          println("Canceling bitmap load for tile [${tile.regionBounds}]")
           ongoingDecode.cancel()
           ongoingDecodes.update { it - tile.regionBounds }
         }
