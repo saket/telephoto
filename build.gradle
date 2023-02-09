@@ -9,9 +9,9 @@ buildscript {
   ext.versions = [
     minSdk: 24,
     compileSdk: 33,
-    kotlin: '1.8.0',
+    kotlin: '1.8.10',
     composeUi: '1.4.0-alpha05',
-    composeCompiler: '1.4.0',
+    composeCompiler: '1.4.2',
     composeUiMaterial3: '1.1.0-alpha05',
     appCompat: '1.6.0',
     testParamInjector: '1.10',
@@ -24,11 +24,11 @@ buildscript {
   }
 
   dependencies {
-    classpath "com.android.tools.build:gradle:7.4.0"
+    classpath "com.android.tools.build:gradle:7.4.1"
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
     classpath "com.vanniktech:gradle-maven-publish-plugin:0.19.0"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
-    classpath "app.cash.paparazzi:paparazzi-gradle-plugin:1.1.0"
+    classpath "app.cash.paparazzi:paparazzi-gradle-plugin:1.2.0"
   }
 }
 
