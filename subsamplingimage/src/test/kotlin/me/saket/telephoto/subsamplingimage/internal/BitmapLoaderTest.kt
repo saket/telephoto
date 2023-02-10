@@ -37,7 +37,7 @@ class BitmapLoaderTest {
   @Test fun `when tiles become visible, load their bitmaps`() = runTest(timeout = 1.seconds) {
     val loader = bitmapLoader()
     val requestedRegions = decoder.requestedRegions.testIn(this)
-    val cachedBitmaps = loader.bitmaps().testIn(this)
+    val cachedBitmaps = loader.cachedBitmaps().testIn(this)
     assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
     val visibleTile = fakeBitmapTile(isVisible = true)
@@ -65,7 +65,7 @@ class BitmapLoaderTest {
 
   @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(1.seconds) {
     val loader = bitmapLoader()
-    val cachedBitmaps = loader.bitmaps().drop(1).testIn(this)
+    val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
     val tile1 = fakeBitmapTile(isVisible = true)
     val tile2 = fakeBitmapTile(isVisible = true)
@@ -89,7 +89,7 @@ class BitmapLoaderTest {
 
   @Test fun `when tiles become invisible, discard their stale bitmaps from cache`() = runTest(1.seconds) {
     val loader = bitmapLoader()
-    val cachedBitmaps = loader.bitmaps().drop(1).testIn(this)
+    val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
     val tile1 = fakeBitmapTile(isVisible = true)
     val tile2 = fakeBitmapTile(isVisible = true)
@@ -119,7 +119,7 @@ class BitmapLoaderTest {
     runTest(timeout = 1.seconds) {
       val loader = bitmapLoader()
       val requestedRegions = decoder.requestedRegions.testIn(this)
-      val cachedBitmaps = loader.bitmaps().drop(1).testIn(this)
+      val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
       val visibleTile = fakeBitmapTile(isVisible = true)
       loader.loadOrUnloadForTiles(listOf(visibleTile))
@@ -143,7 +143,7 @@ class BitmapLoaderTest {
     runTest(timeout = 1.seconds) {
       val loader = bitmapLoader()
       val requestedRegions = decoder.requestedRegions.testIn(this)
-      val cachedBitmaps = loader.bitmaps().drop(1).testIn(this)
+      val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
       val visibleTile = fakeBitmapTile(isVisible = true)
       loader.loadOrUnloadForTiles(listOf(visibleTile))
@@ -170,7 +170,6 @@ private class FakeImageRegionDecoder : ImageRegionDecoder {
 
   override suspend fun decodeRegion(region: BitmapRegionBounds, sampleSize: BitmapSampleSize): ImageBitmap {
     requestedRegions.emit(region)
-    println("Waiting for a fake bitmap…")
     return decodedBitmaps.first()
   }
 }

@@ -1,7 +1,6 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -17,15 +16,15 @@ internal class BitmapLoader(
   private val decoder: ImageRegionDecoder,
   private val scope: CoroutineScope,
 ) {
-  private val bitmaps = MutableStateFlow(emptyMap<BitmapRegionBounds, LoadingState>())
+  private val cachedBitmaps = MutableStateFlow(emptyMap<BitmapRegionBounds, LoadingState>())
 
   private sealed interface LoadingState {
     data class Loaded(val bitmap: ImageBitmap) : LoadingState
     data class InFlight(val job: Job) : LoadingState
   }
 
-  fun bitmaps(): Flow<Map<BitmapRegionBounds, ImageBitmap>> {
-    return bitmaps.map { map ->
+  fun cachedBitmaps(): Flow<Map<BitmapRegionBounds, ImageBitmap>> {
+    return cachedBitmaps.map { map ->
       buildMap(capacity = map.size) {
         map.forEach { (region, state) ->
           if (state is Loaded) {
@@ -37,35 +36,37 @@ internal class BitmapLoader(
   }
 
   fun loadOrUnloadForTiles(tiles: List<BitmapTile>) {
-    tiles.fastForEach { tile ->
-      val existing = bitmaps.value[tile.regionBounds]
+    val tilesToLoad = tiles
+      .filter { it.isVisible }
+      .filter { it.regionBounds !in cachedBitmaps.value }
 
-      if (tile.isVisible && existing == null) {
-        // Tile just became visible.
-        val job = scope.launch {
-          val bitmap = decoder.decodeRegion(tile.regionBounds, tile.sampleSize)
-          bitmaps.update { it + (tile.regionBounds to Loaded(bitmap)) }
-        }
-        bitmaps.update { it + (tile.regionBounds to InFlight(job)) }
-      }
+    val regionsToUnload = run {
+      val invisibleTileRegions = tiles
+        .filterNot { it.isVisible }
+        .map { it.regionBounds }
+        .toSet()
 
-      if (!tile.isVisible && existing != null) {
-        // Tile was visible before, but has now gone out of viewport bounds.
-        if (existing is InFlight) {
-          existing.job.cancel()
-        }
-        bitmaps.update { it - tile.regionBounds }
+      val removedTileRegions = run {
+        val currentRegions = tiles.map { it.regionBounds }
+        cachedBitmaps.value.keys
+          .filter { it !in currentRegions }
+          .toSet()
       }
+      return@run invisibleTileRegions + removedTileRegions
     }
 
-    // Remove stale bitmaps whose tiles are no longer visible.
-    val currentTileBounds = tiles.map { it.regionBounds }
-    val itemsToRemove = bitmaps.value.filterKeys { it !in currentTileBounds }
-    itemsToRemove.forEach { (_, state) ->
-      if (state is InFlight) {
-        state.job.cancel()
+    tilesToLoad.forEach { tile ->
+      val job = scope.launch {
+        val bitmap = decoder.decodeRegion(tile.regionBounds, tile.sampleSize)
+        cachedBitmaps.update { it + (tile.regionBounds to Loaded(bitmap)) }
       }
+      cachedBitmaps.update { it + (tile.regionBounds to InFlight(job)) }
     }
-    bitmaps.update { it - itemsToRemove.keys }
+
+    regionsToUnload.forEach { region ->
+      val inFlight = cachedBitmaps.value[region] as? InFlight
+      inFlight?.job?.cancel()
+    }
+    cachedBitmaps.update { it - regionsToUnload }
   }
 }

@@ -96,7 +96,7 @@ fun rememberSubSamplingImageState(
         combine(
           transformations,
           inflatedViewportBounds,
-          bitmapLoader.bitmaps()
+          bitmapLoader.cachedBitmaps()
         ) { transformation, viewportBounds, bitmaps ->
           val zoom = transformation.scale * minOf(
             canvasSize.width / decoder.imageSize.width,
