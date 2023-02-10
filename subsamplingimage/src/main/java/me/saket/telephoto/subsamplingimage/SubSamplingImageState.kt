@@ -33,7 +33,7 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.BitmapTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
 import me.saket.telephoto.zoomable.ZoomableState
@@ -50,7 +50,7 @@ fun rememberSubSamplingImageState(
 
   val decoder by produceState<ImageRegionDecoder?>(initialValue = null, key1 = imageSource) {
     try {
-      value = SkiaImageRegionDecoder.create(context, imageSource).also {
+      value = SkiaImageRegionDecoders.create(context, imageSource).also {
         stateListener.onImageLoaded(it.imageSize)
         zoomableState.setUnscaledContentSize(it.imageSize)
       }
