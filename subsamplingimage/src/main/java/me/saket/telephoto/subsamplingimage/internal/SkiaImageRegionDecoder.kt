@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toAndroidRect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,21 +20,21 @@ import kotlin.time.measureTimedValue
 internal class SkiaImageRegionDecoder(
   private val decoder: BitmapRegionDecoder,
   private val imageSource: ImageSource,
-) {
-  val imageSize = Size(
+) : ImageRegionDecoder {
+  override val imageSize = Size(
     width = decoder.width.toFloat(),
     height = decoder.height.toFloat()
   )
 
   @OptIn(ExperimentalTime::class)
-  suspend fun decodeRegion(region: BitmapRegionBounds, sampleSize: BitmapSampleSize): Bitmap {
+  override suspend fun decodeRegion(region: BitmapRegionBounds, sampleSize: BitmapSampleSize): ImageBitmap {
     val options = BitmapFactory.Options().apply {
       inSampleSize = sampleSize.size
       inPreferredConfig = Bitmap.Config.RGB_565
     }
     val timed = measureTimedValue {
       withContext(Dispatchers.IO) {
-        decoder.decodeRegion(region.bounds.toAndroidRect(), options)
+        decoder.decodeRegion(region.bounds.toAndroidRect(), options).asImageBitmap()
       }
     }
     //println("Decoded bitmap in ${timed.duration} for $region")

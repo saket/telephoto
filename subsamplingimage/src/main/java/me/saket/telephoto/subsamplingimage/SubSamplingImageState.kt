@@ -32,6 +32,7 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.BitmapTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
@@ -47,7 +48,7 @@ fun rememberSubSamplingImageState(
   val context = LocalContext.current
   val stateListener by rememberUpdatedState(stateListener)
 
-  val decoder by produceState<SkiaImageRegionDecoder?>(initialValue = null, key1 = imageSource) {
+  val decoder by produceState<ImageRegionDecoder?>(initialValue = null, key1 = imageSource) {
     try {
       value = SkiaImageRegionDecoder.create(context, imageSource).also {
         stateListener.onImageLoaded(it.imageSize)
@@ -95,7 +96,7 @@ fun rememberSubSamplingImageState(
         combine(
           transformations,
           inflatedViewportBounds,
-          bitmapLoader.bitmaps
+          bitmapLoader.bitmaps()
         ) { transformation, viewportBounds, bitmaps ->
           val zoom = transformation.scale * minOf(
             canvasSize.width / decoder.imageSize.width,
@@ -125,10 +126,10 @@ fun rememberSubSamplingImageState(
           }
         }
       }
-        .flowOn(Dispatchers.IO)
         .distinctUntilChanged()
+        .flowOn(Dispatchers.IO)
         .collect { tiles ->
-          bitmapLoader.loadOrUnloadTiles(tiles)
+          bitmapLoader.loadOrUnloadForTiles(tiles)
           state.visibleTiles = tiles
         }
     }

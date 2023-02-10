@@ -1,64 +1,71 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import android.graphics.Bitmap
-import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import me.saket.telephoto.subsamplingimage.internal.BitmapLoader.LoadingState.InFlight
+import me.saket.telephoto.subsamplingimage.internal.BitmapLoader.LoadingState.Loaded
 
 internal class BitmapLoader(
-  private val decoder: SkiaImageRegionDecoder,
+  private val decoder: ImageRegionDecoder,
   private val scope: CoroutineScope,
 ) {
-  val bitmaps = MutableStateFlow(emptyMap<BitmapRegionBounds, Bitmap>())
-  private val ongoingDecodes = MutableStateFlow(emptyMap<BitmapRegionBounds, Job>())
+  private val bitmaps = MutableStateFlow(emptyMap<BitmapRegionBounds, LoadingState>())
 
-  fun loadOrUnloadTiles(tiles: List<BitmapTile>) {
-    tiles.fastForEach { tile ->
-      if (tile.isVisible) {
-        if (tile.regionBounds !in bitmaps.value && tile.regionBounds !in ongoingDecodes.value) {
-          val decodeJob = scope.launch {
-//            println("Loading bitmap for tile [${tile.regionBounds}]")
-            val bitmap = decoder.decodeRegion(tile.regionBounds, tile.sampleSize)
-            bitmaps.update { existing -> existing + (tile.regionBounds to bitmap) }
-            ongoingDecodes.update { existing -> existing - tile.regionBounds }
+  private sealed interface LoadingState {
+    data class Loaded(val bitmap: ImageBitmap) : LoadingState
+    data class InFlight(val job: Job) : LoadingState
+  }
+
+  fun bitmaps(): Flow<Map<BitmapRegionBounds, ImageBitmap>> {
+    return bitmaps.map { map ->
+      buildMap(capacity = map.size) {
+        map.forEach { (region, state) ->
+          when (state) {
+            is Loaded -> put(region, state.bitmap)
+            is InFlight -> Unit
           }
-          ongoingDecodes.update { existing -> existing + (tile.regionBounds to decodeJob) }
-        }
-
-      } else {
-        if (tile.regionBounds in bitmaps.value) {
-//          println("Removing bitmap for tile [${tile.regionBounds}]")
-          bitmaps.update { existing ->
-            existing - tile.regionBounds
-          }
-        }
-
-        val ongoingDecode = ongoingDecodes.value[tile.regionBounds]
-        if (ongoingDecode != null) {
-//          println("Canceling bitmap load for tile [${tile.regionBounds}]")
-          ongoingDecode.cancel()
-          ongoingDecodes.update { it - tile.regionBounds }
         }
       }
     }
-
-    bitmaps.update { existing ->
-      existing - (
-        existing.keys - tiles.map { it.regionBounds }.toSet()
-      )
-    }
   }
-}
 
-@JvmInline
-internal value class BitmapRegionBounds(
-  val bounds: Rect,
-) {
-  override fun toString(): String {
-    return "Rect(${bounds.topLeft}, ${bounds.size})"
+  fun loadOrUnloadForTiles(tiles: List<BitmapTile>) {
+    tiles.fastForEach { tile ->
+      val existing = bitmaps.value[tile.regionBounds]
+
+      if (tile.isVisible && existing == null) {
+        // Tile just became visible.
+        val job = scope.launch {
+          val bitmap = decoder.decodeRegion(tile.regionBounds, tile.sampleSize)
+          bitmaps.update { it + (tile.regionBounds to Loaded(bitmap)) }
+        }
+        bitmaps.update { it + (tile.regionBounds to InFlight(job)) }
+      }
+
+      if (!tile.isVisible && existing != null) {
+        // Tile was visible before, but has now gone out of viewport bounds.
+        if (existing is InFlight) {
+          existing.job.cancel()
+        }
+        bitmaps.update { it - tile.regionBounds }
+      }
+    }
+
+    // Remove stale bitmaps whose tiles are no longer visible.
+    val currentTileBounds = tiles.map { it.regionBounds }
+    val itemsToRemove = bitmaps.value.filterKeys { it !in currentTileBounds }
+    itemsToRemove.forEach { (_, state) ->
+      if (state is InFlight) {
+        state.job.cancel()
+      }
+    }
+    bitmaps.update { it - itemsToRemove.keys }
   }
 }

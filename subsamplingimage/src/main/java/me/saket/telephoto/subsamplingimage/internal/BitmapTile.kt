@@ -1,15 +1,15 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ImageBitmap
 
 internal typealias BitmapTileGrid = Map<BitmapSampleSize, List<BitmapTile>>
 
 @Immutable
-internal data class BitmapTile(
-  val bitmap: Bitmap? = null, // todo: this does not override equals() :S
+internal data class BitmapTile( // todo: rename to BitmapRegionTIle
+  val bitmap: ImageBitmap? = null,
   val sampleSize: BitmapSampleSize,
 
   val regionBounds: BitmapRegionBounds,
@@ -20,6 +20,11 @@ internal data class BitmapTile(
   // TODO: when testing is complete and a video has been recorded of
   //  out-of-bound tiles, remove this in favor of filtering out invisible tiles.
   val isVisible: Boolean = true
+)
+
+@JvmInline
+internal value class BitmapRegionBounds(
+  val bounds: Rect,
 )
 
 /** See [BitmapFactory.Options.inSampleSize]. */
