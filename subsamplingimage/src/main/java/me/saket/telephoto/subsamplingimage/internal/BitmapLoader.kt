@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -27,13 +28,12 @@ internal class BitmapLoader(
     return bitmaps.map { map ->
       buildMap(capacity = map.size) {
         map.forEach { (region, state) ->
-          when (state) {
-            is Loaded -> put(region, state.bitmap)
-            is InFlight -> Unit
+          if (state is Loaded) {
+            put(region, state.bitmap)
           }
         }
       }
-    }
+    }.distinctUntilChanged()
   }
 
   fun loadOrUnloadForTiles(tiles: List<BitmapTile>) {
