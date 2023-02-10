@@ -18,7 +18,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import kotlinx.coroutines.Dispatchers
@@ -98,25 +97,23 @@ fun rememberSubSamplingImageState(
           inflatedViewportBounds,
           bitmapLoader.bitmaps
         ) { transformation, viewportBounds, bitmaps ->
-          val sampleSize = BitmapSampleSize.calculateFor(
-            canvasSize = canvasSize * transformation.scale,  // todo: this calculation doesn't look right.
-            scaledImageSize = decoder.imageSize
+          val zoom = transformation.scale * minOf(
+            canvasSize.width / decoder.imageSize.width,
+            canvasSize.height / decoder.imageSize.height
           )
+
+          val sampleSize = BitmapSampleSize.calculateFor(zoom)
           val tiles = checkNotNull(tileGrid[sampleSize]) {
             "No tiles found for $sampleSize among ${tileGrid.keys}"
           }
 
-          val scale = ScaleFactor(
-            scaleX = transformation.scale * (state.canvasSize.width / decoder.imageSize.width),
-            scaleY = transformation.scale * (state.canvasSize.height / decoder.imageSize.height)
-          )
           tiles.fastMap { tile ->
             val drawBounds = tile.regionBounds.bounds.let {
               it.copy(
-                left = (it.left * scale) + transformation.offset.x,
-                right = (it.right * scale) + transformation.offset.x,
-                top = (it.top * scale) + transformation.offset.y,
-                bottom = (it.bottom * scale) + transformation.offset.y,
+                left = (it.left * zoom) + transformation.offset.x,
+                right = (it.right * zoom) + transformation.offset.x,
+                top = (it.top * zoom) + transformation.offset.y,
+                bottom = (it.bottom * zoom) + transformation.offset.y,
               )
             }
             val isVisible = drawBounds.overlaps(viewportBounds)

@@ -59,7 +59,11 @@ class ZoomableState internal constructor() {
   internal var maxZoomFactor: Float = 1f
   internal var rotationEnabled: Boolean = false
 
-  /** Raw size of the image/video/anything without any scaling applied. */
+  /**
+   * Raw size of the image/video/anything without any scaling applied.
+   * Used only for determining whether the content can zoom any further.
+   */
+  // TODO: verify doc.
   private var unscaledContentSize by mutableStateOf(IntSize.Zero)
 
   /**

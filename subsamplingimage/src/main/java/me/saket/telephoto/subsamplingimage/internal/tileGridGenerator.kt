@@ -76,7 +76,11 @@ internal fun BitmapSampleSize.Companion.calculateFor(
     canvasSize.width / scaledImageSize.width,
     canvasSize.height / scaledImageSize.height
   )
+  return calculateFor(zoom)
+}
 
+/** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
+internal fun BitmapSampleSize.Companion.calculateFor(zoom: Float): BitmapSampleSize {
   var sampleSize = 1
   while (sampleSize * 2 < (1 / zoom)) {
     // BitmapRegionDecoder requires values based on powers of 2.
