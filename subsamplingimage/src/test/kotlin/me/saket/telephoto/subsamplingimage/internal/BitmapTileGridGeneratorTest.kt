@@ -2,6 +2,7 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Ignore
@@ -14,6 +15,16 @@ import kotlin.time.measureTime
 
 @OptIn(ExperimentalTime::class)
 class BitmapTileGridGeneratorTest {
+
+  @Test fun `empty canvas size`() {
+    assertThrows {
+      generateBitmapTileGrid(
+        canvasSize = Size(1080f, 0f),
+        unscaledImageSize = Size(10f, 10f)
+      )
+    }
+  }
+
   @Test fun `correctly generate tile grid`() {
     val imageSize = Size(
       width = 9734f,

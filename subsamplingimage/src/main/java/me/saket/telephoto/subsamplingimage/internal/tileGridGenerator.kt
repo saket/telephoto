@@ -56,22 +56,13 @@ internal fun generateBitmapTileGrid(
   }
 }
 
-private fun Size.coerceAtLeast(other: Size): Size {
-  return Size(
-    width = width.coerceAtLeast(other.width),
-    height = height.coerceAtLeast(other.height)
-  )
-}
-
-private fun Size.discardFractionalParts(): IntSize {
-  return IntSize(width = width.toInt(), height = height.toInt())
-}
-
 /** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
 internal fun BitmapSampleSize.Companion.calculateFor(
   canvasSize: Size,
   scaledImageSize: Size
 ): BitmapSampleSize {
+  check(canvasSize.minDimension > 0f) { "Can't calculate a sample size for $canvasSize" }
+
   val zoom = min(
     canvasSize.width / scaledImageSize.width,
     canvasSize.height / scaledImageSize.height
@@ -81,6 +72,8 @@ internal fun BitmapSampleSize.Companion.calculateFor(
 
 /** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
 internal fun BitmapSampleSize.Companion.calculateFor(zoom: Float): BitmapSampleSize {
+  check(zoom > 0f) { "Can't calculate a sample size for an image that'll never be shown." }
+
   var sampleSize = 1
   while (sampleSize * 2 < (1 / zoom)) {
     // BitmapRegionDecoder requires values based on powers of 2.

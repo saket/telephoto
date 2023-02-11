@@ -9,7 +9,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -121,8 +120,7 @@ class SampleActivity : AppCompatActivity() {
       SubSamplingImage(
         modifier = Modifier
           .fillMaxWidth()
-          //.wrapContentHeight()
-          .height(300.dp)
+          .wrapContentHeight()
           .border(2.dp, Color.Yellow),
         state = rememberSubSamplingImageState(
           zoomableState = state,

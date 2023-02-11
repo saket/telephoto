@@ -69,21 +69,22 @@ fun rememberSubSamplingImageState(
   }
 
   decoder?.let { decoder ->
+    state.imageSize = decoder.imageSize
+
     val scope = rememberCoroutineScope()
     LaunchedEffect(state, zoomableState, decoder) {
       val bitmapLoader = BitmapLoader(decoder, scope)
       val transformations = snapshotFlow { zoomableState.contentTransformations }
-      val canvasSizeChanges = snapshotFlow { state.canvasSize }.filter { it.isSpecified }
+      val canvasSizeChanges = snapshotFlow { state.canvasSize }
+        .filter { it.isSpecified }
+        .filter { it.minDimension > 0f }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
-        val baseSampleSize = BitmapSampleSize.calculateFor(
-          canvasSize = canvasSize,
-          scaledImageSize = decoder.imageSize
-        )
         val tileGrid: BitmapTileGrid = generateBitmapTileGrid(
           canvasSize = canvasSize,
           unscaledImageSize = decoder.imageSize
         )
+
         val inflatedViewportBounds = transformations
           .map { it.viewportSize }
           .distinctUntilChanged()
@@ -142,6 +143,7 @@ fun rememberSubSamplingImageState(
 class SubSamplingImageState internal constructor() {
   internal var visibleTiles by mutableStateOf(emptyList<BitmapTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
+  internal var imageSize by mutableStateOf(Size.Unspecified)
 }
 
 internal fun Rect.inflateByPercent(percent: Float): Rect {

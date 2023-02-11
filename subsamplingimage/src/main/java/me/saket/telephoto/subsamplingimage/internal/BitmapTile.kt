@@ -17,8 +17,7 @@ internal data class BitmapTile( // todo: rename to BitmapRegionTIle
   /** [regionBounds] x (scale + pan + rotation). */
   val drawBounds: Rect = Rect.Zero,
 
-  // TODO: when testing is complete and a video has been recorded of
-  //  out-of-bound tiles, remove this in favor of filtering out invisible tiles.
+  // TODO: consider remove this in favor of filtering out invisible tiles.
   val isVisible: Boolean = true
 )
 
