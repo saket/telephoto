@@ -4,7 +4,6 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -30,7 +29,7 @@ fun ZoomableViewport(
   state: ZoomableState,
   modifier: Modifier = Modifier,
   clipToBounds: Boolean = true,
-  content: @Composable BoxScope.() -> Unit
+  content: @Composable () -> Unit
 ) {
   val zoomableModifier = if (state.isReadyToInteract) {
     val scope = rememberCoroutineScope()
@@ -57,7 +56,7 @@ fun ZoomableViewport(
   ) {
     Box(
       modifier = Modifier.onGloballyPositioned { state.contentBounds = it.boundsInParent() },
-      content = content
+      content = { content() }
     )
   }
 }

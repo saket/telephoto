@@ -4,31 +4,22 @@ import android.os.Bundle
 import android.view.ViewGroup
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -109,19 +100,12 @@ class SampleActivity : AppCompatActivity() {
     )
 
     ZoomableViewport(
-      modifier = Modifier
-        .fillMaxSize()
-        .padding(vertical = 40.dp, horizontal = 120.dp)
-        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))
-        .borderOverContent(2.dp, Color.White, cornerRadius = 8.dp),
+      modifier = Modifier.fillMaxSize(),
       state = state,
       clipToBounds = false
     ) {
       SubSamplingImage(
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-          .border(2.dp, Color.Yellow),
+        modifier = Modifier.fillMaxSize(),
         state = rememberSubSamplingImageState(
           zoomableState = state,
           imageSource = ImageSource.asset("pahade.jpeg")
@@ -131,16 +115,3 @@ class SampleActivity : AppCompatActivity() {
   }
 }
 
-private fun Modifier.borderOverContent(width: Dp, color: Color, cornerRadius: Dp): Modifier {
-  return drawWithContent {
-    val cornerRadiusPx = cornerRadius.toPx()
-    val borderPx = width.toPx()
-
-    drawContent()
-    drawRoundRect(
-      color = color,
-      cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
-      style = Stroke(borderPx)
-    )
-  }
-}
