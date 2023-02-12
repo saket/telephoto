@@ -41,18 +41,18 @@ import java.io.IOException
 
 @Composable
 fun rememberSubSamplingImageState(
-  zoomableState: ZoomableState,
+  viewportState: ZoomableState,
   imageSource: ImageSource,
-  stateListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
+  eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
 ): SubSamplingImageState {
   val context = LocalContext.current
-  val stateListener by rememberUpdatedState(stateListener)
+  val stateListener by rememberUpdatedState(eventListener)
 
   val decoder by produceState<ImageRegionDecoder?>(initialValue = null, key1 = imageSource) {
     try {
       value = SkiaImageRegionDecoders.create(context, imageSource).also {
         stateListener.onImageLoaded(it.imageSize)
-        zoomableState.setUnscaledContentSize(it.imageSize)
+        viewportState.setUnscaledContentSize(it.imageSize)
       }
     } catch (e: IOException) {
       stateListener.onImageLoadingFailed(e)
@@ -72,9 +72,9 @@ fun rememberSubSamplingImageState(
     state.imageSize = decoder.imageSize
 
     val scope = rememberCoroutineScope()
-    LaunchedEffect(state, zoomableState, decoder) {
+    LaunchedEffect(state, viewportState, decoder) {
       val bitmapLoader = BitmapLoader(decoder, scope)
-      val transformations = snapshotFlow { zoomableState.contentTransformations }
+      val transformations = snapshotFlow { viewportState.contentTransformations }
       val canvasSizeChanges = snapshotFlow { state.canvasSize }
         .filter { it.isSpecified }
         .filter { it.minDimension > 0f }

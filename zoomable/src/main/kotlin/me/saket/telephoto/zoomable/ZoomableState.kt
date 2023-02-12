@@ -25,7 +25,7 @@ import kotlin.math.sin
 
 /** todo: doc */
 @Composable
-fun rememberZoomableState(
+fun rememberZoomableState(  // todo: rename to rememberZoomableViewportState()
   maxZoomFactor: Float = 1f,
   rotationEnabled: Boolean = false,
 ): ZoomableState {

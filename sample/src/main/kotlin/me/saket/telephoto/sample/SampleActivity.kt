@@ -107,7 +107,7 @@ class SampleActivity : AppCompatActivity() {
       SubSamplingImage(
         modifier = Modifier.fillMaxSize(),
         state = rememberSubSamplingImageState(
-          zoomableState = state,
+          viewportState = state,
           imageSource = ImageSource.asset("pahade.jpeg")
         )
       )
