@@ -1,7 +1,10 @@
 package me.saket.telephoto.subsamplingimage
 
+import androidx.compose.runtime.Stable
+
 sealed interface ImageSource {
   companion object {
+    @Stable
     fun asset(name: String): ImageSource = AssetImageSource(name)
   }
 }
