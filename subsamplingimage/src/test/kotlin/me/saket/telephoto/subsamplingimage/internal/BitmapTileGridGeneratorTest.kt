@@ -2,7 +2,6 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Ignore
@@ -25,7 +24,26 @@ class BitmapTileGridGeneratorTest {
     }
   }
 
-  @Test fun `correctly generate tile grid`() {
+  @Test fun `image smaller than viewport`() {
+    val tileGrid = generateBitmapTileGrid(
+      canvasSize = Size(
+        width = 1080f,
+        height = 2214f
+      ),
+      unscaledImageSize = Size(
+        width = 500f,
+        height = 400f
+      )
+    )
+
+    assertThat(tileGrid.entries).hasSize(1)
+    tileGrid.entries.single().let { (sampleSize, tiles) ->
+      assertThat(sampleSize).isEqualTo(BitmapSampleSize(1))
+      assertThat(tiles).hasSize(1)
+    }
+  }
+
+  @Test fun `image larger than viewport`() {
     val imageSize = Size(
       width = 9734f,
       height = 3265f

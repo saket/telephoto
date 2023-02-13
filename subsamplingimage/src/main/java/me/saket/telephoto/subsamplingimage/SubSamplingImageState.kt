@@ -46,23 +46,35 @@ fun rememberSubSamplingImageState(
   eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
 ): SubSamplingImageState {
   val context = LocalContext.current
-  val stateListener by rememberUpdatedState(eventListener)
+  val eventListener by rememberUpdatedState(eventListener)
+
+  val viewportEventListener = remember(eventListener) {
+    object : SubSamplingImageEventListener by eventListener {
+      override fun onImageLoaded(imageSize: Size) {
+        eventListener.onImageLoaded(imageSize)
+        viewportState.setUnscaledContentSize(imageSize)
+      }
+
+      override fun onImageDisplayed() {
+        eventListener.onImageDisplayed()
+      }
+    }
+  }
 
   val decoder by produceState<ImageRegionDecoder?>(initialValue = null, key1 = imageSource) {
     try {
       value = SkiaImageRegionDecoders.create(context, imageSource).also {
-        stateListener.onImageLoaded(it.imageSize)
-        viewportState.setUnscaledContentSize(it.imageSize)
+        viewportEventListener.onImageLoaded(it.imageSize)
       }
     } catch (e: IOException) {
-      stateListener.onImageLoadingFailed(e)
+      viewportEventListener.onImageLoadingFailed(e)
     }
   }
 
   val state = remember {
     SubSamplingImageState(imageSource)
   }.also {
-    it.eventListener = eventListener
+    it.eventListener = viewportEventListener
     it.imageSource = imageSource
   }
 

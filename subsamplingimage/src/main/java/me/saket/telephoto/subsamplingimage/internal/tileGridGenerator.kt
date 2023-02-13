@@ -23,7 +23,7 @@ internal fun generateBitmapTileGrid(
   return possibleSampleSizes.associateWith { sampleSize ->
     val tileSize: IntSize = (unscaledImageSize * (sampleSize.size / baseSampleSize.size.toFloat()))
       // TODO: consider smaller tiles with parallel loading of bitmaps with pooled decoders.
-      .coerceAtLeast(canvasSize / 2f)
+      .coerceAtLeast((canvasSize / 2f).coerceAtMost(unscaledImageSize))
       .discardFractionalParts()
 
     // Number of tiles can be fractional. To avoid this, the fractional

@@ -47,7 +47,35 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("pahade.jpeg", contentDescription = null),
+          imageSource = ImageSource.asset("pahade.jpg", contentDescription = null),
+          eventListener = onImageDisplayed { onImageDisplayed.unlock() }
+        )
+        ZoomableViewport(
+          modifier = Modifier.fillMaxSize(),
+          state = viewportState
+        ) {
+          SubSamplingImage(
+            modifier = Modifier.fillMaxSize(),
+            state = imageState,
+          )
+        }
+      }
+    }
+
+    onImageDisplayed.withLock {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+  }
+
+  @Test fun image_smaller_than_viewport() = runBlocking {
+    val onImageDisplayed = Mutex(locked = true)
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        val viewportState = rememberZoomableState()
+        val imageState = rememberSubSamplingImageState(
+          viewportState = viewportState,
+          imageSource = ImageSource.asset("smol.jpg", contentDescription = null),
           eventListener = onImageDisplayed { onImageDisplayed.unlock() }
         )
         ZoomableViewport(
@@ -76,10 +104,6 @@ class SubSamplingImageTest {
   }
 
   @Test fun image_that_fills_both_width_and_height() {
-    // todo.
-  }
-
-  @Test fun image_smaller_than_viewport() {
     // todo.
   }
 

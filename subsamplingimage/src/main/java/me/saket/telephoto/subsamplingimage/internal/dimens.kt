@@ -13,6 +13,13 @@ internal fun Size.coerceAtLeast(other: Size): Size {
   )
 }
 
+internal fun Size.coerceAtMost(other: Size): Size {
+  return Size(
+    width = width.coerceAtMost(other.width),
+    height = height.coerceAtMost(other.height)
+  )
+}
+
 // todo: these two functions can be removed by storing an IntRect in BitmapTile.
 internal fun Size.discardFractionalParts(): IntSize {
   return IntSize(width = width.toInt(), height = height.toInt())

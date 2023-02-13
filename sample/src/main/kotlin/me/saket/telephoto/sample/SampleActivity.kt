@@ -43,7 +43,7 @@ class SampleActivity : AppCompatActivity() {
         SubsamplingScaleImageView(this).also {
           it.layoutParams =
             ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-          it.setImage(ImageSource.asset("pahade.jpeg", contentDescription = null))
+          it.setImage(ImageSource.asset("smol.jpg", contentDescription = null))
           it.setBackgroundColor(Color.DarkGray.toArgb())
         }
       )
@@ -108,10 +108,9 @@ class SampleActivity : AppCompatActivity() {
         modifier = Modifier.fillMaxSize(),
         state = rememberSubSamplingImageState(
           viewportState = state,
-          imageSource = ImageSource.asset("pahade.jpeg", contentDescription = null),
+          imageSource = ImageSource.asset("smol.jpg", contentDescription = null),
         )
       )
     }
   }
 }
-
