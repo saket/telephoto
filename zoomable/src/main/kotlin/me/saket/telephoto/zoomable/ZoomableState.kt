@@ -71,7 +71,7 @@ class ZoomableState internal constructor() {
    * This size should be independent of any scaling applied to the content.
    */
   // todo: should this be an IntRect?
-  internal var contentBounds by mutableStateOf(Rect.Zero)
+  internal var contentLayoutBounds by mutableStateOf(Rect.Zero)
 
   // todo: should this be an IntRect?
   internal var viewportBounds by mutableStateOf(Rect.Zero)
@@ -79,7 +79,7 @@ class ZoomableState internal constructor() {
   /** todo: doc. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
     unscaledContentSize != IntSize.Zero
-      && contentBounds != Rect.Zero
+      && contentLayoutBounds != Rect.Zero
       && viewportBounds != Rect.Zero
   }
 
@@ -94,7 +94,7 @@ class ZoomableState internal constructor() {
 
     val isZoomingIn = zoomDelta > 1f
     val isFullyZoomedIn =
-      (gestureTransformations.zoom * contentBounds.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
+      (gestureTransformations.zoom * contentLayoutBounds.width).roundToInt() >= (unscaledContentSize.width * maxZoomFactor)
 
     // Apply elasticity to zoom once content can't zoom any further.
     val zoomDelta = when {
@@ -140,7 +140,7 @@ class ZoomableState internal constructor() {
     gestureTransformations = gestureTransformations.let { old ->
       old.copy(
         offset = newOffset.withZoom(-newZoom) {
-          val newContentBounds = Rect(offset = it, contentBounds.size * newZoom)
+          val newContentBounds = Rect(offset = it, contentLayoutBounds.size * newZoom)
           newContentBounds.topLeftCoercedInside(viewportBounds)
         },
         zoom = newZoom,
@@ -179,7 +179,7 @@ class ZoomableState internal constructor() {
 
   internal suspend fun animateResetOfTransformations() {
     val minLayoutZoom = 1f
-    val maxLayoutZoom = (maxZoomFactor * unscaledContentSize.width) / contentBounds.width
+    val maxLayoutZoom = (maxZoomFactor * unscaledContentSize.width) / contentLayoutBounds.width
 
     val current = gestureTransformations
     val target = GestureTransformations.Empty.copy(

@@ -55,7 +55,7 @@ fun ZoomableViewport(
       .then(zoomableModifier)
   ) {
     Box(
-      modifier = Modifier.onGloballyPositioned { state.contentBounds = it.boundsInParent() },
+      modifier = Modifier.onGloballyPositioned { state.contentLayoutBounds = it.boundsInParent() },
       content = { content() }
     )
   }
