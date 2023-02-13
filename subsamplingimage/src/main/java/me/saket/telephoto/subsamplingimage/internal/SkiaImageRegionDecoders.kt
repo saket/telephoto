@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.AssetImageSource
 import me.saket.telephoto.subsamplingimage.ImageSource
 import java.io.InputStream
+import kotlin.math.max
 
 /**
  * Pools multiple [BitmapRegionDecoder]s to concurrently load multiple bitmap regions at the same time.
@@ -50,7 +51,7 @@ internal class SkiaImageRegionDecoders private constructor(
   companion object {
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun create(context: Context, imageSource: ImageSource): SkiaImageRegionDecoders {
-      val decoderCount = Runtime.getRuntime().availableProcessors()  // Same number used by Dispatchers.Default.
+      val decoderCount = max(Runtime.getRuntime().availableProcessors(), 2) // Same number used by Dispatchers.Default.
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
       val decoders = withContext(dispatcher) {
