@@ -42,7 +42,7 @@ fun SubSamplingImage(
         )
       }
 
-      if (debugTiles) {
+      if (SubSamplingImageState.showTileBounds) {
         drawRect(
           color = Color.White,
           topLeft = tile.drawBounds.topLeft,
@@ -93,4 +93,3 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size): Modifier {
 private val Constraints.hasFixedSize
   get() = hasFixedWidth && hasFixedHeight
 
-private const val debugTiles = true

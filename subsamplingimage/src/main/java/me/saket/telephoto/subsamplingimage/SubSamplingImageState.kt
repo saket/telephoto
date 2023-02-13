@@ -144,6 +144,11 @@ class SubSamplingImageState internal constructor() {
   internal var visibleTiles by mutableStateOf(emptyList<BitmapTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
   internal var imageSize by mutableStateOf(Size.Unspecified)
+
+  companion object {
+    // Only used in tests.
+    internal var showTileBounds = true
+  }
 }
 
 internal fun Rect.inflateByPercent(percent: Float): Rect {

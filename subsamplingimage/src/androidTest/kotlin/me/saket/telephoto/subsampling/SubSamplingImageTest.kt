@@ -12,6 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dropbox.dropshots.Dropshots
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -26,26 +27,28 @@ class SubSamplingImageTest {
   @get:Rule val dropshots = Dropshots()
 
   @Before
-  fun hide_default_toolbar() {
+  fun setup() {
     composeTestRule.activityRule.scenario.onActivity {
       it.title = "Telephoto"
     }
+    SubSamplingImageState.showTileBounds = true
   }
 
   @Test fun canary() {
     composeTestRule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableState()
+        val imageState = rememberSubSamplingImageState(
+          viewportState = viewportState,
+          imageSource = ImageSource.asset("pahade.jpeg"),
+        )
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
           state = viewportState
         ) {
           SubSamplingImage(
             modifier = Modifier.fillMaxSize(),
-            state = rememberSubSamplingImageState(
-              viewportState = viewportState,
-              imageSource = ImageSource.asset("pahade.jpeg"),
-            )
+            state = imageState
           )
         }
       }
