@@ -47,14 +47,8 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("pahade.jpeg"),
-          eventListener = remember {
-            object : SubSamplingImageEventListener {
-              override fun onImageDisplayed() {
-                onImageDisplayed.unlock()
-              }
-            }
-          }
+          imageSource = ImageSource.asset("pahade.jpeg", contentDescription = null),
+          eventListener = onImageDisplayed { onImageDisplayed.unlock() }
         )
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
@@ -73,6 +67,31 @@ class SubSamplingImageTest {
     }
   }
 
+  @Test fun image_that_fills_height() {
+    // todo.
+  }
+
+  @Test fun image_that_fills_width() {
+    // todo.
+  }
+
+  @Test fun image_that_fills_both_width_and_height() {
+    // todo.
+  }
+
+  @Test fun image_smaller_than_viewport() {
+    // todo.
+  }
+
+  @Test fun updating_of_image_works() {
+    // todo:
+    //  - content description should get updated.
+  }
+
+  @Test fun updating_of_image_works_when_zoomable_transformations_were_non_empty() {
+    // todo.
+  }
+
   @Composable
   private fun ScreenScaffold(content: @Composable () -> Unit) {
     Box(
@@ -81,6 +100,17 @@ class SubSamplingImageTest {
         .background(Color.DarkGray)
     ) {
       content()
+    }
+  }
+
+  @Composable
+  private fun onImageDisplayed(action: () -> Unit): SubSamplingImageEventListener {
+    return remember {
+      object : SubSamplingImageEventListener {
+        override fun onImageDisplayed() {
+          action()
+        }
+      }
     }
   }
 }
