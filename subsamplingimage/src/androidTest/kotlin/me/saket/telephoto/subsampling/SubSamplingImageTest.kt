@@ -4,13 +4,15 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dropbox.dropshots.Dropshots
+import com.google.testing.junit.testparameterinjector.TestParameter
+import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,12 +26,14 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
+@RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val dropshots = Dropshots()
+  @get:Rule val testName = TestName()
 
   @Before
   fun setup() {
@@ -68,7 +72,7 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun image_smaller_than_viewport() = runBlocking {
+  @Test fun image_smaller_than_viewport(@TestParameter wrapContent: Boolean) = runBlocking {
     val onImageDisplayed = Mutex(locked = true)
 
     composeTestRule.setContent {
@@ -84,7 +88,7 @@ class SubSamplingImageTest {
           state = viewportState
         ) {
           SubSamplingImage(
-            modifier = Modifier.fillMaxSize(),
+            modifier = if (wrapContent) Modifier.wrapContentSize() else Modifier.fillMaxSize(),
             state = imageState,
             contentDescription = null,
           )
@@ -93,7 +97,7 @@ class SubSamplingImageTest {
     }
 
     onImageDisplayed.withLock {
-      dropshots.assertSnapshot(composeTestRule.activity)
+      dropshots.assertSnapshot(composeTestRule.activity, name = testName.methodName + "_(wrap_content=$wrapContent)")
     }
   }
 

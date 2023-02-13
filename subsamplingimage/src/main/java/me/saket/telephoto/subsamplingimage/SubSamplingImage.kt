@@ -92,7 +92,7 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size): Modifier {
       val scaleToFitImage = minOf(
         constraints.maxWidth / imageSize.width,
         constraints.maxHeight / imageSize.height
-      )
+      ).coerceAtMost(1f)
       constraints.constrain(
         Constraints(
           minWidth = (scaleToFitImage * imageSize.width).toCeilInt(),
@@ -112,4 +112,3 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size): Modifier {
 @Stable
 private val Constraints.hasFixedSize
   get() = hasFixedWidth && hasFixedHeight
-
