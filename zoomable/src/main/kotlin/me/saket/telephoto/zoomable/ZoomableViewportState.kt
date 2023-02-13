@@ -25,18 +25,18 @@ import kotlin.math.sin
 
 /** todo: doc */
 @Composable
-fun rememberZoomableState(  // todo: rename to rememberZoomableViewportState()
+fun rememberZoomableViewportState(
   maxZoomFactor: Float = 1f,
   rotationEnabled: Boolean = false,
-): ZoomableState {
-  return remember { ZoomableState() }.apply {
+): ZoomableViewportState {
+  return remember { ZoomableViewportState() }.apply {
     this.rotationEnabled = rotationEnabled
     this.maxZoomFactor = maxZoomFactor
   }
 }
 
 @Stable
-class ZoomableState internal constructor() {
+class ZoomableViewportState internal constructor() {
   /**
    * Transformations that should be applied by the viewport to its content.
    *

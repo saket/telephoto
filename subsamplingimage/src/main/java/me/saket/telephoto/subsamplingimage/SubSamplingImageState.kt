@@ -36,12 +36,12 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
-import me.saket.telephoto.zoomable.ZoomableState
+import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
 
 @Composable
 fun rememberSubSamplingImageState(
-  viewportState: ZoomableState,
+  viewportState: ZoomableViewportState,
   imageSource: ImageSource,
   eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
 ): SubSamplingImageState {

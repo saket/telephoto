@@ -22,7 +22,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageEventListener
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.ZoomableViewport
-import me.saket.telephoto.zoomable.rememberZoomableState
+import me.saket.telephoto.zoomable.rememberZoomableViewportState
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -48,7 +48,7 @@ class SubSamplingImageTest {
 
     composeTestRule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableState()
+        val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpg"),
@@ -77,7 +77,7 @@ class SubSamplingImageTest {
 
     composeTestRule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableState()
+        val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("smol.jpg"),

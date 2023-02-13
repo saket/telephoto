@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun ZoomableViewport(
-  state: ZoomableState,
+  state: ZoomableViewportState,
   modifier: Modifier = Modifier,
   clipToBounds: Boolean = true,
   content: @Composable () -> Unit

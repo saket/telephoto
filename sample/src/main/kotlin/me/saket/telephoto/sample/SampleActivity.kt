@@ -29,7 +29,7 @@ import me.saket.telephoto.subsamplingimage.SubsamplingScaleImageView
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.graphicsLayer
-import me.saket.telephoto.zoomable.rememberZoomableState
+import me.saket.telephoto.zoomable.rememberZoomableViewportState
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SampleActivity : AppCompatActivity() {
@@ -67,7 +67,7 @@ class SampleActivity : AppCompatActivity() {
 
   @Composable
   private fun ZoomableViewportSample() {
-    val state = rememberZoomableState(
+    val state = rememberZoomableViewportState(
       rotationEnabled = false,
       maxZoomFactor = 1.5f,
     )
@@ -94,7 +94,7 @@ class SampleActivity : AppCompatActivity() {
 
   @Composable
   private fun SubSamplingImageSample() {
-    val state = rememberZoomableState(
+    val state = rememberZoomableViewportState(
       rotationEnabled = false,
       maxZoomFactor = 1.5f,
     )
