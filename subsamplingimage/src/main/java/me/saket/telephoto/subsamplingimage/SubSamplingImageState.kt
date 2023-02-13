@@ -60,9 +60,10 @@ fun rememberSubSamplingImageState(
   }
 
   val state = remember {
-    SubSamplingImageState()
+    SubSamplingImageState(imageSource)
   }.also {
     it.eventListener = eventListener
+    it.imageSource = imageSource
   }
 
   LaunchedEffect(state, decoder) {
@@ -142,10 +143,12 @@ fun rememberSubSamplingImageState(
 }
 
 @Stable
-class SubSamplingImageState internal constructor() {
+class SubSamplingImageState internal constructor(imageSource: ImageSource) {
   internal var tiles by mutableStateOf(emptyList<BitmapTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
   internal var imageSize by mutableStateOf(Size.Unspecified)
+
+  internal var imageSource by mutableStateOf(imageSource)
 
   internal lateinit var eventListener: SubSamplingImageEventListener
   private var firstDrawEventSent = false

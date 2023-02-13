@@ -13,6 +13,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -55,6 +59,7 @@ fun SubSamplingImage(
 
   Spacer(
     modifier
+      .contentDescription(state.imageSource.contentDescription)
       .onSizeChanged { state.canvasSize = it.toSize() }
       .drawBehind(onDraw)
       .drawBehind { state.maybeSendFirstDrawEvent() }
@@ -62,6 +67,19 @@ fun SubSamplingImage(
   )
 }
 
+@Stable
+private fun Modifier.contentDescription(contentDescription: String?): Modifier {
+  if (contentDescription != null) {
+    return semantics {
+      this.contentDescription = contentDescription
+      this.role = Role.Image
+    }
+  } else {
+    return this
+  }
+}
+
+@Stable
 @Suppress("NAME_SHADOWING")
 private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size): Modifier {
   if (imageSize.isUnspecified) {
