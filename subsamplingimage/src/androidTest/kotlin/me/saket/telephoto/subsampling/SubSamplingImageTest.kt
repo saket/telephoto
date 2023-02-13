@@ -47,7 +47,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("pahade.jpg", contentDescription = null),
+          imageSource = ImageSource.asset("pahade.jpg"),
           eventListener = onImageDisplayed { onImageDisplayed.unlock() }
         )
         ZoomableViewport(
@@ -57,6 +57,7 @@ class SubSamplingImageTest {
           SubSamplingImage(
             modifier = Modifier.fillMaxSize(),
             state = imageState,
+            contentDescription = null,
           )
         }
       }
@@ -75,7 +76,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("smol.jpg", contentDescription = null),
+          imageSource = ImageSource.asset("smol.jpg"),
           eventListener = onImageDisplayed { onImageDisplayed.unlock() }
         )
         ZoomableViewport(
@@ -85,6 +86,7 @@ class SubSamplingImageTest {
           SubSamplingImage(
             modifier = Modifier.fillMaxSize(),
             state = imageState,
+            contentDescription = null,
           )
         }
       }

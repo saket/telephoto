@@ -31,6 +31,7 @@ import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 fun SubSamplingImage(
   state: SubSamplingImageState,
   modifier: Modifier = Modifier,
+  contentDescription: String?,
 ) {
   val density = LocalDensity.current
 
@@ -59,7 +60,7 @@ fun SubSamplingImage(
 
   Spacer(
     modifier
-      .contentDescription(state.imageSource.contentDescription)
+      .contentDescription(contentDescription)
       .onSizeChanged { state.canvasSize = it.toSize() }
       .drawBehind(onDraw)
       .drawBehind { state.maybeSendFirstDrawEvent() }
