@@ -5,13 +5,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dropbox.dropshots.Dropshots
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.SubSamplingImageEventListener
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.ZoomableViewport
@@ -34,13 +39,22 @@ class SubSamplingImageTest {
     SubSamplingImageState.showTileBounds = true
   }
 
-  @Test fun canary() {
+  @Test fun canary() = runBlocking {
+    val onImageDisplayed = Mutex(locked = true)
+
     composeTestRule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpeg"),
+          eventListener = remember {
+            object : SubSamplingImageEventListener {
+              override fun onImageDisplayed() {
+                onImageDisplayed.unlock()
+              }
+            }
+          }
         )
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
@@ -48,16 +62,15 @@ class SubSamplingImageTest {
         ) {
           SubSamplingImage(
             modifier = Modifier.fillMaxSize(),
-            state = imageState
+            state = imageState,
           )
         }
       }
     }
 
-    // TODO: find a better way of waiting for the image to be displayed.
-    Thread.sleep(100)
-
-    dropshots.assertSnapshot(composeTestRule.activity)
+    onImageDisplayed.withLock {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Composable

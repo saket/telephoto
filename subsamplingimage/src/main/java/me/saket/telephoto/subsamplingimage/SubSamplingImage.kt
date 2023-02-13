@@ -31,7 +31,7 @@ fun SubSamplingImage(
   val density = LocalDensity.current
 
   val onDraw: DrawScope.() -> Unit = {
-    state.visibleTiles.fastForEach { tile ->
+    state.tiles.fastForEach { tile ->
       if (tile.isVisible && tile.bitmap != null) {
         drawImage(
           image = tile.bitmap,
@@ -57,6 +57,7 @@ fun SubSamplingImage(
     modifier
       .onSizeChanged { state.canvasSize = it.toSize() }
       .drawBehind(onDraw)
+      .drawBehind { state.maybeSendFirstDrawEvent() }
       .wrapContentSizeIfNeeded(state.imageSize)
   )
 }

@@ -61,11 +61,13 @@ fun rememberSubSamplingImageState(
 
   val state = remember {
     SubSamplingImageState()
+  }.also {
+    it.eventListener = eventListener
   }
 
   LaunchedEffect(state, decoder) {
     // Reset tiles for new images.
-    state.visibleTiles = emptyList()
+    state.tiles = emptyList()
   }
 
   decoder?.let { decoder ->
@@ -131,7 +133,7 @@ fun rememberSubSamplingImageState(
         .flowOn(Dispatchers.IO)
         .collect { tiles ->
           bitmapLoader.loadOrUnloadForTiles(tiles)
-          state.visibleTiles = tiles
+          state.tiles = tiles
         }
     }
   }
@@ -141,12 +143,22 @@ fun rememberSubSamplingImageState(
 
 @Stable
 class SubSamplingImageState internal constructor() {
-  internal var visibleTiles by mutableStateOf(emptyList<BitmapTile>())
+  internal var tiles by mutableStateOf(emptyList<BitmapTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
   internal var imageSize by mutableStateOf(Size.Unspecified)
 
+  internal lateinit var eventListener: SubSamplingImageEventListener
+  private var firstDrawEventSent = false
+
+  fun maybeSendFirstDrawEvent() {
+    if (!firstDrawEventSent && tiles.isNotEmpty() && tiles.all { it.isVisible && it.bitmap != null }) {
+      eventListener.onImageDisplayed()
+      firstDrawEventSent = true
+    }
+  }
+
   companion object {
-    // Only used in tests.
+    // Only used by tests.
     internal var showTileBounds = true
   }
 }
