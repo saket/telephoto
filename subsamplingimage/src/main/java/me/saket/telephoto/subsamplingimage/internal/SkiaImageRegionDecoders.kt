@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toAndroidRect
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,7 +35,7 @@ internal class SkiaImageRegionDecoders private constructor(
   override suspend fun decodeRegion(region: BitmapRegionBounds, sampleSize: BitmapSampleSize): ImageBitmap {
     val options = BitmapFactory.Options().apply {
       inSampleSize = sampleSize.size
-      inPreferredConfig = Bitmap.Config.RGB_565
+      inPreferredConfig = Bitmap.Config.ARGB_8888
     }
     val bitmap = decoders.borrow { decoder ->
       withContext(dispatcher) {
