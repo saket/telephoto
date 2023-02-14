@@ -163,7 +163,11 @@ class SubSamplingImageState internal constructor() {
   private var firstDrawEventSent = false
 
   fun maybeSendFirstDrawEvent() {
-    if (!firstDrawEventSent && tiles.isNotEmpty() && tiles.all { it.isVisible && it.bitmap != null }) {
+    if (!firstDrawEventSent
+      && canvasSize.minDimension > 0f // Wait until content size is measured in case of wrap_content.
+      && tiles.isNotEmpty()
+      && tiles.all { it.isVisible && it.bitmap != null }
+    ) {
       eventListener.onImageDisplayed()
       firstDrawEventSent = true
     }

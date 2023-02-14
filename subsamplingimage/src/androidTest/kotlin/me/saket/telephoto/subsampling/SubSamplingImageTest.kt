@@ -1,6 +1,6 @@
 package me.saket.telephoto.subsampling
 
-import android.graphics.drawable.ColorDrawable
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -11,7 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
@@ -43,8 +42,12 @@ class SubSamplingImageTest {
   @Before
   fun setup() {
     composeTestRule.activityRule.scenario.onActivity {
-      it.title = "Telephoto"
-      it.actionBar!!.setBackgroundDrawable(ColorDrawable(Color.Black.toArgb()))
+      it.actionBar?.hide()
+
+      // Hide system bars in an attempt to reduce differences
+      // in from screenshots generated on different devices.
+      it.window.setDecorFitsSystemWindows(false)
+      it.window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
     }
     SubSamplingImageState.showTileBounds = true
   }
@@ -166,7 +169,7 @@ class SubSamplingImageTest {
     Box(
       Modifier
         .fillMaxSize()
-        .background(Color.DarkGray)
+        .background(Color(0xFF1C1A25))
     ) {
       content()
     }
@@ -192,11 +195,13 @@ class SubSamplingImageTest {
     }
   }
 
+  @Suppress("unused")
   enum class SizeParam(val modifier: Modifier) {
     FillMaxSize(Modifier.fillMaxSize()),
     WrapContent(Modifier.wrapContentSize()),
   }
 
+  @Suppress("unused")
   enum class AlignmentParam(val value: Alignment) {
     TopCenter(Alignment.TopCenter),
     Center(Alignment.Center),
