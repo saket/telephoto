@@ -14,6 +14,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -100,15 +101,15 @@ class SampleActivity : AppCompatActivity() {
     )
 
     ZoomableViewport(
-      modifier = Modifier.fillMaxSize(),
       state = state,
-      clipToBounds = false
+      modifier = Modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center
     ) {
       SubSamplingImage(
         modifier = Modifier.fillMaxSize(),
         state = rememberSubSamplingImageState(
           viewportState = state,
-          imageSource = ImageSource.asset("smol.jpg"),
+          imageSource = ImageSource.asset("path.jpg"),
         ),
         contentDescription = null,
       )

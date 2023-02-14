@@ -5,7 +5,9 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -29,9 +31,14 @@ fun ZoomableViewport(
   state: ZoomableViewportState,
   modifier: Modifier = Modifier,
   clipToBounds: Boolean = true,
+  contentAlignment: Alignment = Alignment.Center,
   content: @Composable () -> Unit
 ) {
   val zoomableModifier = if (state.isReadyToInteract) {
+    LaunchedEffect(contentAlignment) {
+      state.setContentAlignment(contentAlignment)
+    }
+
     val scope = rememberCoroutineScope()
     Modifier
       .pointerInput(Unit) {
