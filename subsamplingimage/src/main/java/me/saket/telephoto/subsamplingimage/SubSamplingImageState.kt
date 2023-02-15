@@ -39,6 +39,7 @@ import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
 import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
 
+// todo: doc.
 @Composable
 fun rememberSubSamplingImageState(
   viewportState: ZoomableViewportState,
@@ -153,6 +154,7 @@ fun rememberSubSamplingImageState(
   return state
 }
 
+// todo: doc.
 @Stable
 class SubSamplingImageState internal constructor() {
   internal var tiles by mutableStateOf(emptyList<BitmapTile>())
@@ -162,11 +164,10 @@ class SubSamplingImageState internal constructor() {
   internal lateinit var eventListener: SubSamplingImageEventListener
   private var firstDrawEventSent = false
 
-  fun maybeSendFirstDrawEvent() {
+  internal fun maybeSendFirstDrawEvent() {
     if (!firstDrawEventSent
       && canvasSize.minDimension > 0f // Wait until content size is measured in case of wrap_content.
-      && tiles.isNotEmpty()
-      && tiles.all { it.isVisible && it.bitmap != null }
+      && tiles.isNotEmpty() && tiles.all { it.isVisible && it.bitmap != null }
     ) {
       eventListener.onImageDisplayed()
       firstDrawEventSent = true
