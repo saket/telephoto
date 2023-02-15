@@ -16,14 +16,14 @@ internal class BitmapLoader(
   private val decoder: ImageRegionDecoder,
   private val scope: CoroutineScope,
 ) {
-  private val cachedBitmaps = MutableStateFlow(emptyMap<BitmapRegionBounds, LoadingState>())
+  private val cachedBitmaps = MutableStateFlow(emptyMap<BitmapRegionTile, LoadingState>())
 
   private sealed interface LoadingState {
     data class Loaded(val bitmap: ImageBitmap) : LoadingState
     data class InFlight(val job: Job) : LoadingState
   }
 
-  fun cachedBitmaps(): Flow<Map<BitmapRegionBounds, ImageBitmap>> {
+  fun cachedBitmaps(): Flow<Map<BitmapRegionTile, ImageBitmap>> {
     return cachedBitmaps.map { map ->
       buildMap(capacity = map.size) {
         map.forEach { (region, state) ->
@@ -36,31 +36,19 @@ internal class BitmapLoader(
   }
 
   fun loadOrUnloadForTiles(tiles: List<BitmapRegionTile>) {
-    val tilesToLoad = tiles
-      .filter { it.isVisible }
-      .filter { it.regionBounds !in cachedBitmaps.value }
+    val regionsToLoad = tiles
+      .filter { it !in cachedBitmaps.value }
 
-    val regionsToUnload = run {
-      val invisibleTileRegions = tiles
-        .filterNot { it.isVisible }
-        .map { it.regionBounds }
-        .toSet()
+    val regionsToUnload = cachedBitmaps.value.keys
+      .filter { it !in tiles }
+      .toSet()
 
-      val removedTileRegions = run {
-        val currentRegions = tiles.map { it.regionBounds }
-        cachedBitmaps.value.keys
-          .filter { it !in currentRegions }
-          .toSet()
-      }
-      return@run invisibleTileRegions + removedTileRegions
-    }
-
-    tilesToLoad.forEach { tile ->
+    regionsToLoad.forEach { region ->
       val job = scope.launch {
-        val bitmap = decoder.decodeRegion(tile.regionBounds, tile.sampleSize)
-        cachedBitmaps.update { it + (tile.regionBounds to Loaded(bitmap)) }
+        val bitmap = decoder.decodeRegion(region)
+        cachedBitmaps.update { it + (region to Loaded(bitmap)) }
       }
-      cachedBitmaps.update { it + (tile.regionBounds to InFlight(job)) }
+      cachedBitmaps.update { it + (region to InFlight(job)) }
     }
 
     regionsToUnload.forEach { region ->

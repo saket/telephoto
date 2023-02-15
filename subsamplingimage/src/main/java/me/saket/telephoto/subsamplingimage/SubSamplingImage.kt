@@ -37,21 +37,21 @@ fun SubSamplingImage(
 
   val onDraw: DrawScope.() -> Unit = {
     state.tiles.fastForEach { tile ->
-      if (tile.isVisible && tile.bitmap != null) {
+      if (tile.bitmap != null) {
         drawImage(
           image = tile.bitmap,
           srcOffset = IntOffset.Zero,
           srcSize = IntSize(tile.bitmap.width, tile.bitmap.height),
-          dstOffset = tile.drawBounds.topLeft.discardFractionalParts(),
-          dstSize = tile.drawBounds.size.discardFractionalParts(),
+          dstOffset = tile.bounds.topLeft.discardFractionalParts(),
+          dstSize = tile.bounds.size.discardFractionalParts(),
         )
       }
 
       if (SubSamplingImageState.showTileBounds) {
         drawRect(
           color = Color.White,
-          topLeft = tile.drawBounds.topLeft,
-          size = tile.drawBounds.size,
+          topLeft = tile.bounds.topLeft,
+          size = tile.bounds.size,
           style = Stroke(width = density.run { 2.dp.toPx() })
         )
       }

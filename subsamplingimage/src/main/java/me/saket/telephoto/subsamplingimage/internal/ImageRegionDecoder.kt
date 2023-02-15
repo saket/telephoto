@@ -7,5 +7,5 @@ import androidx.compose.ui.graphics.ImageBitmap
 internal interface ImageRegionDecoder {
   val imageSize: Size
 
-  suspend fun decodeRegion(region: BitmapRegionBounds, sampleSize: BitmapSampleSize): ImageBitmap
+  suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap
 }

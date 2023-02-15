@@ -27,10 +27,11 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
-import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
+import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
@@ -126,7 +127,7 @@ fun rememberSubSamplingImageState(
           // todo: draw base tile only when any of the visible foreground tiles is lacking a bitmap.
 
           return@combine (baseTiles + foregroundTiles).fastMapNotNull { tile ->
-            val drawBounds = tile.regionBounds.bounds.let {
+            val drawBounds = tile.bounds.let {
               it.copy(
                 left = (it.left * zoom) + transformation.offset.x,
                 right = (it.right * zoom) + transformation.offset.x,
@@ -135,10 +136,10 @@ fun rememberSubSamplingImageState(
               )
             }
             if (drawBounds.overlaps(viewportBounds)) {
-              tile.copy(
-                drawBounds = drawBounds,
-                isVisible = true,
-                bitmap = bitmaps[tile.regionBounds]
+              CanvasRegionTile(
+                bitmap = bitmaps[tile],
+                bitmapRegion = tile,
+                bounds = drawBounds,
               )
             } else {
               null
@@ -147,9 +148,11 @@ fun rememberSubSamplingImageState(
         }
       }
         .distinctUntilChanged()
+        .onEach { tiles ->
+          bitmapLoader.loadOrUnloadForTiles(tiles.map { it.bitmapRegion })
+        }
         .flowOn(Dispatchers.IO)
         .collect { tiles ->
-          bitmapLoader.loadOrUnloadForTiles(tiles)
           state.tiles = tiles
         }
     }
@@ -161,7 +164,7 @@ fun rememberSubSamplingImageState(
 // todo: doc.
 @Stable
 class SubSamplingImageState internal constructor() {
-  internal var tiles by mutableStateOf(emptyList<BitmapRegionTile>())
+  internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
   internal var imageSize by mutableStateOf(Size.Unspecified)
 
@@ -171,7 +174,7 @@ class SubSamplingImageState internal constructor() {
   internal fun maybeSendFirstDrawEvent() {
     if (!firstDrawEventSent
       && canvasSize.minDimension > 0f // Wait until content size is measured in case of wrap_content.
-      && tiles.isNotEmpty() && tiles.all { it.isVisible && it.bitmap != null }
+      && tiles.isNotEmpty() && tiles.all { it.bitmap != null }
     ) {
       eventListener.onImageDisplayed()
       firstDrawEventSent = true

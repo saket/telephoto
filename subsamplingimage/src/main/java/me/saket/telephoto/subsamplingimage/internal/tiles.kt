@@ -6,22 +6,16 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 
 // todo: doc
-@Immutable
-internal data class BitmapRegionTile( // TODO: split into BitmapRegionTile and CanvasRegionTile.
-  val bitmap: ImageBitmap? = null,
+internal data class BitmapRegionTile(
   val sampleSize: BitmapSampleSize,
-
-  val regionBounds: BitmapRegionBounds,
-
-  /** [regionBounds] x (scale + pan + rotation). */
-  val drawBounds: Rect = Rect.Zero,
-
-  // TODO: consider remove this in favor of filtering out invisible tiles.
-  val isVisible: Boolean = true
+  val bounds: Rect,
 )
 
-@JvmInline
-internal value class BitmapRegionBounds(
+// todo: doc
+@Immutable
+internal data class CanvasRegionTile(
+  val bitmap: ImageBitmap?,
+  val bitmapRegion: BitmapRegionTile,
   val bounds: Rect,
 )
 

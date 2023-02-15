@@ -17,14 +17,14 @@ internal fun BitmapRegionTileGrid.Companion.generate(
 
   val baseTile = BitmapRegionTile(
     sampleSize = baseSampleSize,
-    regionBounds = BitmapRegionBounds(Rect(Offset.Zero, unscaledImageSize))
+    bounds = Rect(Offset.Zero, unscaledImageSize)
   )
 
   // Apart from the base layer, tiles are generated for all possible levels of
   // sample size ahead of time. This will save some allocation during zoom gestures.
   val possibleSampleSizes = generateSequence(seed = baseSampleSize) { current ->
     if (current.size < 2) null else current / 2
-  }.drop(1) // Drop base size.
+  }.drop(1) // Skip base size.
 
   val foregroundTiles = possibleSampleSizes.associateWith { sampleSize ->
     val tileSize: IntSize = (unscaledImageSize * (sampleSize.size / baseSampleSize.size.toFloat()))
@@ -44,14 +44,12 @@ internal fun BitmapRegionTileGrid.Companion.generate(
         val isLastYTile = y == yTileCount - 1
         val tile = BitmapRegionTile(
           sampleSize = sampleSize,
-          regionBounds = BitmapRegionBounds(
-            Rect(
-              left = x * tileSize.width.toFloat(),
-              top = y * tileSize.height.toFloat(),
-              // Stretch the last tiles to cover any remaining space.
-              right = (if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width).toFloat(),
-              bottom = (if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height).toFloat()
-            )
+          bounds = Rect(
+            left = x * tileSize.width.toFloat(),
+            top = y * tileSize.height.toFloat(),
+            // Stretch the last tiles to cover any remaining space.
+            right = (if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width).toFloat(),
+            bottom = (if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height).toFloat()
           )
         )
         tileGrid.add(tile)
