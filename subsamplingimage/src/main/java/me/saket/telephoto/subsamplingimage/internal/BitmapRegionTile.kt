@@ -5,10 +5,9 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 
-internal typealias BitmapTileGrid = Map<BitmapSampleSize, List<BitmapTile>>
-
+// todo: doc
 @Immutable
-internal data class BitmapTile( // todo: rename to BitmapRegionTIle
+internal data class BitmapRegionTile( // TODO: split into BitmapRegionTile and CanvasRegionTile.
   val bitmap: ImageBitmap? = null,
   val sampleSize: BitmapSampleSize,
 
@@ -36,4 +35,12 @@ internal value class BitmapSampleSize(val size: Int) {
       "Incorrect size = $size. BitmapRegionDecoder requires values based on powers of 2."
     }
   }
+}
+
+// todo: doc
+internal data class BitmapRegionTileGrid(
+  val base: BitmapRegionTile,
+  val foreground: Map<BitmapSampleSize, List<BitmapRegionTile>> // TODO: can the key be a ZoomLevel to avoid calculating sample size on every gesture event?
+) {
+  companion object; // For extensions.
 }

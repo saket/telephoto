@@ -204,8 +204,8 @@ private fun runTest(
   testBody: suspend TestScope.() -> Unit
 ) = runTest(dispatchTimeoutMs = timeout.inWholeMilliseconds, testBody = testBody)
 
-private fun fakeBitmapTile(isVisible: Boolean): BitmapTile {
-  return BitmapTile(
+private fun fakeBitmapTile(isVisible: Boolean): BitmapRegionTile {
+  return BitmapRegionTile(
     sampleSize = BitmapSampleSize(Random.nextInt(from = 0, until = 10) * 2),
     isVisible = isVisible,
     regionBounds = BitmapRegionBounds(

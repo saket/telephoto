@@ -1,28 +1,33 @@
 package me.saket.telephoto.subsamplingimage.internal
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.min
 
-internal fun generateBitmapTileGrid(
+internal fun BitmapRegionTileGrid.Companion.generate(
   canvasSize: Size,
   unscaledImageSize: Size
-): BitmapTileGrid {
+): BitmapRegionTileGrid {
   val baseSampleSize = BitmapSampleSize.calculateFor(
     canvasSize = canvasSize,
     scaledImageSize = unscaledImageSize
   )
 
+  val baseTile = BitmapRegionTile(
+    sampleSize = baseSampleSize,
+    regionBounds = BitmapRegionBounds(Rect(Offset.Zero, unscaledImageSize))
+  )
+
   // Apart from the base layer, tiles are generated for all possible levels of
   // sample size ahead of time. This will save some allocation during zoom gestures.
-  val possibleSampleSizes = generateSequence(seed = baseSampleSize) { previous ->
-    if (previous.size == 1) null else previous / 2
-  }
+  val possibleSampleSizes = generateSequence(seed = baseSampleSize) { current ->
+    if (current.size < 2) null else current / 2
+  }.drop(1) // Drop base size.
 
-  return possibleSampleSizes.associateWith { sampleSize ->
+  val foregroundTiles = possibleSampleSizes.associateWith { sampleSize ->
     val tileSize: IntSize = (unscaledImageSize * (sampleSize.size / baseSampleSize.size.toFloat()))
-      // TODO: consider smaller tiles with parallel loading of bitmaps with pooled decoders.
       .coerceAtLeast((canvasSize / 2f).coerceAtMost(unscaledImageSize))
       .discardFractionalParts()
 
@@ -32,12 +37,12 @@ internal fun generateBitmapTileGrid(
     val xTileCount: Int = (unscaledImageSize.width / tileSize.width).toInt()
     val yTileCount: Int = (unscaledImageSize.height / tileSize.height).toInt()
 
-    val tileGrid = ArrayList<BitmapTile>(xTileCount * yTileCount)
+    val tileGrid = ArrayList<BitmapRegionTile>(xTileCount * yTileCount)
     for (x in 0 until xTileCount) {
       for (y in 0 until yTileCount) {
         val isLastXTile = x == xTileCount - 1
         val isLastYTile = y == yTileCount - 1
-        val tile = BitmapTile(
+        val tile = BitmapRegionTile(
           sampleSize = sampleSize,
           regionBounds = BitmapRegionBounds(
             Rect(
@@ -54,6 +59,11 @@ internal fun generateBitmapTileGrid(
     }
     return@associateWith tileGrid
   }
+
+  return BitmapRegionTileGrid(
+    base = baseTile,
+    foreground = foregroundTiles,
+  )
 }
 
 /** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */

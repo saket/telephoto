@@ -35,7 +35,7 @@ internal class BitmapLoader(
     }.distinctUntilChanged()
   }
 
-  fun loadOrUnloadForTiles(tiles: List<BitmapTile>) {
+  fun loadOrUnloadForTiles(tiles: List<BitmapRegionTile>) {
     val tilesToLoad = tiles
       .filter { it.isVisible }
       .filter { it.regionBounds !in cachedBitmaps.value }

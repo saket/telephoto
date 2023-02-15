@@ -19,7 +19,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.util.fastMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
@@ -29,13 +28,14 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
+import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
+import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
-import me.saket.telephoto.subsamplingimage.internal.BitmapTile
-import me.saket.telephoto.subsamplingimage.internal.BitmapTileGrid
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
-import me.saket.telephoto.subsamplingimage.internal.generateBitmapTileGrid
+import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
+import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
 
@@ -95,7 +95,7 @@ fun rememberSubSamplingImageState(
         .filter { it.minDimension > 0f }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
-        val tileGrid: BitmapTileGrid = generateBitmapTileGrid(
+        val tileGrid = BitmapRegionTileGrid.generate(
           canvasSize = canvasSize,
           unscaledImageSize = decoder.imageSize
         )
@@ -119,12 +119,13 @@ fun rememberSubSamplingImageState(
             canvasSize.height / decoder.imageSize.height
           )
 
+          val baseTiles = listOf(tileGrid.base)
           val sampleSize = BitmapSampleSize.calculateFor(zoom)
-          val tiles = checkNotNull(tileGrid[sampleSize]) {
-            "No tiles found for $sampleSize among ${tileGrid.keys}"
-          }
+          val foregroundTiles = tileGrid.foreground[sampleSize].orEmpty()
 
-          tiles.fastMap { tile ->
+          // todo: draw base tile only when any of the visible foreground tiles is lacking a bitmap.
+
+          return@combine (baseTiles + foregroundTiles).fastMapNotNull { tile ->
             val drawBounds = tile.regionBounds.bounds.let {
               it.copy(
                 left = (it.left * zoom) + transformation.offset.x,
@@ -133,12 +134,15 @@ fun rememberSubSamplingImageState(
                 bottom = (it.bottom * zoom) + transformation.offset.y,
               )
             }
-            val isVisible = drawBounds.overlaps(viewportBounds)
-            tile.copy(
-              drawBounds = drawBounds,
-              isVisible = isVisible,
-              bitmap = bitmaps[tile.regionBounds]
-            )
+            if (drawBounds.overlaps(viewportBounds)) {
+              tile.copy(
+                drawBounds = drawBounds,
+                isVisible = true,
+                bitmap = bitmaps[tile.regionBounds]
+              )
+            } else {
+              null
+            }
           }
         }
       }
@@ -157,7 +161,7 @@ fun rememberSubSamplingImageState(
 // todo: doc.
 @Stable
 class SubSamplingImageState internal constructor() {
-  internal var tiles by mutableStateOf(emptyList<BitmapTile>())
+  internal var tiles by mutableStateOf(emptyList<BitmapRegionTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
   internal var imageSize by mutableStateOf(Size.Unspecified)
 
