@@ -2,8 +2,12 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 
 // todo: doc
 internal data class BitmapRegionTile(
@@ -16,7 +20,8 @@ internal data class BitmapRegionTile(
 internal data class CanvasRegionTile(
   val bitmap: ImageBitmap?,
   val bitmapRegion: BitmapRegionTile,
-  val bounds: Rect,
+  val offset: IntOffset,
+  val size: IntSize,
 )
 
 /** See [BitmapFactory.Options.inSampleSize]. */

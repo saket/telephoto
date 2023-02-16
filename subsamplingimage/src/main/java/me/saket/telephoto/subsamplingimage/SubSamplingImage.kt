@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
 import me.saket.telephoto.subsamplingimage.internal.discardFractionalParts
@@ -42,16 +43,16 @@ fun SubSamplingImage(
           image = tile.bitmap,
           srcOffset = IntOffset.Zero,
           srcSize = IntSize(tile.bitmap.width, tile.bitmap.height),
-          dstOffset = tile.bounds.topLeft.discardFractionalParts(),
-          dstSize = tile.bounds.size.discardFractionalParts(),
+          dstOffset = tile.offset,
+          dstSize = tile.size,
         )
       }
 
       if (SubSamplingImageState.showTileBounds) {
         drawRect(
           color = Color.White,
-          topLeft = tile.bounds.topLeft,
-          size = tile.bounds.size,
+          topLeft = tile.offset.toOffset(),
+          size = tile.size.toSize(),
           style = Stroke(width = density.run { 2.dp.toPx() })
         )
       }

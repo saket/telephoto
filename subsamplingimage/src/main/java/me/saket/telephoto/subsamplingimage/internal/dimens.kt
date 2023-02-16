@@ -1,8 +1,10 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.ceil
 
@@ -20,7 +22,6 @@ internal fun Size.coerceAtMost(other: Size): Size {
   )
 }
 
-// todo: these two functions can be removed by storing an IntRect in BitmapTile.
 internal fun Size.discardFractionalParts(): IntSize {
   return IntSize(width = width.toInt(), height = height.toInt())
 }

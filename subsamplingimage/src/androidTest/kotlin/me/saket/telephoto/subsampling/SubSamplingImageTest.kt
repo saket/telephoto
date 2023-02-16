@@ -164,6 +164,13 @@ class SubSamplingImageTest {
     // todo.
   }
 
+  @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
+    // todo.
+  }
+
+  @Test fun state_restoration() {
+  }
+
   @Composable
   private fun ScreenScaffold(content: @Composable () -> Unit) {
     Box(

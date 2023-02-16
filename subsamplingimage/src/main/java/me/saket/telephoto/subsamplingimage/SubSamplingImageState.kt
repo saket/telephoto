@@ -35,6 +35,7 @@ import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
+import me.saket.telephoto.subsamplingimage.internal.discardFractionalParts
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.zoomable.ZoomableViewportState
@@ -139,7 +140,8 @@ fun rememberSubSamplingImageState(
               CanvasRegionTile(
                 bitmap = bitmaps[tile],
                 bitmapRegion = tile,
-                bounds = drawBounds,
+                offset = drawBounds.topLeft.discardFractionalParts(),
+                size = drawBounds.size.discardFractionalParts(),
               )
             } else {
               null
