@@ -6,9 +6,9 @@ package me.saket.telephoto.subsamplingimage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,7 +50,6 @@ fun rememberSubSamplingImageState(
   imageSource: ImageSource,
   eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
 ): SubSamplingImageState {
-  val context = LocalContext.current
   val eventListener by rememberUpdatedState(eventListener)
 
   val viewportEventListener = remember(eventListener) {
@@ -65,15 +65,7 @@ fun rememberSubSamplingImageState(
     }
   }
 
-  val decoder by produceState<ImageRegionDecoder?>(initialValue = null, key1 = imageSource) {
-    try {
-      value = SkiaImageRegionDecoders.create(context, imageSource).also {
-        viewportEventListener.onImageLoaded(it.imageSize)
-      }
-    } catch (e: IOException) {
-      viewportEventListener.onImageLoadingFailed(e)
-    }
-  }
+  val decoder: ImageRegionDecoder? by createDecoder(imageSource, viewportEventListener)
 
   val state = remember {
     SubSamplingImageState()
@@ -117,11 +109,9 @@ fun rememberSubSamplingImageState(
             canvasSize.width / decoder.imageSize.width,
             canvasSize.height / decoder.imageSize.height
           )
-
           val sampleSize = BitmapSampleSize.calculateFor(zoom)
-          val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
 
-          val foregroundTiles = foregroundRegions.fastMapNotNull { tile ->
+          val foregroundTiles = tileGrid.foreground[sampleSize]?.fastMapNotNull { tile ->
             val drawBounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset)
             if (drawBounds.overlaps(viewportBounds)) {
               CanvasRegionTile(
@@ -132,7 +122,7 @@ fun rememberSubSamplingImageState(
             } else {
               null
             }
-          }
+          }.orEmpty()
 
           // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
           // a fallback. The base tile will hide again when all bitmaps have been loaded.
@@ -163,6 +153,32 @@ fun rememberSubSamplingImageState(
   }
 
   return state
+}
+
+@Composable
+private fun createDecoder(
+  imageSource: ImageSource,
+  eventListener: SubSamplingImageEventListener
+): State<ImageRegionDecoder?> {
+  val context = LocalContext.current
+  val eventListener by rememberUpdatedState(eventListener)
+
+  val decoder = remember { mutableStateOf<ImageRegionDecoder?>(null) }
+  val isInPreviewMode = LocalInspectionMode.current
+
+  if (!isInPreviewMode) {
+    LaunchedEffect(imageSource) {
+      try {
+        decoder.value = SkiaImageRegionDecoders.create(context, imageSource).also {
+          eventListener.onImageLoaded(it.imageSize)
+        }
+      } catch (e: IOException) {
+        eventListener.onImageLoadingFailed(e)
+      }
+    }
+  }
+
+  return decoder
 }
 
 // todo: doc.
