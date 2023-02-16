@@ -103,18 +103,14 @@ fun rememberSubSamplingImageState(
           unscaledImageSize = decoder.imageSize
         )
 
-        val inflatedViewportBounds = transformations
+        val viewportBounds = transformations
           .map { it.viewportSize }
           .distinctUntilChanged()
-          .map { size ->
-            // TODO: inflating the bounds results in a higher number of bitmaps in memory.
-            //  Test if this is worth keeping.
-            Rect(Offset.Zero, size)/*.inflateByPercent(0.1f)*/
-          }
+          .map { size -> Rect(Offset.Zero, size) }
 
         combine(
           transformations,
-          inflatedViewportBounds,
+          viewportBounds,
           bitmapLoader.cachedBitmaps()
         ) { transformation, viewportBounds, bitmaps ->
           val zoom = transformation.scale * minOf(
@@ -193,13 +189,4 @@ class SubSamplingImageState internal constructor() {
     // Only used by tests.
     internal var showTileBounds = false
   }
-}
-
-internal fun Rect.inflateByPercent(percent: Float): Rect {
-  return Rect(
-    left = left - (width * percent),
-    top = top - (height * percent),
-    right = right + (width * percent),
-    bottom = bottom + (height * percent)
-  )
 }
