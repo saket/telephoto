@@ -185,7 +185,7 @@ class SubSamplingImageState internal constructor() {
 
   companion object {
     // Only used by tests.
-    internal var showTileBounds = true
+    internal var showTileBounds = false
   }
 }
 

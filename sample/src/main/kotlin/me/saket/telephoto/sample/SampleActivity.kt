@@ -112,7 +112,7 @@ class SampleActivity : AppCompatActivity() {
     ZoomableViewport(
       state = state,
       modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center
+      contentAlignment = Alignment.TopCenter
     ) {
       SubSamplingImage(
         modifier = Modifier.fillMaxSize(),
