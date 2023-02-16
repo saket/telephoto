@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
@@ -35,9 +36,9 @@ import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
-import me.saket.telephoto.subsamplingimage.internal.discardFractionalParts
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
+import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
 import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
 
@@ -121,32 +122,37 @@ fun rememberSubSamplingImageState(
             canvasSize.height / decoder.imageSize.height
           )
 
-          val baseTiles = listOf(tileGrid.base)
           val sampleSize = BitmapSampleSize.calculateFor(zoom)
-          val foregroundTiles = tileGrid.foreground[sampleSize].orEmpty()
+          val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
 
-          // todo: draw base tile only when any of the visible foreground tiles is lacking a bitmap.
-
-          return@combine (baseTiles + foregroundTiles).fastMapNotNull { tile ->
-            val drawBounds = tile.bounds.let {
-              it.copy(
-                left = (it.left * zoom) + transformation.offset.x,
-                right = (it.right * zoom) + transformation.offset.x,
-                top = (it.top * zoom) + transformation.offset.y,
-                bottom = (it.bottom * zoom) + transformation.offset.y,
-              )
-            }
+          val foregroundTiles = foregroundRegions.fastMapNotNull { tile ->
+            val drawBounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset)
             if (drawBounds.overlaps(viewportBounds)) {
               CanvasRegionTile(
+                bounds = drawBounds,
                 bitmap = bitmaps[tile],
-                bitmapRegion = tile,
-                offset = drawBounds.topLeft.discardFractionalParts(),
-                size = drawBounds.size.discardFractionalParts(),
+                bitmapRegion = tile
               )
             } else {
               null
             }
           }
+
+          // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
+          // a fallback. The base tile will hide again when all bitmaps have been loaded.
+          val canDrawBaseTile = foregroundTiles.isEmpty() || foregroundTiles.fastAny { it.bitmap == null }
+
+          // The base tile needs to be always present even if it isn't going to
+          // be drawn. Otherwise BitmapLoader will remove its bitmap from cache.
+          val baseTile = tileGrid.base.let { tile ->
+            CanvasRegionTile(
+              bounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset),
+              bitmap = if (canDrawBaseTile) bitmaps[tile] else null,
+              bitmapRegion = tile,
+            )
+          }
+
+          return@combine (listOf(baseTile) + foregroundTiles)
         }
       }
         .distinctUntilChanged()

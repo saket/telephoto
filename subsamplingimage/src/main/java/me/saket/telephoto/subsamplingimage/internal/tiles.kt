@@ -2,11 +2,9 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 
 // todo: doc
@@ -22,7 +20,20 @@ internal data class CanvasRegionTile(
   val bitmapRegion: BitmapRegionTile,
   val offset: IntOffset,
   val size: IntSize,
-)
+) {
+  constructor(
+    bitmap: ImageBitmap?,
+    bitmapRegion: BitmapRegionTile,
+    bounds: Rect,
+  ) : this(
+    bitmap = bitmap,
+    bitmapRegion = bitmapRegion,
+    // Convert floats to ints by choosing their ceiling value to avoid gaps between tiles.
+    // This may cause tiles to overlap by a pixel, but the result looks okay to my eyes.
+    offset = bounds.topLeft.toCeilIntOffset(),
+    size = bounds.size.toCeilIntSize(),
+  )
+}
 
 /** See [BitmapFactory.Options.inSampleSize]. */
 @JvmInline
