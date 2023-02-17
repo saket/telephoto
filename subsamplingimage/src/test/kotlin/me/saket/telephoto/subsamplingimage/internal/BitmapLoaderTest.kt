@@ -11,12 +11,11 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.testIn
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.random.Random
@@ -36,7 +35,7 @@ class BitmapLoaderTest {
 
   @Test fun `when tiles are received, load bitmaps only for new tiles`() = runTest(timeout = 1.seconds) {
     val loader = bitmapLoader()
-    val decodedRegions = decoder.decodedRegions.testIn(this)
+    val requestedRegions = decoder.requestedRegions.testIn(this)
     val cachedBitmaps = loader.cachedBitmaps().testIn(this)
     assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
@@ -44,24 +43,22 @@ class BitmapLoaderTest {
     val tile2 = fakeBitmapRegionTile()
 
     loader.loadOrUnloadForTiles(listOf(tile1, tile2))
-    runCurrent()
-    decoder.decodedBitmaps.emit(FakeImageBitmap())
-    decoder.decodedBitmaps.emit(FakeImageBitmap())
+    decoder.decodedBitmaps.send(FakeImageBitmap())
+    decoder.decodedBitmaps.send(FakeImageBitmap())
 
-    assertThat(decodedRegions.awaitItem()).isEqualTo(tile1)
-    assertThat(decodedRegions.awaitItem()).isEqualTo(tile2)
+    assertThat(requestedRegions.awaitItem()).isEqualTo(tile1)
+    assertThat(requestedRegions.awaitItem()).isEqualTo(tile2)
     cachedBitmaps.skipItems(1)
     assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
 
     val tile3 = fakeBitmapRegionTile()
     loader.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
-    runCurrent()
-    decoder.decodedBitmaps.emit(FakeImageBitmap())
+    decoder.decodedBitmaps.send(FakeImageBitmap())
 
-    assertThat(decodedRegions.awaitItem()).isEqualTo(tile3)
+    assertThat(requestedRegions.awaitItem()).isEqualTo(tile3)
     assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2, tile3)
 
-    decodedRegions.cancelAndExpectNoEvents()
+    requestedRegions.cancelAndExpectNoEvents()
     cachedBitmaps.cancelAndExpectNoEvents()
   }
 
@@ -72,16 +69,15 @@ class BitmapLoaderTest {
     val tile1 = fakeBitmapRegionTile()
     val tile2 = fakeBitmapRegionTile()
     loader.loadOrUnloadForTiles(listOf(tile1, tile2))
-    runCurrent()
-    decoder.decodedBitmaps.emit(FakeImageBitmap())
-    decoder.decodedBitmaps.emit(FakeImageBitmap())
+    decoder.decodedBitmaps.send(FakeImageBitmap())
+    decoder.decodedBitmaps.send(FakeImageBitmap())
 
-    assertThat(cachedBitmaps.expectMostRecentItem().keys).containsExactly(tile1, tile2)
+    cachedBitmaps.skipItems(1)
+    assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
 
     val tile3 = fakeBitmapRegionTile()
     loader.loadOrUnloadForTiles(listOf(tile3))
-    runCurrent()
-    decoder.decodedBitmaps.emit(FakeImageBitmap())
+    decoder.decodedBitmaps.send(FakeImageBitmap())
 
     cachedBitmaps.skipItems(1)
     assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile3)
@@ -92,20 +88,16 @@ class BitmapLoaderTest {
   @Test fun `when a tile is removed before its bitmap could be loaded, cancel its in-flight load`() =
     runTest(timeout = 1.seconds) {
       val loader = bitmapLoader()
-      val decodedRegions = decoder.decodedRegions.testIn(this)
+      val requestedRegions = decoder.requestedRegions.testIn(this)
       val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
       val visibleTile = fakeBitmapRegionTile()
       loader.loadOrUnloadForTiles(listOf(visibleTile))
-      runCurrent()
-
-      assertThat(decodedRegions.awaitItem()).isEqualTo(visibleTile)
+      assertThat(requestedRegions.awaitItem()).isEqualTo(visibleTile)
       cachedBitmaps.expectNoEvents()
 
       loader.loadOrUnloadForTiles(emptyList())
-      runCurrent()
-
-      decodedRegions.cancelAndExpectNoEvents()
+      requestedRegions.cancelAndExpectNoEvents()
       cachedBitmaps.cancelAndExpectNoEvents()
 
       // Verify that BitmapLoader has cancelled all loading jobs.
@@ -125,13 +117,12 @@ class BitmapLoaderTest {
 
 private class FakeImageRegionDecoder : ImageRegionDecoder {
   override val imageSize: Size get() = error("unused")
-  val decodedRegions = MutableSharedFlow<BitmapRegionTile>()
-  val decodedBitmaps = MutableSharedFlow<ImageBitmap>()
+  val requestedRegions = MutableSharedFlow<BitmapRegionTile>()
+  val decodedBitmaps = Channel<ImageBitmap>()
 
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
-    println("decodeRegion(region=$region)")
-    decodedRegions.emit(region)
-    return decodedBitmaps.first()
+    requestedRegions.emit(region)
+    return decodedBitmaps.receive()
   }
 }
 
