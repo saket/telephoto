@@ -1,6 +1,7 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -41,9 +42,8 @@ internal class BitmapLoader(
 
     val regionsToUnload = cachedBitmaps.value.keys
       .filter { it !in tiles }
-      .toSet()
 
-    regionsToLoad.forEach { region ->
+    regionsToLoad.fastForEach { region ->
       val job = scope.launch {
         val bitmap = decoder.decodeRegion(region)
         cachedBitmaps.update { it + (region to Loaded(bitmap)) }
@@ -51,10 +51,10 @@ internal class BitmapLoader(
       cachedBitmaps.update { it + (region to InFlight(job)) }
     }
 
-    regionsToUnload.forEach { region ->
+    regionsToUnload.fastForEach { region ->
       val inFlight = cachedBitmaps.value[region] as? InFlight
       inFlight?.job?.cancel()
     }
-    cachedBitmaps.update { it - regionsToUnload }
+    cachedBitmaps.update { it - regionsToUnload.toSet() }
   }
 }
