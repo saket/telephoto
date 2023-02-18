@@ -76,10 +76,7 @@ class SampleActivity : AppCompatActivity() {
 
   @Composable
   private fun ZoomableViewportSample() {
-    val state = rememberZoomableViewportState(
-      rotationEnabled = false,
-      maxZoomFactor = 1.5f,
-    )
+    val state = rememberZoomableViewportState(maxZoomFactor = 1.5f)
     ZoomableViewport(
       modifier = Modifier.fillMaxSize(),
       state = state,
@@ -104,11 +101,7 @@ class SampleActivity : AppCompatActivity() {
 
   @Composable
   private fun SubSamplingImageSample() {
-    val state = rememberZoomableViewportState(
-      rotationEnabled = false,
-      maxZoomFactor = 1.5f,
-    )
-
+    val state = rememberZoomableViewportState(maxZoomFactor = 1.5f)
     ZoomableViewport(
       state = state,
       modifier = Modifier.fillMaxSize(),

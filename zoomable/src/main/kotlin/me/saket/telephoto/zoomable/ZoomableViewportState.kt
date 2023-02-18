@@ -23,17 +23,14 @@ import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.GestureTransformations.Companion.ZeroScaleFactor
-import me.saket.telephoto.zoomable.internal.rotateBy
 import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
 
 /** todo: doc */
 @Composable
 fun rememberZoomableViewportState(
   maxZoomFactor: Float = 1f,
-  rotationEnabled: Boolean = false,
 ): ZoomableViewportState {
   return remember { ZoomableViewportState() }.apply {
-    this.rotationEnabled = rotationEnabled
     this.zoomRange = ZoomRange(max = maxZoomFactor)
   }
 }
@@ -51,7 +48,7 @@ class ZoomableViewportState internal constructor() {
         viewportSize = viewportBounds.size,
         scale = it.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = -it.offset * (it.zoom?.finalZoom()?.maxScale ?: 1f),
-        rotationZ = it.rotationZ,
+        rotationZ = 0f,
       )
     }
   }
@@ -59,7 +56,6 @@ class ZoomableViewportState internal constructor() {
   private var gestureTransformations by mutableStateOf(GestureTransformations.Empty)
   private var cancelResetAnimation: (() -> Unit)? = null
 
-  internal var rotationEnabled: Boolean = false
   private lateinit var contentAlignment: Alignment
   internal var zoomRange = ZoomRange.Default  // todo: explain why this isn't a state?
 
@@ -98,7 +94,7 @@ class ZoomableViewportState internal constructor() {
     centroid: Offset,
     panDelta: Offset,
     zoomDelta: Float,
-    rotationDelta: Float,
+    rotationDelta: Float = 0f,
     cancelAnyOngoingResetAnimation: Boolean = true
   ) {
     if (cancelAnyOngoingResetAnimation) {
@@ -135,7 +131,6 @@ class ZoomableViewportState internal constructor() {
       baseZoomMultiplier = baseContentScale,
       viewportZoom = oldZoom.viewportZoom * zoomDelta
     )
-    val rotationDelta = if (rotationEnabled) rotationDelta else 0f
     val oldOffset = gestureTransformations.offset
 
     // Copied from androidx samples:
@@ -155,9 +150,8 @@ class ZoomableViewportState internal constructor() {
     // I found this maths difficult to understand, so here's another explanation in
     // Ryan Harter's words:
     //
-    // The basic idea is that to rotate or scale around an arbitrary point, you
-    // translate so that that point is in the center, then you rotate, then scale,
-    // then move everything back.
+    // The basic idea is that to scale around an arbitrary point, you translate so that that
+    // point is in the center, then you rotate, then scale, then move everything back.
     //
     //              Move the centroid to the center
     //                  of panned content(?)
@@ -170,20 +164,17 @@ class ZoomableViewportState internal constructor() {
       // todo: above comments no longer align with code.
       val visualNewZoom = newZoom.finalZoom().maxScale
       val visualOldZoom = oldZoom.finalZoom().maxScale
-      (oldOffset + centroid / visualOldZoom).rotateBy(rotationDelta) - (centroid / visualNewZoom + panDelta / visualOldZoom)
+      (oldOffset + centroid / visualOldZoom) - (centroid / visualNewZoom + panDelta / visualOldZoom)
     }
 
-    gestureTransformations = gestureTransformations.let { old ->
-      GestureTransformations(
-        offset = newOffset.withZoom(-newZoom.finalZoom().maxScale) {
-          val newContentBounds = Rect(offset = it, unscaledContentSize * newZoom.finalZoom().maxScale)
-          newContentBounds.topLeftCoercedInside(viewportBounds, contentAlignment)
-        },
-        zoom = newZoom,
-        rotationZ = old.rotationZ + rotationDelta,
-        lastCentroid = centroid,
-      )
-    }
+    gestureTransformations = GestureTransformations(
+      offset = newOffset.withZoom(-newZoom.finalZoom().maxScale) {
+        val newContentBounds = Rect(offset = it, unscaledContentSize * newZoom.finalZoom().maxScale)
+        newContentBounds.topLeftCoercedInside(viewportBounds, contentAlignment)
+      },
+      zoom = newZoom,
+      lastCentroid = centroid,
+    )
   }
 
   internal fun refreshContentPosition() {
@@ -192,7 +183,6 @@ class ZoomableViewportState internal constructor() {
       centroid = Offset.Zero,
       panDelta = Offset.Zero,
       zoomDelta = 1f,
-      rotationDelta = 0f,
     )
   }
 
@@ -213,7 +203,6 @@ class ZoomableViewportState internal constructor() {
   internal suspend fun animateResetOfTransformations() {
     val start = gestureTransformations
     val endViewportZoom = start.zoom!!.coercedIn(zoomRange).viewportZoom
-    val endRotationZ = GestureTransformations.Empty.rotationZ
 
     coroutineScope {
       val animationJob = launch {
@@ -223,13 +212,11 @@ class ZoomableViewportState internal constructor() {
         ) {
           val current = gestureTransformations
           val targetViewportZoom = lerp(start = start.zoom.viewportZoom, stop = endViewportZoom, fraction = value)
-          val targetRotationZ = lerp(start = start.rotationZ, stop = endRotationZ, fraction = value)
 
           onGesture(
             centroid = start.lastCentroid,
             panDelta = Offset.Zero,
             zoomDelta = targetViewportZoom / current.zoom!!.viewportZoom,
-            rotationDelta = targetRotationZ + current.rotationZ,
             cancelAnyOngoingResetAnimation = false,
           )
         }
@@ -256,7 +243,6 @@ private operator fun Size.times(scale: ScaleFactor): Size {
 private data class GestureTransformations(
   val offset: Offset,
   val zoom: ContentZoom?,
-  val rotationZ: Float,
   val lastCentroid: Offset,
 ) {
 
@@ -266,7 +252,6 @@ private data class GestureTransformations(
     val Empty = GestureTransformations(
       offset = Offset.Zero,
       zoom = null,
-      rotationZ = 0f,
       lastCentroid = Offset.Zero,
     )
   }
@@ -313,6 +298,7 @@ internal value class ZoomRange private constructor(
   }
 }
 
+// todo: improve doc.
 /** This is named along the lines of `Canvas#withTranslate()`. */
 private fun Offset.withZoom(zoom: Float, action: (Offset) -> Offset): Offset {
   return action(this * zoom) / zoom
