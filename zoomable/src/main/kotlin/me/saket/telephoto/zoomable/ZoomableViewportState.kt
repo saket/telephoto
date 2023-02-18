@@ -124,7 +124,7 @@ class ZoomableViewportState internal constructor() {
     val isZoomingOut = zoomDelta < 1f
     val isZoomingIn = zoomDelta > 1f
     val isAtMinZoom = oldZoom.finalZoom().maxScale <= zoomRange.minZoom(baseZoomMultiplier = baseContentScale)
-    val isAtMaxZoom = oldZoom.finalZoom().maxScale >= zoomRange.maxZoom()
+    val isAtMaxZoom = oldZoom.finalZoom().maxScale >= zoomRange.maxZoom(baseZoomMultiplier = baseContentScale)
 
     // Apply elasticity to zoom once content can't zoom any further.
     val zoomDelta = when {
@@ -174,8 +174,8 @@ class ZoomableViewportState internal constructor() {
     }
 
     gestureTransformations = GestureTransformations(
-      offset = newOffset.withZoom(-newZoom.finalZoom().maxScale) {
-        val newContentBounds = Rect(offset = it, unscaledContentSize * newZoom.finalZoom().maxScale)
+      offset = newOffset.withZoom(-newZoom.finalZoom()) {
+        val newContentBounds = Rect(offset = it, unscaledContentSize * newZoom.finalZoom())
         newContentBounds.topLeftCoercedInside(viewportBounds, contentAlignment)
       },
       zoom = newZoom,
@@ -199,7 +199,7 @@ class ZoomableViewportState internal constructor() {
 
   /** todo: doc */
   fun setUnscaledContentSize(size: Size?) {
-    unscaledContentSize = size ?: Size.Zero
+    unscaledContentSize = size ?: Size.Unspecified
   }
 
   internal suspend fun animateResetOfTransformations() {
@@ -229,6 +229,11 @@ class ZoomableViewportState internal constructor() {
       }
     }
   }
+}
+
+// todo: move to dimens.kt
+private operator fun ScaleFactor.unaryMinus(): ScaleFactor {
+  return this * -1f
 }
 
 // todo: move to dimens.kt
@@ -273,7 +278,7 @@ internal data class ContentZoom(
       baseZoomMultiplier = baseZoomMultiplier,
       viewportZoom = viewportZoom.coerceIn(
         minimumValue = limits.minZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale,
-        maximumValue = limits.maxZoom() / baseZoomMultiplier.maxScale
+        maximumValue = limits.maxZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale
       )
     )
   }
@@ -291,8 +296,10 @@ internal value class ZoomRange private constructor(
     return range.start * baseZoomMultiplier.maxScale
   }
 
-  internal fun maxZoom(): Float {
-    return range.endInclusive
+  internal fun maxZoom(baseZoomMultiplier: ScaleFactor): Float {
+    // Max zoom factor could end up being less than min zoom factor if the content is
+    // scaled-up by default. This is easy to test by setting contentScale = CenterCrop.
+    return maxOf(range.endInclusive, minZoom(baseZoomMultiplier))
   }
 
   companion object {
@@ -302,6 +309,17 @@ internal value class ZoomRange private constructor(
 
 // todo: improve doc.
 /** This is named along the lines of `Canvas#withTranslate()`. */
-private fun Offset.withZoom(zoom: Float, action: (Offset) -> Offset): Offset {
+private fun Offset.withZoom(zoom: ScaleFactor, action: (Offset) -> Offset): Offset {
   return action(this * zoom) / zoom
+}
+
+// todo: move to dimens.kt
+private operator fun Offset.times(factor: ScaleFactor): Offset {
+  return Offset(x = x * factor.scaleX, y = y * factor.scaleY)
+}
+
+
+// todo: move to dimens.kt
+private operator fun Offset.div(factor: ScaleFactor): Offset {
+  return Offset(x = x / factor.scaleX, y = y / factor.scaleY)
 }
