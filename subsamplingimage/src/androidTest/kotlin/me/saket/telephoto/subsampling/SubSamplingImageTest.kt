@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
@@ -65,7 +66,8 @@ class SubSamplingImageTest {
         )
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
-          state = viewportState
+          state = viewportState,
+          contentScale = ContentScale.Inside,
         ) {
           SubSamplingImage(
             modifier = Modifier.fillMaxSize(),
@@ -94,10 +96,11 @@ class SubSamplingImageTest {
         )
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
-          state = viewportState
+          state = viewportState,
+          contentScale = ContentScale.Inside,
         ) {
           SubSamplingImage(
-            modifier = Modifier.then(size.modifier),
+            modifier = size.modifier,
             state = imageState,
             contentDescription = null,
           )
@@ -128,6 +131,7 @@ class SubSamplingImageTest {
           modifier = Modifier.fillMaxSize(),
           state = viewportState,
           contentAlignment = alignment.value,
+          contentScale = ContentScale.Inside,
         ) {
           SubSamplingImage(
             modifier = Modifier.then(size.modifier),

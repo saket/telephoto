@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -33,10 +34,12 @@ fun ZoomableViewport(
   modifier: Modifier = Modifier,
   clipToBounds: Boolean = true,
   contentAlignment: Alignment = Alignment.Center,
+  contentScale: ContentScale,
   content: @Composable () -> Unit
 ) {
   SideEffect {
-    state.setContentAlignment(contentAlignment)
+    state.contentScale = contentScale
+    state.contentAlignment = contentAlignment
   }
 
   val zoomableModifier = if (state.isReadyToInteract) {

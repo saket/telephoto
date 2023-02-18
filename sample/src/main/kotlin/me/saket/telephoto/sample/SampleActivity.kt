@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -80,7 +81,8 @@ class SampleActivity : AppCompatActivity() {
     ZoomableViewport(
       modifier = Modifier.fillMaxSize(),
       state = state,
-      contentAlignment = Alignment.TopCenter,
+      contentAlignment = Alignment.Center,
+      contentScale = ContentScale.Inside,
     ) {
       AsyncImage(
         modifier = Modifier
@@ -105,7 +107,8 @@ class SampleActivity : AppCompatActivity() {
     ZoomableViewport(
       state = state,
       modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.TopCenter
+      contentAlignment = Alignment.TopCenter,
+      contentScale = ContentScale.Inside,
     ) {
       SubSamplingImage(
         modifier = Modifier.fillMaxSize(),

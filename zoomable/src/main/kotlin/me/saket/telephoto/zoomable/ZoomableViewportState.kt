@@ -56,8 +56,10 @@ class ZoomableViewportState internal constructor() {
   private var gestureTransformations by mutableStateOf(GestureTransformations.Empty)
   private var cancelResetAnimation: (() -> Unit)? = null
 
-  private lateinit var contentAlignment: Alignment
   internal var zoomRange = ZoomRange.Default  // todo: explain why this isn't a state?
+
+  internal lateinit var contentScale: ContentScale
+  internal lateinit var contentAlignment: Alignment
 
   /**
    * Raw size of the image/video/anything without any scaling applied.
@@ -86,7 +88,11 @@ class ZoomableViewportState internal constructor() {
 
   internal val thingsThatAffectContentPosition by derivedStateOf {
     // todo: this doesn't look great.
-    Pair(contentAlignment to unscaledContentSize, contentLayoutBounds to viewportBounds)
+    // todo: contentAlignment isn't a state!
+    Pair(
+      contentAlignment to unscaledContentSize,
+      Triple(contentLayoutBounds, viewportBounds, contentScale)
+    )
   }
 
   @Suppress("NAME_SHADOWING")
@@ -104,7 +110,7 @@ class ZoomableViewportState internal constructor() {
     // TODO: should ZoomableViewport accept ContentScale as a param?
     //  1. It doesn't make a lot of sense to offer ContentScale.Crop for zoomable content.
     //  2. ContentScale.Fill performs a non-uniform scaling. Test that it works correctly.
-    val baseContentScale = ContentScale.Inside.computeScaleFactor(
+    val baseContentScale = contentScale.computeScaleFactor(
       srcSize = unscaledContentSize,
       dstSize = contentLayoutBounds.size,
     )
@@ -184,10 +190,6 @@ class ZoomableViewportState internal constructor() {
       panDelta = Offset.Zero,
       zoomDelta = 1f,
     )
-  }
-
-  internal fun setContentAlignment(alignment: Alignment) {
-    contentAlignment = alignment
   }
 
   /** todo: doc */
