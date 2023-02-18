@@ -94,8 +94,16 @@ class ZoomableViewportState internal constructor() {
   }
 
   @Suppress("NAME_SHADOWING")
-  internal fun onGesture(centroid: Offset, panDelta: Offset, zoomDelta: Float, rotationDelta: Float) {
-    cancelResetAnimation?.invoke()
+  internal fun onGesture(
+    centroid: Offset,
+    panDelta: Offset,
+    zoomDelta: Float,
+    rotationDelta: Float,
+    cancelAnyOngoingResetAnimation: Boolean = true
+  ) {
+    if (cancelAnyOngoingResetAnimation) {
+      cancelResetAnimation?.invoke()
+    }
 
     // TODO: should ZoomableViewport accept ContentScale as a param?
     //  1. It doesn't make a lot of sense to offer ContentScale.Crop for zoomable content.
@@ -166,13 +174,14 @@ class ZoomableViewportState internal constructor() {
     }
 
     gestureTransformations = gestureTransformations.let { old ->
-      old.copy(
+      GestureTransformations(
         offset = newOffset.withZoom(-newZoom.finalZoom().maxScale) {
           val newContentBounds = Rect(offset = it, unscaledContentSize * newZoom.finalZoom().maxScale)
           newContentBounds.topLeftCoercedInside(viewportBounds, contentAlignment)
         },
         zoom = newZoom,
         rotationZ = old.rotationZ + rotationDelta,
+        lastCentroid = centroid,
       )
     }
   }
@@ -202,15 +211,9 @@ class ZoomableViewportState internal constructor() {
   }
 
   internal suspend fun animateResetOfTransformations() {
-    val current = gestureTransformations
-
-    val target = GestureTransformations.Empty.copy(
-      zoom = current.zoom!!.coercedIn(zoomRange)
-    )
-    println("---------------------------------")
-    println("time to reset")
-    println("current zoom = ${current.zoom}")
-    println("target zoom = ${target.zoom}")
+    val start = gestureTransformations
+    val endViewportZoom = start.zoom!!.coercedIn(zoomRange).viewportZoom
+    val endRotationZ = GestureTransformations.Empty.rotationZ
 
     coroutineScope {
       val animationJob = launch {
@@ -218,17 +221,16 @@ class ZoomableViewportState internal constructor() {
           targetValue = 1f,
           animationSpec = spring()
         ) {
-          gestureTransformations = gestureTransformations.copy(
-            zoom = current.zoom.copy(
-              viewportZoom = lerp(
-                start = current.zoom.viewportZoom,
-                stop = target.zoom!!.viewportZoom,
-                fraction = value
-              )
-            ),
-            rotationZ = lerp(start = current.rotationZ, stop = target.rotationZ, fraction = value),
-            // todo: uncomment and improve to only reset out-of-bounds offset.
-            //offset = androidx.compose.ui.geometry.lerp(start = current.offset, stop = target.offset, fraction = value),
+          val current = gestureTransformations
+          val targetViewportZoom = lerp(start = start.zoom.viewportZoom, stop = endViewportZoom, fraction = value)
+          val targetRotationZ = lerp(start = start.rotationZ, stop = endRotationZ, fraction = value)
+
+          onGesture(
+            centroid = start.lastCentroid,
+            panDelta = Offset.Zero,
+            zoomDelta = targetViewportZoom / current.zoom!!.viewportZoom,
+            rotationDelta = targetRotationZ + current.rotationZ,
+            cancelAnyOngoingResetAnimation = false,
           )
         }
       }
@@ -255,6 +257,7 @@ private data class GestureTransformations(
   val offset: Offset,
   val zoom: ContentZoom?,
   val rotationZ: Float,
+  val lastCentroid: Offset,
 ) {
 
   companion object {
@@ -264,6 +267,7 @@ private data class GestureTransformations(
       offset = Offset.Zero,
       zoom = null,
       rotationZ = 0f,
+      lastCentroid = Offset.Zero,
     )
   }
 }
