@@ -4,7 +4,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntSize
-import kotlin.math.min
 
 internal fun BitmapRegionTileGrid.Companion.generate(
   canvasSize: Size,
@@ -71,7 +70,7 @@ internal fun BitmapSampleSize.Companion.calculateFor(
 ): BitmapSampleSize {
   check(canvasSize.minDimension > 0f) { "Can't calculate a sample size for $canvasSize" }
 
-  val zoom = min(
+  val zoom = minOf(
     canvasSize.width / scaledImageSize.width,
     canvasSize.height / scaledImageSize.height
   )
@@ -80,7 +79,9 @@ internal fun BitmapSampleSize.Companion.calculateFor(
 
 /** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
 internal fun BitmapSampleSize.Companion.calculateFor(zoom: Float): BitmapSampleSize {
-  check(zoom > 0f) { "Can't calculate a sample size for an image that'll never be shown." }
+  if (zoom == 0f) {
+    return BitmapSampleSize(1)
+  }
 
   var sampleSize = 1
   while (sampleSize * 2 < (1 / zoom)) {

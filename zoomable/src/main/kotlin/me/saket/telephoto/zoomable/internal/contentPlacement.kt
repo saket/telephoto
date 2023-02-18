@@ -3,11 +3,8 @@ package me.saket.telephoto.zoomable.internal
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import kotlin.LazyThreadSafetyMode.NONE
-import kotlin.math.roundToInt
 
 internal fun Rect.topLeftCoercedInside(viewport: Rect, alignment: Alignment): Offset {
   return coerceInside(viewport, targetOffset = topLeft, alignment = alignment)

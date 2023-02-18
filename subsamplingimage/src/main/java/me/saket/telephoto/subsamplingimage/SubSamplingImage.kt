@@ -50,7 +50,7 @@ fun SubSamplingImage(
 
       if (SubSamplingImageState.showTileBounds) {
         drawRect(
-          color = Color.White,
+          color = Color.Black,
           topLeft = tile.offset.toOffset(),
           size = tile.size.toSize(),
           style = Stroke(width = density.run { 2.dp.toPx() })

@@ -18,6 +18,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.util.fastAny
@@ -105,11 +107,9 @@ fun rememberSubSamplingImageState(
           viewportBounds,
           bitmapLoader.cachedBitmaps()
         ) { transformation, viewportBounds, bitmaps ->
-          val zoom = transformation.scale * minOf(
-            canvasSize.width / decoder.imageSize.width,
-            canvasSize.height / decoder.imageSize.height
-          )
-          val sampleSize = BitmapSampleSize.calculateFor(zoom)
+          val zoom = transformation.scale
+
+          val sampleSize = BitmapSampleSize.calculateFor(zoom.maxScale)
 
           val foregroundTiles = tileGrid.foreground[sampleSize]?.fastMapNotNull { tile ->
             val drawBounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset)
@@ -154,6 +154,10 @@ fun rememberSubSamplingImageState(
 
   return state
 }
+
+// todo: move to dimens.kt
+private val ScaleFactor.maxScale: Float
+  get() = maxOf(scaleX, scaleY)
 
 @Composable
 private fun createDecoder(
@@ -203,6 +207,6 @@ class SubSamplingImageState internal constructor() {
 
   companion object {
     // Only used by tests.
-    internal var showTileBounds = false
+    internal var showTileBounds = true
   }
 }

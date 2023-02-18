@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +35,13 @@ fun ZoomableViewport(
   contentAlignment: Alignment = Alignment.Center,
   content: @Composable () -> Unit
 ) {
+  SideEffect {
+    state.setContentAlignment(contentAlignment)
+  }
+
   val zoomableModifier = if (state.isReadyToInteract) {
-    LaunchedEffect(contentAlignment) {
-      state.setContentAlignment(contentAlignment)
+    LaunchedEffect(state.thingsThatAffectContentPosition) {
+      state.refreshContentPosition()
     }
 
     val scope = rememberCoroutineScope()

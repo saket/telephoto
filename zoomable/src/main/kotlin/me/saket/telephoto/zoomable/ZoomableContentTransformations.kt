@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ScaleFactor
 
 /**
  * todo: doc.
@@ -13,31 +14,21 @@ import androidx.compose.ui.graphics.graphicsLayer
  * */
 data class ZoomableContentTransformations(
   val viewportSize: Size,
-  val scale: Float,
+  val scale: ScaleFactor,
   val rotationZ: Float,
   val offset: Offset,
-  val transformOrigin: TransformOrigin = when {
-    // Center content when it's zoomed out and appears smaller than its viewport.
-    scale < 1f -> TransformOrigin.Center
-    else -> TransformOrigin(0f, 0f)
-  },
+  val transformOrigin: TransformOrigin = TransformOriginAtZero,
 ) {
   companion object {
-    val Empty = ZoomableContentTransformations(
-      viewportSize = Size.Unspecified,
-      scale = 1f,
-      rotationZ = 0f,
-      offset = Offset.Zero,
-      transformOrigin = TransformOrigin.Center
-    )
+    private val TransformOriginAtZero = TransformOrigin(0f, 0f)
   }
 }
 
 fun Modifier.graphicsLayer(transformations: ZoomableContentTransformations): Modifier {
   // todo: optimize these. use graphicsLayer only when necessary.
   return graphicsLayer {
-    scaleX = transformations.scale
-    scaleY = transformations.scale
+    scaleX = transformations.scale.scaleX
+    scaleY = transformations.scale.scaleY
     rotationZ = transformations.rotationZ
     translationX = transformations.offset.x
     translationY = transformations.offset.y

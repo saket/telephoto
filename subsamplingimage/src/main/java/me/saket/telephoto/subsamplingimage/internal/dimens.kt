@@ -3,6 +3,7 @@ package me.saket.telephoto.subsamplingimage.internal
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.ceil
@@ -38,11 +39,11 @@ internal fun Float.toCeilInt(): Int {
   return ceil(this).toInt()
 }
 
-internal fun Rect.scaledAndOffsetBy(scale: Float, offset: Offset): Rect {
+internal fun Rect.scaledAndOffsetBy(scale: ScaleFactor, offset: Offset): Rect {
   return copy(
-    left = (left * scale) + offset.x,
-    right = (right * scale) + offset.x,
-    top = (top * scale) + offset.y,
-    bottom = (bottom * scale) + offset.y,
+    left = (left * scale.scaleX) + offset.x,
+    right = (right * scale.scaleX) + offset.x,
+    top = (top * scale.scaleY) + offset.y,
+    bottom = (bottom * scale.scaleY) + offset.y,
   )
 }

@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -66,7 +65,7 @@ class SampleActivity : AppCompatActivity() {
             }
           ) { contentPadding ->
             Box(Modifier.padding(contentPadding)) {
-              //ZoomableViewportSample()
+//              ZoomableViewportSample()
               SubSamplingImageSample()
             }
           }
@@ -84,21 +83,22 @@ class SampleActivity : AppCompatActivity() {
     ZoomableViewport(
       modifier = Modifier.fillMaxSize(),
       state = state,
-      clipToBounds = false
+      contentAlignment = Alignment.TopCenter,
     ) {
       AsyncImage(
         modifier = Modifier
-          .graphicsLayer(state.contentTransformations)
           .fillMaxWidth()
-          .wrapContentHeight(),
+          .wrapContentHeight()
+          .graphicsLayer(state.contentTransformations),
         model = ImageRequest.Builder(LocalContext.current)
-          .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d")
+          .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1500")
           .crossfade(true)
           .build(),
         contentDescription = null,
-        contentScale = ContentScale.FillWidth,
-        onState = { state.setUnscaledContentSize(it.painter?.intrinsicSize) }
-      )
+        // todo: this interferes with ZoomableViewport's content scale.
+        //  investigate if this a bug with coil.
+        //contentScale = ContentScale.Crop,
+        onState = { state.setUnscaledContentSize(it.painter?.intrinsicSize) })
     }
   }
 
