@@ -165,26 +165,25 @@ class ZoomableViewportState internal constructor() {
     //
     //              Move the centroid to the center
     //                  of panned content(?)
-    //                           |                                                    Scale
-    //                           |                                                      |                Move back
-    //                           |                                                      |           (+ new translation)
-    //                           |                                                      |                    |
-    //              _____________|_________________                             ________|_________   ________|_________
-    val newOffset = run {
-      // todo: above comments no longer align with code.
-      val visualNewZoom = newZoom.finalZoom().maxScale
-      val visualOldZoom = oldZoom.finalZoom().maxScale
-      (oldOffset + centroid / visualOldZoom) - (centroid / visualNewZoom + panDelta / visualOldZoom)
-    }
+    //                           |                            Scale
+    //                           |                              |                Move back
+    //                           |                              |           (+ new translation)
+    //                           |                              |                    |
+    //              _____________|_________________     ________|_________   ________|_________
+    val newOffset = (oldOffset + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
 
     gestureTransformation = GestureTransformation(
-      offset = newOffset.withZoom(-newZoom.finalZoom()) {
+      offset = newOffset.withZoomAndTranslate(-newZoom.finalZoom(), contentLayoutBounds.topLeft) {
         val newContentBounds = Rect(offset = it, unscaledContentSize * newZoom.finalZoom())
         newContentBounds.topLeftCoercedInside(viewportBounds, contentAlignment)
       },
       zoom = newZoom,
       lastCentroid = centroid,
     )
+  }
+
+  private operator fun Offset.div(zoom: ContentZoom): Offset {
+    return div(zoom.finalZoom().maxScale)
   }
 
   internal fun refreshContentPosition() {
@@ -256,6 +255,7 @@ internal data class ContentZoom(
   val baseZoomMultiplier: ScaleFactor,
   val viewportZoom: Float,
 ) {
+  // todo: doc
   fun finalZoom(): ScaleFactor {
     return baseZoomMultiplier * viewportZoom
   }
@@ -297,6 +297,6 @@ internal value class ZoomRange private constructor(
 
 // todo: improve doc.
 /** This is named along the lines of `Canvas#withTranslate()`. */
-private fun Offset.withZoom(zoom: ScaleFactor, action: (Offset) -> Offset): Offset {
-  return action(this * zoom) / zoom
+private fun Offset.withZoomAndTranslate(zoom: ScaleFactor, translate: Offset, action: (Offset) -> Offset): Offset {
+  return (action((this * zoom) + translate) - translate) / zoom
 }

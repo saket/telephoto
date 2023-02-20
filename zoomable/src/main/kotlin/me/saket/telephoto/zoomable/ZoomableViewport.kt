@@ -60,10 +60,11 @@ fun ZoomableViewport(
   }
 
   Box(
-    modifier
+    modifier = modifier
       .let { if (clipToBounds) it.clipToBounds() else it }
       .onSizeChanged { state.viewportBounds = Rect(Offset.Zero, size = it.toSize()) }
-      .then(zoomableModifier)
+      .then(zoomableModifier),
+    contentAlignment = contentAlignment,
   ) {
     Box(
       modifier = Modifier.onGloballyPositioned { state.contentLayoutBounds = it.boundsInParent() },

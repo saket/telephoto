@@ -188,7 +188,7 @@ class SubSamplingImageTest {
 
     composeTestRule.setContent {
       ScreenScaffold {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
+        BoxWithConstraints {
           val imageState = rememberSubSamplingImageState(
             imageSource = ImageSource.asset("path.jpg"),
             transformation = ZoomableContentTransformation(
@@ -203,6 +203,36 @@ class SubSamplingImageTest {
           SubSamplingImage(
             modifier = Modifier.fillMaxSize(),
             state = imageState,
+            contentDescription = null,
+          )
+        }
+      }
+    }
+
+    onImageDisplayed.withLock {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+  }
+
+  @Test fun center_aligned_and_wrap_content() = runTest {
+    val onImageDisplayed = Mutex(locked = true)
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        val state = rememberZoomableViewportState()
+        ZoomableViewport(
+          state = state,
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.Center,
+          contentScale = ContentScale.Inside,
+        ) {
+          SubSamplingImage(
+            modifier = Modifier.wrapContentSize(),
+            state = rememberSubSamplingImageState(
+              viewportState = state,
+              imageSource = ImageSource.asset("smol.jpg"),
+              eventListener = onImageDisplayed { onImageDisplayed.unlock() },
+            ),
             contentDescription = null,
           )
         }
