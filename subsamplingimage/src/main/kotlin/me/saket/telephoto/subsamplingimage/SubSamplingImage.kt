@@ -1,6 +1,6 @@
 package me.saket.telephoto.subsamplingimage
 
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
-import me.saket.telephoto.subsamplingimage.internal.discardFractionalParts
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
 @Composable
@@ -59,7 +58,7 @@ fun SubSamplingImage(
     }
   }
 
-  Spacer(
+  Box(
     modifier
       .contentDescription(contentDescription)
       .onSizeChanged { state.canvasSize = it.toSize() }
@@ -85,7 +84,7 @@ private fun Modifier.contentDescription(contentDescription: String?): Modifier {
 @Suppress("NAME_SHADOWING")
 private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size): Modifier {
   if (imageSize.isUnspecified) {
-    return Modifier
+    return this
   }
 
   return layout { measurable, constraints ->

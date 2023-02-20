@@ -18,7 +18,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -31,7 +30,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -42,17 +40,18 @@ import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
+import me.saket.telephoto.zoomable.ZoomableContentTransformations
 import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
 
 // todo: doc.
+// todo: move this to its own module.
 @Composable
 fun rememberSubSamplingImageState(
   viewportState: ZoomableViewportState,
   imageSource: ImageSource,
   eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
 ): SubSamplingImageState {
-  val eventListener by rememberUpdatedState(eventListener)
 
   val viewportEventListener = remember(eventListener) {
     object : SubSamplingImageEventListener by eventListener {
@@ -60,19 +59,32 @@ fun rememberSubSamplingImageState(
         eventListener.onImageLoaded(imageSize)
         viewportState.setUnscaledContentSize(imageSize)
       }
-
-      override fun onImageDisplayed() {
-        eventListener.onImageDisplayed()
-      }
     }
   }
 
-  val decoder: ImageRegionDecoder? by createDecoder(imageSource, viewportEventListener)
+  return rememberSubSamplingImageState(
+    imageSource = imageSource,
+    transformation = viewportState.contentTransformations,
+    eventListener = viewportEventListener,
+  )
+}
+
+// todo: doc.
+@Composable
+fun rememberSubSamplingImageState(
+  imageSource: ImageSource,
+  transformation: ZoomableContentTransformations,
+  eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
+): SubSamplingImageState {
+  val eventListener by rememberUpdatedState(eventListener)
+  val transformation by rememberUpdatedState(transformation)
+
+  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, eventListener)
 
   val state = remember {
     SubSamplingImageState()
   }.also {
-    it.eventListener = viewportEventListener
+    it.eventListener = eventListener
   }
 
   LaunchedEffect(state, decoder) {
@@ -82,11 +94,11 @@ fun rememberSubSamplingImageState(
 
   decoder?.let { decoder ->
     state.imageSize = decoder.imageSize
+    val transformations = remember { snapshotFlow { transformation } }
 
     val scope = rememberCoroutineScope()
-    LaunchedEffect(state, viewportState, decoder) {
+    LaunchedEffect(state, transformations, decoder) {
       val bitmapLoader = BitmapLoader(decoder, scope)
-      val transformations = snapshotFlow { viewportState.contentTransformations }
       val canvasSizeChanges = snapshotFlow { state.canvasSize }
         .filter { it.isSpecified }
         .filter { it.minDimension > 0f }
@@ -107,11 +119,12 @@ fun rememberSubSamplingImageState(
           viewportBounds,
           bitmapLoader.cachedBitmaps()
         ) { transformation, viewportBounds, bitmaps ->
-          val zoom = transformation.scale
+          val zoom = transformation.scale // todo: inline!
 
           val sampleSize = BitmapSampleSize.calculateFor(zoom.maxScale)
+          val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
 
-          val foregroundTiles = tileGrid.foreground[sampleSize]?.fastMapNotNull { tile ->
+          val foregroundTiles = foregroundRegions.fastMapNotNull { tile ->
             val drawBounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset)
             if (drawBounds.overlaps(viewportBounds)) {
               CanvasRegionTile(
@@ -122,7 +135,7 @@ fun rememberSubSamplingImageState(
             } else {
               null
             }
-          }.orEmpty()
+          }
 
           // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
           // a fallback. The base tile will hide again when all bitmaps have been loaded.
@@ -130,21 +143,23 @@ fun rememberSubSamplingImageState(
 
           // The base tile needs to be always present even if it isn't going to
           // be drawn. Otherwise BitmapLoader will remove its bitmap from cache.
-          val baseTile = tileGrid.base.let { tile ->
-            CanvasRegionTile(
-              bounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset),
-              bitmap = if (canDrawBaseTile) bitmaps[tile] else null,
-              bitmapRegion = tile,
-            )
-          }
+          val baseTile = if (canDrawBaseTile) {
+            tileGrid.base.let { tile ->
+              CanvasRegionTile(
+                bounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset),
+                bitmap = bitmaps[tile],
+                bitmapRegion = tile,
+              )
+            }
+          } else null
 
-          return@combine (listOf(baseTile) + foregroundTiles)
+          // Side effect, ew :(.
+          bitmapLoader.loadOrUnloadForTiles(listOf(tileGrid.base) + foregroundRegions)
+
+          return@combine (listOfNotNull(baseTile) + foregroundTiles)
         }
       }
         .distinctUntilChanged()
-        .onEach { tiles ->
-          bitmapLoader.loadOrUnloadForTiles(tiles.map { it.bitmapRegion })
-        }
         .flowOn(Dispatchers.IO)
         .collect { tiles ->
           state.tiles = tiles
@@ -160,7 +175,7 @@ private val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)
 
 @Composable
-private fun createDecoder(
+private fun createRegionDecoder(
   imageSource: ImageSource,
   eventListener: SubSamplingImageEventListener
 ): State<ImageRegionDecoder?> {
@@ -207,6 +222,6 @@ class SubSamplingImageState internal constructor() {
 
   companion object {
     // Only used by tests.
-    internal var showTileBounds = true
+    internal var showTileBounds = false
   }
 }
