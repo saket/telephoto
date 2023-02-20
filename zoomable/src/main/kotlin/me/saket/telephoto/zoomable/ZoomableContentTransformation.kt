@@ -12,7 +12,7 @@ import androidx.compose.ui.layout.ScaleFactor
  *
  * All transformations are done from `0,0`.
  * */
-data class ZoomableContentTransformations(
+data class ZoomableContentTransformation(
   val viewportSize: Size,
   val scale: ScaleFactor,
   val rotationZ: Float,
@@ -24,7 +24,7 @@ data class ZoomableContentTransformations(
   }
 }
 
-fun Modifier.graphicsLayer(transformations: ZoomableContentTransformations): Modifier {
+fun Modifier.graphicsLayer(transformations: ZoomableContentTransformation): Modifier {
   // todo: optimize these. use graphicsLayer only when necessary.
   return graphicsLayer {
     scaleX = transformations.scale.scaleX

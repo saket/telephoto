@@ -40,7 +40,7 @@ import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
-import me.saket.telephoto.zoomable.ZoomableContentTransformations
+import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
 
@@ -64,7 +64,7 @@ fun rememberSubSamplingImageState(
 
   return rememberSubSamplingImageState(
     imageSource = imageSource,
-    transformation = viewportState.contentTransformations,
+    transformation = viewportState.contentTransformation,
     eventListener = viewportEventListener,
   )
 }
@@ -73,7 +73,7 @@ fun rememberSubSamplingImageState(
 @Composable
 fun rememberSubSamplingImageState(
   imageSource: ImageSource,
-  transformation: ZoomableContentTransformations,
+  transformation: ZoomableContentTransformation,
   eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
 ): SubSamplingImageState {
   val eventListener by rememberUpdatedState(eventListener)

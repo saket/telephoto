@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import me.saket.telephoto.zoomable.GestureTransformations.Companion.ZeroScaleFactor
+import me.saket.telephoto.zoomable.GestureTransformation.Companion.ZeroScaleFactor
 import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
 
 /** todo: doc */
@@ -42,9 +42,9 @@ class ZoomableViewportState internal constructor() {
    *
    * todo: doc
    */
-  val contentTransformations: ZoomableContentTransformations by derivedStateOf {
-    gestureTransformations.let {
-      ZoomableContentTransformations(
+  val contentTransformation: ZoomableContentTransformation by derivedStateOf {
+    gestureTransformation.let {
+      ZoomableContentTransformation(
         viewportSize = viewportBounds.size,
         scale = it.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = -it.offset * (it.zoom?.finalZoom()?.maxScale ?: 1f),
@@ -53,7 +53,7 @@ class ZoomableViewportState internal constructor() {
     }
   }
 
-  private var gestureTransformations by mutableStateOf(GestureTransformations.Empty)
+  private var gestureTransformation by mutableStateOf(GestureTransformation.Empty)
   private var cancelResetAnimation: (() -> Unit)? = null
 
   internal var zoomRange = ZoomRange.Default  // todo: explain why this isn't a state?
@@ -115,7 +115,7 @@ class ZoomableViewportState internal constructor() {
       dstSize = contentLayoutBounds.size,
     )
 
-    val oldZoom = gestureTransformations.zoom
+    val oldZoom = gestureTransformation.zoom
       ?: ContentZoom(
         baseZoomMultiplier = baseContentScale,
         viewportZoom = 1f
@@ -137,7 +137,7 @@ class ZoomableViewportState internal constructor() {
       baseZoomMultiplier = baseContentScale,
       viewportZoom = oldZoom.viewportZoom * zoomDelta
     )
-    val oldOffset = gestureTransformations.offset
+    val oldOffset = gestureTransformation.offset
 
     // Copied from androidx samples:
     // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
@@ -173,7 +173,7 @@ class ZoomableViewportState internal constructor() {
       (oldOffset + centroid / visualOldZoom) - (centroid / visualNewZoom + panDelta / visualOldZoom)
     }
 
-    gestureTransformations = GestureTransformations(
+    gestureTransformation = GestureTransformation(
       offset = newOffset.withZoom(-newZoom.finalZoom()) {
         val newContentBounds = Rect(offset = it, unscaledContentSize * newZoom.finalZoom())
         newContentBounds.topLeftCoercedInside(viewportBounds, contentAlignment)
@@ -203,7 +203,7 @@ class ZoomableViewportState internal constructor() {
   }
 
   internal suspend fun animateResetOfTransformations() {
-    val start = gestureTransformations
+    val start = gestureTransformation
     val endViewportZoom = start.zoom!!.coercedIn(zoomRange).viewportZoom
 
     coroutineScope {
@@ -212,7 +212,7 @@ class ZoomableViewportState internal constructor() {
           targetValue = 1f,
           animationSpec = spring()
         ) {
-          val current = gestureTransformations
+          val current = gestureTransformation
           val targetViewportZoom = lerp(start = start.zoom.viewportZoom, stop = endViewportZoom, fraction = value)
 
           onGesture(
@@ -247,7 +247,7 @@ private operator fun Size.times(scale: ScaleFactor): Size {
   )
 }
 
-private data class GestureTransformations(
+private data class GestureTransformation(
   val offset: Offset,
   val zoom: ContentZoom?,
   val lastCentroid: Offset,
@@ -256,7 +256,7 @@ private data class GestureTransformations(
   companion object {
     val ZeroScaleFactor = ScaleFactor(0f, 0f)
 
-    val Empty = GestureTransformations(
+    val Empty = GestureTransformation(
       offset = Offset.Zero,
       zoom = null,
       lastCentroid = Offset.Zero,

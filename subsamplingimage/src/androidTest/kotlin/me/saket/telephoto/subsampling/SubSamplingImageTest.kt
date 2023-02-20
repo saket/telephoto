@@ -30,7 +30,7 @@ import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageEventListener
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
-import me.saket.telephoto.zoomable.ZoomableContentTransformations
+import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.rememberZoomableViewportState
 import org.junit.Before
@@ -191,7 +191,7 @@ class SubSamplingImageTest {
         BoxWithConstraints(Modifier.fillMaxSize()) {
           val imageState = rememberSubSamplingImageState(
             imageSource = ImageSource.asset("path.jpg"),
-            transformation = ZoomableContentTransformations(
+            transformation = ZoomableContentTransformation(
               viewportSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
               scale = ScaleFactor(scaleX = 0.48678285f, scaleY = 0.48678285f),
               rotationZ = 0f,
