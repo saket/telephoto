@@ -2,9 +2,11 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,11 +70,16 @@ fun ZoomableViewport(
   ) {
     Box(
       modifier = Modifier.onGloballyPositioned { state.contentLayoutBounds = it.boundsInParent() },
-      content = { EmptyZoomableViewportScope.content() }
+      content = {
+        val viewportScope = remember(this) { RealZoomableViewportScope(boxScope = this) }
+        viewportScope.content()
+      }
     )
   }
 }
 
-interface ZoomableViewportScope
+interface ZoomableViewportScope : BoxScope
 
-private object EmptyZoomableViewportScope : ZoomableViewportScope
+private class RealZoomableViewportScope(
+  val boxScope: BoxScope
+) : ZoomableViewportScope, BoxScope by boxScope
