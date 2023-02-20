@@ -28,10 +28,12 @@ internal data class CanvasRegionTile(
   ) : this(
     bitmap = bitmap,
     bitmapRegion = bitmapRegion,
-    // Convert floats to ints by choosing their ceiling value to avoid gaps between tiles.
-    // This may cause tiles to overlap by a pixel, but the result looks okay to my eyes.
-    offset = bounds.topLeft.toCeilIntOffset(),
-    size = bounds.size.toCeilIntSize(),
+    // Canvas only accepts integers so fractional values must be discarded.
+    // This is okay because if any fractional part was present and discarded,
+    // the next tile will also move back by a pixel. This would cause the last
+    // tiles on X and Y axes to be 1px short, but that's unnoticeable to eyes.
+    offset = bounds.discardFractionalValues().topLeft,
+    size = bounds.discardFractionalValues().size,
   )
 }
 
