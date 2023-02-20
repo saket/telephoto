@@ -47,3 +47,6 @@ internal fun Rect.discardFractionalValues(): IntRect {
     bottom = bottom.toInt(),
   )
 }
+
+internal val ScaleFactor.maxScale: Float
+  get() = maxOf(scaleX, scaleY)

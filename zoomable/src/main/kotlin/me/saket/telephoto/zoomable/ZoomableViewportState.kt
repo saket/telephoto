@@ -23,7 +23,11 @@ import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.GestureTransformation.Companion.ZeroScaleFactor
+import me.saket.telephoto.zoomable.internal.div
+import me.saket.telephoto.zoomable.internal.maxScale
+import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
+import me.saket.telephoto.zoomable.internal.unaryMinus
 
 /** todo: doc */
 @Composable
@@ -231,22 +235,6 @@ class ZoomableViewportState internal constructor() {
   }
 }
 
-// todo: move to dimens.kt
-private operator fun ScaleFactor.unaryMinus(): ScaleFactor {
-  return this * -1f
-}
-
-// todo: move to dimens.kt
-private val ScaleFactor.maxScale: Float get() = maxOf(scaleX, scaleY)
-
-// todo: move to dimens.kt
-private operator fun Size.times(scale: ScaleFactor): Size {
-  return Size(
-    width = width * scale.scaleX,
-    height = height * scale.scaleY,
-  )
-}
-
 private data class GestureTransformation(
   val offset: Offset,
   val zoom: ContentZoom?,
@@ -311,15 +299,4 @@ internal value class ZoomRange private constructor(
 /** This is named along the lines of `Canvas#withTranslate()`. */
 private fun Offset.withZoom(zoom: ScaleFactor, action: (Offset) -> Offset): Offset {
   return action(this * zoom) / zoom
-}
-
-// todo: move to dimens.kt
-private operator fun Offset.times(factor: ScaleFactor): Offset {
-  return Offset(x = x * factor.scaleX, y = y * factor.scaleY)
-}
-
-
-// todo: move to dimens.kt
-private operator fun Offset.div(factor: ScaleFactor): Offset {
-  return Offset(x = x / factor.scaleX, y = y / factor.scaleY)
 }

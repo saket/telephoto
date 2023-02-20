@@ -39,6 +39,7 @@ import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
+import me.saket.telephoto.subsamplingimage.internal.maxScale
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableViewportState
@@ -167,10 +168,6 @@ fun rememberSubSamplingImageState(
 
   return state
 }
-
-// todo: move to dimens.kt
-private val ScaleFactor.maxScale: Float
-  get() = maxOf(scaleX, scaleY)
 
 @Composable
 private fun createRegionDecoder(
