@@ -119,13 +119,11 @@ fun rememberSubSamplingImageState(
           viewportBounds,
           bitmapLoader.cachedBitmaps()
         ) { transformation, viewportBounds, bitmaps ->
-          val zoom = transformation.scale // todo: inline!
-
-          val sampleSize = BitmapSampleSize.calculateFor(zoom.maxScale)
+          val sampleSize = BitmapSampleSize.calculateFor(transformation.scale.maxScale)
           val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
 
           val foregroundTiles = foregroundRegions.fastMapNotNull { tile ->
-            val drawBounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset)
+            val drawBounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset)
             if (drawBounds.overlaps(viewportBounds)) {
               CanvasRegionTile(
                 bounds = drawBounds,
@@ -146,7 +144,7 @@ fun rememberSubSamplingImageState(
           val baseTile = if (canDrawBaseTile) {
             tileGrid.base.let { tile ->
               CanvasRegionTile(
-                bounds = tile.bounds.scaledAndOffsetBy(zoom, transformation.offset),
+                bounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset),
                 bitmap = bitmaps[tile],
                 bitmapRegion = tile,
               )
