@@ -1,7 +1,5 @@
 package me.saket.telephoto.zoomable
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
@@ -13,16 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.input.pointer.AwaitPointerEventScope
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.toSize
-import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.internal.onAllPointersUp
 
 /**
  * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
@@ -35,7 +31,7 @@ fun ZoomableViewport(
   clipToBounds: Boolean = true,
   contentAlignment: Alignment = Alignment.Center,
   contentScale: ContentScale,
-  content: @Composable () -> Unit
+  content: @Composable ZoomableViewportScope.() -> Unit
 ) {
   SideEffect {
     state.contentScale = contentScale
@@ -71,27 +67,11 @@ fun ZoomableViewport(
   ) {
     Box(
       modifier = Modifier.onGloballyPositioned { state.contentLayoutBounds = it.boundsInParent() },
-      content = { content() }
+      content = { EmptyZoomableViewportScope.content() }
     )
   }
 }
 
-private fun Modifier.onAllPointersUp(block: () -> Unit): Modifier {
-  return pointerInput(Unit) {
-    awaitEachGesture {
-      awaitFirstDown(requireUnconsumed = false)
-      awaitAllPointersUp()
-      block()
-    }
-  }
-}
+interface ZoomableViewportScope
 
-/** Waits for all pointers to be up before returning. */
-private suspend fun AwaitPointerEventScope.awaitAllPointersUp() {
-  val allPointersDown = currentEvent.changes.fastAny { it.pressed }
-  if (allPointersDown) {
-    do {
-      val events = awaitPointerEvent(PointerEventPass.Final)
-    } while (events.changes.fastAny { it.pressed })
-  }
-}
+private object EmptyZoomableViewportScope : ZoomableViewportScope
