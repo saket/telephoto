@@ -30,7 +30,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
-import me.saket.telephoto.subsamplingimage.SubsamplingScaleImageView
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.graphicsLayer
@@ -43,16 +42,6 @@ class SampleActivity : AppCompatActivity() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
     super.onCreate(savedInstanceState)
 
-    if (false) {
-      setContentView(
-        SubsamplingScaleImageView(this).also {
-          it.layoutParams =
-            ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-          it.setImage(ImageSource.asset("smol.jpg"))
-          it.setBackgroundColor(Color.DarkGray.toArgb())
-        }
-      )
-    } else {
       setContent {
         TelephotoTheme {
           Scaffold(
