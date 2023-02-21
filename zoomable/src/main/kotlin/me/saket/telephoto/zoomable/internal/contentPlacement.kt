@@ -10,6 +10,7 @@ internal fun Rect.topLeftCoercedInside(viewport: Rect, alignment: Alignment): Of
   return coerceInside(viewport, targetOffset = topLeft, alignment = alignment)
 }
 
+// todo: doc.
 // TODO: consider inlining this into topLeftCoercedInside().
 internal fun Rect.coerceInside(
   viewport: Rect,
@@ -23,7 +24,7 @@ internal fun Rect.coerceInside(
     alignment.align(
       size = size.roundToIntSize(),
       space = viewport.size.roundToIntSize(),
-      layoutDirection = LayoutDirection.Ltr
+      layoutDirection = LayoutDirection.Ltr // todo: accept this as a param.
     )
   }
 

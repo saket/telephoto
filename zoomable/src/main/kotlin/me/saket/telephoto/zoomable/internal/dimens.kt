@@ -15,6 +15,10 @@ internal operator fun Size.times(scale: ScaleFactor) =
     height = height * scale.scaleY,
   )
 
+internal fun Size.discardFractionalParts(): IntSize {
+  return IntSize(width = width.toInt(), height = height.toInt())
+}
+
 internal val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)
 

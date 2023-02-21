@@ -214,7 +214,7 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun center_aligned_and_wrap_content() = runTest {
+  @Test fun center_aligned_and_wrap_content() = runTest(1.seconds) {
     val onImageDisplayed = Mutex(locked = true)
 
     composeTestRule.setContent {
@@ -242,6 +242,10 @@ class SubSamplingImageTest {
     onImageDisplayed.withLock {
       dropshots.assertSnapshot(composeTestRule.activity)
     }
+  }
+
+  @Test fun bitmaps_for_invisible_tiles_should_not_be_kept_in_memory() = runTest(1.seconds) {
+    // todo.
   }
 
   @Composable

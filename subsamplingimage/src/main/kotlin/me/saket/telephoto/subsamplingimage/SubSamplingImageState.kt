@@ -18,7 +18,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.util.fastAny
@@ -41,6 +40,7 @@ import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.maxScale
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
+import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
@@ -58,7 +58,14 @@ fun rememberSubSamplingImageState(
     object : SubSamplingImageEventListener by eventListener {
       override fun onImageLoaded(imageSize: Size) {
         eventListener.onImageLoaded(imageSize)
-        viewportState.setUnscaledContentSize(imageSize)
+
+        // Assuming that there is no padding between this composable
+        // and its viewport, the content location is reported as 0,0
+        // because SubSamplingImage draws its content from top-start.
+        val imageBoundsInParent = Rect(Offset.Zero, imageSize)
+        viewportState.setContentLocation(object : ZoomableContentLocation {
+          override fun boundsIn(parent: Rect): Rect = imageBoundsInParent
+        })
       }
     }
   }
