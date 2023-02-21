@@ -6,8 +6,17 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.LayoutDirection
 import kotlin.LazyThreadSafetyMode.NONE
 
-internal fun Rect.topLeftCoercedInside(viewport: Rect, alignment: Alignment): Offset {
-  return coerceInside(viewport, targetOffset = topLeft, alignment = alignment)
+internal fun Rect.topLeftCoercedInside(
+  viewport: Rect,
+  alignment: Alignment,
+  layoutDirection: LayoutDirection,
+): Offset {
+  return coerceInside(
+    viewport = viewport,
+    targetOffset = topLeft,
+    alignment = alignment,
+    layoutDirection = layoutDirection
+  )
 }
 
 // todo: doc.
@@ -16,6 +25,7 @@ internal fun Rect.coerceInside(
   viewport: Rect,
   targetOffset: Offset,
   alignment: Alignment,
+  layoutDirection: LayoutDirection,
 ): Offset {
   val alignedOffset by lazy(NONE) {
     // Rounding of floats to ints will cause some loss in precision because the final
@@ -24,7 +34,7 @@ internal fun Rect.coerceInside(
     alignment.align(
       size = size.roundToIntSize(),
       space = viewport.size.roundToIntSize(),
-      layoutDirection = LayoutDirection.Ltr // todo: accept this as a param.
+      layoutDirection = layoutDirection,
     )
   }
 

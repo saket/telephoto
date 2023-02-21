@@ -4,8 +4,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.LayoutDirection
 import com.google.common.truth.Truth.assertThat
-import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
+import me.saket.telephoto.zoomable.internal.coerceInside
 import org.junit.Test
 
 class CoerceInsideTest {
@@ -115,4 +116,13 @@ class CoerceInsideTest {
       )
     ).isEqualTo(Offset(x = -100f, y = 0f))
   }
+}
+
+private fun Rect.topLeftCoercedInside(viewport: Rect, alignment: Alignment): Offset {
+  return coerceInside(
+    viewport,
+    targetOffset = topLeft,
+    alignment = alignment,
+    layoutDirection = LayoutDirection.Ltr
+  )
 }

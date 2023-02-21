@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -60,6 +61,7 @@ class ZoomableViewportState internal constructor() {
 
   internal lateinit var contentScale: ContentScale
   internal lateinit var contentAlignment: Alignment
+  internal lateinit var layoutDirection: LayoutDirection
 
   /**
    * Raw size of the image/video/anything without any scaling applied.
@@ -107,7 +109,7 @@ class ZoomableViewportState internal constructor() {
       cancelResetAnimation?.invoke()
     }
 
-    val unscaledContentBounds = unscaledContentLocation.boundsIn(contentLayoutBounds)
+    val unscaledContentBounds = unscaledContentLocation.boundsIn(contentLayoutBounds, layoutDirection)
     // TODO: should ZoomableViewport accept ContentScale as a param?
     //  1. It doesn't make a lot of sense to offer ContentScale.Crop for zoomable content.
     //  2. ContentScale.Fill performs a non-uniform scaling. Test that it works correctly.
@@ -182,7 +184,7 @@ class ZoomableViewportState internal constructor() {
         // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
         newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
           val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom.finalZoom())
-          expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment)
+          expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
         }
       },
       zoom = newZoom,

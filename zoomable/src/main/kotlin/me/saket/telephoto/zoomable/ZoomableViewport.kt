@@ -18,6 +18,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.onAllPointersUp
@@ -35,9 +36,11 @@ fun ZoomableViewport(
   contentScale: ContentScale,
   content: @Composable ZoomableViewportScope.() -> Unit
 ) {
+  val layoutDirection = LocalLayoutDirection.current
   SideEffect {
     state.contentScale = contentScale
     state.contentAlignment = contentAlignment
+    state.layoutDirection = layoutDirection
   }
 
   val zoomableModifier = if (state.isReadyToInteract) {

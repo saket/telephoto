@@ -20,6 +20,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -64,7 +65,7 @@ fun rememberSubSamplingImageState(
         // because SubSamplingImage draws its content from top-start.
         val imageBoundsInParent = Rect(Offset.Zero, imageSize)
         viewportState.setContentLocation(object : ZoomableContentLocation {
-          override fun boundsIn(parent: Rect): Rect = imageBoundsInParent
+          override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect = imageBoundsInParent
         })
       }
     }
