@@ -11,17 +11,26 @@ import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
 // todo: doc.
 interface ZoomableContentLocation {
+
   // todo: doc.
   fun boundsIn(parent: Rect, direction: LayoutDirection): Rect
 
   companion object {
     // todo: doc.
-    fun fitToBoundsAndAlignedToCenter(size: Size): ZoomableContentLocation {
-      return RelativeContentLocation(
-        size = size,
-        scale = ContentScale.Fit,
-        alignment = Alignment.Center,
-      )
+    fun fitToBoundsAndAlignedToCenter(size: Size?): ZoomableContentLocation {
+      if (size == null) {
+        return Unspecified
+      } else {
+        return RelativeContentLocation(
+          size = size,
+          scale = ContentScale.Fit,
+          alignment = Alignment.Center,
+        )
+      }
+    }
+
+    internal val Unspecified = object : ZoomableContentLocation {
+      override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect = error("location is unspecified")
     }
   }
 }
@@ -48,10 +57,5 @@ internal data class RelativeContentLocation(
     )
   }
 }
-
-internal val ZoomableContentLocation.Companion.Unspecified
-  get() = object : ZoomableContentLocation {
-    override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect = error("location is unspecified")
-  }
 
 internal val ZoomableContentLocation.isSpecified get() = this !== ZoomableContentLocation.Unspecified

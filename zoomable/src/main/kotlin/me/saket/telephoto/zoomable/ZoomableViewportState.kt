@@ -4,6 +4,8 @@ import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -15,6 +17,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
@@ -31,9 +34,28 @@ import me.saket.telephoto.zoomable.internal.unaryMinus
 fun rememberZoomableViewportState(
   maxZoomFactor: Float = 1f,
 ): ZoomableViewportState {
-  return remember { ZoomableViewportState() }.apply {
-    this.zoomRange = ZoomRange(max = maxZoomFactor)
+  val state = remember { ZoomableViewportState() }
+
+  val layoutDirection = LocalLayoutDirection.current
+  SideEffect {
+    state.zoomRange = ZoomRange(max = maxZoomFactor)
+    state.layoutDirection = layoutDirection
   }
+
+  if (state.isReadyToInteract) {
+    LaunchedEffect(
+      state.viewportBounds,
+      state.contentLayoutBounds,
+      state.unscaledContentLocation,
+      state.contentAlignment,
+      state.contentScale,
+      state.layoutDirection,
+    ) {
+      state.refreshContentPosition()
+    }
+  }
+
+  return state
 }
 
 @Stable
@@ -68,7 +90,7 @@ class ZoomableViewportState internal constructor() {
    * Used only for determining whether the content can zoom any further.
    */
   // TODO: verify doc.
-  private var unscaledContentLocation by mutableStateOf(ZoomableContentLocation.Unspecified)
+  internal var unscaledContentLocation by mutableStateOf(ZoomableContentLocation.Unspecified)
 
   /**
    * Bounds of [ZoomableViewport]'s content composable in the layout hierarchy, without any scaling applied.
@@ -86,15 +108,6 @@ class ZoomableViewportState internal constructor() {
       && contentLayoutBounds != Rect.Zero
       && viewportBounds != Rect.Zero
       && ::contentAlignment.isInitialized
-  }
-
-  internal val thingsThatAffectContentPosition by derivedStateOf {
-    // todo: this doesn't look great.
-    // todo: contentAlignment isn't a state!
-    Pair(
-      contentAlignment to unscaledContentLocation,
-      Triple(contentLayoutBounds, viewportBounds, contentScale)
-    )
   }
 
   @Suppress("NAME_SHADOWING")
@@ -256,6 +269,7 @@ private data class GestureTransformation(
   }
 }
 
+// todo: doc
 internal data class ContentZoom(
   val baseZoomMultiplier: ScaleFactor,
   val viewportZoom: Float,

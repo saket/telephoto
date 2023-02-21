@@ -20,10 +20,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
@@ -67,25 +70,25 @@ class SampleActivity : AppCompatActivity() {
       modifier = Modifier.fillMaxSize(),
       state = state,
       contentAlignment = Alignment.Center,
-      contentScale = ContentScale.Inside,
+      contentScale = ContentScale.Fit,
     ) {
       if (false) {
-        //        AsyncImage(
-        //          modifier = Modifier
-        //            .graphicsLayer(state.contentTransformations)
-        //            .fillMaxSize()
-        //            //.wrapContentHeight()
-        //            ,
-        //          model = ImageRequest.Builder(LocalContext.current)
-        //            .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1500")
-        //            .crossfade(true)
-        //            .build(),
-        //          contentDescription = null,
-        //          // todo: this interferes with ZoomableViewport's content scale.
-        //          //  investigate if this a bug with coil.
-        //          //contentScale = ContentScale.Crop,
-        //          onState = { state.setUnscaledContentSize(it.painter?.intrinsicSize) }
-        //        )
+        AsyncImage(
+          modifier = Modifier
+            .graphicsLayer(state.contentTransformation)
+            .fillMaxSize(),
+          model = ImageRequest.Builder(LocalContext.current)
+            .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1500")
+            .crossfade(true)
+            .build(),
+          contentDescription = null,
+          // todo: this interferes with ZoomableViewport's content scale.
+          //  investigate if this a bug with coil.
+          contentScale = ContentScale.Fit,
+          onState = {
+            state.setContentLocation(ZoomableContentLocation.fitToBoundsAndAlignedToCenter(it.painter?.intrinsicSize))
+          }
+        )
       } else {
         val painter = painterResource(R.drawable.fox_smol)
         LaunchedEffect(painter) {
@@ -96,7 +99,7 @@ class SampleActivity : AppCompatActivity() {
 
         Image(
           modifier = Modifier
-            .wrapContentSize()
+            .fillMaxSize()
             .graphicsLayer(state.contentTransformation),
           painter = painter,
           contentDescription = null,
@@ -113,10 +116,10 @@ class SampleActivity : AppCompatActivity() {
       state = state,
       modifier = Modifier.fillMaxSize(),
       contentAlignment = Alignment.TopCenter,
-      contentScale = ContentScale.Inside,
+      contentScale = ContentScale.Crop,
     ) {
       SubSamplingImage(
-        modifier = Modifier.wrapContentSize(),
+        modifier = Modifier.fillMaxSize(),
         state = rememberSubSamplingImageState(
           viewportState = state,
           imageSource = ImageSource.asset("path.jpg"),

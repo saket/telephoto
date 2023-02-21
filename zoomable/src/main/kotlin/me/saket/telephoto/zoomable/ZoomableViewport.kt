@@ -4,7 +4,6 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -18,7 +17,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.onAllPointersUp
@@ -36,18 +34,12 @@ fun ZoomableViewport(
   contentScale: ContentScale,
   content: @Composable ZoomableViewportScope.() -> Unit
 ) {
-  val layoutDirection = LocalLayoutDirection.current
   SideEffect {
     state.contentScale = contentScale
     state.contentAlignment = contentAlignment
-    state.layoutDirection = layoutDirection
   }
 
   val zoomableModifier = if (state.isReadyToInteract) {
-    LaunchedEffect(state.thingsThatAffectContentPosition) {
-      state.refreshContentPosition()
-    }
-
     val scope = rememberCoroutineScope()
     Modifier
       .pointerInput(Unit) {
