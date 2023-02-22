@@ -54,8 +54,7 @@ fun rememberSubSamplingImageState(
   imageSource: ImageSource,
   eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
 ): SubSamplingImageState {
-
-  val viewportEventListener = remember(eventListener) {
+  val eventListener = remember(eventListener) {
     object : SubSamplingImageEventListener by eventListener {
       override fun onImageLoaded(imageSize: Size) {
         eventListener.onImageLoaded(imageSize)
@@ -73,8 +72,8 @@ fun rememberSubSamplingImageState(
 
   return rememberSubSamplingImageState(
     imageSource = imageSource,
+    eventListener = eventListener,
     transformation = viewportState.contentTransformation,
-    eventListener = viewportEventListener,
   )
 }
 
