@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -16,12 +17,11 @@ interface ZoomableContentLocation {
   fun boundsIn(parent: Rect, direction: LayoutDirection): Rect
 
   companion object {
-    // todo: doc.
+    @Stable
     fun fitToBoundsAndAlignedToCenter(size: Size?): ZoomableContentLocation {
-      if (size == null) {
-        return Unspecified
-      } else {
-        return RelativeContentLocation(
+      return when (size) {
+        null -> Unspecified
+        else -> RelativeContentLocation(
           size = size,
           scale = ContentScale.Fit,
           alignment = Alignment.Center,
@@ -29,8 +29,10 @@ interface ZoomableContentLocation {
       }
     }
 
+    @Stable
     internal val Unspecified = object : ZoomableContentLocation {
-      override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect = error("location is unspecified")
+      override fun boundsIn(parent: Rect, direction: LayoutDirection) =
+        error("location is unspecified")
     }
   }
 }
