@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable
+package me.saket.telephoto.viewport
 
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
@@ -19,7 +19,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
-import me.saket.telephoto.zoomable.internal.onAllPointersUp
+import me.saket.telephoto.viewport.internal.onAllPointersUp
 
 /**
  * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available

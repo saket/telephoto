@@ -30,9 +30,9 @@ import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageEventListener
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
-import me.saket.telephoto.zoomable.ZoomableContentTransformation
-import me.saket.telephoto.zoomable.ZoomableViewport
-import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import me.saket.telephoto.viewport.ZoomableContentTransformation
+import me.saket.telephoto.viewport.ZoomableViewport
+import me.saket.telephoto.viewport.rememberZoomableViewportState
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

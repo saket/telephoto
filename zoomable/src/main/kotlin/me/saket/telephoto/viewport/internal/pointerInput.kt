@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable.internal
+package me.saket.telephoto.viewport.internal
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown

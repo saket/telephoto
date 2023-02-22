@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable
+package me.saket.telephoto.viewport
 
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
@@ -8,7 +8,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
-import me.saket.telephoto.zoomable.internal.discardFractionalParts
+import me.saket.telephoto.viewport.internal.discardFractionalParts
 
 // todo: doc.
 interface ZoomableContentLocation {

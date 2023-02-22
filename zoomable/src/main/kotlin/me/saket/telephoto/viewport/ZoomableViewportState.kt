@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable
+package me.saket.telephoto.viewport
 
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateTo
@@ -22,13 +22,13 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import me.saket.telephoto.zoomable.GestureTransformation.Companion.ZeroScaleFactor
-import me.saket.telephoto.zoomable.internal.div
-import me.saket.telephoto.zoomable.internal.maxScale
-import me.saket.telephoto.zoomable.internal.roundToIntSize
-import me.saket.telephoto.zoomable.internal.times
-import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
-import me.saket.telephoto.zoomable.internal.unaryMinus
+import me.saket.telephoto.viewport.GestureTransformation.Companion.ZeroScaleFactor
+import me.saket.telephoto.viewport.internal.div
+import me.saket.telephoto.viewport.internal.maxScale
+import me.saket.telephoto.viewport.internal.roundToIntSize
+import me.saket.telephoto.viewport.internal.times
+import me.saket.telephoto.viewport.internal.topLeftCoercedInside
+import me.saket.telephoto.viewport.internal.unaryMinus
 
 /** todo: doc */
 @Composable

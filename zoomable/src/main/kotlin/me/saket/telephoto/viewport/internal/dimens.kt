@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable.internal
+package me.saket.telephoto.viewport.internal
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
