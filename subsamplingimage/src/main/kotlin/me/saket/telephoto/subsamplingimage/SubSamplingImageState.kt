@@ -86,7 +86,6 @@ fun rememberSubSamplingImageState(
 ): SubSamplingImageState {
   val eventListener by rememberUpdatedState(eventListener)
   val transformation by rememberUpdatedState(transformation)
-
   val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, eventListener)
 
   val state = remember {
@@ -160,7 +159,7 @@ fun rememberSubSamplingImageState(
           } else null
 
           // Side effect, ew :(.
-          bitmapLoader.loadOrUnloadForTiles(listOf(tileGrid.base) + foregroundRegions)
+          bitmapLoader.loadOrUnloadForTiles(listOf(tileGrid.base) + foregroundTiles.map { it.bitmapRegion })
 
           return@combine (listOfNotNull(baseTile) + foregroundTiles)
         }

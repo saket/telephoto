@@ -8,7 +8,10 @@ interface SubSamplingImageEventListener {
   // todo: find a better name because "loaded" sounds similar to "displayed".
   fun onImageLoaded(imageSize: Size) = Unit
 
+  // todo: docs.
   fun onImageLoadingFailed(e: IOException) = Unit
+
+  // todo: docs.
   fun onImageDisplayed() = Unit
 
   companion object {
