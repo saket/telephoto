@@ -88,7 +88,7 @@ class ZoomableViewportState internal constructor() {
   }
 
   private var gestureTransformation: GestureTransformation? by mutableStateOf(null)
-  private var cancelResetAnimation: (() -> Unit)? = null
+  private var cancelOngoingAnimation: (() -> Unit)? = null
 
   internal var zoomRange = ZoomRange.Default  // todo: explain why this isn't a state?
 
@@ -130,7 +130,7 @@ class ZoomableViewportState internal constructor() {
     cancelAnyOngoingResetAnimation: Boolean = true
   ) {
     if (cancelAnyOngoingResetAnimation) {
-      cancelResetAnimation?.invoke()
+      cancelOngoingAnimation?.invoke()
     }
 
     val unscaledContentBounds = unscaledContentLocation.boundsIn(
@@ -153,13 +153,11 @@ class ZoomableViewportState internal constructor() {
 
     val isZoomingOut = zoomDelta < 1f
     val isZoomingIn = zoomDelta > 1f
-    val isAtMinZoom = oldZoom.finalZoom().maxScale <= zoomRange.minZoom(baseZoomMultiplier = baseZoomMultiplier)
-    val isAtMaxZoom = oldZoom.finalZoom().maxScale >= zoomRange.maxZoom(baseZoomMultiplier = baseZoomMultiplier)
 
     // Apply elasticity to zoom once content can't zoom any further.
     val zoomDelta = when {
-      isAtMaxZoom && isZoomingIn -> 1f + zoomDelta / 250
-      isAtMinZoom && isZoomingOut -> 1f - zoomDelta / 500
+      isZoomingIn && oldZoom.isAtMaxZoom(zoomRange) -> 1f + zoomDelta / 250
+      isZoomingOut && oldZoom.isAtMinZoom(zoomRange) -> 1f - zoomDelta / 500
       else -> zoomDelta
     }
     val newZoom = ContentZoom(
@@ -255,9 +253,33 @@ class ZoomableViewportState internal constructor() {
     unscaledContentLocation = location
   }
 
+  internal suspend fun handleDoubleTapZoomTo(centroidInViewport: Offset) {
+    cancelOngoingAnimation?.invoke()
+
+    val currentZoom = gestureTransformation?.zoom ?: return
+    val targetZoomFactor = if (currentZoom.isAtMaxZoom(zoomRange)) {
+      zoomRange.minZoom(baseZoomMultiplier = currentZoom.baseZoomMultiplier)
+    } else {
+      zoomRange.maxZoom(baseZoomMultiplier = currentZoom.baseZoomMultiplier)
+    }
+    val targetViewportZoom = targetZoomFactor / (currentZoom.finalZoom().maxScale)
+
+    coroutineScope {
+      launch {
+        onGesture(
+          centroid = centroidInViewport,
+          panDelta = Offset.Zero,
+          zoomDelta = targetViewportZoom,
+          rotationDelta = 0f,
+          cancelAnyOngoingResetAnimation = true,
+        )
+      }
+    }
+  }
+
   internal suspend fun smoothlySettleOnGestureEnd() {
     val start = gestureTransformation!!
-    val endViewportZoom = start.zoom.coercedIn(zoomRange).viewportZoom
+    val targetViewportZoom = start.zoom.coercedIn(zoomRange).viewportZoom
 
     coroutineScope {
       val animationJob = launch {
@@ -266,18 +288,18 @@ class ZoomableViewportState internal constructor() {
           animationSpec = spring()
         ) {
           val current = gestureTransformation!!
-          val targetViewportZoom = lerp(start = start.zoom.viewportZoom, stop = endViewportZoom, fraction = value)
+          val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
           onGesture(
             centroid = start.lastCentroid,
             panDelta = Offset.Zero,
-            zoomDelta = targetViewportZoom / current.zoom.viewportZoom,
+            zoomDelta = newViewportZoom / current.zoom.viewportZoom,
             cancelAnyOngoingResetAnimation = false,
           )
         }
       }
-      cancelResetAnimation = { animationJob.cancel() }
+      cancelOngoingAnimation = { animationJob.cancel() }
       animationJob.invokeOnCompletion {
-        cancelResetAnimation = null
+        cancelOngoingAnimation = null
       }
     }
   }
@@ -305,14 +327,22 @@ internal data class ContentZoom(
   }
 
   // todo: should probably test this
-  fun coercedIn(limits: ZoomRange): ContentZoom {
+  fun coercedIn(range: ZoomRange): ContentZoom {
     return copy(
       baseZoomMultiplier = baseZoomMultiplier,
       viewportZoom = viewportZoom.coerceIn(
-        minimumValue = limits.minZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale,
-        maximumValue = limits.maxZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale
+        minimumValue = range.minZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale,
+        maximumValue = range.maxZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale
       )
     )
+  }
+
+  fun isAtMinZoom(range: ZoomRange): Boolean {
+    return finalZoom().maxScale <= range.minZoom(baseZoomMultiplier = baseZoomMultiplier)
+  }
+
+  fun isAtMaxZoom(range: ZoomRange): Boolean {
+    return finalZoom().maxScale >= range.maxZoom(baseZoomMultiplier = baseZoomMultiplier)
   }
 }
 
@@ -324,6 +354,7 @@ internal value class ZoomRange private constructor(
 ) {
   constructor(min: Float = 1f, max: Float) : this(min..max)
 
+  // todo: ZoomRange and ContentZoom are inter-dependent. minZoom() and maxZoom() should probably move to ContentZoom.
   internal fun minZoom(baseZoomMultiplier: ScaleFactor): Float {
     return range.start * baseZoomMultiplier.maxScale
   }

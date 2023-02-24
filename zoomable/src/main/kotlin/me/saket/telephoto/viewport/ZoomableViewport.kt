@@ -1,5 +1,6 @@
 package me.saket.telephoto.viewport
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -45,12 +46,22 @@ fun ZoomableViewport(
       .pointerInput(Unit) {
         detectTransformGestures(onGesture = state::onGesture)
       }
+      .pointerInput(Unit) {
+        detectTapGestures(
+          onDoubleTap = { centroid ->
+            scope.launch {
+              state.handleDoubleTapZoomTo(centroidInViewport = centroid)
+            }
+          }
+        )
+      }
       .onAllPointersUp {
         // Reset is performed in a new coroutine. The animation will be canceled
         // if TransformableState#transform() is called again by Modifier#transformable(). todo: this doc is outdated now.
-        scope.launch {
-          state.smoothlySettleOnGestureEnd()
-        }
+        // todo: uncomment this once it no longer cancels double tap to zoom.
+        //scope.launch {
+        //  state.smoothlySettleOnGestureEnd()
+        //}
       }
   } else {
     Modifier
