@@ -1,6 +1,7 @@
 package me.saket.telephoto.viewport
 
 import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
@@ -156,14 +157,31 @@ class ZoomableViewportState internal constructor() {
 
     // Apply elasticity to zoom once content can't zoom any further.
     val zoomDelta = when {
-      isZoomingIn && oldZoom.isAtMaxZoom(zoomRange) -> 1f + zoomDelta / 250
-      isZoomingOut && oldZoom.isAtMinZoom(zoomRange) -> 1f - zoomDelta / 500
+      isZoomingIn && oldZoom.isAtMaxZoom(zoomRange) -> {
+        val prevented = ContentZoom(
+          baseZoomMultiplier = baseZoomMultiplier,
+          viewportZoom = oldZoom.viewportZoom * zoomDelta
+        )
+        println("over zooming! can't go to $prevented")
+        1f + zoomDelta / 250
+      }
+
+      isZoomingOut && oldZoom.isAtMinZoom(zoomRange) -> {
+        val prevented = ContentZoom(
+          baseZoomMultiplier = baseZoomMultiplier,
+          viewportZoom = oldZoom.viewportZoom * zoomDelta
+        )
+        println("under zooming! can't go to $prevented")
+        1f - zoomDelta / 500
+      }
+
       else -> zoomDelta
     }
     val newZoom = ContentZoom(
       baseZoomMultiplier = baseZoomMultiplier,
       viewportZoom = oldZoom.viewportZoom * zoomDelta
     )
+    println("new zoom = $newZoom")
 
     val oldOffset = gestureTransformation.let {
       if (it != null) {
@@ -262,17 +280,36 @@ class ZoomableViewportState internal constructor() {
     } else {
       zoomRange.maxZoom(baseZoomMultiplier = currentZoom.baseZoomMultiplier)
     }
-    val targetViewportZoom = targetZoomFactor / (currentZoom.finalZoom().maxScale)
+
+    val start = gestureTransformation!!
+    val targetViewportZoom = targetZoomFactor / (currentZoom.baseZoomMultiplier.maxScale)
+
+    println("========================")
+    println("Double tapped!")
+    println("target vp zoom = $targetViewportZoom")
+    println("current zoom = $currentZoom")
 
     coroutineScope {
-      launch {
-        onGesture(
-          centroid = centroidInViewport,
-          panDelta = Offset.Zero,
-          zoomDelta = targetViewportZoom,
-          rotationDelta = 0f,
-          cancelAnyOngoingResetAnimation = true,
-        )
+      val animationJob = launch {
+        AnimationState(initialValue = 0f).animateTo(
+          targetValue = 1f,
+          animationSpec = spring(stiffness = Spring.StiffnessLow)
+        ) {
+          val current = gestureTransformation!!
+          val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
+
+          onGesture(
+            centroid = centroidInViewport,
+            panDelta = Offset.Zero,
+            zoomDelta = newViewportZoom / current.zoom.viewportZoom,
+            rotationDelta = 0f,
+            cancelAnyOngoingResetAnimation = false,
+          )
+        }
+      }
+      cancelOngoingAnimation = { animationJob.cancel() }
+      animationJob.invokeOnCompletion {
+        cancelOngoingAnimation = null
       }
     }
   }
