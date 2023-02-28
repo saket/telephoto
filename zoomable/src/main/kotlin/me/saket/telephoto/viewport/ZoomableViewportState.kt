@@ -55,12 +55,6 @@ fun rememberZoomableViewportState(
     ) {
       state.refreshContentPosition()
     }
-
-    LaunchedEffect(state.unscaledContentLocation) {
-      // Content was changed. Reset everything so
-      // that it is moved to its default position.
-      state.resetContentPosition()
-    }
   }
 
   return state
@@ -74,19 +68,14 @@ class ZoomableViewportState internal constructor() {
    * todo: doc
    */
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
-    gestureTransformation?.let {
+    gestureTransformation.let {
       ZoomableContentTransformation(
         viewportSize = viewportBounds.size,
-        scale = it.zoom.finalZoom(),
-        offset = -it.offset * it.zoom.finalZoom().maxScale,
+        scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
+        offset = if (it != null) -it.offset * it.zoom.finalZoom().maxScale else Offset.Zero,
         rotationZ = 0f,
       )
-    } ?: ZoomableContentTransformation(
-      viewportSize = viewportBounds.size,
-      scale = ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
-      offset = Offset.Zero,
-      rotationZ = 0f
-    )
+    }
   }
 
   private var gestureTransformation: GestureTransformation? by mutableStateOf(null)
@@ -249,7 +238,7 @@ class ZoomableViewportState internal constructor() {
   }
 
   // todo: doc
-  fun resetContentPosition() {
+  fun resetContentTransformation() {
     gestureTransformation = null
     if (isReadyToInteract) {
       refreshContentPosition()
@@ -259,6 +248,10 @@ class ZoomableViewportState internal constructor() {
   /** todo: doc */
   fun setContentLocation(location: ZoomableContentLocation) {
     unscaledContentLocation = location
+
+    // Content was changed. Reset everything so
+    // that it is moved to its default position.
+    resetContentTransformation()
   }
 
   internal suspend fun handleDoubleTapZoomTo(centroidInViewport: Offset) {
@@ -276,6 +269,7 @@ class ZoomableViewportState internal constructor() {
       viewportZoom = targetZoomFactor / (start.zoom.baseZoomMultiplier.maxScale)
     )
 
+    // todo: this piece of code is duplicated with onGesture.
     val targetOffset = run {
       val proposedOffset = (start.offset + centroidInViewport / start.zoom) - (centroidInViewport / targetZoom)
       val unscaledContentBounds = unscaledContentLocation.boundsIn(
