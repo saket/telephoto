@@ -7,11 +7,3 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-@Composable
-fun TelephotoTheme(content: @Composable () -> Unit) {
-  val context = LocalContext.current
-  MaterialTheme(
-    colorScheme = if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context),
-    content = content
-  )
-}

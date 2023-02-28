@@ -1,5 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+  id("com.android.application")
+  id("kotlin-android")
+  id("kotlin-parcelize")
+}
 
 android {
   namespace "me.saket.telephoto.sample"
@@ -31,4 +34,5 @@ dependencies {
   implementation "androidx.compose.material:material-icons-extended:$versions.composeUi"
 
   implementation "io.coil-kt:coil-compose:2.2.2"
+  implementation "com.bumble.appyx:core:1.0.4"
 }

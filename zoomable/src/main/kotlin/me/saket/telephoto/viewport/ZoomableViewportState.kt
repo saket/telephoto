@@ -352,12 +352,12 @@ class ZoomableViewportState internal constructor() {
   }
 }
 
+// todo: doc
 private data class GestureTransformation(
   val offset: Offset,
   val zoom: ContentZoom,
   val lastCentroid: Offset,
 ) {
-
   companion object {
     val ZeroScaleFactor = ScaleFactor(0f, 0f)
   }
