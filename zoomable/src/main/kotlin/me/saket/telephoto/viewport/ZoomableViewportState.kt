@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -91,7 +92,9 @@ class ZoomableViewportState internal constructor() {
   private var gestureTransformation: GestureTransformation? by mutableStateOf(null)
   private var cancelOngoingAnimation: (() -> Unit)? = null
 
-  internal var zoomRange = ZoomRange.Default  // todo: explain why this isn't a state?
+  // todo: explain why this isn't a state?
+  //  counter-arg: making this a state will allow live edit to work.
+  internal var zoomRange = ZoomRange.Default
 
   internal lateinit var contentScale: ContentScale
   internal lateinit var contentAlignment: Alignment
@@ -165,7 +168,6 @@ class ZoomableViewportState internal constructor() {
       baseZoomMultiplier = baseZoomMultiplier,
       viewportZoom = oldZoom.viewportZoom * zoomDelta
     )
-    println("new zoom = $newZoom")
 
     val oldOffset = gestureTransformation.let {
       if (it != null) {
@@ -192,13 +194,17 @@ class ZoomableViewportState internal constructor() {
     // We then compute what the new offset should be to keep the centroid
     // visually stationary for rotating and zooming, and also apply the pan.
     //
-    // This is comparable to performing a pre-translate + scale + post-translate on a Matrix.
+    // This is comparable to performing a pre-translate + scale + post-translate on
+    // a Matrix.
     //
     // I found this maths difficult to understand, so here's another explanation in
     // Ryan Harter's words:
     //
-    // The basic idea is that to scale around an arbitrary point, you translate so that that
-    // point is in the center, then you rotate, then scale, then move everything back.
+    // The basic idea is that to scale around an arbitrary point, you translate so that
+    // that point is in the center, then you rotate, then scale, then move everything back.
+    //
+    // Note to self: these values are divided by zoom because that's how the final offset
+    // for UI is calculated: -offset * zoom.
     //
     //              Move the centroid to the center
     //                  of panned content(?)
@@ -259,13 +265,32 @@ class ZoomableViewportState internal constructor() {
     cancelOngoingAnimation?.invoke()
 
     val start = gestureTransformation ?: return
-    val targetZoomFactor = if (start.zoom.isAtMaxZoom(zoomRange)) {
-      zoomRange.minZoom(baseZoomMultiplier = start.zoom.baseZoomMultiplier)
-    } else {
-      zoomRange.maxZoom(baseZoomMultiplier = start.zoom.baseZoomMultiplier)
-    }
+    val shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange)
 
-    val targetViewportZoom = targetZoomFactor / (start.zoom.baseZoomMultiplier.maxScale)
+    val targetZoomFactor = if (shouldZoomIn) {
+      zoomRange.maxZoom(baseZoomMultiplier = start.zoom.baseZoomMultiplier)
+    } else {
+      zoomRange.minZoom(baseZoomMultiplier = start.zoom.baseZoomMultiplier)
+    }
+    val targetZoom = start.zoom.copy(
+      viewportZoom = targetZoomFactor / (start.zoom.baseZoomMultiplier.maxScale)
+    )
+
+    val targetOffset = run {
+      val proposedOffset = (start.offset + centroidInViewport / start.zoom) - (centroidInViewport / targetZoom)
+      val unscaledContentBounds = unscaledContentLocation.boundsIn(
+        parent = contentLayoutBounds,
+        direction = layoutDirection
+      )
+
+      val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * targetZoom.finalZoom())
+
+      // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
+      proposedOffset.withZoomAndTranslate(zoom = -targetZoom.finalZoom(), translate = drawRegionOffset) {
+        val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * targetZoom.finalZoom())
+        expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
+      }
+    }
 
     coroutineScope {
       val animationJob = launch {
@@ -275,11 +300,25 @@ class ZoomableViewportState internal constructor() {
           // jump on its last frame causing a few frames to be dropped.
           animationSpec = spring(stiffness = StiffnessMediumLow, visibilityThreshold = 0.0001f)
         ) {
-          val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
+          val animatedZoom = start.zoom.copy(
+            viewportZoom = lerp(
+              start = start.zoom.viewportZoom,
+              stop = targetZoom.viewportZoom,
+              fraction = value
+            )
+          )
+          // For animating the offset, it is necessary to interpolate between values that the UI
+          // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
+          // offset is used because the zoom and the offset values animate at different scales.
+          val animatedOffsetForUi = lerp(
+            start = (-start.offset * start.zoom.finalZoom()),
+            stop = (-targetOffset * targetZoom.finalZoom()),
+            fraction = value
+          )
 
           gestureTransformation = GestureTransformation(
-            offset = start.offset,
-            zoom = start.zoom.copy(viewportZoom = newViewportZoom),
+            offset = (-animatedOffsetForUi) / animatedZoom,
+            zoom = animatedZoom,
             lastCentroid = centroidInViewport,
           )
         }
