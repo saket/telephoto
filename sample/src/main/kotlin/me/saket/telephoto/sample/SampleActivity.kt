@@ -30,10 +30,10 @@ import coil.request.ImageRequest
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
-import me.saket.telephoto.zoomable.ZoomableContentLocation
-import me.saket.telephoto.zoomable.ZoomableViewport
-import me.saket.telephoto.zoomable.graphicsLayer
-import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import me.saket.telephoto.viewport.ZoomableContentLocation
+import me.saket.telephoto.viewport.ZoomableViewport
+import me.saket.telephoto.viewport.graphicsLayer
+import me.saket.telephoto.viewport.rememberZoomableViewportState
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SampleActivity : AppCompatActivity() {
