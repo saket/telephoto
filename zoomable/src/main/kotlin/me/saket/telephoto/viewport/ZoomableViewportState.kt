@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -120,7 +122,8 @@ class ZoomableViewportState internal constructor() {
     panDelta: Offset,
     zoomDelta: Float,
     rotationDelta: Float = 0f,
-    cancelAnyOngoingResetAnimation: Boolean = true
+    cancelAnyOngoingResetAnimation: Boolean = true,
+    dispatcher: NestedScrollDispatcher? = null
   ) {
     if (cancelAnyOngoingResetAnimation) {
       cancelOngoingAnimation?.invoke()
@@ -171,6 +174,18 @@ class ZoomableViewportState internal constructor() {
       }
     }
 
+    println("\n======================================")
+    println("Pan = $panDelta")
+    val panDelta = if (dispatcher != null) {
+      val preConsumedByParent = -dispatcher.dispatchPreScroll(available = -panDelta, source = NestedScrollSource.Drag)
+      (panDelta - preConsumedByParent).also {
+        println("Pan pre consumed by parent = $preConsumedByParent")
+        println("Remaining pan = $it")
+      }
+    } else {
+      panDelta
+    }
+
     // Copied from androidx samples:
     // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
     //
@@ -204,20 +219,44 @@ class ZoomableViewportState internal constructor() {
     //              _____________|_________________     ________|_________   ________|_________
     val newOffset = (oldOffset + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
 
-    gestureTransformation = GestureTransformation(
-      offset = run {
-        // To ensure that the content always stays within the viewport, the content's actual draw
-        // region will need to be calculated. This is important because the content's draw region may
-        // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 viewport
-        // will have a lot of empty space on both vertical sides.
-        val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * newZoom.finalZoom())
+    val newOffsetWithinBounds = run {
+      // To ensure that the content always stays within the viewport, the content's actual draw
+      // region will need to be calculated. This is important because the content's draw region may
+      // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 viewport
+      // will have a lot of empty space on both vertical sides.
+      val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * newZoom.finalZoom())
 
-        // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-        newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
-          val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom.finalZoom())
-          expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
-        }
-      },
+      // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
+      newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
+        val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom.finalZoom())
+        expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
+      }
+    }
+
+    println("--------------------------------------")
+    println("Proposed offset = $newOffset")
+    println("Coerced offset = $newOffsetWithinBounds")
+    println("--------------------------------------")
+
+    if (dispatcher != null) {
+      val proposed = newOffset
+      val coerced = newOffsetWithinBounds
+
+      val panLeftForParent = proposed - coerced
+      val panConsumed = proposed - panLeftForParent
+
+      println("Pan consumed = $panConsumed (left for parent = $panLeftForParent)")
+
+      val postConsumedByParent = -dispatcher.dispatchPostScroll(
+        consumed = -panConsumed,
+        available = -panLeftForParent,
+        source = NestedScrollSource.Drag
+      )
+      println("Pan post consumed by parent = $postConsumedByParent")
+    }
+
+    gestureTransformation = GestureTransformation(
+      offset = newOffsetWithinBounds,
       zoom = newZoom,
       lastCentroid = centroid,
     )

@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
@@ -41,10 +44,24 @@ fun ZoomableViewport(
   }
 
   val zoomableModifier = if (state.isReadyToInteract) {
+    val nestedScrollDispatcher = remember { NestedScrollDispatcher() }
+    val nestedScrollConnection = remember {
+      object : NestedScrollConnection {}
+    }
+
     val scope = rememberCoroutineScope()
     Modifier
+      .nestedScroll(nestedScrollConnection, nestedScrollDispatcher)
       .pointerInput(Unit) {
-        detectTransformGestures(onGesture = state::onGesture)
+        detectTransformGestures { centroid, panDelta, zoomDelta, rotationDelta ->
+          state.onGesture(
+            centroid = centroid,
+            panDelta = panDelta,
+            zoomDelta = zoomDelta,
+            rotationDelta = rotationDelta,
+            dispatcher = nestedScrollDispatcher,
+          )
+        }
       }
       .pointerInput(Unit) {
         detectTapGestures(
