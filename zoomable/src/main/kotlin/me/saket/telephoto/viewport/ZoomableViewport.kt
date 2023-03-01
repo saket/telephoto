@@ -21,6 +21,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.viewport.internal.onAllPointersUp
@@ -73,6 +74,13 @@ fun ZoomableViewport(
         )
       }
       .onAllPointersUp {
+        // Finish nested scrolling.
+        // TODO: integrate this with detectTransformGestures somehow.
+        scope.launch {
+          nestedScrollDispatcher.dispatchPreFling(available = Velocity.Zero)
+          nestedScrollDispatcher.dispatchPostFling(consumed = Velocity.Zero, available = Velocity.Zero)
+        }
+
         // Reset is performed in a new coroutine. The animation will be canceled
         // if TransformableState#transform() is called again by Modifier#transformable(). todo: this doc is outdated now.
         // todo: uncomment this once it no longer cancels double tap to zoom.
