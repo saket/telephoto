@@ -4,6 +4,7 @@ import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.Spring.StiffnessMediumLow
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.TransformableState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.ContentScale
@@ -64,6 +66,7 @@ fun rememberZoomableViewportState(
 
 @Stable
 class ZoomableViewportState internal constructor() {
+
   /**
    * Transformations that should be applied by the viewport to its content.
    *
@@ -116,8 +119,21 @@ class ZoomableViewportState internal constructor() {
       && ::contentAlignment.isInitialized
   }
 
+  internal val nestedScrollDispatcher = NestedScrollDispatcher()
+  internal val nestedScrollConnection = object : NestedScrollConnection {}
+
+  internal val transformableState = TransformableState { zoomDelta, panDelta, rotationDelta ->
+    handleGesture(
+      centroid = Offset.Zero,
+      panDelta = panDelta,
+      zoomDelta = zoomDelta,
+      rotationDelta = rotationDelta,
+      dispatcher = nestedScrollDispatcher,
+    )
+  }
+
   @Suppress("NAME_SHADOWING")
-  internal fun onGesture(
+  private fun handleGesture(
     centroid: Offset,
     panDelta: Offset,
     zoomDelta: Float,
@@ -267,9 +283,10 @@ class ZoomableViewportState internal constructor() {
   }
 
   // todo: doc
+  /** Update content position by using its current zoom and offset values. */
   internal fun refreshContentPosition() {
     check(isReadyToInteract)
-    onGesture(
+    handleGesture(
       centroid = Offset.Zero,
       panDelta = Offset.Zero,
       zoomDelta = 1f,
@@ -277,6 +294,7 @@ class ZoomableViewportState internal constructor() {
   }
 
   // todo: doc
+  /** Reset content position by discarding the current zoom and offset values. */
   fun resetContentTransformation() {
     gestureTransformation = null
     if (isReadyToInteract) {
@@ -375,7 +393,7 @@ class ZoomableViewportState internal constructor() {
         ) {
           val current = gestureTransformation!!
           val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
-          onGesture(
+          handleGesture(
             centroid = start.lastCentroid,
             panDelta = Offset.Zero,
             zoomDelta = newViewportZoom / current.zoom.viewportZoom,

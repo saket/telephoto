@@ -1,7 +1,7 @@
 package me.saket.telephoto.viewport
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
@@ -13,8 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -45,25 +43,10 @@ fun ZoomableViewport(
   }
 
   val zoomableModifier = if (state.isReadyToInteract) {
-    val nestedScrollDispatcher = remember { NestedScrollDispatcher() }
-    val nestedScrollConnection = remember {
-      object : NestedScrollConnection {}
-    }
-
     val scope = rememberCoroutineScope()
     Modifier
-      .nestedScroll(nestedScrollConnection, nestedScrollDispatcher)
-      .pointerInput(Unit) {
-        detectTransformGestures { centroid, panDelta, zoomDelta, rotationDelta ->
-          state.onGesture(
-            centroid = centroid,
-            panDelta = panDelta,
-            zoomDelta = zoomDelta,
-            rotationDelta = rotationDelta,
-            dispatcher = nestedScrollDispatcher,
-          )
-        }
-      }
+      .nestedScroll(state.nestedScrollConnection, state.nestedScrollDispatcher)
+      .transformable(state.transformableState)
       .pointerInput(Unit) {
         detectTapGestures(
           onDoubleTap = { centroid ->
@@ -77,8 +60,8 @@ fun ZoomableViewport(
         // Finish nested scrolling.
         // TODO: integrate this with detectTransformGestures somehow.
         scope.launch {
-          nestedScrollDispatcher.dispatchPreFling(available = Velocity.Zero)
-          nestedScrollDispatcher.dispatchPostFling(consumed = Velocity.Zero, available = Velocity.Zero)
+          state.nestedScrollDispatcher.dispatchPreFling(available = Velocity.Zero)
+          state.nestedScrollDispatcher.dispatchPostFling(consumed = Velocity.Zero, available = Velocity.Zero)
         }
 
         // Reset is performed in a new coroutine. The animation will be canceled
