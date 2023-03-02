@@ -83,6 +83,7 @@ subprojects { subproject ->
     task.kotlinOptions {
       freeCompilerArgs += [
         '-Xcontext-receivers',
+        '-Xjvm-default=all'
       ]
     }
   }

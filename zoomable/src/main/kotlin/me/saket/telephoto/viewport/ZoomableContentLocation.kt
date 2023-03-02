@@ -1,5 +1,6 @@
 package me.saket.telephoto.viewport
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Rect
@@ -37,7 +38,12 @@ interface ZoomableContentLocation {
   }
 }
 
-internal data class RelativeContentLocation(
+/**
+ * It's intentional that is not a data class. Setting a new location object should
+ * always trigger a position update even if the content size is unchanged.
+ * */
+@Immutable
+internal class RelativeContentLocation(
   val size: Size,
   val scale: ContentScale,
   val alignment: Alignment,

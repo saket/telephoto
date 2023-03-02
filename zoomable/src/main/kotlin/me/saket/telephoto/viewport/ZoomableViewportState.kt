@@ -4,7 +4,7 @@ import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.Spring.StiffnessMediumLow
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.gestures.TransformableState
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -26,9 +26,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import me.saket.telephoto.viewport.GestureTransformation.Companion.ZeroScaleFactor
+import me.saket.telephoto.viewport.internal.TransformableState
 import me.saket.telephoto.viewport.internal.div
 import me.saket.telephoto.viewport.internal.maxScale
 import me.saket.telephoto.viewport.internal.roundToIntSize
@@ -59,6 +58,12 @@ fun rememberZoomableViewportState(
     ) {
       state.refreshContentPosition()
     }
+
+    LaunchedEffect(state.unscaledContentLocation) {
+      // Content was changed. Reset everything so
+      // that it is moved to its default position.
+      state.resetContentTransformation()
+    }
   }
 
   return state
@@ -84,7 +89,6 @@ class ZoomableViewportState internal constructor() {
   }
 
   private var gestureTransformation: GestureTransformation? by mutableStateOf(null)
-  private var cancelOngoingAnimation: (() -> Unit)? = null
 
   // todo: explain why this isn't a state?
   //  counter-arg: making this a state will allow live edit to work.
@@ -122,28 +126,9 @@ class ZoomableViewportState internal constructor() {
   internal val nestedScrollDispatcher = NestedScrollDispatcher()
   internal val nestedScrollConnection = object : NestedScrollConnection {}
 
-  internal val transformableState = TransformableState { zoomDelta, panDelta, rotationDelta ->
-    handleGesture(
-      centroid = Offset.Zero,
-      panDelta = panDelta,
-      zoomDelta = zoomDelta,
-      rotationDelta = rotationDelta,
-      dispatcher = nestedScrollDispatcher,
-    )
-  }
-
   @Suppress("NAME_SHADOWING")
-  private fun handleGesture(
-    centroid: Offset,
-    panDelta: Offset,
-    zoomDelta: Float,
-    rotationDelta: Float = 0f,
-    cancelAnyOngoingResetAnimation: Boolean = true,
-    dispatcher: NestedScrollDispatcher? = null
-  ) {
-    if (cancelAnyOngoingResetAnimation) {
-      cancelOngoingAnimation?.invoke()
-    }
+  internal val transformableState = TransformableState { zoomDelta, panDelta, _ ->
+    val centroid = Offset.Zero  // todo: get this from TransformableState.
 
     val unscaledContentBounds = unscaledContentLocation.boundsIn(
       parent = contentLayoutBounds,
@@ -192,14 +177,15 @@ class ZoomableViewportState internal constructor() {
 
     println("\n======================================")
     println("Pan = $panDelta")
-    val panDelta = if (dispatcher != null) {
-      val preConsumedByParent = -dispatcher.dispatchPreScroll(available = -panDelta, source = NestedScrollSource.Drag)
+    val panDelta = run {
+      val preConsumedByParent = -nestedScrollDispatcher.dispatchPreScroll(
+        available = -panDelta,
+        source = NestedScrollSource.Drag
+      )
       (panDelta - preConsumedByParent).also {
         println("Pan pre consumed by parent = $preConsumedByParent")
         println("Remaining pan = $it")
       }
-    } else {
-      panDelta
     }
 
     // Copied from androidx samples:
@@ -254,22 +240,17 @@ class ZoomableViewportState internal constructor() {
     println("Coerced offset = $newOffsetWithinBounds")
     println("--------------------------------------")
 
-    if (dispatcher != null) {
-      val proposed = newOffset
-      val coerced = newOffsetWithinBounds
+    val panLeftForParent = newOffset - newOffsetWithinBounds
+    val panConsumed = newOffset - panLeftForParent
 
-      val panLeftForParent = proposed - coerced
-      val panConsumed = proposed - panLeftForParent
+    println("Pan consumed = $panConsumed (left for parent = $panLeftForParent)")
 
-      println("Pan consumed = $panConsumed (left for parent = $panLeftForParent)")
-
-      val postConsumedByParent = -dispatcher.dispatchPostScroll(
-        consumed = -panConsumed,
-        available = -panLeftForParent,
-        source = NestedScrollSource.Drag
-      )
-      println("Pan post consumed by parent = $postConsumedByParent")
-    }
+    val postConsumedByParent = -nestedScrollDispatcher.dispatchPostScroll(
+      consumed = -panConsumed,
+      available = -panLeftForParent,
+      source = NestedScrollSource.Drag
+    )
+    println("Pan post consumed by parent = $postConsumedByParent")
 
     gestureTransformation = GestureTransformation(
       offset = newOffsetWithinBounds,
@@ -284,18 +265,16 @@ class ZoomableViewportState internal constructor() {
 
   // todo: doc
   /** Update content position by using its current zoom and offset values. */
-  internal fun refreshContentPosition() {
+  internal suspend fun refreshContentPosition() {
     check(isReadyToInteract)
-    handleGesture(
-      centroid = Offset.Zero,
-      panDelta = Offset.Zero,
-      zoomDelta = 1f,
-    )
+    transformableState.transform(MutatePriority.PreventUserInput) {
+      transformBy(/* default values */)
+    }
   }
 
   // todo: doc
   /** Reset content position by discarding the current zoom and offset values. */
-  fun resetContentTransformation() {
+  suspend fun resetContentTransformation() {
     gestureTransformation = null
     if (isReadyToInteract) {
       refreshContentPosition()
@@ -305,15 +284,9 @@ class ZoomableViewportState internal constructor() {
   /** todo: doc */
   fun setContentLocation(location: ZoomableContentLocation) {
     unscaledContentLocation = location
-
-    // Content was changed. Reset everything so
-    // that it is moved to its default position.
-    resetContentTransformation()
   }
 
   internal suspend fun handleDoubleTapZoomTo(centroidInViewport: Offset) {
-    cancelOngoingAnimation?.invoke()
-
     val start = gestureTransformation ?: return
     val shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange)
 
@@ -343,40 +316,34 @@ class ZoomableViewportState internal constructor() {
       }
     }
 
-    coroutineScope {
-      val animationJob = launch {
-        AnimationState(initialValue = 0f).animateTo(
-          targetValue = 1f,
-          // Without a low visibility threshold, spring() makes a huge
-          // jump on its last frame causing a few frames to be dropped.
-          animationSpec = spring(stiffness = StiffnessMediumLow, visibilityThreshold = 0.0001f)
-        ) {
-          val animatedZoom = start.zoom.copy(
-            viewportZoom = lerp(
-              start = start.zoom.viewportZoom,
-              stop = targetZoom.viewportZoom,
-              fraction = value
-            )
-          )
-          // For animating the offset, it is necessary to interpolate between values that the UI
-          // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
-          // offset is used because the zoom and the offset values animate at different scales.
-          val animatedOffsetForUi = lerp(
-            start = (-start.offset * start.zoom.finalZoom()),
-            stop = (-targetOffset * targetZoom.finalZoom()),
+    transformableState.transform(MutatePriority.UserInput) {
+      AnimationState(initialValue = 0f).animateTo(
+        targetValue = 1f,
+        // Without a low visibility threshold, spring() makes a huge
+        // jump on its last frame causing a few frames to be dropped.
+        animationSpec = spring(stiffness = StiffnessMediumLow, visibilityThreshold = 0.0001f)
+      ) {
+        val animatedZoom = start.zoom.copy(
+          viewportZoom = lerp(
+            start = start.zoom.viewportZoom,
+            stop = targetZoom.viewportZoom,
             fraction = value
           )
+        )
+        // For animating the offset, it is necessary to interpolate between values that the UI
+        // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
+        // offset is used because the zoom and the offset values animate at different scales.
+        val animatedOffsetForUi = lerp(
+          start = (-start.offset * start.zoom.finalZoom()),
+          stop = (-targetOffset * targetZoom.finalZoom()),
+          fraction = value
+        )
 
-          gestureTransformation = GestureTransformation(
-            offset = (-animatedOffsetForUi) / animatedZoom,
-            zoom = animatedZoom,
-            lastCentroid = centroidInViewport,
-          )
-        }
-      }
-      cancelOngoingAnimation = { animationJob.cancel() }
-      animationJob.invokeOnCompletion {
-        cancelOngoingAnimation = null
+        gestureTransformation = GestureTransformation(
+          offset = (-animatedOffsetForUi) / animatedZoom,
+          zoom = animatedZoom,
+          lastCentroid = centroidInViewport,
+        )
       }
     }
   }
@@ -385,25 +352,18 @@ class ZoomableViewportState internal constructor() {
     val start = gestureTransformation!!
     val targetViewportZoom = start.zoom.coercedIn(zoomRange).viewportZoom
 
-    coroutineScope {
-      val animationJob = launch {
-        AnimationState(initialValue = 0f).animateTo(
-          targetValue = 1f,
-          animationSpec = spring()
-        ) {
-          val current = gestureTransformation!!
-          val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
-          handleGesture(
-            centroid = start.lastCentroid,
-            panDelta = Offset.Zero,
-            zoomDelta = newViewportZoom / current.zoom.viewportZoom,
-            cancelAnyOngoingResetAnimation = false,
-          )
-        }
-      }
-      cancelOngoingAnimation = { animationJob.cancel() }
-      animationJob.invokeOnCompletion {
-        cancelOngoingAnimation = null
+    transformableState.transform(MutatePriority.Default) {
+      AnimationState(initialValue = 0f).animateTo(
+        targetValue = 1f,
+        animationSpec = spring()
+      ) {
+        val current = gestureTransformation!!
+        val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
+        transformBy(
+          //centroid = start.lastCentroid,  // todo: restore this functionality?
+          panChange = Offset.Zero,
+          zoomChange = newViewportZoom / current.zoom.viewportZoom,
+        )
       }
     }
   }

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.viewport.internal.onAllPointersUp
+import me.saket.telephoto.viewport.internal.transformable
 
 /**
  * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
