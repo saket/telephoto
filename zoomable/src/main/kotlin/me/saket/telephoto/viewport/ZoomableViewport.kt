@@ -1,7 +1,6 @@
 package me.saket.telephoto.viewport
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
@@ -13,13 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.viewport.internal.onAllPointersUp
@@ -46,7 +43,6 @@ fun ZoomableViewport(
   val zoomableModifier = if (state.isReadyToInteract) {
     val scope = rememberCoroutineScope()
     Modifier
-      .nestedScroll(state.nestedScrollConnection, state.nestedScrollDispatcher)
       .transformable(state.transformableState)
       .pointerInput(Unit) {
         detectTapGestures(
@@ -58,13 +54,6 @@ fun ZoomableViewport(
         )
       }
       .onAllPointersUp {
-        // Finish nested scrolling.
-        // TODO: integrate this with detectTransformGestures somehow.
-        scope.launch {
-          state.nestedScrollDispatcher.dispatchPreFling(available = Velocity.Zero)
-          state.nestedScrollDispatcher.dispatchPostFling(consumed = Velocity.Zero, available = Velocity.Zero)
-        }
-
         // Reset is performed in a new coroutine. The animation will be canceled
         // if TransformableState#transform() is called again by Modifier#transformable(). todo: this doc is outdated now.
         // todo: uncomment this once it no longer cancels double tap to zoom.
