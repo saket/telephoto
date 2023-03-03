@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
@@ -34,6 +35,7 @@ import me.saket.telephoto.viewport.internal.roundToIntSize
 import me.saket.telephoto.viewport.internal.times
 import me.saket.telephoto.viewport.internal.topLeftCoercedInside
 import me.saket.telephoto.viewport.internal.unaryMinus
+import kotlin.math.abs
 
 /** todo: doc */
 @Composable
@@ -82,7 +84,7 @@ class ZoomableViewportState internal constructor() {
       ZoomableContentTransformation(
         viewportSize = viewportBounds.size,
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
-        offset = if (it != null) -it.offset * it.zoom.finalZoom().maxScale else Offset.Zero,
+        offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
       )
     }
@@ -127,141 +129,178 @@ class ZoomableViewportState internal constructor() {
   internal val nestedScrollConnection = object : NestedScrollConnection {}
 
   @Suppress("NAME_SHADOWING")
-  internal val transformableState = TransformableState { zoomDelta, panDelta, _ ->
-    val centroid = Offset.Zero  // todo: get this from TransformableState.
+  internal val transformableState = TransformableState(
+    canConsumePanChange = { panDelta ->
+      val current = gestureTransformation
 
-    val unscaledContentBounds = unscaledContentLocation.boundsIn(
-      parent = contentLayoutBounds,
-      direction = layoutDirection
-    )
+      if (current != null) {
+        val panDeltaWithZoom = panDelta / current.zoom
+        val newOffset = (current.offset - panDeltaWithZoom)
 
-    // This is the minimum scale needed to position the
-    // content within its viewport w.r.t. its content scale.
-    val baseZoomMultiplier = contentScale.computeScaleFactor(
-      srcSize = unscaledContentBounds.size,
-      dstSize = contentLayoutBounds.size,
-    )
+        // todo: this piece of code is duplicated with onGesture.
+        val newOffsetWithinBounds = run {
+          val unscaledContentBounds = unscaledContentLocation.boundsIn(
+            parent = contentLayoutBounds,
+            direction = layoutDirection
+          )
+          val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * current.zoom)
+          newOffset.withZoomAndTranslate(zoom = -current.zoom.finalZoom(), translate = drawRegionOffset) {
+            val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * current.zoom)
+            expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
+          }
+        }
 
-    val oldZoom = gestureTransformation?.zoom
-      ?: ContentZoom(
-        baseZoomMultiplier = baseZoomMultiplier,
-        viewportZoom = 1f
+        val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
+        val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
+
+        // Give up this gesture if the content is almost near its edges.
+        // As a user, I've always hated it when I'm scrolling images in a
+        // horizontal pager, and an image that is only a pixel away from its
+        // edge is preventing the pager from scrolling. I might remove this in
+        // the future if it turns out to be useless.
+        val wasAnyPanChangeConsumed = (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) >= 1f
+        wasAnyPanChangeConsumed
+
+      } else {
+        // Content is probably not ready yet. Ignore this gesture.
+        false
+      }
+    },
+    onTransformation = { zoomDelta, panDelta, _ ->
+      val centroid = Offset.Zero  // todo: get this from TransformableState.
+
+      val unscaledContentBounds = unscaledContentLocation.boundsIn(
+        parent = contentLayoutBounds,
+        direction = layoutDirection
       )
 
-    val isZoomingOut = zoomDelta < 1f
-    val isZoomingIn = zoomDelta > 1f
+      // This is the minimum scale needed to position the
+      // content within its viewport w.r.t. its content scale.
+      val baseZoomMultiplier = contentScale.computeScaleFactor(
+        srcSize = unscaledContentBounds.size,
+        dstSize = contentLayoutBounds.size,
+      )
 
-    // Apply elasticity to zoom once content can't zoom any further.
-    val zoomDelta = when {
-      isZoomingIn && oldZoom.isAtMaxZoom(zoomRange) -> 1f + zoomDelta / 250
-      isZoomingOut && oldZoom.isAtMinZoom(zoomRange) -> 1f - zoomDelta / 500
-      else -> zoomDelta
-    }
-    val newZoom = ContentZoom(
-      baseZoomMultiplier = baseZoomMultiplier,
-      viewportZoom = oldZoom.viewportZoom * zoomDelta
-    )
-
-    val oldOffset = gestureTransformation.let {
-      if (it != null) {
-        it.offset
-      } else {
-        val alignedToCenter = contentAlignment.align(
-          size = (unscaledContentBounds.size * baseZoomMultiplier).roundToIntSize(),
-          space = viewportBounds.size.roundToIntSize(),
-          layoutDirection = layoutDirection
+      val oldZoom = gestureTransformation?.zoom
+        ?: ContentZoom(
+          baseZoomMultiplier = baseZoomMultiplier,
+          viewportZoom = 1f
         )
-        -alignedToCenter.toOffset() / oldZoom.finalZoom()
-      }
-    }
 
-    println("\n======================================")
-    println("Pan = $panDelta")
-    val panDelta = run {
-      val preConsumedByParent = -nestedScrollDispatcher.dispatchPreScroll(
-        available = -panDelta,
+      val isZoomingOut = zoomDelta < 1f
+      val isZoomingIn = zoomDelta > 1f
+
+      // Apply elasticity to zoom once content can't zoom any further.
+      val zoomDelta = when {
+        isZoomingIn && oldZoom.isAtMaxZoom(zoomRange) -> 1f + zoomDelta / 250
+        isZoomingOut && oldZoom.isAtMinZoom(zoomRange) -> 1f - zoomDelta / 500
+        else -> zoomDelta
+      }
+      val newZoom = ContentZoom(
+        baseZoomMultiplier = baseZoomMultiplier,
+        viewportZoom = oldZoom.viewportZoom * zoomDelta
+      )
+
+      val oldOffset = gestureTransformation.let {
+        if (it != null) {
+          it.offset
+        } else {
+          val alignedToCenter = contentAlignment.align(
+            size = (unscaledContentBounds.size * baseZoomMultiplier).roundToIntSize(),
+            space = viewportBounds.size.roundToIntSize(),
+            layoutDirection = layoutDirection
+          )
+          -alignedToCenter.toOffset() / oldZoom
+        }
+      }
+
+      //println("\n======================================")
+      //println("Pan = $panDelta")
+      val panDelta = run {
+        val preConsumedByParent = -nestedScrollDispatcher.dispatchPreScroll(
+          available = -panDelta,
+          source = NestedScrollSource.Drag
+        )
+        (panDelta - preConsumedByParent).also {
+          //println("Pan pre consumed by parent = $preConsumedByParent")
+          //println("Remaining pan = $it")
+        }
+      }
+
+      // Copied from androidx samples:
+      // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
+      //
+      // For natural zooming and rotating, the centroid of the gesture
+      // should be the fixed point where zooming and rotating occurs.
+      //
+      // We compute where the centroid was (in the pre-transformed coordinate
+      // space), and then compute where it will be after this delta.
+      //
+      // We then compute what the new offset should be to keep the centroid
+      // visually stationary for rotating and zooming, and also apply the pan.
+      //
+      // This is comparable to performing a pre-translate + scale + post-translate on
+      // a Matrix.
+      //
+      // I found this maths difficult to understand, so here's another explanation in
+      // Ryan Harter's words:
+      //
+      // The basic idea is that to scale around an arbitrary point, you translate so that
+      // that point is in the center, then you rotate, then scale, then move everything back.
+      //
+      // Note to self: these values are divided by zoom because that's how the final offset
+      // for UI is calculated: -offset * zoom.
+      //
+      //              Move the centroid to the center
+      //                  of panned content(?)
+      //                           |                            Scale
+      //                           |                              |                Move back
+      //                           |                              |           (+ new translation)
+      //                           |                              |                    |
+      //              _____________|_________________     ________|_________   ________|_________
+      val newOffset = (oldOffset + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
+
+      val newOffsetWithinBounds = run {
+        // To ensure that the content always stays within the viewport, the content's actual draw
+        // region will need to be calculated. This is important because the content's draw region may
+        // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 viewport
+        // will have a lot of empty space on both vertical sides.
+        val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * newZoom)
+
+        // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
+        newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
+          val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom)
+          expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
+        }
+      }
+
+      //println("--------------------------------------")
+      //println("Proposed offset = $newOffset")
+      //println("Coerced offset = $newOffsetWithinBounds")
+      //println("--------------------------------------")
+
+      val panLeftForParent = newOffset - newOffsetWithinBounds
+      val panConsumed = newOffset - panLeftForParent
+
+      //println("Pan consumed = $panConsumed (left for parent = $panLeftForParent)")
+
+      val postConsumedByParent = -nestedScrollDispatcher.dispatchPostScroll(
+        consumed = -panConsumed,
+        available = -panLeftForParent,
         source = NestedScrollSource.Drag
       )
-      (panDelta - preConsumedByParent).also {
-        println("Pan pre consumed by parent = $preConsumedByParent")
-        println("Remaining pan = $it")
-      }
-    }
+      //println("Pan post consumed by parent = $postConsumedByParent")
 
-    // Copied from androidx samples:
-    // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
-    //
-    // For natural zooming and rotating, the centroid of the gesture
-    // should be the fixed point where zooming and rotating occurs.
-    //
-    // We compute where the centroid was (in the pre-transformed coordinate
-    // space), and then compute where it will be after this delta.
-    //
-    // We then compute what the new offset should be to keep the centroid
-    // visually stationary for rotating and zooming, and also apply the pan.
-    //
-    // This is comparable to performing a pre-translate + scale + post-translate on
-    // a Matrix.
-    //
-    // I found this maths difficult to understand, so here's another explanation in
-    // Ryan Harter's words:
-    //
-    // The basic idea is that to scale around an arbitrary point, you translate so that
-    // that point is in the center, then you rotate, then scale, then move everything back.
-    //
-    // Note to self: these values are divided by zoom because that's how the final offset
-    // for UI is calculated: -offset * zoom.
-    //
-    //              Move the centroid to the center
-    //                  of panned content(?)
-    //                           |                            Scale
-    //                           |                              |                Move back
-    //                           |                              |           (+ new translation)
-    //                           |                              |                    |
-    //              _____________|_________________     ________|_________   ________|_________
-    val newOffset = (oldOffset + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
+      gestureTransformation = GestureTransformation(
+        offset = newOffsetWithinBounds,
+        zoom = newZoom,
+        lastCentroid = centroid,
+      )
+    })
 
-    val newOffsetWithinBounds = run {
-      // To ensure that the content always stays within the viewport, the content's actual draw
-      // region will need to be calculated. This is important because the content's draw region may
-      // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 viewport
-      // will have a lot of empty space on both vertical sides.
-      val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * newZoom.finalZoom())
-
-      // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-      newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
-        val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom.finalZoom())
-        expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
-      }
-    }
-
-    println("--------------------------------------")
-    println("Proposed offset = $newOffset")
-    println("Coerced offset = $newOffsetWithinBounds")
-    println("--------------------------------------")
-
-    val panLeftForParent = newOffset - newOffsetWithinBounds
-    val panConsumed = newOffset - panLeftForParent
-
-    println("Pan consumed = $panConsumed (left for parent = $panLeftForParent)")
-
-    val postConsumedByParent = -nestedScrollDispatcher.dispatchPostScroll(
-      consumed = -panConsumed,
-      available = -panLeftForParent,
-      source = NestedScrollSource.Drag
-    )
-    println("Pan post consumed by parent = $postConsumedByParent")
-
-    gestureTransformation = GestureTransformation(
-      offset = newOffsetWithinBounds,
-      zoom = newZoom,
-      lastCentroid = centroid,
-    )
-  }
-
-  private operator fun Offset.div(zoom: ContentZoom): Offset {
-    return div(zoom.finalZoom().maxScale)
-  }
+  private operator fun Offset.div(zoom: ContentZoom): Offset = div(zoom.finalZoom().maxScale)
+  private operator fun Offset.times(zoom: ContentZoom): Offset = times(zoom.finalZoom().maxScale)
+  private operator fun Size.times(zoom: ContentZoom): Size = times(zoom.finalZoom().maxScale)
 
   // todo: doc
   /** Update content position by using its current zoom and offset values. */
@@ -307,11 +346,11 @@ class ZoomableViewportState internal constructor() {
         direction = layoutDirection
       )
 
-      val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * targetZoom.finalZoom())
+      val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * targetZoom)
 
       // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
       proposedOffset.withZoomAndTranslate(zoom = -targetZoom.finalZoom(), translate = drawRegionOffset) {
-        val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * targetZoom.finalZoom())
+        val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * targetZoom)
         expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
       }
     }
@@ -334,8 +373,8 @@ class ZoomableViewportState internal constructor() {
         // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
         // offset is used because the zoom and the offset values animate at different scales.
         val animatedOffsetForUi = lerp(
-          start = (-start.offset * start.zoom.finalZoom()),
-          stop = (-targetOffset * targetZoom.finalZoom()),
+          start = (-start.offset * start.zoom),
+          stop = (-targetOffset * targetZoom),
           fraction = value
         )
 

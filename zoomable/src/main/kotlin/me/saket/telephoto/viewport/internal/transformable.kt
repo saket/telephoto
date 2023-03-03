@@ -37,6 +37,7 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.fastMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -94,7 +95,7 @@ fun Modifier.transformable(
         coroutineScope {
           awaitEachGesture {
             try {
-              detectZoom(updatePanZoomLock, channel)
+              detectZoom(updatePanZoomLock, channel, state::canConsumePanChange)
             } catch (exception: CancellationException) {
               if (!isActive) throw exception
             } finally {
@@ -126,7 +127,8 @@ private sealed class TransformEvent {
 
 private suspend fun AwaitPointerEventScope.detectZoom(
   panZoomLock: State<Boolean>,
-  channel: Channel<TransformEvent>
+  channel: Channel<TransformEvent>,
+  canConsumePanChange: (Offset) -> Boolean,
 ) {
   var rotation = 0f
   var zoom = 1f
@@ -134,10 +136,11 @@ private suspend fun AwaitPointerEventScope.detectZoom(
   var pastTouchSlop = false
   val touchSlop = viewConfiguration.touchSlop
   var lockedToPanZoom = false
+  var ignoringGesture = false
   awaitFirstDown(requireUnconsumed = false)
   do {
     val event = awaitPointerEvent()
-    val canceled = event.changes.fastAny { it.isConsumed }
+    val canceled = ignoringGesture || event.changes.fastAny { it.isConsumed }
     if (!canceled) {
       val zoomChange = event.calculateZoom()
       val rotationChange = event.calculateRotation()
@@ -157,9 +160,14 @@ private suspend fun AwaitPointerEventScope.detectZoom(
           rotationMotion > touchSlop ||
           panMotion > touchSlop
         ) {
-          pastTouchSlop = true
-          lockedToPanZoom = panZoomLock.value && rotationMotion < touchSlop
-          channel.trySend(TransformEvent.TransformStarted)
+          // A positive zoom motion indicates the presence of multi-touch for consuming this gesture right away.
+          if (zoomMotion > 0f || canConsumePanChange(pan)) {
+            pastTouchSlop = true
+            lockedToPanZoom = panZoomLock.value && rotationMotion < touchSlop
+            channel.trySend(TransformEvent.TransformStarted)
+          } else {
+            ignoringGesture = true
+          }
         }
       }
 

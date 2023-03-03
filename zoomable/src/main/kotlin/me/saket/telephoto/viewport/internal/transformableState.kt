@@ -53,6 +53,15 @@ interface TransformableState {
   )
 
   /**
+   * Whether this [TransformableState] is capable of consuming a pan change. Called at the starting
+   * of each gesture to determine if the gesture can be handled or given up to the parent for
+   * nested scrolling.
+   *
+   * @return false to skip this gesture.
+   * */
+  fun canConsumePanChange(panChange: Offset): Boolean
+
+  /**
    * Whether this [TransformableState] is currently transforming by gesture or programmatically or
    * not.
    */
@@ -88,13 +97,48 @@ interface TransformScope {
  * whenever pan, zoom or rotation happens (by gesture input or any [TransformableState.transform]
  * call) with the deltas from the previous event.
  *
+ * @param canConsumePanChange See [TransformableState.canConsumePanChange].
+ *
  * @param onTransformation callback invoked when transformation occurs. The callback receives the
  * change from the previous event. It's relative scale multiplier for zoom, [Offset] in pixels
  * for pan and degrees for rotation. Callers should update their state in this lambda.
  */
 fun TransformableState(
+  canConsumePanChange: (panChange: Offset) -> Boolean,
   onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float) -> Unit
-): TransformableState = DefaultTransformableState(onTransformation)
+): TransformableState = DefaultTransformableState(canConsumePanChange, onTransformation)
+
+/**
+ * Create and remember default implementation of [TransformableState] interface that contains
+ * necessary information about the ongoing transformations and provides smooth transformation
+ * capabilities.
+ *
+ * This is the simplest way to set up a [transformable] modifier. When constructing this
+ * [TransformableState], you must provide a [onTransformation] lambda, which will be invoked
+ * whenever pan, zoom or rotation happens (by gesture input or any [TransformableState.transform]
+ * call) with the deltas from the previous event.
+ *
+ * @param canConsumePanChange See [TransformableState.canConsumePanChange].
+ *
+ * @param onTransformation callback invoked when transformation occurs. The callback receives the
+ * change from the previous event. It's relative scale multiplier for zoom, [Offset] in pixels
+ * for pan and degrees for rotation. Callers should update their state in this lambda.
+ */
+@Composable
+@Suppress("NAME_SHADOWING")
+fun rememberTransformableState(
+  canConsumePanChange: (panChange: Offset) -> Boolean,
+  onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float) -> Unit
+): TransformableState {
+  val canConsumePanChange = rememberUpdatedState(canConsumePanChange)
+  val onTransformation = rememberUpdatedState(onTransformation)
+  return remember {
+    TransformableState(
+      canConsumePanChange = { p -> canConsumePanChange.value.invoke(p) },
+      onTransformation = { z, p, r -> onTransformation.value.invoke(z, p, r) }
+    )
+  }
+}
 
 /**
  * Animate zoom by a ratio of [zoomFactor] over the current size and suspend until its finished.
@@ -207,6 +251,7 @@ suspend fun TransformableState.stopTransformation(
 }
 
 private class DefaultTransformableState(
+  val canConsumePanChange: (panChange: Offset) -> Boolean,
   val onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float) -> Unit
 ) : TransformableState {
 
@@ -231,6 +276,10 @@ private class DefaultTransformableState(
         isTransformingState.value = false
       }
     }
+  }
+
+  override fun canConsumePanChange(panChange: Offset): Boolean {
+    return canConsumePanChange.invoke(panChange)
   }
 
   override val isTransformInProgress: Boolean
