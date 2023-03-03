@@ -65,10 +65,12 @@ import kotlin.math.abs
 fun Modifier.transformable(
   state: TransformableState,
   lockRotationOnZoomPan: Boolean = false,
-  enabled: Boolean = true
+  onGestureEnd: () -> Unit = {},
+  enabled: Boolean = true,
 ) = composed(
   factory = {
     val updatePanZoomLock = rememberUpdatedState(lockRotationOnZoomPan)
+    val updatedOnGestureEnd = rememberUpdatedState(onGestureEnd)
     val channel = remember { Channel<TransformEvent>(capacity = Channel.UNLIMITED) }
     if (enabled) {
       LaunchedEffect(state) {
@@ -83,6 +85,7 @@ fun Modifier.transformable(
                 }
                 event = channel.receive()
               }
+              updatedOnGestureEnd.value()
             }
           } catch (_: CancellationException) {
             // ignore the cancellation and start over again.

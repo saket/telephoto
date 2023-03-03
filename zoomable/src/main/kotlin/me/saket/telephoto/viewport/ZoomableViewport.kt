@@ -19,7 +19,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
-import me.saket.telephoto.viewport.internal.onAllPointersUp
 import me.saket.telephoto.viewport.internal.transformable
 
 /**
@@ -43,7 +42,16 @@ fun ZoomableViewport(
   val zoomableModifier = if (state.isReadyToInteract) {
     val scope = rememberCoroutineScope()
     Modifier
-      .transformable(state.transformableState)
+      .transformable(
+        state = state.transformableState,
+        onGestureEnd = {
+          // Reset is performed in a new coroutine. The animation will be canceled
+          // if TransformableState#transform() is called again by Modifier#transformable().
+          scope.launch {
+            state.smoothlySettleOnGestureEnd()
+          }
+        }
+      )
       .pointerInput(Unit) {
         detectTapGestures(
           onDoubleTap = { centroid ->
@@ -52,14 +60,6 @@ fun ZoomableViewport(
             }
           }
         )
-      }
-      .onAllPointersUp {
-        // Reset is performed in a new coroutine. The animation will be canceled
-        // if TransformableState#transform() is called again by Modifier#transformable(). todo: this doc is outdated now.
-        // todo: uncomment this once it no longer cancels double tap to zoom.
-        //scope.launch {
-        //  state.smoothlySettleOnGestureEnd()
-        //}
       }
   } else {
     Modifier
