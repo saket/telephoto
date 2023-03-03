@@ -19,6 +19,7 @@ package me.saket.telephoto.viewport.internal
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
@@ -37,7 +38,6 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
-import androidx.compose.ui.util.fastMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -79,7 +79,7 @@ fun Modifier.transformable(
             state.transform(MutatePriority.UserInput) {
               while (event !is TransformEvent.TransformStopped) {
                 (event as? TransformEvent.TransformDelta)?.let {
-                  transformBy(it.zoomChange, it.panChange, it.rotationChange)
+                  transformBy(it.zoomChange, it.panChange, it.rotationChange, it.centroid)
                 }
                 event = channel.receive()
               }
@@ -121,7 +121,8 @@ private sealed class TransformEvent {
   class TransformDelta(
     val zoomChange: Float,
     val panChange: Offset,
-    val rotationChange: Float
+    val rotationChange: Float,
+    val centroid: Offset,
   ) : TransformEvent()
 }
 
@@ -172,12 +173,13 @@ private suspend fun AwaitPointerEventScope.detectZoom(
       }
 
       if (pastTouchSlop) {
+        val centroid = event.calculateCentroid(useCurrent = false)
         val effectiveRotation = if (lockedToPanZoom) 0f else rotationChange
         if (effectiveRotation != 0f ||
           zoomChange != 1f ||
           panChange != Offset.Zero
         ) {
-          channel.trySend(TransformEvent.TransformDelta(zoomChange, panChange, effectiveRotation))
+          channel.trySend(TransformEvent.TransformDelta(zoomChange, panChange, effectiveRotation, centroid))
         }
         event.changes.fastForEach {
           if (it.positionChanged()) {

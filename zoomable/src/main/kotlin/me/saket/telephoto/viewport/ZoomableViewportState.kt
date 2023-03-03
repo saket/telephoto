@@ -166,9 +166,7 @@ class ZoomableViewportState internal constructor() {
         false
       }
     },
-    onTransformation = { zoomDelta, panDelta, _ ->
-      val centroid = Offset.Zero  // todo: get this from TransformableState.
-
+    onTransformation = { zoomDelta, panDelta, _, centroid ->
       val unscaledContentBounds = unscaledContentLocation.boundsIn(
         parent = contentLayoutBounds,
         direction = layoutDirection
@@ -399,9 +397,9 @@ class ZoomableViewportState internal constructor() {
         val current = gestureTransformation!!
         val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
         transformBy(
-          //centroid = start.lastCentroid,  // todo: restore this functionality?
-          panChange = Offset.Zero,
+          centroid = start.lastCentroid,
           zoomChange = newViewportZoom / current.zoom.viewportZoom,
+          panChange = Offset.Zero,
         )
       }
     }

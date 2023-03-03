@@ -84,7 +84,8 @@ interface TransformScope {
   fun transformBy(
     zoomChange: Float = 1f,
     panChange: Offset = Offset.Zero,
-    rotationChange: Float = 0f
+    rotationChange: Float = 0f,
+    centroid: Offset = Offset.Zero,
   )
 }
 
@@ -105,7 +106,7 @@ interface TransformScope {
  */
 fun TransformableState(
   canConsumePanChange: (panChange: Offset) -> Boolean,
-  onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float) -> Unit
+  onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float, centroid: Offset) -> Unit
 ): TransformableState = DefaultTransformableState(canConsumePanChange, onTransformation)
 
 /**
@@ -128,14 +129,14 @@ fun TransformableState(
 @Suppress("NAME_SHADOWING")
 fun rememberTransformableState(
   canConsumePanChange: (panChange: Offset) -> Boolean,
-  onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float) -> Unit
+  onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float, centroid: Offset) -> Unit
 ): TransformableState {
   val canConsumePanChange = rememberUpdatedState(canConsumePanChange)
   val onTransformation = rememberUpdatedState(onTransformation)
   return remember {
     TransformableState(
       canConsumePanChange = { p -> canConsumePanChange.value.invoke(p) },
-      onTransformation = { z, p, r -> onTransformation.value.invoke(z, p, r) }
+      onTransformation = { z, p, r, c -> onTransformation.value.invoke(z, p, r, c) }
     )
   }
 }
@@ -252,12 +253,12 @@ suspend fun TransformableState.stopTransformation(
 
 private class DefaultTransformableState(
   val canConsumePanChange: (panChange: Offset) -> Boolean,
-  val onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float) -> Unit
+  val onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float, centroid: Offset) -> Unit
 ) : TransformableState {
 
   private val transformScope: TransformScope = object : TransformScope {
-    override fun transformBy(zoomChange: Float, panChange: Offset, rotationChange: Float) =
-      onTransformation(zoomChange, panChange, rotationChange)
+    override fun transformBy(zoomChange: Float, panChange: Offset, rotationChange: Float, centroid: Offset) =
+      onTransformation(zoomChange, panChange, rotationChange, centroid)
   }
 
   private val transformMutex = MutatorMutex()
