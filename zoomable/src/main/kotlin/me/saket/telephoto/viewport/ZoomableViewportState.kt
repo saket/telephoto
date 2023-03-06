@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.layout.lerp
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
@@ -47,7 +48,7 @@ fun rememberZoomableViewportState(
   val state = rememberSaveable(saver = ZoomableViewportState.Saver) {
     ZoomableViewportState()
   }.also {
-    it.zoomRange = ZoomRange(max = maxZoomFactor)
+    it.zoomRange = ZoomRange(maxZoomAsRatioOfSize = maxZoomFactor)
     it.layoutDirection = LocalLayoutDirection.current
   }
 
@@ -68,7 +69,7 @@ fun rememberZoomableViewportState(
       onDispose {
         // Content was changed. Reset everything so that it is moved to its default position.
         // I'm intentionally using a DisposableEffect instead of a LaunchedEffect to avoid
-        // running this code when the value is first set, which can break state restoration.
+        // running this code when the value is first set, which will break state restoration.
         scope.launch {
           state.resetContentTransformation()
         }
@@ -184,13 +185,13 @@ class ZoomableViewportState internal constructor(
 
       // This is the minimum scale needed to position the
       // content within its viewport w.r.t. its content scale.
-      val baseZoomMultiplier = contentScale.computeScaleFactor(
+      val baseZoom = contentScale.computeScaleFactor(
         srcSize = unscaledContentBounds.size,
         dstSize = contentLayoutBounds.size,
       )
 
       val oldZoom = ContentZoom(
-        baseZoomMultiplier = baseZoomMultiplier,
+        baseZoom = baseZoom,
         viewportZoom = gestureTransformation?.zoom?.viewportZoom ?: 1f
       )
 
@@ -204,7 +205,7 @@ class ZoomableViewportState internal constructor(
         else -> zoomDelta
       }
       val newZoom = ContentZoom(
-        baseZoomMultiplier = baseZoomMultiplier,
+        baseZoom = baseZoom,
         viewportZoom = oldZoom.viewportZoom * zoomDelta
       )
 
@@ -213,7 +214,7 @@ class ZoomableViewportState internal constructor(
           it.offset
         } else {
           val alignedToCenter = contentAlignment.align(
-            size = (unscaledContentBounds.size * baseZoomMultiplier).roundToIntSize(),
+            size = (unscaledContentBounds.size * baseZoom).roundToIntSize(),
             space = viewportBounds.size.roundToIntSize(),
             layoutDirection = layoutDirection
           )
@@ -306,12 +307,12 @@ class ZoomableViewportState internal constructor(
     val shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange)
 
     val targetZoomFactor = if (shouldZoomIn) {
-      zoomRange.maxZoom(baseZoomMultiplier = start.zoom.baseZoomMultiplier)
+      zoomRange.maxZoom(baseZoomMultiplier = start.zoom.baseZoom)
     } else {
-      zoomRange.minZoom(baseZoomMultiplier = start.zoom.baseZoomMultiplier)
+      zoomRange.minZoom(baseZoomMultiplier = start.zoom.baseZoom)
     }
     val targetZoom = start.zoom.copy(
-      viewportZoom = targetZoomFactor / (start.zoom.baseZoomMultiplier.maxScale)
+      viewportZoom = targetZoomFactor / (start.zoom.baseZoom.maxScale)
     )
 
     // todo: this piece of code is duplicated with onGesture.
@@ -404,55 +405,54 @@ internal data class GestureTransformation(
 
 // todo: doc
 internal data class ContentZoom(
-  val baseZoomMultiplier: ScaleFactor,  // todo: perhaps this should be removed from here and moved to GestureTransformation.
+  val baseZoom: ScaleFactor,
   val viewportZoom: Float,
 ) {
   // todo: doc
   fun finalZoom(): ScaleFactor {
-    return baseZoomMultiplier * viewportZoom
+    return baseZoom * viewportZoom
   }
 
   // todo: should probably test this
   fun coercedIn(range: ZoomRange): ContentZoom {
     return copy(
-      baseZoomMultiplier = baseZoomMultiplier,
+      baseZoom = baseZoom,
       viewportZoom = viewportZoom.coerceIn(
-        minimumValue = range.minZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale,
-        maximumValue = range.maxZoom(baseZoomMultiplier) / baseZoomMultiplier.maxScale
+        minimumValue = range.minZoom(baseZoom) / baseZoom.maxScale,
+        maximumValue = range.maxZoom(baseZoom) / baseZoom.maxScale
       )
     )
   }
 
   fun isAtMinZoom(range: ZoomRange): Boolean {
-    return finalZoom().maxScale <= range.minZoom(baseZoomMultiplier = baseZoomMultiplier)
+    return finalZoom().maxScale <= range.minZoom(baseZoomMultiplier = baseZoom)
   }
 
   fun isAtMaxZoom(range: ZoomRange): Boolean {
-    return finalZoom().maxScale >= range.maxZoom(baseZoomMultiplier = baseZoomMultiplier)
+    return finalZoom().maxScale >= range.maxZoom(baseZoomMultiplier = baseZoom)
   }
 }
 
 // todo: doc.
-//  - it is confusing that both min and max values can be 1f.
-@JvmInline
-internal value class ZoomRange private constructor(
-  private val range: ClosedFloatingPointRange<Float>
+internal data class ZoomRange(
+  private val minZoomAsRatioOfBaseZoom: Float = 1f,
+  private val maxZoomAsRatioOfSize: Float,
 ) {
-  constructor(min: Float = 1f, max: Float) : this(min..max)
 
   // todo: ZoomRange and ContentZoom are inter-dependent. minZoom() and maxZoom() should probably move to ContentZoom.
   internal fun minZoom(baseZoomMultiplier: ScaleFactor): Float {
-    return range.start * baseZoomMultiplier.maxScale
+    return minZoomAsRatioOfBaseZoom * baseZoomMultiplier.maxScale
   }
 
   internal fun maxZoom(baseZoomMultiplier: ScaleFactor): Float {
-    // Max zoom factor could end up being less than min zoom factor if the content is
-    // scaled-up by default. This is easy to test by setting contentScale = CenterCrop.
-    return maxOf(range.endInclusive, minZoom(baseZoomMultiplier))
+    // Note to self: the max zoom factor can be less than the min zoom
+    // factor if the content is scaled-up by default. This can be tested
+    // by setting contentScale = CenterCrop.
+    return maxOf(maxZoomAsRatioOfSize, minZoom(baseZoomMultiplier))
   }
 
   companion object {
-    val Default = ZoomRange(min = 1f, max = 1f)
+    val Default = ZoomRange(minZoomAsRatioOfBaseZoom = 1f, maxZoomAsRatioOfSize = 1f)
   }
 }
 

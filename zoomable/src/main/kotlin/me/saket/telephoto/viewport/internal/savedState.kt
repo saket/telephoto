@@ -22,7 +22,7 @@ internal data class ZoomableViewportSavedState(
       ),
       zoom = ContentZoom(
         // Base multiplier will be replaced by the actual value when this restored state is consumed.
-        baseZoomMultiplier = ScaleFactor(0f, 0f),
+        baseZoom = ScaleFactor(0f, 0f),
         viewportZoom = viewportZoom ?: return null
       ),
       lastCentroid = Offset.Zero
