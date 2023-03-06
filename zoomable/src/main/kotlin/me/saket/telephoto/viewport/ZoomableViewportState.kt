@@ -6,12 +6,15 @@ import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
@@ -24,8 +27,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
+import kotlinx.coroutines.launch
 import me.saket.telephoto.viewport.GestureTransformation.Companion.ZeroScaleFactor
 import me.saket.telephoto.viewport.internal.TransformableState
+import me.saket.telephoto.viewport.internal.ZoomableViewportSavedState
 import me.saket.telephoto.viewport.internal.div
 import me.saket.telephoto.viewport.internal.maxScale
 import me.saket.telephoto.viewport.internal.roundToIntSize
@@ -39,7 +44,7 @@ import kotlin.math.abs
 fun rememberZoomableViewportState(
   maxZoomFactor: Float = 1f,
 ): ZoomableViewportState {
-  val state = remember {
+  val state = rememberSaveable(saver = ZoomableViewportState.Saver) {
     ZoomableViewportState()
   }.also {
     it.zoomRange = ZoomRange(max = maxZoomFactor)
@@ -58,10 +63,16 @@ fun rememberZoomableViewportState(
       state.refreshContentPosition()
     }
 
-    LaunchedEffect(state.unscaledContentLocation) {
-      // Content was changed. Reset everything so
-      // that it is moved to its default position.
-      state.resetContentTransformation()
+    val scope = rememberCoroutineScope()
+    DisposableEffect(state.unscaledContentLocation) {
+      onDispose {
+        // Content was changed. Reset everything so that it is moved to its default position.
+        // I'm intentionally using a DisposableEffect instead of a LaunchedEffect to avoid
+        // running this code when the value is first set, which can break state restoration.
+        scope.launch {
+          state.resetContentTransformation()
+        }
+      }
     }
   }
 
@@ -69,10 +80,14 @@ fun rememberZoomableViewportState(
 }
 
 @Stable
-class ZoomableViewportState internal constructor() {
+class ZoomableViewportState internal constructor(
+  initialTransformation: GestureTransformation? = null
+) {
 
   /**
    * Transformations that should be applied by the viewport to its content.
+   *
+   * See Modifier#graphicsLayer: [me.saket.telephoto.viewport.graphicsLayer].
    *
    * todo: doc
    */
@@ -87,7 +102,8 @@ class ZoomableViewportState internal constructor() {
     }
   }
 
-  private var gestureTransformation: GestureTransformation? by mutableStateOf(null)
+  // todo: is "gesture" transformation the right name?
+  private var gestureTransformation: GestureTransformation? by mutableStateOf(initialTransformation)
 
   // todo: explain why this isn't a state?
   //  counter-arg: making this a state will allow live edit to work.
@@ -173,11 +189,10 @@ class ZoomableViewportState internal constructor() {
         dstSize = contentLayoutBounds.size,
       )
 
-      val oldZoom = gestureTransformation?.zoom
-        ?: ContentZoom(
-          baseZoomMultiplier = baseZoomMultiplier,
-          viewportZoom = 1f
-        )
+      val oldZoom = ContentZoom(
+        baseZoomMultiplier = baseZoomMultiplier,
+        viewportZoom = gestureTransformation?.zoom?.viewportZoom ?: 1f
+      )
 
       val isZoomingOut = zoomDelta < 1f
       val isZoomingIn = zoomDelta > 1f
@@ -367,10 +382,17 @@ class ZoomableViewportState internal constructor() {
       }
     }
   }
+
+  companion object {
+    internal val Saver = Saver<ZoomableViewportState, ZoomableViewportSavedState>(
+      save = { ZoomableViewportSavedState(it.gestureTransformation) },
+      restore = { ZoomableViewportState(initialTransformation = it.gestureTransformation()) }
+    )
+  }
 }
 
 // todo: doc
-private data class GestureTransformation(
+internal data class GestureTransformation(
   val offset: Offset,
   val zoom: ContentZoom,
   val lastCentroid: Offset,
@@ -382,7 +404,7 @@ private data class GestureTransformation(
 
 // todo: doc
 internal data class ContentZoom(
-  val baseZoomMultiplier: ScaleFactor,
+  val baseZoomMultiplier: ScaleFactor,  // todo: perhaps this should be removed from here and moved to GestureTransformation.
   val viewportZoom: Float,
 ) {
   // todo: doc
