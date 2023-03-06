@@ -1,3 +1,5 @@
+@file:Suppress("NAME_SHADOWING")
+
 package me.saket.telephoto.viewport.internal
 
 /*
@@ -35,7 +37,10 @@ import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CancellationException
@@ -65,12 +70,12 @@ import kotlin.math.abs
 fun Modifier.transformable(
   state: TransformableState,
   lockRotationOnZoomPan: Boolean = false,
-  onGestureEnd: () -> Unit = {},
+  onTransformStopped: (velocity: Velocity) -> Unit = {},
   enabled: Boolean = true,
 ) = composed(
   factory = {
     val updatePanZoomLock = rememberUpdatedState(lockRotationOnZoomPan)
-    val updatedOnGestureEnd = rememberUpdatedState(onGestureEnd)
+    val updatedOnGestureEnd = rememberUpdatedState(onTransformStopped)
     val channel = remember { Channel<TransformEvent>(capacity = Channel.UNLIMITED) }
     if (enabled) {
       LaunchedEffect(state) {
@@ -85,7 +90,9 @@ fun Modifier.transformable(
                 }
                 event = channel.receive()
               }
-              updatedOnGestureEnd.value()
+            }
+            (event as? TransformEvent.TransformStopped)?.let { event ->
+              updatedOnGestureEnd.value(event.velocity)
             }
           } catch (_: CancellationException) {
             // ignore the cancellation and start over again.
@@ -97,12 +104,21 @@ fun Modifier.transformable(
       {
         coroutineScope {
           awaitEachGesture {
+            val velocityTracker = VelocityTracker()
+            var wasGestureCancelled = false
             try {
-              detectZoom(updatePanZoomLock, channel, state::canConsumePanChange)
+              detectZoom(
+                panZoomLock = updatePanZoomLock,
+                channel = channel,
+                canConsumePanChange = state::canConsumePanChange,
+                velocityTracker = velocityTracker,
+              )
             } catch (exception: CancellationException) {
+              wasGestureCancelled = true
               if (!isActive) throw exception
             } finally {
-              channel.trySend(TransformEvent.TransformStopped)
+              val velocity = if (wasGestureCancelled) Velocity.Zero else velocityTracker.calculateVelocity()
+              channel.trySend(TransformEvent.TransformStopped(velocity))
             }
           }
         }
@@ -120,7 +136,7 @@ fun Modifier.transformable(
 
 private sealed class TransformEvent {
   object TransformStarted : TransformEvent()
-  object TransformStopped : TransformEvent()
+  data class TransformStopped(val velocity: Velocity) : TransformEvent()
   class TransformDelta(
     val zoomChange: Float,
     val panChange: Offset,
@@ -133,6 +149,7 @@ private suspend fun AwaitPointerEventScope.detectZoom(
   panZoomLock: State<Boolean>,
   channel: Channel<TransformEvent>,
   canConsumePanChange: (Offset) -> Boolean,
+  velocityTracker: VelocityTracker,
 ) {
   var rotation = 0f
   var zoom = 1f
@@ -146,6 +163,10 @@ private suspend fun AwaitPointerEventScope.detectZoom(
     val event = awaitPointerEvent()
     val canceled = ignoringGesture || event.changes.fastAny { it.isConsumed }
     if (!canceled) {
+      event.changes.fastForEach {
+        velocityTracker.addPointerInputChange(it)
+      }
+
       val zoomChange = event.calculateZoom()
       val rotationChange = event.calculateRotation()
       val panChange = event.calculatePan()

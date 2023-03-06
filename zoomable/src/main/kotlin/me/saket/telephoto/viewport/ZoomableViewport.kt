@@ -44,7 +44,7 @@ fun ZoomableViewport(
     Modifier
       .transformable(
         state = state.transformableState,
-        onGestureEnd = {
+        onTransformStopped = {
           // Reset is performed in a new coroutine. The animation will be canceled
           // if TransformableState#transform() is called again by Modifier#transformable().
           scope.launch {
