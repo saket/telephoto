@@ -1,8 +1,12 @@
 package me.saket.telephoto.viewport
 
 import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.AnimationVector
 import androidx.compose.animation.core.Spring.StiffnessMediumLow
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.animateTo
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.runtime.Composable
@@ -23,9 +27,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
-import androidx.compose.ui.layout.lerp
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
@@ -364,23 +368,41 @@ class ZoomableViewportState internal constructor(
     }
   }
 
-  internal suspend fun smoothlySettleOnGestureEnd() {
+  internal suspend fun smoothlySettleOnGestureEnd(velocity: Velocity) {
     val start = gestureTransformation!!
-    val targetViewportZoom = start.zoom.coercedIn(zoomRange).viewportZoom
+    val viewportZoomWithinBounds = start.zoom.coercedIn(zoomRange).viewportZoom
+    val isOutOfBounds = start.zoom.viewportZoom != viewportZoomWithinBounds
 
-    transformableState.transform(MutatePriority.Default) {
-      AnimationState(initialValue = 0f).animateTo(
-        targetValue = 1f,
-        animationSpec = spring()
-      ) {
-        val current = gestureTransformation!!
-        val newViewportZoom = lerp(start = start.zoom.viewportZoom, stop = targetViewportZoom, fraction = value)
-        transformBy(
-          centroid = start.lastCentroid,
-          zoomChange = newViewportZoom / current.zoom.viewportZoom,
-          panChange = Offset.Zero,
-        )
+    if (isOutOfBounds) {
+      transformableState.transform {
+        var previous = 1f
+        AnimationState(initialValue = start.zoom.viewportZoom).animateTo(
+          targetValue = viewportZoomWithinBounds,
+          animationSpec = spring()
+        ) {
+          transformBy(
+            centroid = start.lastCentroid,
+            zoomChange = if (previous == 0f) 1f else value / previous,
+          )
+          previous = this.value
+        }
       }
+    } else {
+      transformableState.transform {
+        var previous = start.offset
+        AnimationState(
+          typeConverter = Offset.VectorConverter,
+          initialValue = start.offset,
+          initialVelocityVector = AnimationVector(velocity.x, velocity.y)
+        ).animateDecay(exponentialDecay()) {
+          transformBy(
+            centroid = start.lastCentroid,
+            panChange = value - previous
+          )
+          previous = value
+        }
+      }
+
     }
   }
 
