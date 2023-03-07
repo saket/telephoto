@@ -53,7 +53,7 @@ class SubSamplingImageTest {
     composeTestRule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
 
-      // Hide system bars in an attempt to reduce differences
+      // Remove any space occupied by system bars to reduce differences
       // in from screenshots generated on different devices.
       it.window.setDecorFitsSystemWindows(false)
       it.window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)

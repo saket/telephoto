@@ -8,7 +8,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
@@ -31,7 +30,6 @@ fun NormalSizedRemoteImage(
       .crossfade(true)
       .build(),
     contentDescription = null,
-    contentScale = ContentScale.Fit,
     onState = {
       viewportState.setContentLocation(
         ZoomableContentLocation.fitToBoundsAndAlignedToCenter(it.painter?.intrinsicSize)
@@ -56,7 +54,6 @@ fun NormalSizedLocalImage(
       .fillMaxSize()
       .graphicsLayer(viewportState.contentTransformation),
     painter = painter,
-    contentDescription = null,
-    contentScale = ContentScale.Fit,
+    contentDescription = null
   )
 }
