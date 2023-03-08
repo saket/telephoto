@@ -20,10 +20,12 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
@@ -125,6 +127,54 @@ class ZoomableViewportTest {
     assertThat(finalScale.scaleY).isWithin(0.01f).of(2.2f)
     dropshots.assertSnapshot(composeTestRule.activity)
   }
+
+  @Test fun retain_transformations_across_state_restorations() = runTest(1.seconds) {
+    val stateRestorationTester = StateRestorationTester(composeTestRule)
+
+    stateRestorationTester.setContent {
+      ScreenScaffold {
+        val painter = assetPainter("fox_1500.jpg")
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
+        LaunchedEffect(painter) {
+          viewportState.setContentLocation(
+            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
+          )
+        }
+        ZoomableViewport(
+          modifier = Modifier.testTag("viewport"),
+          state = viewportState,
+          contentScale = ContentScale.Fit,
+        ) {
+          Image(
+            modifier = Modifier
+              .fillMaxSize()
+              .graphicsLayer(viewportState.contentTransformation),
+            painter = painter,
+            contentDescription = null,
+          )
+        }
+      }
+    }
+
+    with(composeTestRule.onNodeWithTag("viewport")) {
+      performTouchInput {
+        pinchToZoomBy(visibleSize.center / 2f)
+      }
+      performTouchInput {
+        swipeLeft(startX = center.x, endX = centerLeft.x)
+      }
+    }
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+
+    stateRestorationTester.emulateSavedInstanceStateRestore()
+
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+  }
+
   @Composable
   private fun ScreenScaffold(content: @Composable () -> Unit) {
     Box(
