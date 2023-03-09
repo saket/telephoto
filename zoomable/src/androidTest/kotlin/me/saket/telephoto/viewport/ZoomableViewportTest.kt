@@ -55,8 +55,8 @@ import org.junit.runner.RunWith
 @RunWith(TestParameterInjector::class)
 class ZoomableViewportTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
-  @get:Rule val dropshots = Dropshots()
   @get:Rule val testName = TestName()
+  @get:Rule val dropshots = Dropshots(filenameFunc = { testName.methodName.replace(" ", "_") })
 
   @Before
   fun setup() {
@@ -157,7 +157,7 @@ class ZoomableViewportTest {
     }
   }
 
-  @Test fun alignments_and_scales(
+  @Test fun various_alignments_and_scales(
     @TestParameter alignment: AlignmentParam,
     @TestParameter contentScale: ContentScaleParam,
   ) {
