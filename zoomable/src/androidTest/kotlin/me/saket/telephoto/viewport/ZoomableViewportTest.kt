@@ -3,10 +3,13 @@ package me.saket.telephoto.viewport
 import android.graphics.BitmapFactory
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +33,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
@@ -37,12 +42,16 @@ import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import me.saket.telephoto.viewport.ZoomableViewportTest.ScrollDirection
+import me.saket.telephoto.viewport.ZoomableViewportTest.ScrollDirection.LeftToRight
+import me.saket.telephoto.viewport.ZoomableViewportTest.ScrollDirection.RightToLeft
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
+@ExperimentalFoundationApi
 @RunWith(TestParameterInjector::class)
 class ZoomableViewportTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -248,6 +257,140 @@ class ZoomableViewportTest {
     }
   }
 
+  @Test fun pager_can_be_scrolled_when_content_is_fully_zoomed_out_and_cannot_pan(
+    @TestParameter scrollDirection: ScrollDirection
+  ) {
+    val assetNames = listOf(
+      "forest_fox_1000.jpg",
+      "fox_1500.jpg",
+      "cat_1920.jpg"
+    )
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        HorizontalPager(
+          modifier = Modifier.testTag("pager"),
+          state = rememberPagerState(initialPage = 1),
+          pageCount = assetNames.size
+        ) { pageNum ->
+          val viewportState = rememberZoomableViewportState()
+          ZoomableViewport(
+            state = viewportState,
+            contentScale = ContentScale.Fit,
+          ) {
+            ImageAsset(
+              viewportState = viewportState,
+              assetName = assetNames[pageNum]
+            )
+          }
+        }
+      }
+    }
+
+    composeTestRule.onNodeWithTag("pager").performTouchInput {
+      swipeWithVelocity(scrollDirection)
+    }
+    composeTestRule.mainClock.advanceTimeByFrame()
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+  }
+
+  @Test fun pager_should_not_scroll_when_content_is_zoomed_in_and_can_pan(
+    @TestParameter scrollDirection: ScrollDirection
+  ) {
+    val assetNames = listOf(
+      "forest_fox_1000.jpg",
+      "cat_1920.jpg",
+      "fox_1500.jpg"
+    )
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        HorizontalPager(
+          modifier = Modifier.testTag("pager"),
+          state = rememberPagerState(initialPage = 1),
+          pageCount = assetNames.size
+        ) { pageNum ->
+          val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
+          ZoomableViewport(
+            state = viewportState,
+            contentScale = ContentScale.Fit,
+          ) {
+            ImageAsset(
+              viewportState = viewportState,
+              assetName = assetNames[pageNum]
+            )
+          }
+        }
+      }
+    }
+
+    with(composeTestRule.onNodeWithTag("pager")) {
+      performTouchInput {
+        pinchToZoomBy(visibleSize.center / 2f)
+      }
+      performTouchInput {
+        swipeWithVelocity(scrollDirection)
+      }
+    }
+
+    composeTestRule.mainClock.advanceTimeByFrame()
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+  }
+
+  @Test fun pager_should_scroll_when_content_is_zoomed_in_but_cannot_pan(
+    @TestParameter scrollDirection: ScrollDirection
+  ) {
+    val assetNames = listOf(
+      "forest_fox_1000.jpg",
+      "cat_1920.jpg",
+      "fox_1500.jpg"
+    )
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        HorizontalPager(
+          modifier = Modifier.testTag("pager"),
+          state = rememberPagerState(initialPage = 1),
+          pageCount = assetNames.size
+        ) { pageNum ->
+          val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
+          ZoomableViewport(
+            state = viewportState,
+            contentScale = ContentScale.Fit,
+          ) {
+            ImageAsset(
+              viewportState = viewportState,
+              assetName = assetNames[pageNum]
+            )
+          }
+        }
+      }
+    }
+
+    with(composeTestRule.onNodeWithTag("pager")) {
+      performTouchInput {
+        pinchToZoomBy(visibleSize.center / 2f)
+      }
+      // First swipe will fully pan the content to its edge.
+      // Second swipe should scroll the pager.
+      performTouchInput {
+        swipe(scrollDirection)
+      }
+      performTouchInput {
+        swipe(scrollDirection)
+      }
+    }
+
+    composeTestRule.mainClock.advanceTimeByFrame()
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+  }
+
   @Composable
   private fun ScreenScaffold(content: @Composable () -> Unit) {
     Box(
@@ -292,6 +435,49 @@ class ZoomableViewportTest {
     Crop(ContentScale.Crop),
     Fit(ContentScale.Fit),
     Inside(ContentScale.Inside),
+  }
+
+  @Suppress("unused")
+  enum class ScrollDirection {
+    RightToLeft,
+    LeftToRight
+  }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+private fun TouchInjectionScope.swipeWithVelocity(
+  direction: ScrollDirection,
+  velocity: Float = 5_000f,
+) {
+  when (direction) {
+    RightToLeft -> swipeWithVelocity(
+      start = centerRight,
+      end = center,
+      endVelocity = 5_000f,
+    )
+
+    LeftToRight -> swipeWithVelocity(
+      start = centerLeft,
+      end = center,
+      endVelocity = 5_000f,
+    )
+  }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+private fun TouchInjectionScope.swipe(
+  direction: ScrollDirection
+) {
+  when (direction) {
+    RightToLeft -> swipeLeft(
+      startX = centerRight.x,
+      endX = centerLeft.x,
+    )
+
+    LeftToRight -> swipeRight(
+      startX = centerLeft.x,
+      endX = centerRight.x,
+    )
   }
 }
 
