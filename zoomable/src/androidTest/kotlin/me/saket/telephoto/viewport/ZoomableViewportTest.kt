@@ -31,17 +31,16 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
 import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
+import com.google.testing.junit.testparameterinjector.TestParameter
+import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+import org.junit.runner.RunWith
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(TestParameterInjector::class)
 class ZoomableViewportTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val dropshots = Dropshots()
@@ -59,7 +58,7 @@ class ZoomableViewportTest {
     }
   }
 
-  @Test fun canary() = runTest(1.seconds) {
+  @Test fun canary() {
     composeTestRule.setContent {
       ScreenScaffold {
         val painter = assetPainter("fox_1500.jpg")
@@ -87,7 +86,7 @@ class ZoomableViewportTest {
     dropshots.assertSnapshot(composeTestRule.activity)
   }
 
-  @Test fun zoom_in() = runTest {
+  @Test fun zoom_in() {
     var finalScale = ScaleFactor.Unspecified
 
     composeTestRule.setContent {
@@ -128,7 +127,7 @@ class ZoomableViewportTest {
     dropshots.assertSnapshot(composeTestRule.activity)
   }
 
-  @Test fun retain_transformations_across_state_restorations() = runTest(1.seconds) {
+  @Test fun retain_transformations_across_state_restorations() {
     val stateRestorationTester = StateRestorationTester(composeTestRule)
 
     stateRestorationTester.setContent {
@@ -175,6 +174,65 @@ class ZoomableViewportTest {
     }
   }
 
+  @Test fun alignments_and_scales(
+    @TestParameter alignment: AlignmentParam,
+    @TestParameter contentScale: ContentScaleParam,
+  ) {
+    composeTestRule.setContent {
+      ScreenScaffold {
+        val painter = assetPainter("fox_250.jpg")
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
+        LaunchedEffect(painter) {
+          viewportState.setContentLocation(
+            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
+          )
+        }
+
+        ZoomableViewport(
+          modifier = Modifier.testTag("viewport"),
+          state = viewportState,
+          contentScale = contentScale.value,
+          contentAlignment = alignment.value,
+        ) {
+          Image(
+            modifier = Modifier
+              .fillMaxSize()
+              .graphicsLayer(viewportState.contentTransformation),
+            painter = painter,
+            contentDescription = null,
+          )
+        }
+      }
+    }
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName)
+    }
+
+    with(composeTestRule.onNodeWithTag("viewport")) {
+      performTouchInput {
+        val by = visibleSize.center / 2f
+        pinch(
+          start0 = centerLeft,
+          start1 = centerLeft,
+          end0 = centerLeft - by.toOffset(),
+          end1 = centerLeft + by.toOffset(),
+        )
+      }
+    }
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_zoomed")
+    }
+
+    with(composeTestRule.onNodeWithTag("viewport")) {
+      performTouchInput {
+        swipeLeft(startX = center.x, endX = centerLeft.x)
+      }
+    }
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_zoomed_panned")
+    }
+  }
+
   @Composable
   private fun ScreenScaffold(content: @Composable () -> Unit) {
     Box(
@@ -184,6 +242,20 @@ class ZoomableViewportTest {
     ) {
       content()
     }
+  }
+
+  @Suppress("unused")
+  enum class AlignmentParam(val value: Alignment) {
+    TopCenter(Alignment.TopCenter),
+    Center(Alignment.Center),
+    BottomCenter(Alignment.BottomCenter),
+  }
+
+  @Suppress("unused")
+  enum class ContentScaleParam(val value: ContentScale) {
+    Crop(ContentScale.Crop),
+    Fit(ContentScale.Fit),
+    Inside(ContentScale.Inside),
   }
 }
 
@@ -203,9 +275,4 @@ private fun assetPainter(fileName: String): Painter {
     val stream = context.assets.open(fileName)
     BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
   }
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun runTest(timeout: Duration, testBody: suspend TestScope.() -> Unit) {
-  runTest(dispatchTimeoutMs = timeout.inWholeMilliseconds, testBody = testBody)
 }
