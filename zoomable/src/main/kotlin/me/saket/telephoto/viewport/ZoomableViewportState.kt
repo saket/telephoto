@@ -114,8 +114,8 @@ class ZoomableViewportState internal constructor(
   //  counter-arg: making this a state will allow live edit to work.
   internal var zoomRange = ZoomRange.Default
 
-  internal lateinit var contentScale: ContentScale
-  internal lateinit var contentAlignment: Alignment
+  internal var contentScale by mutableStateOf<ContentScale>(ContentScale.None)
+  internal var contentAlignment by mutableStateOf(Alignment.Center)
   internal lateinit var layoutDirection: LayoutDirection
 
   /**
@@ -140,7 +140,6 @@ class ZoomableViewportState internal constructor(
     unscaledContentLocation.isSpecified
       && contentLayoutBounds != Rect.Zero
       && viewportBounds != Rect.Zero
-      && ::contentAlignment.isInitialized
   }
 
   @Suppress("NAME_SHADOWING")

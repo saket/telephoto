@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -230,6 +234,42 @@ class ZoomableViewportTest {
     }
     composeTestRule.runOnIdle {
       dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_zoomed_panned")
+    }
+  }
+
+  @Test fun updating_of_content_alignment() {
+    var contentAlignment by mutableStateOf(Alignment.BottomCenter)
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        val painter = assetPainter("fox_1500.jpg")
+        val viewportState = rememberZoomableViewportState()
+        LaunchedEffect(painter) {
+          viewportState.setContentLocation(
+            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
+          )
+        }
+
+        ZoomableViewport(
+          state = viewportState,
+          contentScale = ContentScale.Fit,
+          contentAlignment = contentAlignment,
+        ) {
+          Image(
+            modifier = Modifier
+              .fillMaxSize()
+              .graphicsLayer(viewportState.contentTransformation),
+            painter = painter,
+            contentDescription = null,
+          )
+        }
+      }
+    }
+    dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_before_updating_alignment")
+
+    contentAlignment = Alignment.TopCenter
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_after_updating_alignment")
     }
   }
 
