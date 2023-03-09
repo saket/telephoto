@@ -37,7 +37,6 @@ import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -65,24 +64,14 @@ class ZoomableViewportTest {
   @Test fun canary() {
     composeTestRule.setContent {
       ScreenScaffold {
-        val painter = assetPainter("fox_1500.jpg")
         val viewportState = rememberZoomableViewportState()
-        LaunchedEffect(painter) {
-          viewportState.setContentLocation(
-            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
-          )
-        }
-
         ZoomableViewport(
           state = viewportState,
           contentScale = ContentScale.Fit,
         ) {
-          Image(
-            modifier = Modifier
-              .fillMaxSize()
-              .graphicsLayer(viewportState.contentTransformation),
-            painter = painter,
-            contentDescription = null,
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_1500.jpg"
           )
         }
       }
@@ -95,25 +84,15 @@ class ZoomableViewportTest {
 
     composeTestRule.setContent {
       ScreenScaffold {
-        val painter = assetPainter("fox_1500.jpg")
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
-        LaunchedEffect(painter) {
-          viewportState.setContentLocation(
-            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
-          )
-        }
-
         ZoomableViewport(
           modifier = Modifier.testTag("viewport"),
           state = viewportState,
           contentScale = ContentScale.Fit,
         ) {
-          Image(
-            modifier = Modifier
-              .fillMaxSize()
-              .graphicsLayer(viewportState.contentTransformation),
-            painter = painter,
-            contentDescription = null,
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_1500.jpg"
           )
         }
 
@@ -136,24 +115,15 @@ class ZoomableViewportTest {
 
     stateRestorationTester.setContent {
       ScreenScaffold {
-        val painter = assetPainter("fox_1500.jpg")
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
-        LaunchedEffect(painter) {
-          viewportState.setContentLocation(
-            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
-          )
-        }
         ZoomableViewport(
           modifier = Modifier.testTag("viewport"),
           state = viewportState,
           contentScale = ContentScale.Fit,
         ) {
-          Image(
-            modifier = Modifier
-              .fillMaxSize()
-              .graphicsLayer(viewportState.contentTransformation),
-            painter = painter,
-            contentDescription = null,
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_1500.jpg"
           )
         }
       }
@@ -184,26 +154,16 @@ class ZoomableViewportTest {
   ) {
     composeTestRule.setContent {
       ScreenScaffold {
-        val painter = assetPainter("fox_250.jpg")
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
-        LaunchedEffect(painter) {
-          viewportState.setContentLocation(
-            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
-          )
-        }
-
         ZoomableViewport(
           modifier = Modifier.testTag("viewport"),
           state = viewportState,
           contentScale = contentScale.value,
           contentAlignment = alignment.value,
         ) {
-          Image(
-            modifier = Modifier
-              .fillMaxSize()
-              .graphicsLayer(viewportState.contentTransformation),
-            painter = painter,
-            contentDescription = null,
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_250.jpg"
           )
         }
       }
@@ -242,25 +202,15 @@ class ZoomableViewportTest {
 
     composeTestRule.setContent {
       ScreenScaffold {
-        val painter = assetPainter("fox_1500.jpg")
         val viewportState = rememberZoomableViewportState()
-        LaunchedEffect(painter) {
-          viewportState.setContentLocation(
-            ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
-          )
-        }
-
         ZoomableViewport(
           state = viewportState,
           contentScale = ContentScale.Fit,
           contentAlignment = contentAlignment,
         ) {
-          Image(
-            modifier = Modifier
-              .fillMaxSize()
-              .graphicsLayer(viewportState.contentTransformation),
-            painter = painter,
-            contentDescription = null,
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_1500.jpg"
           )
         }
       }
@@ -273,6 +223,31 @@ class ZoomableViewportTest {
     }
   }
 
+  @Test fun updating_of_content_scale() {
+    var contentScale by mutableStateOf(ContentScale.Crop)
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        val viewportState = rememberZoomableViewportState()
+        ZoomableViewport(
+          state = viewportState,
+          contentScale = contentScale,
+        ) {
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_1500.jpg"
+          )
+        }
+      }
+    }
+    dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_before_updating_scale")
+
+    contentScale = ContentScale.Inside
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_after_updating_scale")
+    }
+  }
+
   @Composable
   private fun ScreenScaffold(content: @Composable () -> Unit) {
     Box(
@@ -282,6 +257,27 @@ class ZoomableViewportTest {
     ) {
       content()
     }
+  }
+
+  @Composable
+  private fun ImageAsset(
+    viewportState: ZoomableViewportState,
+    assetName: String
+  ) {
+    val painter = assetPainter(assetName)
+    LaunchedEffect(painter) {
+      viewportState.setContentLocation(
+        ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
+      )
+    }
+
+    Image(
+      modifier = Modifier
+        .fillMaxSize()
+        .graphicsLayer(viewportState.contentTransformation),
+      painter = painter,
+      contentDescription = null,
+    )
   }
 
   @Suppress("unused")
