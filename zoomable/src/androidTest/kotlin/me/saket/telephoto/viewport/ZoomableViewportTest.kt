@@ -86,7 +86,9 @@ class ZoomableViewportTest {
         }
       }
     }
-    dropshots.assertSnapshot(composeTestRule.activity)
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun zoom_in() {
@@ -115,9 +117,11 @@ class ZoomableViewportTest {
     composeTestRule.onNodeWithTag("viewport").performTouchInput {
       pinchToZoomBy(visibleSize.center / 2f)
     }
-    assertThat(finalScale.scaleX).isWithin(0.01f).of(2.2f)
-    assertThat(finalScale.scaleY).isWithin(0.01f).of(2.2f)
-    dropshots.assertSnapshot(composeTestRule.activity)
+    composeTestRule.runOnIdle {
+      assertThat(finalScale.scaleX).isWithin(0.01f).of(2.2f)
+      assertThat(finalScale.scaleY).isWithin(0.01f).of(2.2f)
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun retain_transformations_across_state_restorations() {
