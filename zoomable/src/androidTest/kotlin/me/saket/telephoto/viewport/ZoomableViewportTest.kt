@@ -118,8 +118,8 @@ class ZoomableViewportTest {
       pinchToZoomBy(visibleSize.center / 2f)
     }
     composeTestRule.runOnIdle {
-      assertThat(finalScale.scaleX).isWithin(0.01f).of(2.2f)
-      assertThat(finalScale.scaleY).isWithin(0.01f).of(2.2f)
+      assertThat(finalScale.scaleX).isEqualTo(2f)
+      assertThat(finalScale.scaleY).isEqualTo(2f)
       dropshots.assertSnapshot(composeTestRule.activity)
     }
   }

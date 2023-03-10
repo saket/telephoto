@@ -367,8 +367,8 @@ class ZoomableViewportState internal constructor(
 
     if (isOutOfBounds) {
       transformableState.transform {
-        var previous = 1f
-        AnimationState(initialValue = start.zoom.viewportZoom).animateTo(
+        var previous = start.zoom.viewportZoom
+        AnimationState(initialValue = previous).animateTo(
           targetValue = viewportZoomWithinBounds,
           animationSpec = spring()
         ) {
@@ -384,7 +384,7 @@ class ZoomableViewportState internal constructor(
         var previous = start.offset
         AnimationState(
           typeConverter = Offset.VectorConverter,
-          initialValue = start.offset,
+          initialValue = previous,
           initialVelocityVector = AnimationVector(velocity.x, velocity.y)
         ).animateDecay(splineBasedDecay(density)) {
           transformBy(
