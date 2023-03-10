@@ -31,7 +31,7 @@ interface ZoomableContentLocation {
     }
 
     @Stable
-    internal val Unspecified = object : ZoomableContentLocation {
+    val Unspecified = object : ZoomableContentLocation {
       override fun boundsIn(parent: Rect, direction: LayoutDirection) =
         error("location is unspecified")
     }
@@ -40,7 +40,8 @@ interface ZoomableContentLocation {
 
 /**
  * It's intentional that is not a data class. Setting a new location object should
- * always trigger a position update even if the content size is unchanged.
+ * always trigger a position update even if the content size is unchanged because two
+ * images can have the same size.
  * */
 @Immutable
 internal class RelativeContentLocation(
