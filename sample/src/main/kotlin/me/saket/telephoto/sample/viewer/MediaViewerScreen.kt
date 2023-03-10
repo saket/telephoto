@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
 import me.saket.telephoto.viewport.ZoomableViewport
@@ -39,7 +40,8 @@ fun MediaViewerScreen(key: MediaViewerScreenKey) {
         .padding(contentPadding)
         .fillMaxSize(),
       pageCount = key.album.items.size,
-      state = pagerState
+      state = pagerState,
+      pageSpacing = 16.dp,
     ) { pageNum ->
       MediaPage(
         modifier = Modifier.fillMaxSize(),
