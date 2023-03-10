@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -391,6 +392,47 @@ class ZoomableViewportTest {
     }
   }
 
+  @Test fun reset_transformations_when_content_is_changed() {
+    val maxZoomFactor = 2f
+    var imageScale = ScaleFactor.Unspecified
+    var assetName by mutableStateOf("fox_1500.jpg")
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
+        ZoomableViewport(
+          modifier = Modifier.testTag("viewport"),
+          state = viewportState,
+          contentScale = ContentScale.Fit,
+        ) {
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = assetName
+          )
+        }
+
+        LaunchedEffect(viewportState.contentTransformation) {
+          imageScale = viewportState.contentTransformation.scale
+        }
+      }
+    }
+
+    composeTestRule.onNodeWithTag("viewport").performTouchInput {
+      doubleClick()
+    }
+    composeTestRule.runOnIdle {
+      assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
+    }
+
+    println("switching image")
+    assetName = "cat_1920.jpg"
+
+    composeTestRule.runOnIdle {
+      assertThat(imageScale).isEqualTo(ScaleFactor(1f, 1f))
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
+  }
+
   @Composable
   private fun ScreenScaffold(content: @Composable () -> Unit) {
     Box(
@@ -453,13 +495,13 @@ private fun TouchInjectionScope.swipeWithVelocity(
     RightToLeft -> swipeWithVelocity(
       start = centerRight,
       end = center,
-      endVelocity = 5_000f,
+      endVelocity = velocity,
     )
 
     LeftToRight -> swipeWithVelocity(
       start = centerLeft,
       end = center,
-      endVelocity = 5_000f,
+      endVelocity = velocity,
     )
   }
 }
@@ -491,10 +533,10 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 }
 
 @Composable
-private fun assetPainter(fileName: String): Painter {
+private fun assetPainter(assetName: String): Painter {
   val context = LocalContext.current
-  return remember {
-    context.assets.open(fileName).use { stream ->
+  return remember(assetName) {
+    context.assets.open(assetName).use { stream ->
       BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
     }
   }

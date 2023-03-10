@@ -16,7 +16,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
-import kotlinx.coroutines.launch
 import me.saket.telephoto.viewport.GestureTransformation.Companion.ZeroScaleFactor
 import me.saket.telephoto.viewport.internal.TransformableState
 import me.saket.telephoto.viewport.internal.ZoomableViewportSavedState
@@ -68,15 +66,12 @@ fun rememberZoomableViewportState(
       state.refreshContentPosition()
     }
 
-    val scope = rememberCoroutineScope()
     DisposableEffect(state.unscaledContentLocation) {
       onDispose {
         // Content was changed. Reset everything so that it is moved to its default position.
         // I'm intentionally using a DisposableEffect instead of a LaunchedEffect to avoid
         // running this code when the value is first set, which will break state restoration.
-        scope.launch {
-          state.resetContentTransformation()
-        }
+        state.resetContentTransformation()
       }
     }
   }
@@ -293,11 +288,8 @@ class ZoomableViewportState internal constructor(
 
   // todo: doc
   /** Reset content position by discarding the current zoom and offset values. */
-  suspend fun resetContentTransformation() {
+  fun resetContentTransformation() {
     gestureTransformation = null
-    if (isReadyToInteract) {
-      refreshContentPosition()
-    }
   }
 
   /** todo: doc */
