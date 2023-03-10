@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -21,14 +21,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runTest
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
-import me.saket.telephoto.subsamplingimage.SubSamplingImageEventListener
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.viewport.ZoomableContentTransformation
 import me.saket.telephoto.viewport.ZoomableViewport
@@ -38,14 +32,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 class SubSamplingImageTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
-  @get:Rule val dropshots = Dropshots()
+  @get:Rule val dropshots = Dropshots(filenameFunc = { it.replace(" ", "_") })
   @get:Rule val testName = TestName()
 
   @Before
@@ -60,8 +51,8 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun canary() = runTest(1.seconds) {
-    val onImageDisplayed = Mutex(locked = true)
+  @Test fun canary() {
+    var isImageDisplayed = false
 
     composeTestRule.setContent {
       ScreenScaffold {
@@ -69,8 +60,11 @@ class SubSamplingImageTest {
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpg"),
-          eventListener = onImageDisplayed { onImageDisplayed.unlock() }
         )
+        LaunchedEffect(imageState.isImageDisplayed) {
+          isImageDisplayed = imageState.isImageDisplayed
+        }
+
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
           state = viewportState,
@@ -85,13 +79,12 @@ class SubSamplingImageTest {
       }
     }
 
-    onImageDisplayed.withLock {
-      dropshots.assertSnapshot(composeTestRule.activity)
-    }
+    composeTestRule.waitUntil { isImageDisplayed }
+    dropshots.assertSnapshot(composeTestRule.activity)
   }
 
-  @Test fun image_smaller_than_viewport(@TestParameter size: SizeParam) = runTest(1.seconds) {
-    val onImageDisplayed = Mutex(locked = true)
+  @Test fun image_smaller_than_viewport(@TestParameter size: SizeParam) {
+    var isImageDisplayed = false
 
     composeTestRule.setContent {
       ScreenScaffold {
@@ -99,8 +92,11 @@ class SubSamplingImageTest {
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("smol.jpg"),
-          eventListener = onImageDisplayed { onImageDisplayed.unlock() }
         )
+        LaunchedEffect(imageState.isImageDisplayed) {
+          isImageDisplayed = imageState.isImageDisplayed
+        }
+
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
           state = viewportState,
@@ -115,16 +111,15 @@ class SubSamplingImageTest {
       }
     }
 
-    onImageDisplayed.withLock {
-      dropshots.assertSnapshot(composeTestRule.activity)
-    }
+    composeTestRule.waitUntil { isImageDisplayed }
+    dropshots.assertSnapshot(composeTestRule.activity)
   }
 
   @Test fun various_content_alignment(
     @TestParameter alignment: AlignmentParam,
     @TestParameter size: SizeParam,
-  ) = runTest(1.seconds) {
-    val onImageDisplayed = Mutex(locked = true)
+  ) {
+    var isImageDisplayed = false
 
     composeTestRule.setContent {
       ScreenScaffold {
@@ -132,8 +127,11 @@ class SubSamplingImageTest {
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpg"),
-          eventListener = onImageDisplayed { onImageDisplayed.unlock() }
         )
+        LaunchedEffect(imageState.isImageDisplayed) {
+          isImageDisplayed = imageState.isImageDisplayed
+        }
+
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
           state = viewportState,
@@ -149,42 +147,41 @@ class SubSamplingImageTest {
       }
     }
 
-    onImageDisplayed.withLock {
-      dropshots.assertSnapshot(composeTestRule.activity)
-    }
+    composeTestRule.waitUntil { isImageDisplayed }
+    dropshots.assertSnapshot(composeTestRule.activity)
   }
 
-  @Test fun various_content_scale() = runTest(1.seconds) {
+  @Test fun various_content_scale() {
     // todo.
   }
 
-  @Test fun image_that_fills_both_width_and_height() = runTest(1.seconds) {
+  @Test fun image_that_fills_both_width_and_height() {
     // todo.
   }
 
-  @Test fun updating_of_image_works() = runTest(1.seconds) {
+  @Test fun updating_of_image_works() {
     // todo:
     //  - content description should get updated.
   }
 
-  @Test fun updating_of_image_works_when_zoomable_transformations_were_non_empty() = runTest(1.seconds) {
+  @Test fun updating_of_image_works_when_zoomable_transformations_were_non_empty() {
     // todo.
   }
 
-  @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() = runTest(1.seconds) {
+  @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
     // todo.
   }
 
-  @Test fun state_restoration() = runTest(1.seconds) {
+  @Test fun state_restoration() {
     // todo.
   }
 
-  @Test fun zoomed_in_image() = runTest(1.seconds) {
+  @Test fun zoomed_in_image() {
     // todo
   }
 
-  @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() = runTest(1.seconds) {
-    val onImageDisplayed = Mutex(locked = true)
+  @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
+    var isImageDisplayed = false
 
     composeTestRule.setContent {
       ScreenScaffold {
@@ -198,8 +195,11 @@ class SubSamplingImageTest {
               offset = Offset(x = -866.9214f, y = 0f),
               transformOrigin = TransformOrigin(0f, 0f)
             ),
-            eventListener = onImageDisplayed { onImageDisplayed.unlock() }
           )
+          LaunchedEffect(imageState.isImageDisplayed) {
+            isImageDisplayed = imageState.isImageDisplayed
+          }
+
           SubSamplingImage(
             modifier = Modifier.fillMaxSize(),
             state = imageState,
@@ -209,42 +209,44 @@ class SubSamplingImageTest {
       }
     }
 
-    onImageDisplayed.withLock {
-      dropshots.assertSnapshot(composeTestRule.activity)
-    }
+    composeTestRule.waitUntil { isImageDisplayed }
+    dropshots.assertSnapshot(composeTestRule.activity)
   }
 
-  @Test fun center_aligned_and_wrap_content() = runTest(1.seconds) {
-    val onImageDisplayed = Mutex(locked = true)
+  @Test fun center_aligned_and_wrap_content() {
+    var isImageDisplayed = false
 
     composeTestRule.setContent {
       ScreenScaffold {
-        val state = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState()
+        val imageState = rememberSubSamplingImageState(
+          viewportState = viewportState,
+          imageSource = ImageSource.asset("smol.jpg"),
+        )
+        LaunchedEffect(imageState.isImageDisplayed) {
+          isImageDisplayed = imageState.isImageDisplayed
+        }
+
         ZoomableViewport(
-          state = state,
+          state = viewportState,
           modifier = Modifier.fillMaxSize(),
           contentAlignment = Alignment.Center,
           contentScale = ContentScale.Inside,
         ) {
           SubSamplingImage(
             modifier = Modifier.wrapContentSize(),
-            state = rememberSubSamplingImageState(
-              viewportState = state,
-              imageSource = ImageSource.asset("smol.jpg"),
-              eventListener = onImageDisplayed { onImageDisplayed.unlock() },
-            ),
+            state = imageState,
             contentDescription = null,
           )
         }
       }
     }
 
-    onImageDisplayed.withLock {
-      dropshots.assertSnapshot(composeTestRule.activity)
-    }
+    composeTestRule.waitUntil { isImageDisplayed }
+    dropshots.assertSnapshot(composeTestRule.activity)
   }
 
-  @Test fun bitmaps_for_invisible_tiles_should_not_be_kept_in_memory() = runTest(1.seconds) {
+  @Test fun bitmaps_for_invisible_tiles_should_not_be_kept_in_memory() {
     // todo.
   }
 
@@ -256,17 +258,6 @@ class SubSamplingImageTest {
         .background(Color(0xFF1C1A25))
     ) {
       content()
-    }
-  }
-
-  @Composable
-  private fun onImageDisplayed(action: () -> Unit): SubSamplingImageEventListener {
-    return remember {
-      object : SubSamplingImageEventListener {
-        override fun onImageDisplayed() {
-          action()
-        }
-      }
     }
   }
 
@@ -282,9 +273,4 @@ class SubSamplingImageTest {
     Center(Alignment.Center),
     BottomCenter(Alignment.BottomCenter),
   }
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun runTest(timeout: Duration, testBody: suspend TestScope.() -> Unit) {
-  runTest(dispatchTimeoutMs = timeout.inWholeMilliseconds, testBody = testBody)
 }

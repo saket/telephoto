@@ -52,29 +52,28 @@ import java.io.IOException
 fun rememberSubSamplingImageState(
   viewportState: ZoomableViewportState,
   imageSource: ImageSource,
-  eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
+  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
 ): SubSamplingImageState {
-  val eventListener = remember(eventListener) {
-    object : SubSamplingImageEventListener by eventListener {
-      override fun onImageLoaded(imageSize: Size) {
-        eventListener.onImageLoaded(imageSize)
-
-        // Assuming that there is no padding between this composable
-        // and its viewport, the content location is reported as 0,0
-        // because SubSamplingImage draws its content from top-start.
-        val imageBoundsInParent = Rect(Offset.Zero, imageSize)
-        viewportState.setContentLocation(object : ZoomableContentLocation {
-          override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect = imageBoundsInParent
-        })
-      }
-    }
-  }
-
-  return rememberSubSamplingImageState(
+  val state = rememberSubSamplingImageState(
     imageSource = imageSource,
-    eventListener = eventListener,
+    errorReporter = errorReporter,
     transformation = viewportState.contentTransformation,
   )
+
+  LaunchedEffect(state.imageSize) {
+    val contentLocation = state.imageSize?.let { imageSize ->
+      // Assuming that there is no padding between this composable
+      // and its viewport, the content location is reported as 0,0
+      // because SubSamplingImage draws its content from top-start.
+      val imageBoundsInParent = Rect(Offset.Zero, imageSize)
+      object : ZoomableContentLocation {
+        override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect = imageBoundsInParent
+      }
+    }
+    viewportState.setContentLocation(contentLocation ?: ZoomableContentLocation.Unspecified)
+  }
+
+  return state
 }
 
 // todo: doc.
@@ -82,25 +81,26 @@ fun rememberSubSamplingImageState(
 fun rememberSubSamplingImageState(
   imageSource: ImageSource,
   transformation: ZoomableContentTransformation,
-  eventListener: SubSamplingImageEventListener = SubSamplingImageEventListener.Empty
+  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
 ): SubSamplingImageState {
-  val eventListener by rememberUpdatedState(eventListener)
+  val errorReporter by rememberUpdatedState(errorReporter)
   val transformation by rememberUpdatedState(transformation)
-  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, eventListener)
+  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, errorReporter)
 
   val state = remember {
     SubSamplingImageState()
   }.also {
-    it.eventListener = eventListener
+    it.errorReporter = errorReporter
   }
 
+  // Reset everything when a new image is set.
   LaunchedEffect(state, decoder) {
-    // Reset tiles for new images.
+    state.imageSize = decoder?.imageSize
+    state.isImageDisplayed = false
     state.tiles = emptyList()
   }
 
   decoder?.let { decoder ->
-    state.imageSize = decoder.imageSize
     val transformations = remember { snapshotFlow { transformation } }
 
     val scope = rememberCoroutineScope()
@@ -178,10 +178,10 @@ fun rememberSubSamplingImageState(
 @Composable
 private fun createRegionDecoder(
   imageSource: ImageSource,
-  eventListener: SubSamplingImageEventListener
+  errorReporter: SubSamplingImageErrorReporter
 ): State<ImageRegionDecoder?> {
   val context = LocalContext.current
-  val eventListener by rememberUpdatedState(eventListener)
+  val errorReporter by rememberUpdatedState(errorReporter)
 
   val decoder = remember { mutableStateOf<ImageRegionDecoder?>(null) }
   val isInPreviewMode = LocalInspectionMode.current
@@ -189,11 +189,9 @@ private fun createRegionDecoder(
   if (!isInPreviewMode) {
     LaunchedEffect(imageSource) {
       try {
-        decoder.value = SkiaImageRegionDecoders.create(context, imageSource).also {
-          eventListener.onImageLoaded(it.imageSize)
-        }
+        decoder.value = SkiaImageRegionDecoders.create(context, imageSource)
       } catch (e: IOException) {
-        eventListener.onImageLoadingFailed(e)
+        errorReporter.onImageLoadingFailed(e)
       }
     }
   }
@@ -204,20 +202,20 @@ private fun createRegionDecoder(
 // todo: doc.
 @Stable
 class SubSamplingImageState internal constructor() {
+  var imageSize: Size? by mutableStateOf(null)
+  var isImageDisplayed by mutableStateOf(false)
+
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
-  internal var imageSize by mutableStateOf(Size.Unspecified)
 
-  internal lateinit var eventListener: SubSamplingImageEventListener
-  private var firstDrawEventSent = false
+  internal lateinit var errorReporter: SubSamplingImageErrorReporter
 
   internal fun maybeSendFirstDrawEvent() {
-    if (!firstDrawEventSent
+    if (!isImageDisplayed
       && canvasSize.minDimension > 0f // Wait until content size is measured in case of wrap_content.
       && tiles.isNotEmpty() && tiles.all { it.bitmap != null }
     ) {
-      eventListener.onImageDisplayed()
-      firstDrawEventSent = true
+      isImageDisplayed = true
     }
   }
 

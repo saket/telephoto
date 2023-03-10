@@ -56,8 +56,8 @@ import org.junit.runner.RunWith
 @RunWith(TestParameterInjector::class)
 class ZoomableViewportTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val dropshots = Dropshots(filenameFunc = { it.replace(" ", "_") })
   @get:Rule val testName = TestName()
-  @get:Rule val dropshots = Dropshots(filenameFunc = { testName.methodName.replace(" ", "_") })
 
   @Before
   fun setup() {

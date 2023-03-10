@@ -82,8 +82,8 @@ private fun Modifier.contentDescription(contentDescription: String?): Modifier {
 
 @Stable
 @Suppress("NAME_SHADOWING")
-private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size): Modifier {
-  if (imageSize.isUnspecified) {
+private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size?): Modifier {
+  if (imageSize == null) {
     return this
   }
 
