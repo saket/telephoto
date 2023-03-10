@@ -56,7 +56,9 @@ internal class SkiaImageRegionDecoders private constructor(
 
       val decoders = withContext(dispatcher) {
         (0 until decoderCount).map {
-          BitmapRegionDecoder.newInstance(imageSource.inputStream(context), /* ignored */ false)!!
+          imageSource.inputStream(context).use { stream ->
+            BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
+          }
         }
       }
       return SkiaImageRegionDecoders(

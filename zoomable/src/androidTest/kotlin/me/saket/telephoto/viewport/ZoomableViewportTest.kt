@@ -494,7 +494,8 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 private fun assetPainter(fileName: String): Painter {
   val context = LocalContext.current
   return remember {
-    val stream = context.assets.open(fileName)
-    BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+    context.assets.open(fileName).use { stream ->
+      BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+    }
   }
 }
