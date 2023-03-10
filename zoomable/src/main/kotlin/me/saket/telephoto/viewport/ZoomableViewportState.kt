@@ -6,8 +6,8 @@ import androidx.compose.animation.core.Spring.StiffnessMediumLow
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.animateTo
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,6 +27,7 @@ import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toOffset
@@ -359,7 +360,7 @@ class ZoomableViewportState internal constructor(
     }
   }
 
-  internal suspend fun smoothlySettleOnGestureEnd(velocity: Velocity) {
+  internal suspend fun smoothlySettleOnGestureEnd(velocity: Velocity, density: Density) {
     val start = gestureTransformation!!
     val viewportZoomWithinBounds = start.zoom.coercedIn(zoomRange).viewportZoom
     val isOutOfBounds = start.zoom.viewportZoom != viewportZoomWithinBounds
@@ -385,7 +386,7 @@ class ZoomableViewportState internal constructor(
           typeConverter = Offset.VectorConverter,
           initialValue = start.offset,
           initialVelocityVector = AnimationVector(velocity.x, velocity.y)
-        ).animateDecay(exponentialDecay()) {
+        ).animateDecay(splineBasedDecay(density)) {
           transformBy(
             centroid = start.lastCentroid,
             panChange = value - previous
@@ -393,7 +394,6 @@ class ZoomableViewportState internal constructor(
           previous = value
         }
       }
-
     }
   }
 

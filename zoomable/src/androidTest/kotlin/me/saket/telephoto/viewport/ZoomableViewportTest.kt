@@ -424,7 +424,6 @@ class ZoomableViewportTest {
       assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
     }
 
-    println("switching image")
     assetName = "cat_1920.jpg"
 
     composeTestRule.runOnIdle {

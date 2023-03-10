@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.viewport.internal.transformable
@@ -37,6 +38,7 @@ fun ZoomableViewport(
   state.contentAlignment = contentAlignment
 
   val zoomableModifier = if (state.isReadyToInteract) {
+    val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     Modifier
       .transformable(
@@ -45,7 +47,7 @@ fun ZoomableViewport(
           // Reset is performed in a new coroutine. The animation will be canceled
           // if TransformableState#transform() is called again by Modifier#transformable().
           scope.launch {
-            state.smoothlySettleOnGestureEnd(velocity)
+            state.smoothlySettleOnGestureEnd(velocity, density)
           }
         }
       )
