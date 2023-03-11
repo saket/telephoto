@@ -212,12 +212,13 @@ class ZoomableViewportState internal constructor(
         if (it != null) {
           it.offset
         } else {
-          val alignedToCenter = contentAlignment.align(
+          val defaultAlignmentOffset = contentAlignment.align(
             size = (unscaledContentBounds.size * baseZoom).roundToIntSize(),
-            space = viewportBounds.size.roundToIntSize(),
+            space = (viewportBounds.size).roundToIntSize(),
             layoutDirection = layoutDirection
           )
-          -alignedToCenter.toOffset() / oldZoom
+          // Take the content's top-left into account because it may not start at 0,0.
+          unscaledContentBounds.topLeft + (-defaultAlignmentOffset.toOffset() / oldZoom)
         }
       }
 
@@ -274,9 +275,9 @@ class ZoomableViewportState internal constructor(
     }
   )
 
-  private operator fun Offset.div(zoom: ContentZoom): Offset = div(zoom.finalZoom().maxScale)
-  private operator fun Offset.times(zoom: ContentZoom): Offset = times(zoom.finalZoom().maxScale)
-  private operator fun Size.times(zoom: ContentZoom): Size = times(zoom.finalZoom().maxScale)
+  private operator fun Offset.div(zoom: ContentZoom): Offset = div(zoom.finalZoom())
+  private operator fun Offset.times(zoom: ContentZoom): Offset = times(zoom.finalZoom())
+  private operator fun Size.times(zoom: ContentZoom): Size = times(zoom.finalZoom())
 
   // todo: doc
   /** Update content position by using its current zoom and offset values. */
