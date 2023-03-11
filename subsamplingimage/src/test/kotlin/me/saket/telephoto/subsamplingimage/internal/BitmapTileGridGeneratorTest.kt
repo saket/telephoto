@@ -73,7 +73,7 @@ class BitmapTileGridGeneratorTest {
     tileGrid.foreground.forEach { (sampleSize, tiles) ->
       val assert = assertWithMessage("Sample size = ${sampleSize.size}")
 
-      // Verify that the tiles cover the entire image.
+      // Verify that the tiles cover the entire image without any gaps.
       assert.that(tiles.minOf { it.bounds.left }).isEqualTo(0f)
       assert.that(tiles.minOf { it.bounds.top }).isEqualTo(0f)
       assert.that(tiles.maxOf { it.bounds.right }).isEqualTo(imageSize.width)

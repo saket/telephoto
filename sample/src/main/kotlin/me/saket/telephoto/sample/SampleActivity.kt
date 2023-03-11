@@ -33,7 +33,8 @@ class SampleActivity : AppCompatActivity() {
         NodeHost(ActivityIntegrationPoint(this, savedInstanceState)) {
           RootNode(
             buildContext = it,
-            initialScreen = GalleryScreenKey(album)
+            //initialScreen = GalleryScreenKey(album)
+            initialScreen = MediaViewerScreenKey(album, initialIndex = 2)
           )
         }
       }

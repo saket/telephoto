@@ -6,7 +6,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -42,16 +41,16 @@ fun SubSamplingImage(
           image = tile.bitmap,
           srcOffset = IntOffset.Zero,
           srcSize = IntSize(tile.bitmap.width, tile.bitmap.height),
-          dstOffset = tile.offset,
-          dstSize = tile.size,
+          dstOffset = tile.bounds.topLeft,
+          dstSize = tile.bounds.size,
         )
       }
 
       if (SubSamplingImageState.showTileBounds) {
         drawRect(
           color = Color.Black,
-          topLeft = tile.offset.toOffset(),
-          size = tile.size.toSize(),
+          topLeft = tile.bounds.topLeft.toOffset(),
+          size = tile.bounds.size.toSize(),
           style = Stroke(width = density.run { 2.dp.toPx() })
         )
       }

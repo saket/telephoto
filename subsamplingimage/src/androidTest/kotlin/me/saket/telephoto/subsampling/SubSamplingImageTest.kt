@@ -18,11 +18,16 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.unit.IntRect
 import com.dropbox.dropshots.Dropshots
+import com.dropbox.dropshots.ResultValidator
+import com.dropbox.dropshots.ThresholdValidator
+import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.viewport.ZoomableContentTransformation
 import me.saket.telephoto.viewport.ZoomableViewport
@@ -30,13 +35,15 @@ import me.saket.telephoto.viewport.rememberZoomableViewportState
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
-  @get:Rule val dropshots = Dropshots(filenameFunc = { it.replace(" ", "_") })
+  @get:Rule val dropshots = Dropshots(
+    filenameFunc = { it.replace(" ", "_") },
+    resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
+  )
 
   @Before
   fun setup() {
@@ -187,6 +194,7 @@ class SubSamplingImageTest {
 
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
     var isImageDisplayed = false
+    var imageTiles: List<CanvasRegionTile>? = null
 
     composeTestRule.setContent {
       ScreenScaffold {
@@ -195,14 +203,17 @@ class SubSamplingImageTest {
             imageSource = ImageSource.asset("path.jpg"),
             transformation = ZoomableContentTransformation(
               viewportSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
-              scale = ScaleFactor(scaleX = 0.48678285f, scaleY = 0.48678285f),
+              scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
+              offset = Offset(x = -2749.3718f, y = -1045.4058f),
               rotationZ = 0f,
-              offset = Offset(x = -866.9214f, y = 0f),
               transformOrigin = TransformOrigin(0f, 0f)
             ),
           )
           LaunchedEffect(imageState.isImageDisplayed) {
             isImageDisplayed = imageState.isImageDisplayed
+          }
+          LaunchedEffect(imageState.tiles) {
+            imageTiles = imageState.tiles
           }
 
           SubSamplingImage(
@@ -217,6 +228,15 @@ class SubSamplingImageTest {
     composeTestRule.waitUntil(timeoutMillis = 2_000) { isImageDisplayed }
     composeTestRule.runOnIdle {
       dropshots.assertSnapshot(composeTestRule.activity)
+
+      assertThat(imageTiles!!.map { it.bounds }).containsExactly(
+        IntRect(-1122, -1045, 503, 340),
+        IntRect(-1122, 340, 503, 1726),
+        IntRect(-1122, 1726, 503, 3293),
+        IntRect(503, -1045, 2129, 340),
+        IntRect(503, 340, 2129, 1726),
+        IntRect(503, 1726, 2129, 3293),
+      )
     }
   }
 
@@ -283,3 +303,6 @@ class SubSamplingImageTest {
     BottomCenter(Alignment.BottomCenter),
   }
 }
+
+private fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
+  ThresholdValidator(threshold = thresholdPercent / 100)

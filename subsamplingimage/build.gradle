@@ -41,6 +41,7 @@ dependencies {
   androidTestImplementation "androidx.test:rules:1.5.0"
   androidTestImplementation "androidx.test.ext:junit-ktx:1.1.5"
   androidTestImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
+  androidTestImplementation "com.google.truth:truth:1.1.3"
   androidTestImplementation "androidx.compose.ui:ui-test-junit4:$versions.composeUi"
   debugImplementation("androidx.compose.ui:ui-test-manifest:$versions.composeUi")
 }

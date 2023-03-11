@@ -4,8 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntRect
 
 // todo: doc
 internal data class BitmapRegionTile(
@@ -18,8 +17,7 @@ internal data class BitmapRegionTile(
 internal data class CanvasRegionTile(
   val bitmap: ImageBitmap?,
   val bitmapRegion: BitmapRegionTile,
-  val offset: IntOffset,
-  val size: IntSize,
+  val bounds: IntRect,
 ) {
   constructor(
     bitmap: ImageBitmap?,
@@ -32,8 +30,7 @@ internal data class CanvasRegionTile(
     // This is okay because if any fractional part was present and discarded,
     // the next tile will also move back by a pixel. This would cause the last
     // tiles on X and Y axes to be 1px short, but that's unnoticeable to eyes.
-    offset = bounds.discardFractionalValues().topLeft,
-    size = bounds.discardFractionalValues().size,
+    bounds = bounds.discardFractionalValues(),
   )
 }
 
