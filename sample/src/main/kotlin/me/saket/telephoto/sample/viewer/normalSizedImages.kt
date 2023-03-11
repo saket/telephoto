@@ -8,6 +8,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
@@ -32,7 +33,7 @@ fun NormalSizedRemoteImage(
     contentDescription = null,
     onState = {
       viewportState.setContentLocation(
-        ZoomableContentLocation.fitToBoundsAndAlignedToCenter(it.painter?.intrinsicSize)
+        ZoomableContentLocation.fitInsideAndCenterAligned(it.painter?.intrinsicSize)
       )
     }
   )
@@ -45,7 +46,7 @@ fun NormalSizedLocalImage(
   val painter = painterResource(R.drawable.fox_smol)
   LaunchedEffect(painter) {
     viewportState.setContentLocation(
-      ZoomableContentLocation.fitToBoundsAndAlignedToCenter(painter.intrinsicSize)
+      ZoomableContentLocation.fitInsideAndCenterAligned(painter.intrinsicSize)
     )
   }
 
@@ -54,6 +55,7 @@ fun NormalSizedLocalImage(
       .fillMaxSize()
       .graphicsLayer(viewportState.contentTransformation),
     painter = painter,
+    contentScale = ContentScale.Inside,
     contentDescription = null
   )
 }

@@ -37,7 +37,6 @@ import org.junit.runner.RunWith
 class SubSamplingImageTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val dropshots = Dropshots(filenameFunc = { it.replace(" ", "_") })
-  @get:Rule val testName = TestName()
 
   @Before
   fun setup() {
@@ -80,7 +79,9 @@ class SubSamplingImageTest {
     }
 
     composeTestRule.waitUntil { isImageDisplayed }
-    dropshots.assertSnapshot(composeTestRule.activity)
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun image_smaller_than_viewport(@TestParameter size: SizeParam) {
@@ -112,7 +113,9 @@ class SubSamplingImageTest {
     }
 
     composeTestRule.waitUntil { isImageDisplayed }
-    dropshots.assertSnapshot(composeTestRule.activity)
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun various_content_alignment(
@@ -148,7 +151,9 @@ class SubSamplingImageTest {
     }
 
     composeTestRule.waitUntil { isImageDisplayed }
-    dropshots.assertSnapshot(composeTestRule.activity)
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun various_content_scale() {
@@ -209,8 +214,10 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil { isImageDisplayed }
-    dropshots.assertSnapshot(composeTestRule.activity)
+    composeTestRule.waitUntil(timeoutMillis = 2_000) { isImageDisplayed }
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun center_aligned_and_wrap_content() {
@@ -243,7 +250,9 @@ class SubSamplingImageTest {
     }
 
     composeTestRule.waitUntil { isImageDisplayed }
-    dropshots.assertSnapshot(composeTestRule.activity)
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun bitmaps_for_invisible_tiles_should_not_be_kept_in_memory() {

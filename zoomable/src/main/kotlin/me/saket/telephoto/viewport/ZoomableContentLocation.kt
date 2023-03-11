@@ -11,20 +11,47 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
 import me.saket.telephoto.viewport.internal.discardFractionalParts
 
-// todo: doc.
+/**
+ * For [ZoomableViewport] to be able to correctly scale and pan its content, it uses
+ * [ZoomableContentLocation] to understand the content's _visual_ size and position to prevent them
+ * from going out of bounds.
+ *
+ * [ZoomableViewport] can't calculate this on its own by inspecting its children's layout bounds
+ * because that may not always match the content's visual size. For instance, an `Image` composable
+ * that uses `Modifier.fillMaxSize()` could actually be drawing an image that only fills half its
+ * size. An another possibility is a sub-sampled composable such as a map whose full sized content
+ * could be at an order of magnitude larger than the layout bounds.
+ */
 interface ZoomableContentLocation {
 
   // todo: doc.
   fun boundsIn(parent: Rect, direction: LayoutDirection): Rect
 
   companion object {
+    /**
+     * Describes a zoomable content's location that is positioned in the center of its layout
+     * and is downscaled only if its size exceeds its layout bounds while maintaining its
+     * original aspect ratio.
+     *
+     * That is, its alignment = [Alignment.Center] and scale = [ContentScale.Inside].
+     *
+     * For an `Image` composable, its image will always be centered, but its scale will
+     * need to be changed from the default value of `Fit` to `Inside`.
+     *
+     * ```
+     * Image(
+     *   painter = …,
+     *   contentScale = ContentScale.Inside
+     * )
+     * ```
+     */
     @Stable
-    fun fitToBoundsAndAlignedToCenter(size: Size?): ZoomableContentLocation {
+    fun fitInsideAndCenterAligned(size: Size?): ZoomableContentLocation {
       return when (size) {
         null -> Unspecified
         else -> RelativeContentLocation(
           size = size,
-          scale = ContentScale.Fit,
+          scale = ContentScale.Inside,
           alignment = Alignment.Center,
         )
       }
