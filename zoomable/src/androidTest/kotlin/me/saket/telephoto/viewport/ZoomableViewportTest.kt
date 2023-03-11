@@ -165,6 +165,7 @@ class ZoomableViewportTest {
   @Test fun various_alignments_and_scales(
     @TestParameter alignment: AlignmentParam,
     @TestParameter contentScale: ContentScaleParam,
+    @TestParameter imageAsset: ImageAssetParam,
   ) {
     composeTestRule.setContent {
       ScreenScaffold {
@@ -177,7 +178,7 @@ class ZoomableViewportTest {
         ) {
           ImageAsset(
             viewportState = viewportState,
-            assetName = "fox_250.jpg"
+            assetName = imageAsset.assetName,
           )
         }
       }
@@ -481,6 +482,13 @@ class ZoomableViewportTest {
     Crop(ContentScale.Crop),
     Fit(ContentScale.Fit),
     Inside(ContentScale.Inside),
+    Fill(ContentScale.FillBounds),
+  }
+
+  @Suppress("unused")
+  enum class ImageAssetParam(val assetName: String) {
+    SmallerThanViewport("fox_250.jpg"),
+    LargerThanViewport("cat_1920.jpg")
   }
 
   @Suppress("unused")
