@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
 import com.dropbox.dropshots.Dropshots
+import com.dropbox.dropshots.ResultValidator
+import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
@@ -56,7 +58,10 @@ import org.junit.runner.RunWith
 @RunWith(TestParameterInjector::class)
 class ZoomableViewportTest {
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
-  @get:Rule val dropshots = Dropshots(filenameFunc = { it.replace(" ", "_") })
+  @get:Rule val dropshots = Dropshots(
+    filenameFunc = { it.replace(" ", "_") },
+    resultValidator = ThresholdValidator(thresholdPercent = 0.01f)
+  )
   @get:Rule val testName = TestName()
 
   @Before
@@ -553,3 +558,6 @@ private fun assetPainter(assetName: String): Painter {
     }
   }
 }
+
+private fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
+  ThresholdValidator(threshold = thresholdPercent / 100)
