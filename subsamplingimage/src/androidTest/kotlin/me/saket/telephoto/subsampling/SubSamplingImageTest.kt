@@ -25,7 +25,6 @@ import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
-import leakcanary.DetectLeaksAfterTestSuccess
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
@@ -73,7 +72,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("pahade.jpg"),
+          image = ImageSource.asset("pahade.jpg"),
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -107,7 +106,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("smol.jpg"),
+          image = ImageSource.asset("smol.jpg"),
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -144,7 +143,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("pahade.jpg"),
+          image = ImageSource.asset("pahade.jpg"),
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -208,7 +207,7 @@ class SubSamplingImageTest {
       ScreenScaffold {
         BoxWithConstraints {
           val imageState = rememberSubSamplingImageState(
-            imageSource = ImageSource.asset("path.jpg"),
+            image = ImageSource.asset("path.jpg"),
             transformation = ZoomableContentTransformation(
               viewportSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
               scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
@@ -256,7 +255,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("smol.jpg"),
+          image = ImageSource.asset("smol.jpg"),
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed

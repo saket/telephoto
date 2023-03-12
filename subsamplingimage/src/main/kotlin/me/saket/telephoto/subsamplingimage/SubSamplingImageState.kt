@@ -50,12 +50,12 @@ import java.io.IOException
 // todo: move this to its own module.
 @Composable
 fun rememberSubSamplingImageState(
+  image: ImageSource,
   viewportState: ZoomableViewportState,
-  imageSource: ImageSource,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
 ): SubSamplingImageState {
   val state = rememberSubSamplingImageState(
-    imageSource = imageSource,
+    image = image,
     errorReporter = errorReporter,
     transformation = viewportState.contentTransformation,
   )
@@ -79,18 +79,16 @@ fun rememberSubSamplingImageState(
 // todo: doc.
 @Composable
 fun rememberSubSamplingImageState(
-  imageSource: ImageSource,
+  image: ImageSource,
   transformation: ZoomableContentTransformation,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
 ): SubSamplingImageState {
   val errorReporter by rememberUpdatedState(errorReporter)
   val transformation by rememberUpdatedState(transformation)
-  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, errorReporter)
+  val decoder: ImageRegionDecoder? by createRegionDecoder(image, errorReporter)
 
   val state = remember {
     SubSamplingImageState()
-  }.also {
-    it.errorReporter = errorReporter
   }
 
   // Reset everything when a new image is set.
@@ -203,12 +201,10 @@ private fun createRegionDecoder(
 @Stable
 class SubSamplingImageState internal constructor() {
   var imageSize: Size? by mutableStateOf(null)
-  var isImageDisplayed by mutableStateOf(false)
+  var isImageDisplayed: Boolean by mutableStateOf(false)
 
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
-
-  internal lateinit var errorReporter: SubSamplingImageErrorReporter
 
   internal fun maybeSendFirstDrawEvent() {
     if (!isImageDisplayed

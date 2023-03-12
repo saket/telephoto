@@ -30,7 +30,7 @@ class SubSamplingImagePreviewTest {
       CompositionLocalProvider(LocalInspectionMode provides true) {
         val state = rememberSubSamplingImageState(
           viewportState = rememberZoomableViewportState(),
-          imageSource = source.source
+          image = source.source
         )
         SubSamplingImage(
           state = state,

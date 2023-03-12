@@ -13,8 +13,8 @@ fun SubSampledImage(viewportState: ZoomableViewportState) {
   SubSamplingImage(
     modifier = Modifier.fillMaxSize(),
     state = rememberSubSamplingImageState(
+      image = ImageSource.asset("path.jpg"),
       viewportState = viewportState,
-      imageSource = ImageSource.asset("path.jpg"),
     ),
     contentDescription = null,
   )
