@@ -1,5 +1,6 @@
 package me.saket.telephoto.subsamplingimage.internal
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.AssetManager
 import android.graphics.Bitmap
@@ -16,6 +17,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.AssetImageSource
 import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.ResourceImageSource
 import java.io.InputStream
 import kotlin.math.max
 
@@ -71,10 +73,14 @@ internal class SkiaImageRegionDecoders private constructor(
   }
 }
 
+@SuppressLint("ResourceType")
 private fun ImageSource.inputStream(context: Context): InputStream {
   return when (this) {
     is AssetImageSource -> {
       context.assets.open(assetName, AssetManager.ACCESS_RANDOM)
+    }
+    is ResourceImageSource -> {
+      context.resources.openRawResource(id)
     }
   }
 }

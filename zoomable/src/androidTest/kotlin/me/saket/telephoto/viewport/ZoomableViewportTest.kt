@@ -67,7 +67,7 @@ class ZoomableViewportTest {
     resultValidator = ThresholdValidator(thresholdPercent = 0.01f)
   )
 
-  @get:Rule val rules = RuleChain.outerRule(dropshots)
+  @get:Rule val rules: RuleChain = RuleChain.outerRule(dropshots)
     .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
       around(composeTestRule)
     }

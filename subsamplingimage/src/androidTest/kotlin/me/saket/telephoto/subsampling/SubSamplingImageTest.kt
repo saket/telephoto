@@ -38,6 +38,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
+import me.saket.telephoto.subsamplingimage.test.R
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
@@ -47,7 +48,7 @@ class SubSamplingImageTest {
     resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
   )
 
-  @get:Rule val rules = RuleChain.outerRule(dropshots)
+  @get:Rule val rules: RuleChain = RuleChain.outerRule(dropshots)
     .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
       around(composeTestRule)
     }
@@ -64,7 +65,7 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun canary() {
+  @Test fun canary(@TestParameter image: ImageSourceParam) {
     var isImageDisplayed = false
 
     composeTestRule.setContent {
@@ -72,7 +73,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          image = ImageSource.asset("pahade.jpg"),
+          image = image.source
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -308,6 +309,12 @@ class SubSamplingImageTest {
     TopCenter(Alignment.TopCenter),
     Center(Alignment.Center),
     BottomCenter(Alignment.BottomCenter),
+  }
+
+  @Suppress("unused")
+  enum class ImageSourceParam(val source: ImageSource) {
+    Asset(ImageSource.asset("pahade.jpg")),
+    Resource(ImageSource.resource(R.drawable.cat_1920))
   }
 }
 
