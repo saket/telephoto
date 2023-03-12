@@ -60,6 +60,7 @@ subprojects { subproject ->
     android.compileSdk versions.compileSdk
     android.defaultConfig {
       minSdk versions.minSdk
+      targetSdk versions.compileSdk
     }
     android.compileOptions {
       sourceCompatibility = JavaVersion.VERSION_11
