@@ -1,5 +1,7 @@
 package me.saket.telephoto.subsampling
 
+import android.content.Context
+import android.net.Uri
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
@@ -17,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.IntRect
 import com.dropbox.dropshots.Dropshots
@@ -30,6 +33,7 @@ import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
+import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.viewport.ZoomableContentTransformation
 import me.saket.telephoto.viewport.ZoomableViewport
 import me.saket.telephoto.viewport.rememberZoomableViewportState
@@ -38,7 +42,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
-import me.saket.telephoto.subsamplingimage.test.R
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
@@ -71,9 +74,10 @@ class SubSamplingImageTest {
     composeTestRule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
+        val context = LocalContext.current
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          image = image.source
+          image = image.source(context)
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -312,9 +316,10 @@ class SubSamplingImageTest {
   }
 
   @Suppress("unused")
-  enum class ImageSourceParam(val source: ImageSource) {
-    Asset(ImageSource.asset("pahade.jpg")),
-    Resource(ImageSource.resource(R.drawable.cat_1920))
+  enum class ImageSourceParam(val source: (Context) -> ImageSource) {
+    Asset({ ImageSource.asset("pahade.jpg") }),
+    Resource({ ImageSource.resource(R.drawable.cat_1920) }),
+    ContentUri({ ImageSource.contentUri(Uri.parse("""android.resource://${it.packageName}/${R.drawable.cat_1920}""")) }),
   }
 }
 

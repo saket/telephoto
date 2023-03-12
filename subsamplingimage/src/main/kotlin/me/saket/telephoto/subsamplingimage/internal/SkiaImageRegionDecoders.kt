@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toAndroidRect
+import androidx.compose.ui.text.style.TextDirection.Companion.Content
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.AssetImageSource
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.ResourceImageSource
+import me.saket.telephoto.subsamplingimage.UriImageSource
 import java.io.InputStream
 import kotlin.math.max
 
@@ -81,6 +83,9 @@ private fun ImageSource.inputStream(context: Context): InputStream {
     }
     is ResourceImageSource -> {
       context.resources.openRawResource(id)
+    }
+    is UriImageSource -> {
+      checkNotNull(context.contentResolver.openInputStream(uri)) { "Failed to read URI: $uri" }
     }
   }
 }
