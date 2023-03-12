@@ -25,6 +25,8 @@ import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import leakcanary.DetectLeaksAfterTestSuccess
+import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
@@ -35,15 +37,21 @@ import me.saket.telephoto.viewport.rememberZoomableViewportState
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
-  @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
-  @get:Rule val dropshots = Dropshots(
+  private val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  private val dropshots = Dropshots(
     filenameFunc = { it.replace(" ", "_") },
     resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
   )
+
+  @get:Rule val rules = RuleChain.outerRule(dropshots)
+    .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
+      around(composeTestRule)
+    }
 
   @Before
   fun setup() {
