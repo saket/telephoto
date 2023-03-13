@@ -37,6 +37,7 @@ import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.viewport.ZoomableContentTransformation
 import me.saket.telephoto.viewport.ZoomableViewport
 import me.saket.telephoto.viewport.rememberZoomableViewportState
+import okio.source
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -68,7 +69,7 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun canary(@TestParameter image: ImageSourceParam) {
+  @Test fun canary(@TestParameter imageSource: ImageSourceParam) {
     var isImageDisplayed = false
 
     composeTestRule.setContent {
@@ -77,7 +78,7 @@ class SubSamplingImageTest {
         val context = LocalContext.current
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          image = image.source(context)
+          image = imageSource.source(context)
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -320,6 +321,7 @@ class SubSamplingImageTest {
     Asset({ ImageSource.asset("pahade.jpg") }),
     Resource({ ImageSource.resource(R.drawable.cat_1920) }),
     ContentUri({ ImageSource.contentUri(Uri.parse("""android.resource://${it.packageName}/${R.drawable.cat_1920}""")) }),
+    Stream({ ImageSource.stream { it.assets.open("pahade.jpg").source() } })
   }
 }
 

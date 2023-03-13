@@ -1,8 +1,6 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
@@ -10,17 +8,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toAndroidRect
-import androidx.compose.ui.text.style.TextDirection.Companion.Content
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
-import me.saket.telephoto.subsamplingimage.AssetImageSource
 import me.saket.telephoto.subsamplingimage.ImageSource
-import me.saket.telephoto.subsamplingimage.ResourceImageSource
-import me.saket.telephoto.subsamplingimage.UriImageSource
-import java.io.InputStream
 import kotlin.math.max
 
 /**
@@ -60,7 +53,7 @@ internal class SkiaImageRegionDecoders private constructor(
 
       val decoders = withContext(dispatcher) {
         (0 until decoderCount).map {
-          imageSource.inputStream(context).use { stream ->
+          imageSource.stream(context).use { stream ->
             BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
           }
         }
@@ -71,21 +64,6 @@ internal class SkiaImageRegionDecoders private constructor(
         decoders = ResourcePool(decoders),
         dispatcher = dispatcher,
       )
-    }
-  }
-}
-
-@SuppressLint("ResourceType")
-private fun ImageSource.inputStream(context: Context): InputStream {
-  return when (this) {
-    is AssetImageSource -> {
-      context.assets.open(assetName, AssetManager.ACCESS_RANDOM)
-    }
-    is ResourceImageSource -> {
-      context.resources.openRawResource(id)
-    }
-    is UriImageSource -> {
-      checkNotNull(context.contentResolver.openInputStream(uri)) { "Failed to read URI: $uri" }
     }
   }
 }
