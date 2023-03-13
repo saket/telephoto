@@ -1,6 +1,0 @@
-apply plugin: 'java-library'
-apply plugin: 'org.jetbrains.kotlin.jvm'
-
-dependencies {
-  implementation "junit:junit:$versions.junit"
-}

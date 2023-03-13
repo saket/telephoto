@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.IntRect
 import com.dropbox.dropshots.Dropshots
@@ -35,7 +35,6 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
-import me.saket.telephoto.test.Retry
 import me.saket.telephoto.viewport.ZoomableContentTransformation
 import me.saket.telephoto.viewport.ZoomableViewport
 import me.saket.telephoto.viewport.rememberZoomableViewportState
@@ -45,6 +44,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
@@ -53,12 +54,9 @@ class SubSamplingImageTest {
     filenameFunc = { it.replace(" ", "_") },
     resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
   )
-  private val retryTimeouts = Retry { e, runCount ->
-    e is ComposeTimeoutException && runCount < 3
-  }
 
-  @get:Rule val rules: RuleChain = RuleChain.outerRule(dropshots)
-    .around(retryTimeouts)
+  @get:Rule val rules: RuleChain = RuleChain.emptyRuleChain()
+    .around(dropshots)
     .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
       around(composeTestRule)
     }
@@ -104,7 +102,7 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil { isImageDisplayed }
+    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
     composeTestRule.runOnIdle {
       dropshots.assertSnapshot(composeTestRule.activity)
     }
@@ -138,7 +136,7 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil { isImageDisplayed }
+    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
     composeTestRule.runOnIdle {
       dropshots.assertSnapshot(composeTestRule.activity)
     }
@@ -176,7 +174,7 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil { isImageDisplayed }
+    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
     composeTestRule.runOnIdle {
       dropshots.assertSnapshot(composeTestRule.activity)
     }
@@ -244,7 +242,7 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil(timeoutMillis = 2_000) { isImageDisplayed }
+    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
     composeTestRule.runOnIdle {
       dropshots.assertSnapshot(composeTestRule.activity)
 
@@ -288,7 +286,7 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil { isImageDisplayed }
+    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
     composeTestRule.runOnIdle {
       dropshots.assertSnapshot(composeTestRule.activity)
     }
@@ -333,3 +331,7 @@ class SubSamplingImageTest {
 
 private fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
   ThresholdValidator(threshold = thresholdPercent / 100)
+
+private fun AndroidComposeTestRule<*, *>.waitUntil(timeout: Duration, condition: () -> Boolean) {
+  this.waitUntil(timeoutMillis = timeout.inWholeMilliseconds, condition)
+}
