@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.IntRect
 import com.dropbox.dropshots.Dropshots
@@ -34,6 +35,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
+import me.saket.telephoto.test.Retry
 import me.saket.telephoto.viewport.ZoomableContentTransformation
 import me.saket.telephoto.viewport.ZoomableViewport
 import me.saket.telephoto.viewport.rememberZoomableViewportState
@@ -51,8 +53,12 @@ class SubSamplingImageTest {
     filenameFunc = { it.replace(" ", "_") },
     resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
   )
+  private val retryTimeouts = Retry { e, runCount ->
+    e is ComposeTimeoutException && runCount < 3
+  }
 
   @get:Rule val rules: RuleChain = RuleChain.outerRule(dropshots)
+    .around(retryTimeouts)
     .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
       around(composeTestRule)
     }

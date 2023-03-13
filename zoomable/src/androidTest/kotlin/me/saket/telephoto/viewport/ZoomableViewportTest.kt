@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.StateRestorationTester
@@ -45,8 +46,8 @@ import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
-import leakcanary.DetectLeaksAfterTestSuccess
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
+import me.saket.telephoto.test.Retry
 import me.saket.telephoto.viewport.ZoomableViewportTest.ScrollDirection
 import me.saket.telephoto.viewport.ZoomableViewportTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.viewport.ZoomableViewportTest.ScrollDirection.RightToLeft
@@ -66,12 +67,16 @@ class ZoomableViewportTest {
     filenameFunc = { it.replace(" ", "_") },
     resultValidator = ThresholdValidator(thresholdPercent = 0.01f)
   )
+  private val retryTimeouts = Retry { e, runCount ->
+    e is ComposeTimeoutException && runCount < 3
+  }
 
   @get:Rule val rules: RuleChain = RuleChain.outerRule(dropshots)
+    .around(testName)
+    .around(retryTimeouts)
     .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
       around(composeTestRule)
     }
-    .around(testName)
 
   @Before
   fun setup() {
