@@ -50,12 +50,12 @@ import java.io.IOException
 // todo: move this to its own module.
 @Composable
 fun rememberSubSamplingImageState(
-  image: ImageSource,
+  imageSource: ImageSource,
   viewportState: ZoomableViewportState,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
 ): SubSamplingImageState {
   val state = rememberSubSamplingImageState(
-    image = image,
+    imageSource = imageSource,
     errorReporter = errorReporter,
     transformation = viewportState.contentTransformation,
   )
@@ -79,13 +79,13 @@ fun rememberSubSamplingImageState(
 // todo: doc.
 @Composable
 fun rememberSubSamplingImageState(
-  image: ImageSource,
+  imageSource: ImageSource,
   transformation: ZoomableContentTransformation,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
 ): SubSamplingImageState {
   val errorReporter by rememberUpdatedState(errorReporter)
   val transformation by rememberUpdatedState(transformation)
-  val decoder: ImageRegionDecoder? by createRegionDecoder(image, errorReporter)
+  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, errorReporter)
 
   val state = remember {
     SubSamplingImageState()

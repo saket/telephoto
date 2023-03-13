@@ -82,7 +82,7 @@ class SubSamplingImageTest {
         val context = LocalContext.current
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          image = imageSource.source(context)
+          imageSource = imageSource.source(context)
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -116,7 +116,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          image = ImageSource.asset("smol.jpg"),
+          imageSource = ImageSource.asset("smol.jpg"),
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -153,7 +153,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          image = ImageSource.asset("pahade.jpg"),
+          imageSource = ImageSource.asset("pahade.jpg"),
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -217,7 +217,7 @@ class SubSamplingImageTest {
       ScreenScaffold {
         BoxWithConstraints {
           val imageState = rememberSubSamplingImageState(
-            image = ImageSource.asset("path.jpg"),
+            imageSource = ImageSource.asset("path.jpg"),
             transformation = ZoomableContentTransformation(
               viewportSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
               scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
@@ -265,7 +265,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          image = ImageSource.asset("smol.jpg"),
+          imageSource = ImageSource.asset("smol.jpg"),
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
