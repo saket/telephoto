@@ -197,16 +197,25 @@ class ZoomableViewportState internal constructor(
       val isZoomingOut = zoomDelta < 1f
       val isZoomingIn = zoomDelta > 1f
 
-      // Apply elasticity to zoom once content can't zoom any further.
+      // Apply elasticity if content is being over/under-zoomed.
+      val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomRange)
+      val isAtMinZoom = oldZoom.isAtMinZoom(zoomRange)
       val zoomDelta = when {
-        isZoomingIn && oldZoom.isAtMaxZoom(zoomRange) -> 1f + zoomDelta / 250
-        isZoomingOut && oldZoom.isAtMinZoom(zoomRange) -> 1f - zoomDelta / 500
+        isZoomingIn && isAtMaxZoom -> 1f + zoomDelta / 250
+        isZoomingOut && isAtMinZoom -> 1f - zoomDelta / 250
         else -> zoomDelta
       }
       val newZoom = ContentZoom(
         baseZoom = baseZoom,
         viewportZoom = oldZoom.viewportZoom * zoomDelta
-      )
+      ).let {
+        if (isAtMinZoom || isAtMaxZoom) {
+          // Apply a hard-stop after a limit.
+          it.coercedIn(zoomRange.inflate(minBy = 0.1f, maxBy = 0.4f))
+        } else {
+          it
+        }
+      }
 
       val oldOffset = gestureTransformation.let {
         if (it != null) {
@@ -452,6 +461,13 @@ internal data class ZoomRange(
   private val minZoomAsRatioOfBaseZoom: Float = 1f,
   private val maxZoomAsRatioOfSize: Float,
 ) {
+
+  fun inflate(minBy: Float, maxBy: Float): ZoomRange {
+    return ZoomRange(
+      minZoomAsRatioOfBaseZoom = minZoomAsRatioOfBaseZoom - (minBy * minZoomAsRatioOfBaseZoom),
+      maxZoomAsRatioOfSize = maxZoomAsRatioOfSize + (maxBy * maxZoomAsRatioOfSize)
+    )
+  }
 
   // todo: ZoomRange and ContentZoom are inter-dependent. minZoom() and maxZoom() should probably move to ContentZoom.
   internal fun minZoom(baseZoomMultiplier: ScaleFactor): Float {
