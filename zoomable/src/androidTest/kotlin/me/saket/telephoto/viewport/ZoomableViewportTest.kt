@@ -62,7 +62,7 @@ class ZoomableViewportTest {
   private val composeTestRule = createAndroidComposeRule<ComponentActivity>()
   private val testName = TestName()
   private val dropshots = Dropshots(
-    filenameFunc = { it.replace(" ", "_") },
+    filenameFunc = { it },
     resultValidator = ThresholdValidator(thresholdPercent = 0.01f)
   )
 

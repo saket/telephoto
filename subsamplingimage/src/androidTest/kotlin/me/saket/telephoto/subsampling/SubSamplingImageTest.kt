@@ -51,7 +51,7 @@ import kotlin.time.Duration.Companion.seconds
 class SubSamplingImageTest {
   private val composeTestRule = createAndroidComposeRule<ComponentActivity>()
   private val dropshots = Dropshots(
-    filenameFunc = { it.replace(" ", "_") },
+    filenameFunc = { it },
     resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
   )
 
