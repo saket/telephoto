@@ -52,7 +52,7 @@ import java.io.IOException
 fun rememberSubSamplingImageState(
   imageSource: ImageSource,
   viewportState: ZoomableViewportState,
-  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
+  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
 ): SubSamplingImageState {
   val state = rememberSubSamplingImageState(
     imageSource = imageSource,
@@ -81,7 +81,7 @@ fun rememberSubSamplingImageState(
 fun rememberSubSamplingImageState(
   imageSource: ImageSource,
   transformation: ZoomableContentTransformation,
-  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOp
+  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
 ): SubSamplingImageState {
   val errorReporter by rememberUpdatedState(errorReporter)
   val transformation by rememberUpdatedState(transformation)

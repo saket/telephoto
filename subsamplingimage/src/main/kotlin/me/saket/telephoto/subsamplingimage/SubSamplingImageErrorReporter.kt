@@ -8,6 +8,15 @@ interface SubSamplingImageErrorReporter {
   fun onImageLoadingFailed(e: IOException) = Unit
 
   companion object {
-    val NoOp = object : SubSamplingImageErrorReporter {}
+    val NoOpInRelease = object : SubSamplingImageErrorReporter {
+      override fun onImageLoadingFailed(e: IOException) {
+        if (BuildConfig.DEBUG) {
+          // I'm not entirely convinced with this, but I think failure
+          // in loading of bitmaps from local storage is not a good sign
+          // and should be surfaced asap in debug builds.
+          throw e
+        }
+      }
+    }
   }
 }
