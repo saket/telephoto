@@ -43,6 +43,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -61,8 +62,11 @@ class SubSamplingImageTest {
       around(composeTestRule)
     }
 
+  @get:Rule val testName = TestName()
+
   @Before
   fun setup() {
+    println(testName.methodName + "------------------------")
     composeTestRule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
 

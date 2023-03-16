@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -37,6 +38,7 @@ fun SubSamplingImage(
   val onDraw: DrawScope.() -> Unit = {
     state.tiles.fastForEach { tile ->
       if (tile.bitmap != null) {
+        println("drawing image")
         drawImage(
           image = tile.bitmap,
           srcOffset = IntOffset.Zero,

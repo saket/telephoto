@@ -211,6 +211,7 @@ class SubSamplingImageState internal constructor() {
       && canvasSize.minDimension > 0f // Wait until content size is measured in case of wrap_content.
       && tiles.isNotEmpty() && tiles.all { it.bitmap != null }
     ) {
+      println("Setting isImageDisplayed = true")
       isImageDisplayed = true
     }
   }
