@@ -39,8 +39,9 @@ fun MediaViewerScreen(key: MediaViewerScreenKey) {
       modifier = Modifier
         .padding(contentPadding)
         .fillMaxSize(),
-      pageCount = key.album.items.size,
       state = pagerState,
+      pageCount = key.album.items.size,
+      beyondBoundsPageCount = 1,
       pageSpacing = 16.dp,
     ) { pageNum ->
       MediaPage(
