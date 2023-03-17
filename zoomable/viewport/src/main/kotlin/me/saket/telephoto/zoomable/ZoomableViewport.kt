@@ -1,5 +1,7 @@
 package me.saket.telephoto.zoomable
 
+import android.os.Build
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -17,6 +19,7 @@ import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.transformable
@@ -38,8 +41,10 @@ fun ZoomableViewport(
   state.contentAlignment = contentAlignment
 
   val zoomableModifier = if (state.isReadyToInteract) {
+    val view = LocalView.current
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
+
     Modifier
       .transformable(
         state = state.transformableState,
@@ -47,7 +52,12 @@ fun ZoomableViewport(
           // Reset is performed in a new coroutine. The animation will be canceled
           // if TransformableState#transform() is called again by Modifier#transformable().
           scope.launch {
-            state.smoothlySettleOnGestureEnd(velocity, density)
+            if (state.isZoomOutsideRange()) {
+              view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
+              state.smoothlySettleZoomOnGestureEnd()
+            } else {
+              state.fling(velocity = velocity, density = density)
+            }
           }
         }
       )
@@ -86,3 +96,16 @@ interface ZoomableViewportScope : BoxScope
 private class RealZoomableViewportScope(
   val boxScope: BoxScope
 ) : ZoomableViewportScope, BoxScope by boxScope
+
+private object HapticFeedbackConstantsCompat {
+  val GESTURE_END: Int
+    get() {
+      return if (Build.VERSION.SDK_INT >= 30) {
+        HapticFeedbackConstants.GESTURE_END
+      } else {
+        // PhoneWindowManager#getVibrationEffect() maps
+        // GESTURE_END and CONTEXT_CLICK to the same effect.
+        HapticFeedbackConstants.CONTEXT_CLICK
+      }
+    }
+}

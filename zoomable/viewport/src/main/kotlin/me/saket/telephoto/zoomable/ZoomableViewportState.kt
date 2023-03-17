@@ -374,39 +374,45 @@ class ZoomableViewportState internal constructor(
     }
   }
 
-  internal suspend fun smoothlySettleOnGestureEnd(velocity: Velocity, density: Density) {
+  internal fun isZoomOutsideRange(): Boolean {
+    val currentZoom = gestureTransformation!!.zoom
+    val viewportZoomWithinBounds = currentZoom.coercedIn(zoomRange).viewportZoom
+    return currentZoom.viewportZoom != viewportZoomWithinBounds
+  }
+
+  internal suspend fun smoothlySettleZoomOnGestureEnd() {
     val start = gestureTransformation!!
     val viewportZoomWithinBounds = start.zoom.coercedIn(zoomRange).viewportZoom
-    val isOutOfBounds = start.zoom.viewportZoom != viewportZoomWithinBounds
 
-    if (isOutOfBounds) {
-      transformableState.transform {
-        var previous = start.zoom.viewportZoom
-        AnimationState(initialValue = previous).animateTo(
-          targetValue = viewportZoomWithinBounds,
-          animationSpec = spring()
-        ) {
-          transformBy(
-            centroid = start.lastCentroid,
-            zoomChange = if (previous == 0f) 1f else value / previous,
-          )
-          previous = this.value
-        }
+    transformableState.transform {
+      var previous = start.zoom.viewportZoom
+      AnimationState(initialValue = previous).animateTo(
+        targetValue = viewportZoomWithinBounds,
+        animationSpec = spring()
+      ) {
+        transformBy(
+          centroid = start.lastCentroid,
+          zoomChange = if (previous == 0f) 1f else value / previous,
+        )
+        previous = this.value
       }
-    } else {
-      transformableState.transform {
-        var previous = start.offset
-        AnimationState(
-          typeConverter = Offset.VectorConverter,
-          initialValue = previous,
-          initialVelocityVector = AnimationVector(velocity.x, velocity.y)
-        ).animateDecay(splineBasedDecay(density)) {
-          transformBy(
-            centroid = start.lastCentroid,
-            panChange = value - previous
-          )
-          previous = value
-        }
+    }
+  }
+
+  internal suspend fun fling(velocity: Velocity, density: Density) {
+    val start = gestureTransformation!!
+    transformableState.transform {
+      var previous = start.offset
+      AnimationState(
+        typeConverter = Offset.VectorConverter,
+        initialValue = previous,
+        initialVelocityVector = AnimationVector(velocity.x, velocity.y)
+      ).animateDecay(splineBasedDecay(density)) {
+        transformBy(
+          centroid = start.lastCentroid,
+          panChange = value - previous
+        )
+        previous = value
       }
     }
   }
