@@ -52,7 +52,7 @@ internal class SkiaImageRegionDecoders private constructor(
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
       val decoders = withContext(dispatcher) {
-        (0 until decoderCount).map {
+        List(decoderCount) {
           imageSource.stream(context).use { stream ->
             BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
           }
@@ -81,7 +81,6 @@ private class ResourcePool<T>(resources: List<T>) {
   }
 
   suspend fun <R> borrow(handler: suspend (T) -> R): R {
-    //delay(Random.nextLong(from = 300, until = 3_000))  // todo: remove!
     val borrowed = channel.receive()
     return try {
       handler(borrowed)

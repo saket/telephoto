@@ -30,7 +30,7 @@ fun SubSampledImage(viewportState: ZoomableViewportState) {
     val result = context.imageLoader.execute(
       ImageRequest.Builder(context)
         .data(url)
-        .memoryCachePolicy(CachePolicy.DISABLED)
+        .memoryCachePolicy(CachePolicy.DISABLED)  // In-memory caching will be handled by SubSamplingImage.
         .build()
     )
     if (result is SuccessResult) {

@@ -41,6 +41,7 @@ import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.maxScale
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
+import me.saket.telephoto.subsamplingimage.internal.withImprovedMessageFor
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableViewportState
@@ -189,7 +190,7 @@ private fun createRegionDecoder(
       try {
         decoder.value = SkiaImageRegionDecoders.create(context, imageSource)
       } catch (e: IOException) {
-        errorReporter.onImageLoadingFailed(e, imageSource)
+        errorReporter.onImageLoadingFailed(e.withImprovedMessageFor(imageSource), imageSource)
       }
     }
   }
