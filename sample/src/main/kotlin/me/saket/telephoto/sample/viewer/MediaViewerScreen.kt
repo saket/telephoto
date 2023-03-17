@@ -20,8 +20,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
-import me.saket.telephoto.viewport.ZoomableViewport
-import me.saket.telephoto.viewport.rememberZoomableViewportState
+import me.saket.telephoto.zoomable.ZoomableViewport
+import me.saket.telephoto.zoomable.rememberZoomableViewportState
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)

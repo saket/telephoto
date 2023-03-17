@@ -81,6 +81,7 @@ private class ResourcePool<T>(resources: List<T>) {
   }
 
   suspend fun <R> borrow(handler: suspend (T) -> R): R {
+    //delay(Random.nextLong(from = 300, until = 3_000))  // todo: remove!
     val borrowed = channel.receive()
     return try {
       handler(borrowed)

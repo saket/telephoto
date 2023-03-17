@@ -1,3 +1,4 @@
 include ':sample'
 include ':subsamplingimage'
-include ':zoomable'
+include ':zoomable:api'
+include ':zoomable:viewport'

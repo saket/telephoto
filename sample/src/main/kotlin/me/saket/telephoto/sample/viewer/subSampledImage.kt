@@ -17,7 +17,7 @@ import coil.request.SuccessResult
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
-import me.saket.telephoto.viewport.ZoomableViewportState
+import me.saket.telephoto.zoomable.ZoomableViewportState
 
 @Composable
 @OptIn(ExperimentalCoilApi::class)

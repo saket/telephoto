@@ -35,9 +35,9 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
-import me.saket.telephoto.viewport.ZoomableContentTransformation
-import me.saket.telephoto.viewport.ZoomableViewport
-import me.saket.telephoto.viewport.rememberZoomableViewportState
+import me.saket.telephoto.zoomable.ZoomableContentTransformation
+import me.saket.telephoto.zoomable.ZoomableViewport
+import me.saket.telephoto.zoomable.rememberZoomableViewportState
 import okio.source
 import org.junit.Before
 import org.junit.Rule

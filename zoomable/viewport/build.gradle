@@ -4,11 +4,12 @@ plugins {
 
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
 apply plugin: 'app.cash.paparazzi'
 apply plugin: 'com.vanniktech.maven.publish'
 
 android {
-  namespace "me.saket.telephoto.subsamplingimage"
+  namespace "me.saket.telephoto.zoomable.viewport"
 
   defaultConfig {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -20,17 +21,13 @@ android {
 
 dependencies {
   api project(":zoomable:api")
-  api project(":zoomable:viewport")
 
   implementation "androidx.compose.ui:ui-util:$versions.composeUi"
   api "androidx.compose.foundation:foundation:$versions.composeUi"
-  api "com.squareup.okio:okio:3.3.0"
 
   testImplementation "junit:junit:$versions.junit"
   testImplementation "com.google.truth:truth:$versions.truth"
   testImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
-  testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
-  testImplementation "app.cash.turbine:turbine:0.12.1"
 
   androidTestImplementation "androidx.test:core-ktx:1.5.0"
   androidTestImplementation "androidx.test:rules:1.5.0"

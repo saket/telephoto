@@ -14,9 +14,9 @@ import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import me.saket.telephoto.sample.R
-import me.saket.telephoto.viewport.ZoomableContentLocation
-import me.saket.telephoto.viewport.ZoomableViewportState
-import me.saket.telephoto.viewport.graphicsLayer
+import me.saket.telephoto.zoomable.ZoomableContentLocation
+import me.saket.telephoto.zoomable.ZoomableViewportState
+import me.saket.telephoto.zoomable.graphicsLayer
 
 @Composable
 fun NormalSizedRemoteImage(

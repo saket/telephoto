@@ -41,13 +41,13 @@ import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.maxScale
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
-import me.saket.telephoto.viewport.ZoomableContentLocation
-import me.saket.telephoto.viewport.ZoomableContentTransformation
-import me.saket.telephoto.viewport.ZoomableViewportState
+import me.saket.telephoto.zoomable.ZoomableContentLocation
+import me.saket.telephoto.zoomable.ZoomableContentTransformation
+import me.saket.telephoto.zoomable.ZoomableViewportState
 import java.io.IOException
 
 // todo: doc.
-// todo: move this to its own module.
+// todo: should this accept a ZoomableContentTransformationProvider?
 @Composable
 fun rememberSubSamplingImageState(
   imageSource: ImageSource,
