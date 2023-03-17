@@ -48,8 +48,7 @@ task clean(type: Delete) {
 }
 
 subprojects { subproject ->
-  plugins.withType(BasePlugin) { plugin ->
-
+  plugins.withType(BasePlugin).configureEach { plugin ->
     def android = project.extensions.getByName("android") as BaseExtension
     def isApp = plugin instanceof AppPlugin
 
