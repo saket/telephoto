@@ -211,7 +211,11 @@ class ZoomableViewportState internal constructor(
       ).let {
         if (isAtMinZoom || isAtMaxZoom) {
           // Apply a hard-stop after a limit.
-          it.coercedIn(zoomRange.inflate(minBy = 0.1f, maxBy = 0.4f))
+          it.coercedIn(
+            range = zoomRange,
+            leewayPercentForMinZoom = 0.1f,
+            leewayPercentForMaxZoom = 0.4f
+          )
         } else {
           it
         }
@@ -436,13 +440,18 @@ internal data class ContentZoom(
     return baseZoom * viewportZoom
   }
 
-  // todo: should probably test this
-  fun coercedIn(range: ZoomRange): ContentZoom {
+  fun coercedIn(
+    range: ZoomRange,
+    leewayPercentForMinZoom: Float = 0f,
+    leewayPercentForMaxZoom: Float = leewayPercentForMinZoom,
+  ): ContentZoom {
+    val minViewportZoom = range.minZoom(baseZoom) / baseZoom.maxScale
+    val maxViewportZoom = range.maxZoom(baseZoom) / baseZoom.maxScale
     return copy(
       baseZoom = baseZoom,
       viewportZoom = viewportZoom.coerceIn(
-        minimumValue = range.minZoom(baseZoom) / baseZoom.maxScale,
-        maximumValue = range.maxZoom(baseZoom) / baseZoom.maxScale
+        minimumValue = minViewportZoom * (1 - leewayPercentForMinZoom),
+        maximumValue = maxViewportZoom * (1 + leewayPercentForMaxZoom),
       )
     )
   }
@@ -461,13 +470,6 @@ internal data class ZoomRange(
   private val minZoomAsRatioOfBaseZoom: Float = 1f,
   private val maxZoomAsRatioOfSize: Float,
 ) {
-
-  fun inflate(minBy: Float, maxBy: Float): ZoomRange {
-    return ZoomRange(
-      minZoomAsRatioOfBaseZoom = minZoomAsRatioOfBaseZoom - (minBy * minZoomAsRatioOfBaseZoom),
-      maxZoomAsRatioOfSize = maxZoomAsRatioOfSize + (maxBy * maxZoomAsRatioOfSize)
-    )
-  }
 
   // todo: ZoomRange and ContentZoom are inter-dependent. minZoom() and maxZoom() should probably move to ContentZoom.
   internal fun minZoom(baseZoomMultiplier: ScaleFactor): Float {
