@@ -181,7 +181,7 @@ private fun createRegionDecoder(
   val context = LocalContext.current
   val errorReporter by rememberUpdatedState(errorReporter)
 
-  val decoder = remember { mutableStateOf<ImageRegionDecoder?>(null) }
+  val decoder = remember(imageSource) { mutableStateOf<ImageRegionDecoder?>(null) }
   val isInPreviewMode = LocalInspectionMode.current
 
   if (!isInPreviewMode) {

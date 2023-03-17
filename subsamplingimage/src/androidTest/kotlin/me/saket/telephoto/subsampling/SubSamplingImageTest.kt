@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -193,8 +196,42 @@ class SubSamplingImageTest {
   }
 
   @Test fun updating_of_image_works() {
-    // todo:
-    //  - content description should get updated.
+    var isImageDisplayed = false
+    var imageSource by mutableStateOf(ImageSource.asset("smol.jpg"))
+
+    composeTestRule.setContent {
+      ScreenScaffold {
+        val viewportState = rememberZoomableViewportState()
+        val imageState = rememberSubSamplingImageState(
+          viewportState = viewportState,
+          imageSource = imageSource,
+        )
+        LaunchedEffect(imageState.isImageDisplayed) {
+          isImageDisplayed = imageState.isImageDisplayed
+        }
+
+        ZoomableViewport(
+          modifier = Modifier.fillMaxSize(),
+          state = viewportState,
+          contentScale = ContentScale.Inside,
+        ) {
+          SubSamplingImage(
+            modifier = Modifier.fillMaxSize(),
+            state = imageState,
+            contentDescription = null,
+          )
+        }
+      }
+    }
+    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
+
+    imageSource = ImageSource.asset("path.jpg")
+
+    composeTestRule.waitUntil { !isImageDisplayed }
+    composeTestRule.waitUntil { isImageDisplayed }
+    composeTestRule.runOnIdle {
+      dropshots.assertSnapshot(composeTestRule.activity)
+    }
   }
 
   @Test fun updating_of_image_works_when_zoomable_transformations_were_non_empty() {
