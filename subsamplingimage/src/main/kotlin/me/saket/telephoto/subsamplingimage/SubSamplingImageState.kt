@@ -189,7 +189,7 @@ private fun createRegionDecoder(
       try {
         decoder.value = SkiaImageRegionDecoders.create(context, imageSource)
       } catch (e: IOException) {
-        errorReporter.onImageLoadingFailed(e)
+        errorReporter.onImageLoadingFailed(e, imageSource)
       }
     }
   }
