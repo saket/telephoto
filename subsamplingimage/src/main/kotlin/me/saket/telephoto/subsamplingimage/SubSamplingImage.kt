@@ -38,7 +38,9 @@ fun SubSamplingImage(
   val onDraw: DrawScope.() -> Unit = {
     state.tiles.fastForEach { tile ->
       if (tile.bitmap != null) {
-        println("drawing image")
+        if (BuildConfig.DEBUG) {
+          println("drawing image")
+        }
         drawImage(
           image = tile.bitmap,
           srcOffset = IntOffset.Zero,
