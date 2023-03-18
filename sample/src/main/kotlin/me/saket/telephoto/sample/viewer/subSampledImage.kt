@@ -1,3 +1,5 @@
+@file:Suppress("NAME_SHADOWING")
+
 package me.saket.telephoto.sample.viewer
 
 import androidx.compose.foundation.layout.fillMaxSize

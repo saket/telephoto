@@ -1,6 +1,7 @@
 package me.saket.telephoto.zoomable
 
 import android.graphics.BitmapFactory
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -24,13 +25,16 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
@@ -39,6 +43,7 @@ import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.unit.toSize
 import com.dropbox.dropshots.Dropshots
 import com.dropbox.dropshots.ResultValidator
 import com.dropbox.dropshots.ThresholdValidator
@@ -447,6 +452,47 @@ class ZoomableViewportTest {
     rule.runOnIdle {
       assertThat(imageScale).isEqualTo(ScaleFactor(1f, 1f))
       dropshots.assertSnapshot(rule.activity)
+    }
+  }
+
+  @Test fun on_click_works() {
+    var onClickCalled = false
+    var onLongClickCalled = false
+
+    rule.setContent {
+      val state = rememberZoomableViewportState()
+      ZoomableViewport(
+        state = state,
+        contentScale = ContentScale.Inside,
+        onClick = { onClickCalled = true },
+        onLongClick = { onLongClickCalled = true }
+      ) {
+        Box(
+          Modifier
+            .testTag("content")
+            .fillMaxSize()
+            .onSizeChanged {
+              state.setContentLocation(ZoomableContentLocation.fitInsideAndCenterAligned(it.toSize()))
+            }
+        )
+      }
+    }
+
+    rule.onNodeWithTag("content").performClick()
+    rule.runOnIdle {
+      // Clicks are delayed until they're confirmed to not be double clicks.
+      assertThat(onClickCalled).isFalse()
+    }
+
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(onClickCalled).isTrue()
+      assertThat(onLongClickCalled).isFalse()
+    }
+
+    rule.onNodeWithTag("content").performTouchInput { longClick() }
+    rule.runOnIdle {
+      assertThat(onLongClickCalled).isTrue()
     }
   }
 
