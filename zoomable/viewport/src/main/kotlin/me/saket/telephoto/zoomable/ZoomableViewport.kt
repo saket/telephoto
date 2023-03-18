@@ -24,13 +24,17 @@ import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.transformable
 
-// TODO: doc.
 /**
  * A viewport that handles zoom & pan gestures for its content.
  *
  * Because [ZoomableViewport] handles all gestures including double-taps, `Modifier.clickable()` and
  * related modifiers will not work for any composable inside its content hierarchy. [onClick] and
  * [onLongClick] can be used instead.
+ *
+ * @param contentScale Single source of truth for your content's aspect ratio. Any scaling provided by
+ * composables in your content such as `Image` should be set to `ContentScale.FitInside` or ignored.
+ * A visual guide of the various scale values can be found
+ * [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
  *
  * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
  * space. Otherwise, gestures made outside the viewport's (unscaled) bounds will not be registered.
