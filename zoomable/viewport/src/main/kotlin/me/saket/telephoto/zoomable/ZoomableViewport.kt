@@ -24,17 +24,26 @@ import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.transformable
 
+// TODO: doc.
 /**
+ * A viewport that handles zoom & pan gestures for its content.
+ *
+ * Because [ZoomableViewport] handles all gestures including double-taps, `Modifier.clickable()` and
+ * related modifiers will not work for any composable inside its content hierarchy. [onClick] and
+ * [onLongClick] can be used instead.
+ *
  * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
  * space. Otherwise, gestures made outside the viewport's (unscaled) bounds will not be registered.
  */
 @Composable
 fun ZoomableViewport(
   state: ZoomableViewportState,
-  modifier: Modifier = Modifier,
-  clipToBounds: Boolean = true,
-  contentAlignment: Alignment = Alignment.Center,
   contentScale: ContentScale,
+  modifier: Modifier = Modifier,
+  contentAlignment: Alignment = Alignment.Center,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
   content: @Composable ZoomableViewportScope.() -> Unit
 ) {
   state.contentScale = contentScale
@@ -49,8 +58,6 @@ fun ZoomableViewport(
       .transformable(
         state = state.transformableState,
         onTransformStopped = { velocity ->
-          // Reset is performed in a new coroutine. The animation will be canceled
-          // if TransformableState#transform() is called again by Modifier#transformable().
           scope.launch {
             if (state.isZoomOutsideRange()) {
               view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
@@ -63,6 +70,8 @@ fun ZoomableViewport(
       )
       .pointerInput(Unit) {
         detectTapGestures(
+          onTap = onClick,
+          onLongPress = onLongClick,
           onDoubleTap = { centroid ->
             scope.launch {
               state.handleDoubleTapZoomTo(centroidInViewport = centroid)
@@ -91,7 +100,7 @@ fun ZoomableViewport(
   }
 }
 
-interface ZoomableViewportScope : BoxScope
+interface ZoomableViewportScope : BoxScope, BlockClickableModifiers
 
 private class RealZoomableViewportScope(
   val boxScope: BoxScope
