@@ -20,12 +20,19 @@ sealed interface ImageSource {
      * For example, if you're using Coil, you can read downloaded images from its disk cache:
      *
      * ```kotlin
-     * val imageUrl: String = …
      * val imageLoader: coil.ImageLoader = …
+     * val result = imageLoader.execute(
+     *   ImageRequest.Builder(context)
+     *     .data(…)
+     *     .memoryCachePolicy(DISABLED)
+     *     .build()
+     * )
      *
-     * ImageSource.stream {
-     *   val diskCache = imageLoader.diskCache!!
-     *   diskCache.fileSystem.source(diskCache[imageUrl]!!.data)
+     * if (result is SuccessResult) {
+     *   ImageSource.stream {
+     *     val diskCache = imageLoader.diskCache!!
+     *     diskCache.fileSystem.source(diskCache[result.diskCacheKey!!]!!.data)
+     *   }
      * }
      * ```
      *
