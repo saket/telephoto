@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package me.saket.telephoto.sample.viewer
 
 import androidx.compose.foundation.Image

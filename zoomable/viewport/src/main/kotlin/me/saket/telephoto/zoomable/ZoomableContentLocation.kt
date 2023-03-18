@@ -5,6 +5,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.LayoutDirection
@@ -43,8 +44,8 @@ interface ZoomableContentLocation {
      */
     @Stable
     fun fitInsideAndCenterAligned(size: Size?): ZoomableContentLocation {
-      return when (size) {
-        null -> Unspecified
+      return when {
+        size == null || size.isUnspecified -> Unspecified
         else -> RelativeContentLocation(
           size = size,
           scale = ContentScale.Inside,
