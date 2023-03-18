@@ -32,7 +32,7 @@ import me.saket.telephoto.zoomable.internal.transformable
  * [onLongClick] can be used instead.
  *
  * @param contentScale Single source of truth for your content's aspect ratio. Any scaling provided by
- * composables in your content such as `Image` should be set to `ContentScale.FitInside` or ignored.
+ * composables in your content such as `Image` should be set to `ContentScale.Inside` or ignored.
  * A visual guide of the various scale values can be found
  * [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
  *

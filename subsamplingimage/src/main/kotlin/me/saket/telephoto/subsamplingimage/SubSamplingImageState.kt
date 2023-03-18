@@ -49,6 +49,7 @@ import java.io.IOException
 
 // todo: doc.
 // todo: should this accept a ZoomableContentTransformationProvider?
+//  - the provider can have a setContentLocation function and a viewportSize field.
 @Composable
 fun rememberSubSamplingImageState(
   imageSource: ImageSource,
