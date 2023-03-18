@@ -23,10 +23,6 @@ import me.saket.telephoto.zoomable.internal.discardFractionalParts
  * could be at an order of magnitude larger than the layout bounds.
  */
 interface ZoomableContentLocation {
-
-  // todo: doc.
-  fun boundsIn(parent: Rect, direction: LayoutDirection): Rect
-
   companion object {
     /**
      * Describes a zoomable content's location that is positioned in the center of its layout
@@ -63,6 +59,8 @@ interface ZoomableContentLocation {
         error("location is unspecified")
     }
   }
+
+  fun boundsIn(parent: Rect, direction: LayoutDirection): Rect
 }
 
 /**
