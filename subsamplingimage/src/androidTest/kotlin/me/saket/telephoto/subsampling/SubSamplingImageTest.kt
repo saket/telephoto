@@ -53,7 +53,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
-  private val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  private val rule = createAndroidComposeRule<ComponentActivity>()
   private val dropshots = Dropshots(
     filenameFunc = { it },
     resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
@@ -62,7 +62,7 @@ class SubSamplingImageTest {
   @get:Rule val rules: RuleChain = RuleChain.emptyRuleChain()
     .around(dropshots)
     .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
-      around(composeTestRule)
+      around(rule)
     }
 
   @get:Rule val testName = TestName()
@@ -70,7 +70,7 @@ class SubSamplingImageTest {
   @Before
   fun setup() {
     println(testName.methodName + "------------------------")
-    composeTestRule.activityRule.scenario.onActivity {
+    rule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
 
       // Remove any space occupied by system bars to reduce differences
@@ -83,7 +83,7 @@ class SubSamplingImageTest {
   @Test fun canary(@TestParameter imageSource: ImageSourceParam) {
     var isImageDisplayed = false
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         val context = LocalContext.current
@@ -109,16 +109,16 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
   @Test fun image_smaller_than_viewport(@TestParameter size: SizeParam) {
     var isImageDisplayed = false
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
@@ -143,9 +143,9 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -155,7 +155,7 @@ class SubSamplingImageTest {
   ) {
     var isImageDisplayed = false
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
@@ -181,9 +181,9 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -199,7 +199,7 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
     var imageSource by mutableStateOf(ImageSource.asset("smol.jpg"))
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
@@ -223,14 +223,14 @@ class SubSamplingImageTest {
         }
       }
     }
-    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(2.seconds) { isImageDisplayed }
 
     imageSource = ImageSource.asset("path.jpg")
 
-    composeTestRule.waitUntil { !isImageDisplayed }
-    composeTestRule.waitUntil { isImageDisplayed }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.waitUntil { !isImageDisplayed }
+    rule.waitUntil { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -254,7 +254,7 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
     var imageTiles: List<CanvasRegionTile>? = null
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         BoxWithConstraints {
           val imageState = rememberSubSamplingImageState(
@@ -283,9 +283,9 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
 
       assertThat(imageTiles!!.map { it.bounds }).containsExactly(
         IntRect(-1122, -1045, 503, 340),
@@ -301,7 +301,7 @@ class SubSamplingImageTest {
   @Test fun center_aligned_and_wrap_content() {
     var isImageDisplayed = false
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
@@ -327,9 +327,9 @@ class SubSamplingImageTest {
       }
     }
 
-    composeTestRule.waitUntil(2.seconds) { isImageDisplayed }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 

@@ -59,7 +59,7 @@ import org.junit.runner.RunWith
 @ExperimentalFoundationApi
 @RunWith(TestParameterInjector::class)
 class ZoomableViewportTest {
-  private val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  private val rule = createAndroidComposeRule<ComponentActivity>()
   private val testName = TestName()
   private val dropshots = Dropshots(
     filenameFunc = { it },
@@ -69,12 +69,12 @@ class ZoomableViewportTest {
   @get:Rule val rules: RuleChain = RuleChain.outerRule(dropshots)
     .around(testName)
     .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
-      around(composeTestRule)
+      around(rule)
     }
 
   @Before
   fun setup() {
-    composeTestRule.activityRule.scenario.onActivity {
+    rule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
 
       // Remove any space occupied by system bars to reduce differences
@@ -85,7 +85,7 @@ class ZoomableViewportTest {
   }
 
   @Test fun canary() {
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         ZoomableViewport(
@@ -99,15 +99,15 @@ class ZoomableViewportTest {
         }
       }
     }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
   @Test fun zoom_in() {
     var finalScale = ScaleFactor.Unspecified
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
         ZoomableViewport(
@@ -127,18 +127,18 @@ class ZoomableViewportTest {
       }
     }
 
-    composeTestRule.onNodeWithTag("viewport").performTouchInput {
+    rule.onNodeWithTag("viewport").performTouchInput {
       pinchToZoomBy(visibleSize.center / 2f)
     }
-    composeTestRule.runOnIdle {
+    rule.runOnIdle {
       assertThat(finalScale.scaleX).isEqualTo(2f)
       assertThat(finalScale.scaleY).isEqualTo(2f)
-      dropshots.assertSnapshot(composeTestRule.activity)
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
   @Test fun retain_transformations_across_state_restorations() {
-    val stateRestorationTester = StateRestorationTester(composeTestRule)
+    val stateRestorationTester = StateRestorationTester(rule)
 
     stateRestorationTester.setContent {
       ScreenScaffold {
@@ -156,7 +156,7 @@ class ZoomableViewportTest {
       }
     }
 
-    with(composeTestRule.onNodeWithTag("viewport")) {
+    with(rule.onNodeWithTag("viewport")) {
       performTouchInput {
         pinchToZoomBy(visibleSize.center / 2f)
       }
@@ -164,14 +164,14 @@ class ZoomableViewportTest {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
 
     stateRestorationTester.emulateSavedInstanceStateRestore()
 
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -180,7 +180,7 @@ class ZoomableViewportTest {
     @TestParameter contentScale: ContentScaleParam,
     @TestParameter imageAsset: ImageAssetParam,
   ) {
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
         ZoomableViewport(
@@ -196,11 +196,11 @@ class ZoomableViewportTest {
         }
       }
     }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName)
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName)
     }
 
-    with(composeTestRule.onNodeWithTag("viewport")) {
+    with(rule.onNodeWithTag("viewport")) {
       performTouchInput {
         val by = visibleSize.center / 2f
         pinch(
@@ -211,24 +211,24 @@ class ZoomableViewportTest {
         )
       }
     }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_zoomed")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
 
-    with(composeTestRule.onNodeWithTag("viewport")) {
+    with(rule.onNodeWithTag("viewport")) {
       performTouchInput {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_zoomed_panned")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
   }
 
   @Test fun updating_of_content_alignment() {
     var contentAlignment by mutableStateOf(Alignment.BottomCenter)
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         ZoomableViewport(
@@ -243,18 +243,18 @@ class ZoomableViewportTest {
         }
       }
     }
-    dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_before_updating_alignment")
+    dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_updating_alignment")
 
     contentAlignment = Alignment.TopCenter
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_after_updating_alignment")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_after_updating_alignment")
     }
   }
 
   @Test fun updating_of_content_scale() {
     var contentScale by mutableStateOf(ContentScale.Crop)
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         ZoomableViewport(
@@ -268,11 +268,11 @@ class ZoomableViewportTest {
         }
       }
     }
-    dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_before_updating_scale")
+    dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_updating_scale")
 
     contentScale = ContentScale.Inside
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity, testName.methodName + "_after_updating_scale")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_after_updating_scale")
     }
   }
 
@@ -285,7 +285,7 @@ class ZoomableViewportTest {
       "cat_1920.jpg"
     )
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         HorizontalPager(
           modifier = Modifier.testTag("pager"),
@@ -306,12 +306,12 @@ class ZoomableViewportTest {
       }
     }
 
-    composeTestRule.onNodeWithTag("pager").performTouchInput {
+    rule.onNodeWithTag("pager").performTouchInput {
       swipeWithVelocity(scrollDirection)
     }
-    composeTestRule.mainClock.advanceTimeByFrame()
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.mainClock.advanceTimeByFrame()
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -324,7 +324,7 @@ class ZoomableViewportTest {
       "fox_1500.jpg"
     )
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         HorizontalPager(
           modifier = Modifier.testTag("pager"),
@@ -345,7 +345,7 @@ class ZoomableViewportTest {
       }
     }
 
-    with(composeTestRule.onNodeWithTag("pager")) {
+    with(rule.onNodeWithTag("pager")) {
       performTouchInput {
         pinchToZoomBy(visibleSize.center / 2f)
       }
@@ -354,9 +354,9 @@ class ZoomableViewportTest {
       }
     }
 
-    composeTestRule.mainClock.advanceTimeByFrame()
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.mainClock.advanceTimeByFrame()
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -369,7 +369,7 @@ class ZoomableViewportTest {
       "fox_1500.jpg"
     )
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         HorizontalPager(
           modifier = Modifier.testTag("pager"),
@@ -390,7 +390,7 @@ class ZoomableViewportTest {
       }
     }
 
-    with(composeTestRule.onNodeWithTag("pager")) {
+    with(rule.onNodeWithTag("pager")) {
       performTouchInput {
         pinchToZoomBy(visibleSize.center / 2f)
       }
@@ -404,9 +404,9 @@ class ZoomableViewportTest {
       }
     }
 
-    composeTestRule.mainClock.advanceTimeByFrame()
-    composeTestRule.runOnIdle {
-      dropshots.assertSnapshot(composeTestRule.activity)
+    rule.mainClock.advanceTimeByFrame()
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -415,7 +415,7 @@ class ZoomableViewportTest {
     var imageScale = ScaleFactor.Unspecified
     var assetName by mutableStateOf("fox_1500.jpg")
 
-    composeTestRule.setContent {
+    rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
         ZoomableViewport(
@@ -435,18 +435,18 @@ class ZoomableViewportTest {
       }
     }
 
-    composeTestRule.onNodeWithTag("viewport").performTouchInput {
+    rule.onNodeWithTag("viewport").performTouchInput {
       doubleClick()
     }
-    composeTestRule.runOnIdle {
+    rule.runOnIdle {
       assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
     }
 
     assetName = "cat_1920.jpg"
 
-    composeTestRule.runOnIdle {
+    rule.runOnIdle {
       assertThat(imageScale).isEqualTo(ScaleFactor(1f, 1f))
-      dropshots.assertSnapshot(composeTestRule.activity)
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
