@@ -75,7 +75,7 @@ private fun MediaPage(
     when (model) {
       is MediaItem.NormalSizedLocalImage -> NormalSizedLocalImage(viewportState)
       is MediaItem.NormalSizedRemoteImage -> NormalSizedRemoteImage(viewportState)
-      is MediaItem.SubSampledImage -> SubSampledImage(viewportState)
+      is MediaItem.SubSampledImage -> LargeImage(viewportState)
     }
   }
 }

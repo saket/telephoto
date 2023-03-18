@@ -23,7 +23,7 @@ import me.saket.telephoto.zoomable.ZoomableViewportState
 
 @Composable
 @OptIn(ExperimentalCoilApi::class)
-fun SubSampledImage(viewportState: ZoomableViewportState) {
+fun LargeImage(viewportState: ZoomableViewportState) {
   val context = LocalContext.current
   var imageSource: ImageSource? by remember { mutableStateOf(null) }
 
