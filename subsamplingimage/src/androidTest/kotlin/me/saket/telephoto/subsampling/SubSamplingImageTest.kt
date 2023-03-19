@@ -89,7 +89,6 @@ class SubSamplingImageTest {
 
   @Before
   fun setup() {
-    println(testName.methodName + "------------------------")
     rule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
 
