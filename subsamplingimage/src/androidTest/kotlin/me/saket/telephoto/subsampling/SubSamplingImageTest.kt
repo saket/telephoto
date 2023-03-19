@@ -13,18 +13,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.IntRect
 import com.dropbox.dropshots.Dropshots
 import com.dropbox.dropshots.ResultValidator
@@ -89,7 +95,7 @@ class SubSamplingImageTest {
         val context = LocalContext.current
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = imageSource.source(context)
+          imageSource = remember { imageSource.source(context) }
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -154,6 +160,7 @@ class SubSamplingImageTest {
     @TestParameter size: SizeParam,
   ) {
     var isImageDisplayed = false
+    var tiles: List<CanvasRegionTile> = emptyList()
 
     rule.setContent {
       ScreenScaffold {
@@ -165,6 +172,9 @@ class SubSamplingImageTest {
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
         }
+        LaunchedEffect(imageState.tiles) {
+          tiles = imageState.tiles
+        }
 
         ZoomableViewport(
           modifier = Modifier.fillMaxSize(),
@@ -173,7 +183,9 @@ class SubSamplingImageTest {
           contentScale = ContentScale.Inside,
         ) {
           SubSamplingImage(
-            modifier = Modifier.then(size.modifier),
+            modifier = Modifier
+              .then(size.modifier)
+              .testTag("image"),
             state = imageState,
             contentDescription = null,
           )
@@ -184,6 +196,19 @@ class SubSamplingImageTest {
     rule.waitUntil(2.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
+    }
+
+    // todo: take another screenshot after zooming in.
+    rule.onNodeWithTag("image").performTouchInput {
+      doubleClick()
+    }
+    rule.runOnIdle {
+      rule.waitUntil {
+        tiles.isNotEmpty() && tiles.all { it.bitmap != null }
+      }
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed")
     }
   }
 
@@ -260,7 +285,7 @@ class SubSamplingImageTest {
           val imageState = rememberSubSamplingImageState(
             imageSource = ImageSource.asset("path.jpg"),
             transformation = ZoomableContentTransformation(
-              viewportSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
+              viewportBounds = Rect(Offset.Zero, Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())),
               scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
               offset = Offset(x = -2749.3718f, y = -1045.4058f),
               rotationZ = 0f,

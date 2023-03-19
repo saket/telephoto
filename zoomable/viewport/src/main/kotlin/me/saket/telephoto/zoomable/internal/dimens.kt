@@ -1,6 +1,7 @@
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.unit.IntSize
@@ -30,3 +31,8 @@ internal operator fun Offset.times(factor: ScaleFactor) =
 
 internal operator fun Offset.div(factor: ScaleFactor) =
   Offset(x = x / factor.scaleX, y = y / factor.scaleY)
+
+internal fun Rect.relativeTo(other: Rect): Rect {
+  val topLeftDiff = this.topLeft - other.topLeft
+  return Rect(topLeftDiff, size)
+}

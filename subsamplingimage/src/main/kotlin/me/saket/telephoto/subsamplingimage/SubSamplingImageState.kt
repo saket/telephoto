@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -116,22 +115,16 @@ fun rememberSubSamplingImageState(
           unscaledImageSize = decoder.imageSize
         )
 
-        val viewportBounds = transformations
-          .map { it.viewportSize }
-          .distinctUntilChanged()
-          .map { size -> Rect(Offset.Zero, size) }
-
         combine(
           transformations,
-          viewportBounds,
           bitmapLoader.cachedBitmaps()
-        ) { transformation, viewportBounds, bitmaps ->
+        ) { transformation, bitmaps ->
           val sampleSize = BitmapSampleSize.calculateFor(transformation.scale.maxScale)
           val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
 
           val foregroundTiles = foregroundRegions.fastMapNotNull { tile ->
             val drawBounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset)
-            if (drawBounds.overlaps(viewportBounds)) {
+            if (drawBounds.overlaps(transformation.viewportBounds)) {
               CanvasRegionTile(
                 bounds = drawBounds,
                 bitmap = bitmaps[tile],

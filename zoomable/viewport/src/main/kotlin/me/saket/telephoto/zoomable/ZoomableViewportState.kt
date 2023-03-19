@@ -37,6 +37,7 @@ import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.ZoomableViewportSavedState
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.maxScale
+import me.saket.telephoto.zoomable.internal.relativeTo
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
@@ -87,15 +88,12 @@ class ZoomableViewportState internal constructor(
 
   /**
    * Transformations that should be applied by the viewport to its content.
-   *
-   * See Modifier#graphicsLayer: [me.saket.telephoto.viewport.graphicsLayer].
-   *
-   * todo: doc
    */
+  // todo: doc
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
       ZoomableContentTransformation(
-        viewportSize = viewportBounds.size,
+        viewportBounds = viewportBounds.relativeTo(contentLayoutBounds),
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
