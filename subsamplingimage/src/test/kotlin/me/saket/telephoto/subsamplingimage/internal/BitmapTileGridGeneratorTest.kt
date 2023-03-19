@@ -21,7 +21,6 @@ class BitmapTileGridGeneratorTest {
       BitmapRegionTileGrid.generate(
         canvasSize = Size(1080f, 0f),
         unscaledImageSize = Size(10f, 10f),
-        minTileSize = Size.Zero,
       )
     }
   }
@@ -35,8 +34,7 @@ class BitmapTileGridGeneratorTest {
       unscaledImageSize = Size(
         width = 500f,
         height = 400f
-      ),
-      minTileSize = Size.Zero,
+      )
     )
 
     assertThat(tileGrid.base.sampleSize).isEqualTo(BitmapSampleSize(1))
@@ -53,8 +51,7 @@ class BitmapTileGridGeneratorTest {
         width = 1080f,
         height = 2214f
       ),
-      unscaledImageSize = imageSize,
-      minTileSize = Size.Zero,
+      unscaledImageSize = imageSize
     )
 
     // Verify that the layers are sorted by their sample size.
@@ -105,8 +102,7 @@ class BitmapTileGridGeneratorTest {
           unscaledImageSize = Size(
             width = 9734f - (Random.nextInt(0..100)),
             height = 3265f - (Random.nextInt(0..100))
-          ),
-          minTileSize = Size.Zero,
+          )
         )
       }
     }
@@ -116,6 +112,13 @@ class BitmapTileGridGeneratorTest {
     assertThat(time).isLessThan(30.milliseconds)
   }
 }
+
+internal fun BitmapRegionTileGrid.Companion.generate(canvasSize: Size, unscaledImageSize: Size) =
+  generate(
+    canvasSize = canvasSize,
+    unscaledImageSize = unscaledImageSize,
+    minTileSize = canvasSize / 2f
+  )
 
 private val Size.area: Float get() = width * height
 private val Rect.area: Float get() = size.area
