@@ -36,10 +36,8 @@ fun LargeImage(viewportState: ZoomableViewportState) {
         .build()
     )
     if (result is SuccessResult) {
-      imageSource = ImageSource.stream {
-        val diskCache = context.imageLoader.diskCache!!
-        diskCache.fileSystem.source(diskCache[result.diskCacheKey!!]!!.data)
-      }
+      val diskCache = context.imageLoader.diskCache!!
+      imageSource = ImageSource.file(diskCache[result.diskCacheKey!!]!!.data)
     } else {
       // TODO: handle errors here.
     }

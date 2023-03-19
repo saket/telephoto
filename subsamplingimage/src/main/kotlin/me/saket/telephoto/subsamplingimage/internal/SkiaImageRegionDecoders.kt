@@ -52,10 +52,8 @@ internal class SkiaImageRegionDecoders private constructor(
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
       val decoders = withContext(dispatcher) {
-        List(decoderCount) {
-          imageSource.stream(context).use { stream ->
-            BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
-          }
+        List(decoderCount) { i ->
+          imageSource.decoder(context)
         }
       }
       return SkiaImageRegionDecoders(

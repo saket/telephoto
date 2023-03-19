@@ -3,48 +3,51 @@ package me.saket.telephoto.subsamplingimage
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.AssetManager
+import android.graphics.BitmapRegionDecoder
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.remember
-import okio.buffer
-import java.io.InputStream
+import okio.Path
 
+/**
+ * Image to display with [SubSamplingImage]. Can be one of:
+ *
+ * * [ImageSource.file]
+ * * [ImageSource.asset]
+ * * [ImageSource.resource]
+ * * [ImageSource.contentUri]
+ *
+ * At the time of writing this, only the JPEG, PNG, WebP and HEIF formats are supported by [BitmapRegionDecoder].
+ * */
 sealed interface ImageSource {
   companion object {
     /**
-     * A streaming source of bitmap for displaying locally stored images.
+     * Images stored on the device file system.
      *
      * This can be used with image loading libraries that store cached images on disk.
      * For example, if you're using Coil, you can read downloaded images from its disk cache:
      *
      * ```kotlin
      * val imageLoader: coil.ImageLoader = …
+     * val diskCache: coil.DiskCache = imageLoader.diskCache!!
+     *
      * val result = imageLoader.execute(
      *   ImageRequest.Builder(context)
      *     .data(…)
      *     .memoryCachePolicy(DISABLED)
      *     .build()
      * )
-     *
      * if (result is SuccessResult) {
-     *   ImageSource.stream {
-     *     val diskCache = imageLoader.diskCache!!
-     *     diskCache.fileSystem.source(diskCache[result.diskCacheKey!!]!!.data)
-     *   }
+     *   ImageSource.file(diskCache[result.diskCacheKey!!]!!.data)
      * }
      * ```
      *
-     * Make sure that a new copy of a stream is produced each time [producer] is called instead
-     * of reusing a cached value. This is because multiple streams are used for decoding bitmaps
-     * in parallel across multiple threads.
-     *
-     * The returned value isn't stable and should be used with [remember] if needed.
+     * The returned value is stable and does not need to be remembered.
      */
-    fun stream(producer: suspend (Context) -> okio.Source): ImageSource {
-      return StreamingImageSource(producer)
-    }
+    @Stable
+    fun file(path: Path): ImageSource = FileImageSource(path)
 
     /**
      * Images stored in `src/main/assets`.
@@ -73,31 +76,49 @@ sealed interface ImageSource {
   }
 
   // todo: doc.
-  suspend fun stream(context: Context): InputStream
+  suspend fun decoder(context: Context): BitmapRegionDecoder
 }
 
 @Immutable
-internal data class StreamingImageSource(val producer: suspend (Context) -> okio.Source) : ImageSource {
-  override suspend fun stream(context: Context) =
-    producer(context).buffer().inputStream()
+internal data class FileImageSource(val path: Path) : ImageSource {
+  init {
+    check(path.isAbsolute)
+  }
+
+  override suspend fun decoder(context: Context): BitmapRegionDecoder {
+    return ParcelFileDescriptor.open(path.toFile(), ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
+      BitmapRegionDecoder.newInstance(fd.fileDescriptor, /* ignored */ false)
+    }
+  }
 }
 
 @Immutable
 internal data class AssetImageSource(val assetName: String) : ImageSource {
-  override suspend fun stream(context: Context) =
-    context.assets.open(assetName, AssetManager.ACCESS_RANDOM)
+  override suspend fun decoder(context: Context): BitmapRegionDecoder {
+    return context.assets.open(assetName, AssetManager.ACCESS_RANDOM).use { stream ->
+      if (BuildConfig.DEBUG && stream !is AssetManager.AssetInputStream) {
+        error("BitmapRegionDecoder won't be able to optimize reading of this asset")
+      }
+      BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
+    }
+  }
 }
 
 @Immutable
 internal data class ResourceImageSource(@DrawableRes val id: Int) : ImageSource {
   @SuppressLint("ResourceType")
-  override suspend fun stream(context: Context) =
-    context.resources.openRawResource(id)
+  override suspend fun decoder(context: Context): BitmapRegionDecoder {
+    return context.resources.openRawResource(id).use { stream ->
+      BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
+    }
+  }
 }
 
 @Immutable
 internal data class UriImageSource(val uri: Uri) : ImageSource {
-  @SuppressLint("Recycle")
-  override suspend fun stream(context: Context) =
-    context.contentResolver.openInputStream(uri) ?: error("Failed to read from uri: $uri")
+  override suspend fun decoder(context: Context): BitmapRegionDecoder {
+    return context.contentResolver.openInputStream(uri)
+      ?.use { stream -> BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!! }
+      ?: error("Failed to read bitmap from uri: $uri")
+  }
 }

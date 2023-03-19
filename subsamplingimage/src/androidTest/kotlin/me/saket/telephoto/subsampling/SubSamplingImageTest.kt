@@ -58,6 +58,9 @@ import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toOkioPath
 import okio.source
 import org.junit.Before
 import org.junit.Rule
@@ -494,11 +497,11 @@ class SubSamplingImageTest {
   }
 
   @Suppress("unused")
-  enum class ImageSourceParam(val source: (Context) -> ImageSource) {
+  enum class ImageSourceParam(val source: Context.() -> ImageSource) {
     Asset({ ImageSource.asset("pahade.jpg") }),
     Resource({ ImageSource.resource(R.drawable.cat_1920) }),
-    ContentUri({ ImageSource.contentUri(Uri.parse("""android.resource://${it.packageName}/${R.drawable.cat_1920}""")) }),
-    Stream({ ImageSource.stream { it.assets.open("pahade.jpg").source() } })
+    ContentUri({ ImageSource.contentUri(Uri.parse("""android.resource://${packageName}/${R.drawable.cat_1920}""")) }),
+    File({ ImageSource.file(createFileFromAsset("pahade.jpg")) })
   }
 
   @Suppress("unused")
@@ -514,4 +517,13 @@ private fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
 
 private fun AndroidComposeTestRule<*, *>.waitUntil(timeout: Duration, condition: () -> Boolean) {
   this.waitUntil(timeoutMillis = timeout.inWholeMilliseconds, condition)
+}
+
+private fun Context.createFileFromAsset(assetName: String): Path {
+  return (cacheDir.toOkioPath() / assetName).also { path ->
+    FileSystem.SYSTEM.run {
+      delete(path)
+      write(path) { writeAll(assets.open(assetName).source()) }
+    }
+  }
 }

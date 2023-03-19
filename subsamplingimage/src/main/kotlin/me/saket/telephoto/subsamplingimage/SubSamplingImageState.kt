@@ -37,13 +37,11 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
-import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.maxScale
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
-import me.saket.telephoto.subsamplingimage.internal.withImprovedMessageFor
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableViewportState
@@ -192,7 +190,7 @@ private fun createRegionDecoder(
       try {
         decoder.value = factory.create(context, imageSource)
       } catch (e: IOException) {
-        errorReporter.onImageLoadingFailed(e.withImprovedMessageFor(imageSource), imageSource)
+        errorReporter.onImageLoadingFailed(e, imageSource)
       }
     }
   }
