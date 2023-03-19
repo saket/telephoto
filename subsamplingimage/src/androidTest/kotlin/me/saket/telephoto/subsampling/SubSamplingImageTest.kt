@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -41,10 +43,16 @@ import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.coroutines.delay
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
+import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
+import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
@@ -265,8 +273,69 @@ class SubSamplingImageTest {
   @Test fun updating_of_image_works_when_content_transformation_was_non_empty() {
   }
 
-  // todo.
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
+    class FakeRegionDecoderFactory(val shouldIgnore: (BitmapRegionTile) -> Boolean) : ImageRegionDecoder.Factory {
+      override suspend fun create(context: Context, imageSource: ImageSource): ImageRegionDecoder {
+        val real = SkiaImageRegionDecoders.Factory.create(context, imageSource)
+        return object : ImageRegionDecoder by real {
+          override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+            return if (shouldIgnore(region)) {
+              delay(Long.MAX_VALUE)
+              error("shouldn't reach here")
+            } else {
+              real.decodeRegion(region)
+            }
+          }
+        }
+      }
+    }
+
+    val fakeRegionDecoderFactory = FakeRegionDecoderFactory(
+      shouldIgnore = { region ->
+        region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648f
+      }
+    )
+    var isImageDisplayed = false
+
+    rule.setContent {
+      ScreenScaffold {
+        CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
+          val viewportState = rememberZoomableViewportState()
+          val imageState = rememberSubSamplingImageState(
+            viewportState = viewportState,
+            imageSource = ImageSource.asset("pahade.jpg"),
+          ).also {
+            it.showTileBounds = true
+          }
+          LaunchedEffect(imageState.isImageDisplayed) {
+            isImageDisplayed = imageState.isImageDisplayed
+          }
+
+          ZoomableViewport(
+            modifier = Modifier.fillMaxSize(),
+            state = viewportState,
+            contentScale = ContentScale.Inside,
+          ) {
+            SubSamplingImage(
+              modifier = Modifier
+                .fillMaxSize()
+                .testTag("image"),
+              state = imageState,
+              contentDescription = null,
+            )
+          }
+        }
+      }
+    }
+
+    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.onNodeWithTag("image").performTouchInput { doubleClick(center) }
+
+    rule.runOnIdle {
+      // Wait for white-listed tiles to load full-resolution bitmaps.
+      Thread.sleep(200)
+      dropshots.assertSnapshot(rule.activity)
+    }
   }
 
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
@@ -350,10 +419,6 @@ class SubSamplingImageTest {
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
-  }
-
-  // todo.
-  @Test fun bitmaps_for_invisible_tiles_should_not_be_kept_in_memory() {
   }
 
   @Test fun bitmap_tiles_should_be_at_least_half_of_viewport_size(

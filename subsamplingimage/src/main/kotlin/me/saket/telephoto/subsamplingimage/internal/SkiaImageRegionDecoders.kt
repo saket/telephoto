@@ -45,9 +45,9 @@ internal class SkiaImageRegionDecoders private constructor(
     return bitmap.asImageBitmap()
   }
 
-  companion object {
+  object Factory : ImageRegionDecoder.Factory {
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun create(context: Context, imageSource: ImageSource): SkiaImageRegionDecoders {
+    override suspend fun create(context: Context, imageSource: ImageSource): SkiaImageRegionDecoders {
       val decoderCount = max(Runtime.getRuntime().availableProcessors(), 2) // Same number used by Dispatchers.Default.
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 

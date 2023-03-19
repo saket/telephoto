@@ -36,6 +36,7 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
@@ -186,9 +187,10 @@ private fun createRegionDecoder(
   val isInPreviewMode = LocalInspectionMode.current
 
   if (!isInPreviewMode) {
+    val factory = LocalImageRegionDecoderFactory.current
     LaunchedEffect(imageSource) {
       try {
-        decoder.value = SkiaImageRegionDecoders.create(context, imageSource)
+        decoder.value = factory.create(context, imageSource)
       } catch (e: IOException) {
         errorReporter.onImageLoadingFailed(e.withImprovedMessageFor(imageSource), imageSource)
       }
