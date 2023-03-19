@@ -26,9 +26,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -110,15 +112,19 @@ fun rememberSubSamplingImageState(
         .filter { it.minDimension > 0f }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
-        val tileGrid = BitmapRegionTileGrid.generate(
-          canvasSize = canvasSize,
-          unscaledImageSize = decoder.imageSize
-        )
+        val tileGrids = transformations.distinctUntilChangedBy { it.viewportBounds }.map {
+          BitmapRegionTileGrid.generate(
+            canvasSize = canvasSize,
+            unscaledImageSize = decoder.imageSize,
+            minTileSize = it.viewportBounds.size / 2f,
+          )
+        }
 
         combine(
+          tileGrids,
           transformations,
           bitmapLoader.cachedBitmaps()
-        ) { transformation, bitmaps ->
+        ) { tileGrid, transformation, bitmaps ->
           val sampleSize = BitmapSampleSize.calculateFor(transformation.scale.maxScale)
           val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
 
@@ -200,6 +206,7 @@ class SubSamplingImageState internal constructor() {
 
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
+  internal var showTileBounds = false  // Only used by tests.
 
   internal fun maybeSendFirstDrawEvent() {
     if (!isImageDisplayed
@@ -211,10 +218,5 @@ class SubSamplingImageState internal constructor() {
       }
       isImageDisplayed = true
     }
-  }
-
-  companion object {
-    // Only used by tests.
-    internal var showTileBounds = false
   }
 }

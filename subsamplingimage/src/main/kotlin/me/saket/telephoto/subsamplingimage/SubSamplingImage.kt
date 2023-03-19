@@ -53,7 +53,7 @@ fun SubSamplingImage(
         )
       }
 
-      if (SubSamplingImageState.showTileBounds) {
+      if (state.showTileBounds) {
         drawRect(
           color = Color.Black,
           topLeft = tile.bounds.topLeft.toOffset(),

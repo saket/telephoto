@@ -20,7 +20,8 @@ class BitmapTileGridGeneratorTest {
     assertThrows {
       BitmapRegionTileGrid.generate(
         canvasSize = Size(1080f, 0f),
-        unscaledImageSize = Size(10f, 10f)
+        unscaledImageSize = Size(10f, 10f),
+        minTileSize = Size.Zero,
       )
     }
   }
@@ -34,7 +35,8 @@ class BitmapTileGridGeneratorTest {
       unscaledImageSize = Size(
         width = 500f,
         height = 400f
-      )
+      ),
+      minTileSize = Size.Zero,
     )
 
     assertThat(tileGrid.base.sampleSize).isEqualTo(BitmapSampleSize(1))
@@ -51,7 +53,8 @@ class BitmapTileGridGeneratorTest {
         width = 1080f,
         height = 2214f
       ),
-      unscaledImageSize = imageSize
+      unscaledImageSize = imageSize,
+      minTileSize = Size.Zero,
     )
 
     // Verify that the layers are sorted by their sample size.
@@ -102,7 +105,8 @@ class BitmapTileGridGeneratorTest {
           unscaledImageSize = Size(
             width = 9734f - (Random.nextInt(0..100)),
             height = 3265f - (Random.nextInt(0..100))
-          )
+          ),
+          minTileSize = Size.Zero,
         )
       }
     }

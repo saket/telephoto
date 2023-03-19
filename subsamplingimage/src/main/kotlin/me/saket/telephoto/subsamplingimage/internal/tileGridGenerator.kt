@@ -7,7 +7,8 @@ import androidx.compose.ui.unit.IntSize
 
 internal fun BitmapRegionTileGrid.Companion.generate(
   canvasSize: Size,
-  unscaledImageSize: Size
+  unscaledImageSize: Size,
+  minTileSize: Size,
 ): BitmapRegionTileGrid {
   val baseSampleSize = BitmapSampleSize.calculateFor(
     canvasSize = canvasSize,
@@ -27,7 +28,7 @@ internal fun BitmapRegionTileGrid.Companion.generate(
 
   val foregroundTiles = possibleSampleSizes.associateWith { sampleSize ->
     val tileSize: IntSize = (unscaledImageSize * (sampleSize.size / baseSampleSize.size.toFloat()))
-      .coerceAtLeast((canvasSize / 2f).coerceAtMost(unscaledImageSize))
+      .coerceAtLeast(minTileSize.coerceAtMost(unscaledImageSize))
       .discardFractionalParts()
 
     // Number of tiles can be fractional. To avoid this, the fractional

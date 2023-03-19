@@ -31,6 +31,7 @@ import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pinch
 import androidx.compose.ui.unit.IntRect
 import com.dropbox.dropshots.Dropshots
 import com.dropbox.dropshots.ResultValidator
@@ -198,14 +199,12 @@ class SubSamplingImageTest {
       dropshots.assertSnapshot(rule.activity)
     }
 
-    // todo: take another screenshot after zooming in.
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick()
     }
     rule.runOnIdle {
-      rule.waitUntil {
-        tiles.isNotEmpty() && tiles.all { it.bitmap != null }
-      }
+      // Wait for full-resolution tiles to load.
+      rule.waitUntil { tiles.all { it.bitmap != null } }
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed")
@@ -259,20 +258,12 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun updating_of_image_works_when_zoomable_transformations_were_non_empty() {
+  @Test fun updating_of_image_works_when_content_transformation_was_non_empty() {
     // todo.
   }
 
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
     // todo.
-  }
-
-  @Test fun state_restoration() {
-    // todo.
-  }
-
-  @Test fun zoomed_in_image() {
-    // todo
   }
 
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
@@ -360,6 +351,54 @@ class SubSamplingImageTest {
 
   @Test fun bitmaps_for_invisible_tiles_should_not_be_kept_in_memory() {
     // todo.
+  }
+
+  @Test fun bitmap_tiles_should_be_at_least_half_of_viewport_size(
+    @TestParameter size: SizeParam,
+  ) {
+    var isImageDisplayed = false
+
+    rule.setContent {
+      ScreenScaffold {
+        val viewportState = rememberZoomableViewportState()
+        val imageState = rememberSubSamplingImageState(
+          viewportState = viewportState,
+          imageSource = ImageSource.asset("pahade.jpg"),
+        ).also {
+          it.showTileBounds = true
+        }
+        LaunchedEffect(imageState.isImageDisplayed) {
+          isImageDisplayed = imageState.isImageDisplayed
+        }
+
+        ZoomableViewport(
+          modifier = Modifier.fillMaxSize(),
+          state = viewportState,
+          contentScale = ContentScale.Inside,
+        ) {
+          SubSamplingImage(
+            modifier = Modifier
+              .then(size.modifier)
+              .testTag("image"),
+            state = imageState,
+            contentDescription = null,
+          )
+        }
+      }
+    }
+
+    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.onNodeWithTag("image").performTouchInput {
+      pinch(
+        start0 = center,
+        start1 = center,
+        end0 = center - Offset(0f, 30f),
+        end1 = center + Offset(0f, 30f),
+      )
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
+    }
   }
 
   @Composable
