@@ -5,6 +5,7 @@ import android.net.Uri
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +34,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
 import com.dropbox.dropshots.ResultValidator
 import com.dropbox.dropshots.ThresholdValidator
@@ -87,7 +89,9 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun canary(@TestParameter imageSource: ImageSourceParam) {
+  @Test fun various_image_sources(
+    @TestParameter imageSource: ImageSourceParam
+  ) {
     var isImageDisplayed = false
 
     rule.setContent {
@@ -122,7 +126,10 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun image_smaller_than_viewport(@TestParameter size: SizeParam) {
+  @Test fun various_image_sizes_and_layout_sizes(
+    @TestParameter layoutSize: LayoutSizeParam,
+    @TestParameter imageSize: ImageSizeParam,
+  ) {
     var isImageDisplayed = false
 
     rule.setContent {
@@ -130,7 +137,7 @@ class SubSamplingImageTest {
         val viewportState = rememberZoomableViewportState()
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
-          imageSource = ImageSource.asset("smol.jpg"),
+          imageSource = imageSize.source,
         )
         LaunchedEffect(imageState.isImageDisplayed) {
           isImageDisplayed = imageState.isImageDisplayed
@@ -142,7 +149,7 @@ class SubSamplingImageTest {
           contentScale = ContentScale.Inside,
         ) {
           SubSamplingImage(
-            modifier = size.modifier,
+            modifier = layoutSize.modifier.border(1.dp, Color.Yellow),
             state = imageState,
             contentDescription = null,
           )
@@ -156,9 +163,9 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun various_content_alignment(
+  @Test fun various_content_alignments(
     @TestParameter alignment: AlignmentParam,
-    @TestParameter size: SizeParam,
+    @TestParameter size: LayoutSizeParam,
   ) {
     var isImageDisplayed = false
     var tiles: List<CanvasRegionTile> = emptyList()
@@ -211,12 +218,8 @@ class SubSamplingImageTest {
     }
   }
 
-  @Test fun various_content_scale() {
-    // todo.
-  }
-
-  @Test fun image_that_fills_both_width_and_height() {
-    // todo.
+  // todo.
+  @Test fun various_content_scales() {
   }
 
   @Test fun updating_of_image_works() {
@@ -258,12 +261,12 @@ class SubSamplingImageTest {
     }
   }
 
+  // todo.
   @Test fun updating_of_image_works_when_content_transformation_was_non_empty() {
-    // todo.
   }
 
+  // todo.
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
-    // todo.
   }
 
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
@@ -349,12 +352,12 @@ class SubSamplingImageTest {
     }
   }
 
+  // todo.
   @Test fun bitmaps_for_invisible_tiles_should_not_be_kept_in_memory() {
-    // todo.
   }
 
   @Test fun bitmap_tiles_should_be_at_least_half_of_viewport_size(
-    @TestParameter size: SizeParam,
+    @TestParameter size: LayoutSizeParam,
   ) {
     var isImageDisplayed = false
 
@@ -413,7 +416,7 @@ class SubSamplingImageTest {
   }
 
   @Suppress("unused")
-  enum class SizeParam(val modifier: Modifier) {
+  enum class LayoutSizeParam(val modifier: Modifier) {
     FillMaxSize(Modifier.fillMaxSize()),
     WrapContent(Modifier.wrapContentSize()),
   }
@@ -431,6 +434,13 @@ class SubSamplingImageTest {
     Resource({ ImageSource.resource(R.drawable.cat_1920) }),
     ContentUri({ ImageSource.contentUri(Uri.parse("""android.resource://${it.packageName}/${R.drawable.cat_1920}""")) }),
     Stream({ ImageSource.stream { it.assets.open("pahade.jpg").source() } })
+  }
+
+  @Suppress("unused")
+  enum class ImageSizeParam(val source: ImageSource) {
+    LargeLandscapeImage(ImageSource.asset("pahade.jpg")),
+    LargePortraitImage(ImageSource.resource(R.drawable.cat_1920)),
+    SmallSquareImage(ImageSource.asset("smol.jpg")),
   }
 }
 
