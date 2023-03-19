@@ -2,7 +2,6 @@ package me.saket.telephoto.sample.viewer
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -14,7 +13,7 @@ import coil.request.ImageRequest
 import me.saket.telephoto.sample.R
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableViewportState
-import me.saket.telephoto.zoomable.graphicsLayer
+import me.saket.telephoto.zoomable.applyTransformation
 
 @Composable
 fun NormalSizedRemoteImage(
@@ -22,8 +21,8 @@ fun NormalSizedRemoteImage(
 ) {
   AsyncImage(
     modifier = Modifier
-      .graphicsLayer(viewportState.contentTransformation)
-      .fillMaxSize(),
+      .fillMaxSize()
+      .applyTransformation(viewportState.contentTransformation),
     model = ImageRequest.Builder(LocalContext.current)
       .data("https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1500")
       .crossfade(true)
@@ -51,7 +50,7 @@ fun NormalSizedLocalImage(
   Image(
     modifier = Modifier
       .fillMaxSize()
-      .graphicsLayer(viewportState.contentTransformation),
+      .applyTransformation(viewportState.contentTransformation),
     painter = painter,
     contentScale = ContentScale.Inside,
     contentDescription = null

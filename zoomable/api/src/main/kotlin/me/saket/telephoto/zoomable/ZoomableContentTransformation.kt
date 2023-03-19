@@ -29,14 +29,14 @@ data class ZoomableContentTransformation(
   }
 }
 
-fun Modifier.graphicsLayer(transformations: ZoomableContentTransformation): Modifier {
+fun Modifier.applyTransformation(transformation: ZoomableContentTransformation): Modifier {
   // todo: optimize these. use graphicsLayer only when necessary.
   return graphicsLayer {
-    scaleX = transformations.scale.scaleX
-    scaleY = transformations.scale.scaleY
-    rotationZ = transformations.rotationZ
-    translationX = transformations.offset.x
-    translationY = transformations.offset.y
-    transformOrigin = transformations.transformOrigin
+    scaleX = transformation.scale.scaleX
+    scaleY = transformation.scale.scaleY
+    rotationZ = transformation.rotationZ
+    translationX = transformation.offset.x
+    translationY = transformation.offset.y
+    transformOrigin = transformation.transformOrigin
   }
 }

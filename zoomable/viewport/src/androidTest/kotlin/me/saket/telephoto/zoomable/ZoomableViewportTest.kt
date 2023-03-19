@@ -522,7 +522,7 @@ class ZoomableViewportTest {
     Image(
       modifier = Modifier
         .fillMaxSize()
-        .graphicsLayer(viewportState.contentTransformation),
+        .applyTransformation(viewportState.contentTransformation),
       painter = painter,
       contentDescription = null,
       contentScale = ContentScale.Inside,
