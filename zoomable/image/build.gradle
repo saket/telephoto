@@ -8,7 +8,7 @@ android {
 
 dependencies {
   api project(':zoomable:viewport')
-  implementation project(':subsamplingimage')
+  api project(':subsamplingimage')
 
   api "androidx.compose.foundation:foundation:$versions.composeUi"
 

@@ -19,7 +19,7 @@ import okio.Path
  * * [ImageSource.resource]
  * * [ImageSource.contentUri]
  *
- * At the time of writing this, only the JPEG, PNG, WebP and HEIF formats are supported by [BitmapRegionDecoder].
+ * See [supportedMimeTypes] for supported image formats.
  * */
 sealed interface ImageSource {
   companion object {
@@ -73,6 +73,11 @@ sealed interface ImageSource {
      */
     @Stable
     fun contentUri(uri: Uri): ImageSource = UriImageSource(uri)
+
+    /** Formats supported by [BitmapRegionDecoder]. */
+    fun supportedMimeTypes(): Set<String> {
+      return setOf("image/jpeg", "image/png", "image/webp", "image/heic")
+    }
   }
 
   // todo: doc.
