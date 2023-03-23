@@ -47,6 +47,7 @@ fun ZoomableViewport(
   contentAlignment: Alignment = Alignment.Center,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
+  onDoubleTap: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   content: @Composable ZoomableViewportScope.() -> Unit
 ) {
@@ -77,6 +78,7 @@ fun ZoomableViewport(
           onTap = onClick,
           onLongPress = onLongClick,
           onDoubleTap = { centroid ->
+            onDoubleTap?.invoke(centroid)
             scope.launch {
               state.handleDoubleTapZoomTo(centroidInViewport = centroid)
             }
