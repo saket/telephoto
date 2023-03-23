@@ -31,16 +31,6 @@ interface ZoomableContentLocation {
      * original aspect ratio.
      *
      * That is, its alignment = [Alignment.Center] and scale = [ContentScale.Inside].
-     *
-     * For an `Image` composable, its image will always be centered, but its scale will
-     * need to be changed from the default value of `Fit` to `Inside`.
-     *
-     * ```
-     * Image(
-     *   painter = …,
-     *   contentScale = ContentScale.Inside
-     * )
-     * ```
      */
     @Stable
     fun fitInsideAndCenterAligned(size: Size?): ZoomableContentLocation {

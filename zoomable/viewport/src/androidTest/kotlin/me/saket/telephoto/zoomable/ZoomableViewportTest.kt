@@ -472,7 +472,9 @@ class ZoomableViewportTest {
             .testTag("content")
             .fillMaxSize()
             .onSizeChanged {
-              state.setContentLocation(ZoomableContentLocation.fitInsideAndCenterAligned(it.toSize()))
+              state.setContentLocation(
+                ZoomableContentLocation.fitInsideAndCenterAligned(it.toSize())
+              )
             }
         )
       }

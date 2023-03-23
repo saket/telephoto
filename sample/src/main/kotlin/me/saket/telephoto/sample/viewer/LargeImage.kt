@@ -1,56 +1,23 @@
-@file:Suppress("NAME_SHADOWING")
-
 package me.saket.telephoto.sample.viewer
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import coil.annotation.ExperimentalCoilApi
-import coil.imageLoader
-import coil.request.CachePolicy
 import coil.request.ImageRequest
-import coil.request.SuccessResult
-import me.saket.telephoto.subsamplingimage.ImageSource
-import me.saket.telephoto.subsamplingimage.SubSamplingImage
-import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
+import me.saket.telephoto.AsyncImageSource
+import me.saket.telephoto.AsyncImage
 import me.saket.telephoto.zoomable.ZoomableViewportState
 
 @Composable
-@OptIn(ExperimentalCoilApi::class)
 fun LargeImage(viewportState: ZoomableViewportState) {
-  val context = LocalContext.current
-  var imageSource: ImageSource? by remember { mutableStateOf(null) }
-
-  LaunchedEffect(Unit) {
-    val url = "https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65"
-    val result = context.imageLoader.execute(
-      ImageRequest.Builder(context)
-        .data(url)
-        .memoryCachePolicy(CachePolicy.DISABLED)  // In-memory caching will be handled by SubSamplingImage.
+  // TODO: handle errors here.
+  // TODO: show loading.
+  AsyncImage(
+    imageSource = AsyncImageSource.coil(
+      ImageRequest.Builder(LocalContext.current)
+        .data("https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65")
         .build()
-    )
-    if (result is SuccessResult) {
-      val diskCache = context.imageLoader.diskCache!!
-      imageSource = ImageSource.file(diskCache[result.diskCacheKey!!]!!.data)
-    } else {
-      // TODO: handle errors here.
-    }
-  }
-
-  imageSource?.let { imageSource ->
-    SubSamplingImage(
-      modifier = Modifier.fillMaxSize(),
-      state = rememberSubSamplingImageState(
-        imageSource = imageSource,
-        viewportState = viewportState,
-      ),
-      contentDescription = null,
-    )
-  }
+    ),
+    viewportState = viewportState,
+    contentDescription = null,
+  )
 }
