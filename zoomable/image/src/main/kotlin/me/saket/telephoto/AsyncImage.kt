@@ -6,12 +6,12 @@ import android.graphics.drawable.Drawable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import coil.annotation.ExperimentalCoilApi
 import coil.imageLoader
 import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.google.accompanist.drawablepainter.DrawablePainter
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
@@ -38,33 +39,26 @@ fun AsyncImage(
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
 ) {
-  var result: PainterOrImageSource? by remember { mutableStateOf(null) }
-
-  LaunchedEffect(imageSource) {
-    // todo: this delays rendering of images by 1 frame.
-    //  Implement RememberObserver in AsyncImageSource directly?
-    imageSource.foo {
-      result = it
-    }
+  val content by key(imageSource) {
+    imageSource.content()
   }
-
-  when (val result = result) {
-    is PainterOrImageSource.PainterResult -> {
+  when (val it = content) {
+    is ImageContent.PainterContent -> {
       Image(
         modifier = modifier,
-        painter = result.painter,
+        painter = it.painter,
         viewportState = viewportState,
-        contentDescription = null,
+        contentDescription = contentDescription,
         alpha = alpha,
         colorFilter = colorFilter,
       )
     }
 
-    is PainterOrImageSource.ImageSourceResult -> {
+    is ImageContent.BitmapContent -> {
       SubSamplingImage(
         modifier = modifier,
         state = rememberSubSamplingImageState(
-          imageSource = result.source,
+          imageSource = it.source,
           viewportState = viewportState
         ),
         contentDescription = contentDescription,
@@ -77,7 +71,7 @@ fun AsyncImage(
   }
 }
 
-fun interface AsyncImageSource {
+abstract class AsyncImageSource {
   companion object {
     @Stable
     fun coil(request: ImageRequest): AsyncImageSource = CoilImageSource(request)
@@ -86,64 +80,66 @@ fun interface AsyncImageSource {
     fun painter(painter: Painter): AsyncImageSource = PainterAsyncImageSource(painter)
   }
 
-  suspend fun foo(action: (PainterOrImageSource) -> Unit)
+  @Composable
+  internal abstract fun content(): State<ImageContent?>
 
   @Immutable
   private data class PainterAsyncImageSource(
     val painter: Painter
-  ) : AsyncImageSource {
-    override suspend fun foo(action: (PainterOrImageSource) -> Unit) {
-      action(PainterOrImageSource.PainterResult(painter))
+  ) : AsyncImageSource() {
+    @Composable
+    override fun content(): State<ImageContent> {
+      return remember(painter) {
+        stateOf(ImageContent.PainterContent(painter))
+      }
     }
   }
 
   @Immutable
   private data class CoilImageSource(
     private val request: ImageRequest
-  ) : AsyncImageSource {
+  ) : AsyncImageSource() {
+    @Composable
     @OptIn(ExperimentalCoilApi::class)
-    override suspend fun foo(action: (PainterOrImageSource) -> Unit) {
-      check(request.diskCachePolicy.writeEnabled)
-
-      // todo: use request.bitmapConfig?
-
-      request.context.imageLoader.execute(
-        request.newBuilder()
-          .listener(
-            onError = { _, result ->
-              action(PainterOrImageSource.PainterResult(createDrawablePainter(result.drawable)))
-            },
-            onSuccess = { _, result ->
-              if (result.drawable is BitmapDrawable) {
-                val diskCache = request.context.imageLoader.diskCache!!
-                action(
-                  PainterOrImageSource.ImageSourceResult(
-                    ImageSource.file(diskCache[result.diskCacheKey!!]!!.data)
-                  )
-                )
-              } else {
-                action(PainterOrImageSource.PainterResult(createDrawablePainter(result.drawable)))
+    override fun content(): State<ImageContent?> {
+      return produceState(initialValue = null as ImageContent?, key1 = request) {
+        val result = request.context.imageLoader.execute(
+          request.newBuilder()
+            // This will unfortunately replace any existing target, but it is the only
+            // way to read placeholder images set using ImageRequest#placeholderMemoryCacheKey.
+            // Placeholder images should be small in size so sub-sampling isn't needed here.
+            .target(
+              onStart = { placeholder ->
+                this.value = ImageContent.PainterContent(createDrawablePainter(placeholder))
               }
-            }
-          )
-          .target(
-            onStart = { placeholder ->
-              action(PainterOrImageSource.PainterResult(createDrawablePainter(placeholder)))
-            }
-          )
-          .build()
-      )
+            )
+            .build()
+        )
+
+        // todo: use request.bitmapConfig?
+        if (result is SuccessResult && result.drawable is BitmapDrawable) {
+          val diskCache = request.context.imageLoader.diskCache ?: error("Disk caching must be enabled")
+          val diskCacheKey = result.diskCacheKey ?: error("Disk caching must be enabled")
+          val cached = diskCache[diskCacheKey] ?: error("Coil returned a null image from disk cache")
+          this.value = ImageContent.BitmapContent(ImageSource.file(cached.data))
+
+        } else {
+          this.value = ImageContent.PainterContent(createDrawablePainter(result.drawable))
+        }
+      }
     }
   }
 }
 
-// todo: painters need to be remembered for them to start animating.
-sealed interface PainterOrImageSource {
+internal sealed interface ImageContent {
   @JvmInline
-  value class PainterResult(val painter: Painter) : PainterOrImageSource
+  value class PainterContent(
+    val painter: Painter
+  ) : ImageContent
 
-  @JvmInline
-  value class ImageSourceResult(val source: ImageSource) : PainterOrImageSource
+  data class BitmapContent(
+    val source: ImageSource,
+  ) : ImageContent
 }
 
 private fun createDrawablePainter(drawable: Drawable?): Painter {
@@ -158,3 +154,10 @@ private object EmptyPainter : Painter() {
   override val intrinsicSize: Size get() = Size.Unspecified
   override fun DrawScope.onDraw() = Unit
 }
+
+private fun <T> stateOf(value: T): State<T> {
+  return ImmutableState(value)
+}
+
+@Immutable
+private class ImmutableState<T>(override val value: T) : State<T>
