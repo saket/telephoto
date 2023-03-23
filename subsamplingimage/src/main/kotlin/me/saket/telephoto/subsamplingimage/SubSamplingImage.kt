@@ -10,6 +10,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.layout
@@ -34,6 +36,8 @@ fun SubSamplingImage(
   state: SubSamplingImageState,
   modifier: Modifier = Modifier,
   contentDescription: String?,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
 ) {
   val density = LocalDensity.current
   val animatedAlpha by animateFloatAsState(if (state.isImageDisplayed) 1f else 0f)
@@ -47,6 +51,8 @@ fun SubSamplingImage(
           srcSize = IntSize(tile.bitmap.width, tile.bitmap.height),
           dstOffset = tile.bounds.topLeft,
           dstSize = tile.bounds.size,
+          alpha = alpha,
+          colorFilter = colorFilter
         )
       }
 

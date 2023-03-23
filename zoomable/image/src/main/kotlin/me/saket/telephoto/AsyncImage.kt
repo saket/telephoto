@@ -53,8 +53,8 @@ fun AsyncImage(
       Image(
         modifier = modifier,
         painter = result.painter,
-        contentDescription = null,
         viewportState = viewportState,
+        contentDescription = null,
         alpha = alpha,
         colorFilter = colorFilter,
       )
@@ -68,9 +68,8 @@ fun AsyncImage(
           viewportState = viewportState
         ),
         contentDescription = contentDescription,
-        // todo: add these two params.
-        //alpha = alpha,
-        //colorFilter = colorFilter,
+        alpha = alpha,
+        colorFilter = colorFilter,
       )
     }
 
@@ -138,7 +137,7 @@ fun interface AsyncImageSource {
   }
 }
 
-// todo: painters need to be remembered for them to start working.
+// todo: painters need to be remembered for them to start animating.
 sealed interface PainterOrImageSource {
   @JvmInline
   value class PainterResult(val painter: Painter) : PainterOrImageSource
