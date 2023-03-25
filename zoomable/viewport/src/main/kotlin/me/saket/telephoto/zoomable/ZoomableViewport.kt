@@ -42,8 +42,8 @@ import me.saket.telephoto.zoomable.internal.transformable
 @Composable
 fun ZoomableViewport(
   state: ZoomableViewportState,
-  contentScale: ContentScale,
   modifier: Modifier = Modifier,
+  contentScale: ContentScale = ContentScale.Fit,
   contentAlignment: Alignment = Alignment.Center,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
