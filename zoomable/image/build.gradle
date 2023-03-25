@@ -8,10 +8,7 @@ android {
 
 dependencies {
   api project(':zoomable:viewport')
-  api project(':subsamplingimage')
+  api project(':subsamplingimage')  // todo: does this still need to be exposed?
 
   api "androidx.compose.foundation:foundation:$versions.composeUi"
-
-  api "io.coil-kt:coil-compose:2.2.2"
-  implementation "com.google.accompanist:accompanist-drawablepainter:0.28.0"
 }

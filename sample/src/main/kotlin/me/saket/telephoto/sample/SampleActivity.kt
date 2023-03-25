@@ -23,6 +23,7 @@ class SampleActivity : AppCompatActivity() {
 
     val album = MediaAlbum(
       items = listOf(
+        // todo: pass ZoomableImageSources instead
         MediaItem.NormalSizedLocalImage(caption = "Normal sized local image"),
         MediaItem.NormalSizedRemoteImage(caption = "Normal sized remote image"),
         MediaItem.SubSampledImage(caption = "Sub sampled image"),

@@ -1,25 +1,24 @@
 package me.saket.telephoto.sample.viewer
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import coil.request.ImageRequest
-import me.saket.telephoto.ZoomableImageSource
-import me.saket.telephoto.Image
+import androidx.compose.ui.Modifier
+import me.saket.telephoto.zoomable.Image
+import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableViewportState
+import me.saket.telephoto.zoomable.coil.coil
 
 @Composable
-fun LargeImage(viewportState: ZoomableViewportState) {
+fun LargeImage(
+  viewportState: ZoomableViewportState
+) {
   // TODO: handle errors here.
   // TODO: show loading.
 
-
   Image(
-    imageSource = ZoomableImageSource.coil(
-      ImageRequest.Builder(LocalContext.current)
-        .data("https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65")
-        .build()
-    ),
-    zoomState = viewportState,
+    modifier = Modifier.fillMaxSize(),
+    zoomableImage = ZoomableImageSource.coil("https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65"),
+    viewportState = viewportState,
     contentDescription = null,
   )
 }

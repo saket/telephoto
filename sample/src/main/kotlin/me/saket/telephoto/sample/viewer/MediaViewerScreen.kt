@@ -14,9 +14,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
@@ -65,12 +63,10 @@ private fun MediaPage(
   model: MediaItem,
   modifier: Modifier = Modifier,
 ) {
-  val viewportState = rememberZoomableViewportState(maxZoomFactor = 3f)
+  val viewportState = rememberZoomableViewportState()
   ZoomableViewport(
     modifier = modifier,
     state = viewportState,
-    contentScale = ContentScale.Inside,
-    contentAlignment = Alignment.Center,
   ) {
     when (model) {
       is MediaItem.NormalSizedLocalImage -> NormalSizedLocalImage(viewportState)

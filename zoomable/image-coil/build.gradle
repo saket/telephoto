@@ -1,0 +1,14 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.vanniktech.maven.publish'
+
+android {
+  namespace "me.saket.telephoto.zoomable.image.coil"
+}
+
+dependencies {
+  api project(':zoomable:image')
+
+  api "io.coil-kt:coil-compose:$versions.coil"
+  implementation "com.google.accompanist:accompanist-drawablepainter:$versions.accompanist"
+}
