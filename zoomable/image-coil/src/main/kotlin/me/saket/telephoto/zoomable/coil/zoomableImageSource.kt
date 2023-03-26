@@ -1,6 +1,5 @@
 package me.saket.telephoto.zoomable.coil
 
-import android.content.ContentResolver
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -14,12 +13,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.AsyncImagePainter
 import coil.decode.DataSource
-import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
@@ -32,39 +29,16 @@ import coil.size.Size.Companion as CoilSize
 
 // todo: doc
 @Stable
-fun ZoomableImageSource.Companion.coil(
-  model: Any?
-): ZoomableImageSource = CoilImageModelSource(model)
-
-// todo: doc
-@Stable
-fun ZoomableImageSource.Companion.coil(
-  request: ImageRequest,
-  imageLoader: ImageLoader = request.context.imageLoader,
-): ZoomableImageSource = CoilImageRequestSource(request, imageLoader)
-
-// todo: doc
-@Stable
 fun ZoomableImageSource.Companion.painter(
   painter: Painter
 ): ZoomableImageSource {
   // Treat coil's painter specially because its image may require sub-sampling.
   // Otherwise, coil will downsize the image to fit layout bounds by default.
   return if (painter is AsyncImagePainter) {
-    ZoomableImageSource.coil(painter.request)
+    CoilImageRequestSource(painter.request, painter.imageLoader)
   } else {
     PainterImageSource(painter)
   }
-}
-
-// todo: doc
-@Stable
-fun ZoomableImageSource.Companion.asset(
-  assetName: String
-): ZoomableImageSource {
-  return ZoomableImageSource.coil(
-    Uri.parse("${ContentResolver.SCHEME_FILE}:///android_asset/$assetName")
-  )
 }
 
 @Immutable
@@ -77,28 +51,6 @@ private data class PainterImageSource(
     return remember {
       mutableStateOf(PainterContent(painter))
     }
-  }
-}
-
-@Immutable
-private data class CoilImageModelSource(
-  private val model: Any?
-) : ZoomableImageSource {
-
-  @Composable
-  override fun content(): State<ZoomableImageSource.ImageContent?> {
-    val context = LocalContext.current
-    val delegate = remember {
-      ZoomableImageSource.coil(
-        request = when (model) {
-          is ImageRequest -> model
-          else -> ImageRequest.Builder(context)
-            .data(model)
-            .build()
-        }
-      )
-    }
-    return delegate.content()
   }
 }
 

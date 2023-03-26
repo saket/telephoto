@@ -71,11 +71,12 @@ fun Image(
   }
 }
 
-fun interface ZoomableImageSource {
+// todo: doc.
+interface ZoomableImageSource {
   companion object; // For extensions.
 
   @Composable
-  fun content(): State<ImageContent?>
+  fun content(): State<ImageContent?> // todo: could this not return a state?
 
   sealed interface ImageContent {
     @JvmInline
