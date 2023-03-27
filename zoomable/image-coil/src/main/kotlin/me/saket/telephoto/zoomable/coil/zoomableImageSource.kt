@@ -62,8 +62,8 @@ private data class CoilImageRequestSource(
 
   @Composable
   @OptIn(ExperimentalCoilApi::class)
-  override fun content(): State<ZoomableImageSource.ImageContent?> {
-    return produceState(initialValue = null as ZoomableImageSource.ImageContent?) {
+  override fun content(): State<ZoomableImageSource.ImageContent> {
+    return produceState(initialValue = PainterContent(EmptyPainter) as ZoomableImageSource.ImageContent) {
       val result = imageLoader.execute(
         request.newBuilder()
           // Prevent coil from spending any extra effort in downsizing images.

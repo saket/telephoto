@@ -66,8 +66,6 @@ fun Image(
         colorFilter = colorFilter,
       )
     }
-
-    null -> Box(modifier)
   }
 }
 
@@ -76,7 +74,7 @@ interface ZoomableImageSource {
   companion object; // For extensions.
 
   @Composable
-  fun content(): State<ImageContent?> // todo: could this not return a state?
+  fun content(): State<ImageContent> // todo: could this not return a state?
 
   sealed interface ImageContent {
     @JvmInline
