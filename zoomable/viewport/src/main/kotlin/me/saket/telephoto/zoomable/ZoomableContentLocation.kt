@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
 import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
+// todo: should this be called DrawRegion?
 /**
  * For [ZoomableViewport] to be able to correctly scale and pan its content, it uses
  * [ZoomableContentLocation] to understand the content's _visual_ size and position to prevent them

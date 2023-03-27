@@ -1,13 +1,9 @@
 package me.saket.telephoto.zoomable
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,21 +27,19 @@ fun Image(
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
 ) {
-  val content by key(zoomableImage) {
+  val content = key(zoomableImage) {
     zoomableImage.content()
   }
-  when (val it = content) {
+  when (content) {
     is PainterContent -> {
-      LaunchedEffect(it.painter.intrinsicSize) {
+      LaunchedEffect(content.painter.intrinsicSize) {
         viewportState.setContentLocation(
-          ZoomableContentLocation.fitInsideAndCenterAligned(it.painter.intrinsicSize)
+          ZoomableContentLocation.fitInsideAndCenterAligned(content.painter.intrinsicSize)
         )
       }
       Image(
-        modifier = modifier
-          .fillMaxSize()
-          .applyTransformation(viewportState.contentTransformation),
-        painter = it.painter,
+        modifier = modifier.applyTransformation(viewportState.contentTransformation),
+        painter = content.painter,
         contentDescription = contentDescription,
         alignment = Alignment.Center,
         contentScale = ContentScale.Inside,
@@ -58,7 +52,7 @@ fun Image(
       SubSamplingImage(
         modifier = modifier,
         state = rememberSubSamplingImageState(
-          imageSource = it.source,
+          imageSource = content.source,
           viewportState = viewportState
         ),
         contentDescription = contentDescription,
@@ -74,7 +68,7 @@ interface ZoomableImageSource {
   companion object; // For extensions.
 
   @Composable
-  fun content(): State<ImageContent> // todo: could this not return a state?
+  fun content(): ImageContent
 
   sealed interface ImageContent {
     @JvmInline

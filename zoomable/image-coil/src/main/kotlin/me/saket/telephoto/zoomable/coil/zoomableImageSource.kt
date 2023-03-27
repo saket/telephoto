@@ -5,11 +5,12 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
@@ -32,9 +33,9 @@ import coil.size.Size.Companion as CoilSize
 fun ZoomableImageSource.Companion.painter(
   painter: Painter
 ): ZoomableImageSource {
-  // Treat coil's painter specially because its image may require sub-sampling.
-  // Otherwise, coil will downsize the image to fit layout bounds by default.
   return if (painter is AsyncImagePainter) {
+    // Treat coil's painter specially because its image may require sub-sampling.
+    // Otherwise, coil will downsize the image to fit layout bounds by default.
     CoilImageRequestSource(painter.request, painter.imageLoader)
   } else {
     PainterImageSource(painter)
@@ -43,14 +44,12 @@ fun ZoomableImageSource.Companion.painter(
 
 @Immutable
 private data class PainterImageSource(
-  val painter: Painter
+  private val painter: Painter,
 ) : ZoomableImageSource {
 
   @Composable
-  override fun content(): State<ZoomableImageSource.ImageContent> {
-    return remember {
-      mutableStateOf(PainterContent(painter))
-    }
+  override fun content(): ZoomableImageSource.ImageContent {
+    return remember { PainterContent(painter) }
   }
 }
 
@@ -62,8 +61,12 @@ private data class CoilImageRequestSource(
 
   @Composable
   @OptIn(ExperimentalCoilApi::class)
-  override fun content(): State<ZoomableImageSource.ImageContent> {
-    return produceState(initialValue = PainterContent(EmptyPainter) as ZoomableImageSource.ImageContent) {
+  override fun content(): ZoomableImageSource.ImageContent {
+    var content: ZoomableImageSource.ImageContent by remember {
+      mutableStateOf(PainterContent(EmptyPainter))
+    }
+
+    LaunchedEffect(this) {
       val result = imageLoader.execute(
         request.newBuilder()
           // Prevent coil from spending any extra effort in downsizing images.
@@ -85,14 +88,14 @@ private data class CoilImageRequestSource(
           // Placeholder images should be small in size so sub-sampling isn't needed here.
           .target(
             onStart = { placeholder ->
-              this.value = PainterContent(placeholder.asPainter())
+              content = PainterContent(placeholder.asPainter())
             }
           )
           .build()
       )
 
       val requestData = result.request.data
-      this.value = if (result is SuccessResult && result.drawable is BitmapDrawable) {
+      content = if (result is SuccessResult && result.drawable is BitmapDrawable) {
         // Prefer reading of images directly from files whenever possible because
         // that is significantly faster than reading from their input streams.
         if (result.diskCacheKey != null) {
@@ -111,14 +114,16 @@ private data class CoilImageRequestSource(
         PainterContent(result.drawable.asPainter())
       }
     }
+
+    return content
   }
-}
 
-private fun Drawable?.asPainter(): Painter {
-  return if (this == null) EmptyPainter else DrawablePainter(mutate())
-}
+  private fun Drawable?.asPainter(): Painter {
+    return if (this == null) EmptyPainter else DrawablePainter(mutate())
+  }
 
-private object EmptyPainter : Painter() {
-  override val intrinsicSize: Size get() = Size.Unspecified
-  override fun DrawScope.onDraw() = Unit
+  private object EmptyPainter : Painter() {
+    override val intrinsicSize: Size get() = Size.Unspecified
+    override fun DrawScope.onDraw() = Unit
+  }
 }
