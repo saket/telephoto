@@ -23,46 +23,46 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.google.accompanist.drawablepainter.DrawablePainter
 import me.saket.telephoto.subsamplingimage.ImageSource
-import me.saket.telephoto.zoomable.ZoomableImageSource
-import me.saket.telephoto.zoomable.ZoomableImageSource.ImageContent.BitmapContent
-import me.saket.telephoto.zoomable.ZoomableImageSource.ImageContent.PainterContent
+import me.saket.telephoto.zoomable.ZoomableImage
+import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.BitmapContent
+import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.PainterContent
 import coil.size.Size.Companion as CoilSize
 
 // todo: doc
 @Stable
-fun ZoomableImageSource.Companion.painter(
+fun ZoomableImage.Companion.painter(
   painter: Painter
-): ZoomableImageSource {
+): ZoomableImage {
   return if (painter is AsyncImagePainter) {
     // Treat coil's painter specially because its image may require sub-sampling.
     // Otherwise, coil will downsize the image to fit layout bounds by default.
-    CoilImageRequestSource(painter.request, painter.imageLoader)
+    CoilImageRequest(painter.request, painter.imageLoader)
   } else {
-    PainterImageSource(painter)
+    PainterImage(painter)
   }
 }
 
 @Immutable
-private data class PainterImageSource(
+private data class PainterImage(
   private val painter: Painter,
-) : ZoomableImageSource {
+) : ZoomableImage {
 
   @Composable
-  override fun content(): ZoomableImageSource.ImageContent {
+  override fun content(): ZoomableImage.ImageContent {
     return remember { PainterContent(painter) }
   }
 }
 
 @Immutable
-private data class CoilImageRequestSource(
+private data class CoilImageRequest(
   private val request: ImageRequest,
   private val imageLoader: ImageLoader,
-) : ZoomableImageSource {
+) : ZoomableImage {
 
   @Composable
   @OptIn(ExperimentalCoilApi::class)
-  override fun content(): ZoomableImageSource.ImageContent {
-    var content: ZoomableImageSource.ImageContent by remember {
+  override fun content(): ZoomableImage.ImageContent {
+    var content: ZoomableImage.ImageContent by remember {
       mutableStateOf(PainterContent(EmptyPainter))
     }
 

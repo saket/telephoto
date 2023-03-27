@@ -14,13 +14,13 @@ import androidx.compose.ui.layout.ContentScale
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
-import me.saket.telephoto.zoomable.ZoomableImageSource.ImageContent.BitmapContent
-import me.saket.telephoto.zoomable.ZoomableImageSource.ImageContent.PainterContent
+import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.BitmapContent
+import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.PainterContent
 
 // todo: doc.
 @Composable
 fun Image(
-  zoomableImage: ZoomableImageSource,
+  zoomableImage: ZoomableImage,
   viewportState: ZoomableViewportState,
   contentDescription: String?,
   modifier: Modifier = Modifier,
@@ -64,7 +64,7 @@ fun Image(
 }
 
 // todo: doc.
-interface ZoomableImageSource {
+interface ZoomableImage {
   companion object; // For extensions.
 
   @Composable
