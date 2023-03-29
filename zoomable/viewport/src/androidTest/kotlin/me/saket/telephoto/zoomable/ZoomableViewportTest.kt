@@ -93,7 +93,7 @@ class ZoomableViewportTest {
   @Test fun canary() {
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         ZoomableViewport(
           state = viewportState,
           contentScale = ContentScale.Fit,
@@ -236,7 +236,7 @@ class ZoomableViewportTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         ZoomableViewport(
           state = viewportState,
           contentScale = ContentScale.Fit,
@@ -262,7 +262,7 @@ class ZoomableViewportTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         ZoomableViewport(
           state = viewportState,
           contentScale = contentScale,
@@ -298,7 +298,7 @@ class ZoomableViewportTest {
           state = rememberPagerState(initialPage = 1),
           pageCount = assetNames.size
         ) { pageNum ->
-          val viewportState = rememberZoomableViewportState()
+          val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
           ZoomableViewport(
             state = viewportState,
             contentScale = ContentScale.Fit,
@@ -506,7 +506,7 @@ class ZoomableViewportTest {
     var onLongClickCalled = false
 
     rule.setContent {
-      val state = rememberZoomableViewportState()
+      val state = rememberZoomableViewportState(maxZoomFactor = 1f)
       ZoomableViewport(
         state = state,
         contentScale = ContentScale.Inside,

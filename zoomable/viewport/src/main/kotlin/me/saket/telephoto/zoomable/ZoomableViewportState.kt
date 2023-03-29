@@ -46,7 +46,7 @@ import kotlin.math.abs
 /** todo: doc */
 @Composable
 fun rememberZoomableViewportState(
-  maxZoomFactor: Float = 1f,
+  maxZoomFactor: Float
 ): ZoomableViewportState {
   val state = rememberSaveable(saver = ZoomableViewportState.Saver) {
     ZoomableViewportState()

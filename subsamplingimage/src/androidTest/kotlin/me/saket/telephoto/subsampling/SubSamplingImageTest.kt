@@ -106,7 +106,7 @@ class SubSamplingImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         val context = LocalContext.current
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
@@ -144,7 +144,7 @@ class SubSamplingImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = imageSize.source,
@@ -182,7 +182,7 @@ class SubSamplingImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpg"),
@@ -238,7 +238,7 @@ class SubSamplingImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = imageSource,
@@ -302,7 +302,7 @@ class SubSamplingImageTest {
     rule.setContent {
       ScreenScaffold {
         CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
-          val viewportState = rememberZoomableViewportState()
+          val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
           val imageState = rememberSubSamplingImageState(
             viewportState = viewportState,
             imageSource = ImageSource.asset("pahade.jpg"),
@@ -393,7 +393,7 @@ class SubSamplingImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("smol.jpg"),
@@ -430,7 +430,7 @@ class SubSamplingImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpg"),

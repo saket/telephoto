@@ -29,7 +29,7 @@ class SubSamplingImagePreviewTest {
     paparazzi.snapshot {
       CompositionLocalProvider(LocalInspectionMode provides true) {
         val state = rememberSubSamplingImageState(
-          viewportState = rememberZoomableViewportState(),
+          viewportState = rememberZoomableViewportState(maxZoomFactor = 1f),
           imageSource = source.source
         )
         SubSamplingImage(
