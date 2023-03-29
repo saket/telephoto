@@ -55,13 +55,8 @@ interface ZoomableContentLocation {
   fun boundsIn(parent: Rect, direction: LayoutDirection): Rect
 }
 
-/**
- * It's intentional that is not a data class. Setting a new location object should
- * always trigger a position update even if the content size is unchanged because two
- * images can have the same size.
- * */
 @Immutable
-internal class RelativeContentLocation(
+internal data class RelativeContentLocation(
   val size: Size,
   val scale: ContentScale,
   val alignment: Alignment,

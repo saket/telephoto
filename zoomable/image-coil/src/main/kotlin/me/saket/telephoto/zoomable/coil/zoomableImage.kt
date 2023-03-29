@@ -121,7 +121,9 @@ private data class CoilImageResolver(
         if (result.diskCacheKey != null) {
           val diskCache = imageLoader.diskCache!!
           val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
-          RequiresSubSampling(ImageSource.file(cached.data))  // todo: use request.bitmapConfig?
+          RequiresSubSampling(ImageSource.file(cached.data))
+          // todo: use request.bitmapConfig?
+          // todo: read cross-fade.
 
         } else if (result.dataSource == DataSource.DISK && requestData is Uri) {
           // Image is present somewhere on the disk, but not in coil's

@@ -10,7 +10,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -64,17 +63,9 @@ fun rememberZoomableViewportState(
       state.contentAlignment,
       state.contentScale,
       state.layoutDirection,
+      state.gestureTransformation == null,
     ) {
       state.refreshContentPosition()
-    }
-
-    DisposableEffect(state.unscaledContentLocation) {
-      onDispose {
-        // Content was changed. Reset everything so that it is moved to its default position.
-        // I'm intentionally using a DisposableEffect instead of a LaunchedEffect to avoid
-        // running this code when the value is first set, which will break state restoration.
-        state.resetContentTransformation()
-      }
     }
   }
 
@@ -102,7 +93,7 @@ class ZoomableViewportState internal constructor(
   }
 
   // todo: is "gesture" transformation the right name?
-  private var gestureTransformation: GestureTransformation? by mutableStateOf(initialTransformation)
+  internal var gestureTransformation: GestureTransformation? by mutableStateOf(initialTransformation)
 
   // todo: explain why this isn't a state?
   //  counter-arg: making this a state will allow live edit to work.
@@ -296,17 +287,15 @@ class ZoomableViewportState internal constructor(
     }
   }
 
-  // todo: doc
-  /** Reset content position by discarding the current zoom and offset values. */
-  fun resetContentTransformation() {
-    gestureTransformation = null
-  }
-
   /** todo: doc */
   fun setContentLocation(location: ZoomableContentLocation) {
     unscaledContentLocation = location
   }
 
+  /** Reset content to its minimum zoom and zero offset values **without** any animation. */
+  fun resetZoomAndPanImmediately() {
+    gestureTransformation = null
+  }
   internal suspend fun handleDoubleTapZoomTo(centroidInViewport: Offset) {
     val start = gestureTransformation ?: return
     val shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange)

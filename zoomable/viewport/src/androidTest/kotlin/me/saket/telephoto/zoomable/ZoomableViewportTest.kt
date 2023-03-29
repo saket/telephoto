@@ -50,6 +50,7 @@ import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.coroutines.channels.Channel
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
 import me.saket.telephoto.zoomable.ZoomableViewportTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableViewportTest.ScrollDirection.LeftToRight
@@ -415,7 +416,7 @@ class ZoomableViewportTest {
     }
   }
 
-  @Test fun reset_transformations_when_content_is_changed() {
+  @Test fun do_not_auto_reset_transformations_when_content_is_changed() {
     val maxZoomFactor = 2f
     var imageScale = ScaleFactor.Unspecified
     var assetName by mutableStateOf("fox_1500.jpg")
@@ -447,11 +448,56 @@ class ZoomableViewportTest {
       assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
     }
 
+    // It sounds weird that changing the image does not auto-reset transformations,
+    // but the idea is that in the future it should be possible to load a low-quality
+    // preview as a placeholder before loading the full image.
     assetName = "cat_1920.jpg"
 
     rule.runOnIdle {
-      assertThat(imageScale).isEqualTo(ScaleFactor(1f, 1f))
+      assertThat(imageScale).isEqualTo(ScaleFactor(2f, 2f))
       dropshots.assertSnapshot(rule.activity)
+    }
+  }
+
+  @Test fun reset_content_transformations() {
+    val maxZoomFactor = 2f
+    var imageScale = ScaleFactor.Unspecified
+    val resetTriggers = Channel<Unit>()
+
+    rule.setContent {
+      ScreenScaffold {
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
+        ZoomableViewport(
+          modifier = Modifier.testTag("viewport"),
+          state = viewportState,
+          contentScale = ContentScale.Fit,
+        ) {
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_1500.jpg"
+          )
+        }
+
+        LaunchedEffect(viewportState.contentTransformation) {
+          imageScale = viewportState.contentTransformation.scale
+        }
+        LaunchedEffect(resetTriggers) {
+          resetTriggers.receive()
+          viewportState.resetZoomAndPanImmediately()
+        }
+      }
+    }
+
+    rule.onNodeWithTag("viewport").performTouchInput {
+      doubleClick()
+    }
+    rule.runOnIdle {
+      assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
+    }
+
+    resetTriggers.trySend(Unit)
+    rule.runOnIdle {
+      assertThat(imageScale).isEqualTo(ScaleFactor(1f, 1f))
     }
   }
 
