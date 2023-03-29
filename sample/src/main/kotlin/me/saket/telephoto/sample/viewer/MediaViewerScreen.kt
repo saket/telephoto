@@ -14,6 +14,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -46,7 +47,8 @@ fun MediaViewerScreen(key: MediaViewerScreenKey) {
     ) { pageNum ->
       MediaPage(
         modifier = Modifier.fillMaxSize(),
-        model = key.album.items[pageNum]
+        model = key.album.items[pageNum],
+        isActivePage = pagerState.settledPage == pageNum,
       )
     }
   }
@@ -64,6 +66,7 @@ private fun CloseNavIconButton() {
 private fun MediaPage(
   model: MediaItem,
   modifier: Modifier = Modifier,
+  isActivePage: Boolean,
 ) {
   val viewportState = rememberZoomableViewportState(maxZoomFactor = 3f)
   ZoomableViewport(
@@ -76,6 +79,12 @@ private fun MediaPage(
       is MediaItem.NormalSizedLocalImage -> NormalSizedLocalImage(viewportState)
       is MediaItem.NormalSizedRemoteImage -> NormalSizedRemoteImage(viewportState)
       is MediaItem.SubSampledImage -> LargeImage(viewportState)
+    }
+  }
+
+  if (!isActivePage) {
+    LaunchedEffect(Unit) {
+      viewportState.resetZoomAndPanImmediately()
     }
   }
 }
