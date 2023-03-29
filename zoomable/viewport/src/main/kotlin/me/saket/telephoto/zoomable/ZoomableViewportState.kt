@@ -296,14 +296,32 @@ class ZoomableViewportState internal constructor(
   fun resetZoomAndPanImmediately() {
     gestureTransformation = null
   }
+
+  suspend fun zoomOut() {
+    smoothlyToggleZoom(
+      shouldZoomIn = false,
+      centroidInViewport = Offset.Zero,
+    )
+  }
+
   internal suspend fun handleDoubleTapZoomTo(centroidInViewport: Offset) {
     val start = gestureTransformation ?: return
-    val shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange)
+    smoothlyToggleZoom(
+      shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange),
+      centroidInViewport = centroidInViewport
+    )
+  }
+
+  private suspend fun smoothlyToggleZoom(
+    shouldZoomIn: Boolean,
+    centroidInViewport: Offset
+  ) {
+    val start = gestureTransformation ?: return
 
     val targetZoomFactor = if (shouldZoomIn) {
-      zoomRange.maxZoom(baseZoomMultiplier = start.zoom.baseZoom)
+      zoomRange.maxZoom(baseZoom = start.zoom.baseZoom)
     } else {
-      zoomRange.minZoom(baseZoomMultiplier = start.zoom.baseZoom)
+      zoomRange.minZoom(baseZoom = start.zoom.baseZoom)
     }
     val targetZoom = start.zoom.copy(
       viewportZoom = targetZoomFactor / (start.zoom.baseZoom.maxScale)
@@ -447,11 +465,11 @@ internal data class ContentZoom(
   }
 
   fun isAtMinZoom(range: ZoomRange): Boolean {
-    return finalZoom().maxScale <= range.minZoom(baseZoomMultiplier = baseZoom)
+    return finalZoom().maxScale <= range.minZoom(baseZoom = baseZoom)
   }
 
   fun isAtMaxZoom(range: ZoomRange): Boolean {
-    return finalZoom().maxScale >= range.maxZoom(baseZoomMultiplier = baseZoom)
+    return finalZoom().maxScale >= range.maxZoom(baseZoom = baseZoom)
   }
 }
 
@@ -462,15 +480,15 @@ internal data class ZoomRange(
 ) {
 
   // todo: ZoomRange and ContentZoom are inter-dependent. minZoom() and maxZoom() should probably move to ContentZoom.
-  internal fun minZoom(baseZoomMultiplier: ScaleFactor): Float {
-    return minZoomAsRatioOfBaseZoom * baseZoomMultiplier.maxScale
+  internal fun minZoom(baseZoom: ScaleFactor): Float {
+    return minZoomAsRatioOfBaseZoom * baseZoom.maxScale
   }
 
-  internal fun maxZoom(baseZoomMultiplier: ScaleFactor): Float {
+  internal fun maxZoom(baseZoom: ScaleFactor): Float {
     // Note to self: the max zoom factor can be less than the min zoom
     // factor if the content is scaled-up by default. This can be tested
     // by setting contentScale = CenterCrop.
-    return maxOf(maxZoomAsRatioOfSize, minZoom(baseZoomMultiplier))
+    return maxOf(maxZoomAsRatioOfSize, minZoom(baseZoom))
   }
 
   companion object {
