@@ -18,52 +18,72 @@ import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.AsyncImagePainter
 import coil.decode.DataSource
+import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.google.accompanist.drawablepainter.DrawablePainter
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
-import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.BitmapContent
-import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.PainterContent
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
 import coil.size.Size.Companion as CoilSize
 
-// todo: doc
+/**
+ * A zoomable image that can be loaded by Coil and displayed using [me.saket.telephoto.zoomable.Image].
+ *
+ * ```kotlin
+ * ZoomableViewport(…) {
+ *   Image(
+ *     zoomableImage = ZoomableImage.coil(rememberAsyncImagePainter("https://dog.ceo")),
+ *     viewportState = …,
+ *     contentDescription = …
+ *   )
+ * }
+ * ```
+ */
 @Stable
-fun ZoomableImage.Companion.painter(
-  painter: Painter
+fun ZoomableImage.Companion.coil(painter: AsyncImagePainter): ZoomableImage {
+  return CoilImageResolver(painter.request, painter.imageLoader)
+}
+
+/**
+ * A zoomable image that can be loaded by Coil and displayed using [me.saket.telephoto.zoomable.Image].
+ *
+ * ```kotlin
+ * ZoomableViewport(…) {
+ *   Image(
+ *     zoomableImage = ZoomableImage.coil(
+ *       ImageRequest.Builder(context)
+ *         .data("https://dog.ceo")
+ *         .build()
+ *     ),
+ *     viewportState = …,
+ *     contentDescription = …
+ *   )
+ * }
+ * ```
+ */
+@Stable
+fun ZoomableImage.Companion.coil(
+  request: ImageRequest,
+  imageLoader: ImageLoader = request.context.imageLoader,
 ): ZoomableImage {
-  return if (painter is AsyncImagePainter) {
-    // Treat coil's painter specially because its image may require sub-sampling.
-    // Otherwise, coil will downsize the image to fit layout bounds by default.
-    CoilImageRequest(painter.request, painter.imageLoader)
-  } else {
-    PainterImage(painter)
-  }
+  return CoilImageResolver(request, imageLoader)
 }
 
 @Immutable
-private data class PainterImage(
-  private val painter: Painter,
-) : ZoomableImage {
-
-  @Composable
-  override fun content(): ZoomableImage.ImageContent {
-    return remember { PainterContent(painter) }
-  }
-}
-
-@Immutable
-private data class CoilImageRequest(
+private data class CoilImageResolver(
   private val request: ImageRequest,
   private val imageLoader: ImageLoader,
 ) : ZoomableImage {
 
   @Composable
   @OptIn(ExperimentalCoilApi::class)
-  override fun content(): ZoomableImage.ImageContent {
-    var content: ZoomableImage.ImageContent by remember {
-      mutableStateOf(PainterContent(EmptyPainter))
+  override fun resolve(): ResolvedImage {
+    var resolved: ResolvedImage by remember {
+      mutableStateOf(GenericImage(request.placeholder.asPainter()))
     }
 
     LaunchedEffect(this) {
@@ -88,34 +108,34 @@ private data class CoilImageRequest(
           // Placeholder images should be small in size so sub-sampling isn't needed here.
           .target(
             onStart = { placeholder ->
-              content = PainterContent(placeholder.asPainter())
+              resolved = GenericImage(placeholder.asPainter())
             }
           )
           .build()
       )
 
       val requestData = result.request.data
-      content = if (result is SuccessResult && result.drawable is BitmapDrawable) {
+      resolved = if (result is SuccessResult && result.drawable is BitmapDrawable) {
         // Prefer reading of images directly from files whenever possible because
         // that is significantly faster than reading from their input streams.
         if (result.diskCacheKey != null) {
           val diskCache = imageLoader.diskCache!!
           val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
-          BitmapContent(ImageSource.file(cached.data))  // todo: use request.bitmapConfig?
+          RequiresSubSampling(ImageSource.file(cached.data))  // todo: use request.bitmapConfig?
 
         } else if (result.dataSource == DataSource.DISK && requestData is Uri) {
           // Image is present somewhere on the disk, but not in coil's
-          // disk cache. Possibly an asset, a file, or a resource?
-          BitmapContent(ImageSource.contentUri(requestData))
+          // disk cache. Possibly an asset or an image shared by another app?
+          RequiresSubSampling(ImageSource.contentUri(requestData))
         } else {
-          PainterContent(result.drawable.asPainter())
+          GenericImage(result.drawable.asPainter())
         }
       } else {
-        PainterContent(result.drawable.asPainter())
+        GenericImage(result.drawable.asPainter())
       }
     }
 
-    return content
+    return resolved
   }
 
   private fun Drawable?.asPainter(): Painter {

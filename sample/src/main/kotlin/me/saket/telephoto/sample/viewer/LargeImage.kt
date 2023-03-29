@@ -7,7 +7,7 @@ import coil.compose.rememberAsyncImagePainter
 import me.saket.telephoto.zoomable.Image
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableViewportState
-import me.saket.telephoto.zoomable.coil.painter
+import me.saket.telephoto.zoomable.coil.coil
 
 @Composable
 fun LargeImage(
@@ -18,7 +18,7 @@ fun LargeImage(
 
   Image(
     modifier = Modifier.fillMaxSize(),
-    zoomableImage = ZoomableImage.painter(
+    zoomableImage = ZoomableImage.coil(
       rememberAsyncImagePainter("https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65")
     ),
     viewportState = viewportState,

@@ -14,10 +14,27 @@ import androidx.compose.ui.layout.ContentScale
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
-import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.BitmapContent
-import me.saket.telephoto.zoomable.ZoomableImage.ImageContent.PainterContent
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
 
-// todo: doc.
+/**
+ * An image composable that can consume pan & zoom transformations provided by [ZoomableViewport].
+ * For images that are possibly large enough to not fit in memory, sub-sampling is automatically enabled
+ * so that they're displayed without any loss of detail when fully zoomed in.
+ *
+ * ```kotlin
+ * val viewportState = rememberZoomableViewportState()
+ * ZoomableViewport(viewportState) {
+ *   Image(
+ *     zoomableImage = …,
+ *     viewportState = viewportState,
+ *     contentDescription = …
+ *   )
+ * }
+ * ```
+ *
+ * If sub-sampling is always desired, you could use [SubSamplingImage] directly.
+ */
 @Composable
 fun Image(
   zoomableImage: ZoomableImage,
@@ -27,19 +44,19 @@ fun Image(
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
 ) {
-  val content = key(zoomableImage) {
-    zoomableImage.content()
+  val resolved = key(zoomableImage) {
+    zoomableImage.resolve()
   }
-  when (content) {
-    is PainterContent -> {
-      LaunchedEffect(content.painter.intrinsicSize) {
+  when (resolved) {
+    is GenericImage -> {
+      LaunchedEffect(resolved.painter.intrinsicSize) {
         viewportState.setContentLocation(
-          ZoomableContentLocation.fitInsideAndCenterAligned(content.painter.intrinsicSize)
+          ZoomableContentLocation.fitInsideAndCenterAligned(resolved.painter.intrinsicSize)
         )
       }
       Image(
         modifier = modifier.applyTransformation(viewportState.contentTransformation),
-        painter = content.painter,
+        painter = resolved.painter,
         contentDescription = contentDescription,
         alignment = Alignment.Center,
         contentScale = ContentScale.Inside,
@@ -48,11 +65,11 @@ fun Image(
       )
     }
 
-    is BitmapContent -> {
+    is RequiresSubSampling -> {
       SubSamplingImage(
         modifier = modifier,
         state = rememberSubSamplingImageState(
-          imageSource = content.source,
+          imageSource = resolved.source,
           viewportState = viewportState
         ),
         contentDescription = contentDescription,
@@ -63,19 +80,30 @@ fun Image(
   }
 }
 
-// todo: doc.
+/**
+ * A zoomable image that can be displayed using [me.saket.telephoto.zoomable.Image].
+ *
+ * If you're using Coil for loading images, Telephoto provides a default implementation
+ * through `me.saket.telephoto:zoomable-image-coil`:
+ *
+ * ```kotlin
+ * val image = ZoomableImage.coil(rememberAsyncImagePainter("https://dog.ceo"))
+ * ```
+ */
 interface ZoomableImage {
   companion object; // For extensions.
 
   @Composable
-  fun content(): ImageContent
+  fun resolve(): ResolvedImage
 
-  sealed interface ImageContent {
+  sealed interface ResolvedImage {
+    /** Images that aren't bitmaps (for e.g., GIFs) and should be rendered without sub-sampling. */
     @JvmInline
     @Immutable
-    value class PainterContent(val painter: Painter) : ImageContent
+    value class GenericImage(val painter: Painter) : ResolvedImage
 
+    /** Full resolution bitmaps that should be rendered using [SubSamplingImage]. */
     @Immutable
-    data class BitmapContent(val source: ImageSource) : ImageContent
+    data class RequiresSubSampling(val source: ImageSource) : ResolvedImage
   }
 }

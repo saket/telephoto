@@ -114,7 +114,7 @@ class ZoomableViewportState internal constructor(
 
   /**
    * Raw size of the image/video/anything without any scaling applied.
-   * Used only for determining whether the content can zoom any further.
+   * Used only for ensuring that the content does not pan/zoom outside its limits.
    */
   // TODO: verify doc.
   internal var unscaledContentLocation by mutableStateOf(ZoomableContentLocation.Unspecified)
@@ -122,11 +122,8 @@ class ZoomableViewportState internal constructor(
   /**
    * Bounds of [ZoomableViewport]'s content composable in the layout hierarchy, without any scaling applied.
    */
-  // todo: should this be an IntRect?
-  // todo: should this be named contentCanvasBounds? or contentCanvasSize?
   internal var contentLayoutBounds by mutableStateOf(Rect.Zero)
 
-  // todo: should this be an IntRect?
   internal var viewportBounds by mutableStateOf(Rect.Zero)
 
   /** todo: doc. */

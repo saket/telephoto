@@ -21,6 +21,8 @@ import okio.Path
  * * [ImageSource.resource]
  * * [ImageSource.contentUri]
  *
+ * Raw input streams aren't supported because reading from files is significantly faster.
+ *
  * See [definitelySupportedMimeTypes] for supported image formats.
  * */
 sealed interface ImageSource {

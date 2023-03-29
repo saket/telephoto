@@ -24,8 +24,10 @@ import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.transformable
 
+// todo: complete this doc.
 /**
- * A viewport that handles zoom & pan gestures for its content.
+ * [ZoomableViewport] is a building block for designing zoomable media experiences. It listens to zoom
+ * & pan gestures while being agnostic to how the resulting transformations are applied to its content.
  *
  * Because [ZoomableViewport] handles all gestures including double-taps, `Modifier.clickable()` and
  * related modifiers will not work for any composable inside its content hierarchy. [onClick] and
