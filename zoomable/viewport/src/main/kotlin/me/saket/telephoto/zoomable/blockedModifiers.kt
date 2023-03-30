@@ -66,5 +66,6 @@ interface BlockClickableModifiers {
   ): Modifier = noImpl()
 }
 
+@Suppress("UnusedReceiverParameter")
 private fun Modifier.noImpl(): Nothing =
   throw UnsupportedOperationException("Not implemented, should not be called")
