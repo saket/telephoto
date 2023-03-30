@@ -501,6 +501,48 @@ class ZoomableViewportTest {
     }
   }
 
+  @Test fun zoom_fraction_is_correctly_calculated() {
+    var zoomFraction: Float? = null
+
+    rule.setContent {
+      ScreenScaffold {
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 3f)
+        ZoomableViewport(
+          modifier = Modifier.testTag("viewport"),
+          state = viewportState,
+          contentScale = ContentScale.Fit,
+        ) {
+          ImageAsset(
+            viewportState = viewportState,
+            assetName = "fox_1500.jpg"
+          )
+        }
+
+        LaunchedEffect(viewportState.zoomFraction) {
+          zoomFraction = viewportState.zoomFraction
+        }
+      }
+    }
+
+    rule.runOnIdle {
+      assertThat(zoomFraction).isEqualTo(0f)
+    }
+
+    rule.onNodeWithTag("viewport").performTouchInput {
+      pinchToZoomBy(IntOffset(0, 5))
+    }
+    rule.runOnIdle {
+      assertThat(zoomFraction).isWithin(0.1f).of(0.6f)
+    }
+
+    rule.onNodeWithTag("viewport").performTouchInput {
+      doubleClick()
+    }
+    rule.runOnIdle {
+      assertThat(zoomFraction).isEqualTo(1f)
+    }
+  }
+
   @Test fun on_click_works() {
     var onClickCalled = false
     var onLongClickCalled = false
@@ -528,10 +570,10 @@ class ZoomableViewportTest {
 
     rule.onNodeWithTag("content").performClick()
     rule.runOnIdle {
-      // Clicks are delayed until they're confirmed to not be double clicks.
+      // Clicks are delayed until they're confirmed to not be double clicks
+      // so make sure that onClick does not get called prematurely.
       assertThat(onClickCalled).isFalse()
     }
-
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
       assertThat(onClickCalled).isTrue()

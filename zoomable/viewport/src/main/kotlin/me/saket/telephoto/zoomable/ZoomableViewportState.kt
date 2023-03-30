@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable
 
+import androidx.annotation.FloatRange
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.AnimationVector
 import androidx.compose.animation.core.Spring.StiffnessMediumLow
@@ -78,7 +79,7 @@ class ZoomableViewportState internal constructor(
 ) {
 
   /**
-   * Transformations that should be applied by the viewport to its content.
+   * Transformations that should be applied to viewport's content.
    */
   // todo: doc
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
@@ -89,6 +90,24 @@ class ZoomableViewportState internal constructor(
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
       )
+    }
+  }
+
+  /**
+   * The content's current zoom as a fraction of its min and max allowed zoom factors.
+   *
+   * @return A value between 0 and 1, where 0 indicates that the image is fully zoomed out,
+   * 1 indicates that the image is fully zoomed in, and `null` indicates that an initial zoom
+   * value hasn't been calculated yet. A `null` value could be treated the same as 0, but
+   * [ZoomableViewport] leaves that up to you.
+   */
+  @get:FloatRange(from = 0.0, to = 1.0)
+  val zoomFraction: Float? by derivedStateOf {
+    gestureTransformation?.let {
+      val min = zoomRange.minZoom(it.zoom.baseZoom)
+      val max = zoomRange.maxZoom(it.zoom.baseZoom)
+      val current = it.zoom.finalZoom().maxScale
+      ((current - min) / (max - min)).coerceIn(0f, 1f)
     }
   }
 
