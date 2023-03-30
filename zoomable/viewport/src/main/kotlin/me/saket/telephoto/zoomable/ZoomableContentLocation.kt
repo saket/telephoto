@@ -3,6 +3,7 @@ package me.saket.telephoto.zoomable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isUnspecified
@@ -13,16 +14,17 @@ import androidx.compose.ui.unit.toOffset
 import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
 // todo: should this be called DrawRegion?
+//  no, canvas draw region can be smaller than images.
 /**
- * For [ZoomableViewport] to be able to correctly scale and pan its content, it uses
- * [ZoomableContentLocation] to understand the content's _visual_ size and position to prevent them
+ * For [Modifier.zoomable] to be able to correctly scale and pan its content, it uses
+ * [ZoomableContentLocation] to understand the content's _visual_ size & position to prevent them
  * from going out of bounds.
  *
- * [ZoomableViewport] can't calculate this on its own by inspecting its children's layout bounds
- * because that may not always match the content's visual size. For instance, an `Image` composable
+ * [Modifier.zoomable] can't calculate this on its own by inspecting its layout bounds because
+ * that may be smaller or larger than the content's visual size. For instance, an `Image` composable
  * that uses `Modifier.fillMaxSize()` could actually be drawing an image that only fills half its
- * size. An another possibility is a sub-sampled composable such as a map whose full sized content
- * could be at an order of magnitude larger than the layout bounds.
+ * height. Another possibility is a sub-sampled composable such as a map whose full sized content
+ * could be at an order of magnitude larger than its layout bounds.
  */
 interface ZoomableContentLocation {
   companion object {
@@ -34,12 +36,12 @@ interface ZoomableContentLocation {
      * That is, its alignment = [Alignment.Center] and scale = [ContentScale.Inside].
      */
     @Stable
-    fun fitInsideAndCenterAligned(size: Size?): ZoomableContentLocation {
+    fun scaledInsideAndCenterAligned(size: Size?): ZoomableContentLocation {
       return when {
         size == null || size.isUnspecified -> Unspecified
         else -> RelativeContentLocation(
           size = size,
-          scale = ContentScale.Inside,
+          scale = ContentScale.None,
           alignment = Alignment.Center,
         )
       }

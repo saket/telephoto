@@ -561,7 +561,7 @@ class ZoomableViewportTest {
             .fillMaxSize()
             .onSizeChanged {
               state.setContentLocation(
-                ZoomableContentLocation.fitInsideAndCenterAligned(it.toSize())
+                ZoomableContentLocation.scaledInsideAndCenterAligned(it.toSize())
               )
             }
         )
@@ -605,7 +605,7 @@ class ZoomableViewportTest {
     val painter = assetPainter(assetName)
     LaunchedEffect(painter) {
       viewportState.setContentLocation(
-        ZoomableContentLocation.fitInsideAndCenterAligned(painter.intrinsicSize)
+        ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
       )
     }
 

@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -47,7 +48,7 @@ import kotlin.math.abs
 /** todo: doc */
 @Composable
 fun rememberZoomableViewportState(
-  maxZoomFactor: Float
+  maxZoomFactor: Float = 2f,
 ): ZoomableViewportState {
   val state = rememberSaveable(saver = ZoomableViewportState.Saver) {
     ZoomableViewportState()
@@ -69,7 +70,6 @@ fun rememberZoomableViewportState(
       state.refreshContentPosition()
     }
   }
-
   return state
 }
 
@@ -94,12 +94,26 @@ class ZoomableViewportState internal constructor(
   }
 
   /**
+   * Single source of truth for your content's aspect ratio. If you're using `Modifier.zoomable()`
+   * with `Image()` or other composables that also accept [ContentScale], they should be set to
+   * [ContentScale.None] to avoid any conflicts.
+   *
+   * A visual guide of the various scale values can be found
+   * [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
+   */
+  var contentScale by mutableStateOf<ContentScale>(ContentScale.None)
+
+  // todo: doc
+  //  explain how the alignment affects zooming.
+  var contentAlignment by mutableStateOf(Alignment.Center)
+
+  /**
    * The content's current zoom as a fraction of its min and max allowed zoom factors.
    *
    * @return A value between 0 and 1, where 0 indicates that the image is fully zoomed out,
    * 1 indicates that the image is fully zoomed in, and `null` indicates that an initial zoom
-   * value hasn't been calculated yet. A `null` value could be treated the same as 0, but
-   * [ZoomableViewport] leaves that up to you.
+   * value hasn't been calculated yet. A `null` value could be safely treated the same as 0, but
+   * [Modifier.zoomable] leaves that up to you.
    */
   @get:FloatRange(from = 0.0, to = 1.0)
   val zoomFraction: Float? by derivedStateOf {
@@ -118,8 +132,6 @@ class ZoomableViewportState internal constructor(
   //  counter-arg: making this a state will allow live edit to work.
   internal var zoomRange = ZoomRange.Default
 
-  internal var contentScale by mutableStateOf<ContentScale>(ContentScale.None)
-  internal var contentAlignment by mutableStateOf(Alignment.Center)
   internal lateinit var layoutDirection: LayoutDirection
 
   /**

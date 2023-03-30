@@ -18,32 +18,28 @@ import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
 import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
 
 /**
- * An image composable that can consume pan & zoom transformations provided by [ZoomableViewport].
- * For images that are possibly large enough to not fit in memory, sub-sampling is automatically enabled
+ * An image composable that handles zoom & pan gestures using [Modifier.zoomable].
+ * For images that are large enough to not fit in memory, sub-sampling is automatically enabled
  * so that they're displayed without any loss of detail when fully zoomed in.
  *
- * ```kotlin
- * val viewportState = rememberZoomableViewportState()
- * ZoomableViewport(viewportState) {
- *   Image(
- *     zoomableImage = …,
- *     viewportState = viewportState,
- *     contentDescription = …
- *   )
- * }
- * ```
- *
- * If sub-sampling is always desired, you could use [SubSamplingImage] directly.
+ * If sub-sampling is always desired, you could also use [SubSamplingImage] directly.
  */
 @Composable
 fun Image(
   zoomableImage: ZoomableImage,
-  viewportState: ZoomableViewportState,
   contentDescription: String?,
   modifier: Modifier = Modifier,
+  viewportState: ZoomableViewportState = rememberZoomableViewportState(),
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
 ) {
+  viewportState.let {
+    it.contentAlignment = alignment
+    it.contentScale = contentScale
+  }
+
   val resolved = key(zoomableImage) {
     zoomableImage.resolve()
   }
@@ -51,11 +47,13 @@ fun Image(
     is GenericImage -> {
       LaunchedEffect(resolved.painter.intrinsicSize) {
         viewportState.setContentLocation(
-          ZoomableContentLocation.fitInsideAndCenterAligned(resolved.painter.intrinsicSize)
+          ZoomableContentLocation.scaledInsideAndCenterAligned(resolved.painter.intrinsicSize)
         )
       }
       Image(
-        modifier = modifier.applyTransformation(viewportState.contentTransformation),
+        modifier = modifier
+          .zoomable(viewportState)
+          .applyTransformation(viewportState.contentTransformation),
         painter = resolved.painter,
         contentDescription = contentDescription,
         alignment = Alignment.Center,
@@ -67,7 +65,7 @@ fun Image(
 
     is RequiresSubSampling -> {
       SubSamplingImage(
-        modifier = modifier,
+        modifier = modifier.zoomable(viewportState),
         state = rememberSubSamplingImageState(
           imageSource = resolved.source,
           viewportState = viewportState

@@ -2,6 +2,7 @@ package me.saket.telephoto.sample.viewer
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -21,7 +22,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
-import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.rememberZoomableViewportState
 
 @Composable
@@ -68,13 +68,8 @@ private fun MediaPage(
   modifier: Modifier = Modifier,
   isActivePage: Boolean,
 ) {
-  val viewportState = rememberZoomableViewportState(maxZoomFactor = 3f)
-  ZoomableViewport(
-    modifier = modifier,
-    state = viewportState,
-    contentAlignment = Alignment.Center,
-    contentScale = ContentScale.Inside,
-  ) {
+  val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
+  Box(modifier) {
     when (model) {
       is MediaItem.NormalSizedLocalImage -> NormalSizedLocalImage(viewportState)
       is MediaItem.NormalSizedRemoteImage -> NormalSizedRemoteImage(viewportState)

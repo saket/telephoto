@@ -97,7 +97,7 @@ fun ZoomableViewport(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-  content: @Composable ZoomableViewportScope.() -> Unit
+  content: @Composable () -> Unit
 ) {
 //  state.contentScale = contentScale
 //  state.contentAlignment = contentAlignment
@@ -153,11 +153,8 @@ fun ZoomableViewport(
 //  }
 }
 
-interface ZoomableViewportScope : BoxScope, BlockClickableModifiers
-
-private class RealZoomableViewportScope(
-  val boxScope: BoxScope
-) : ZoomableViewportScope, BoxScope by boxScope
+//interface ZoomableViewportScope
+//private class RealZoomableViewportScope : ZoomableViewportScope
 
 private object HapticFeedbackConstantsCompat {
   val GESTURE_END: Int
