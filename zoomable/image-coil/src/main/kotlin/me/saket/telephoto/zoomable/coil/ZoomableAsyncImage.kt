@@ -11,12 +11,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
-import coil.compose.AsyncImagePainter
+import coil.compose.LocalImageLoader
 import coil.decode.DataSource
 import coil.imageLoader
 import coil.request.CachePolicy
@@ -28,42 +34,63 @@ import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage
 import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
 import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
+import me.saket.telephoto.zoomable.ZoomableViewportState
+import me.saket.telephoto.zoomable.rememberZoomableViewportState
 import coil.size.Size.Companion as CoilSize
 
 /**
- * A zoomable image that can be loaded by Coil and displayed using [me.saket.telephoto.zoomable.Image].
+ * An overload of [ZoomableImage] that uses Coil for loading images.
  *
- * ```kotlin
- * ZoomableViewport(…) {
- *   Image(
- *     zoomableImage = ZoomableImage.coil(rememberAsyncImagePainter("https://dog.ceo")),
- *     viewportState = …,
- *     contentDescription = …
- *   )
- * }
- * ```
- */
-@Stable
-fun ZoomableImage.Companion.coil(painter: AsyncImagePainter): ZoomableImage {
-  return CoilImageResolver(painter.request, painter.imageLoader)
+ * See [ZoomableImage] for full documentation.
+ * */
+@Composable
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableViewportState = rememberZoomableViewportState(),
+  imageLoader: ImageLoader = LocalImageLoader.current,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+) {
+  ZoomableImage(
+    image = ZoomableImage.coil(
+      request = if (model is ImageRequest) {
+        model
+      } else {
+        ImageRequest.Builder(LocalContext.current)
+          .data(model)
+          .build()
+      },
+      imageLoader = imageLoader,
+    ),
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+  )
 }
 
 /**
- * A zoomable image that can be loaded by Coil and displayed using [me.saket.telephoto.zoomable.Image].
+ * A zoomable image that can be loaded by Coil and displayed using [me.saket.telephoto.zoomable.ZoomableImage].
  *
  * ```kotlin
- * ZoomableViewport(…) {
- *   Image(
- *     zoomableImage = ZoomableImage.coil(
- *       ImageRequest.Builder(context)
- *         .data("https://dog.ceo")
- *         .build()
- *     ),
- *     viewportState = …,
- *     contentDescription = …
- *   )
- * }
+ * ZoomableImage(
+ *   zoomableImage = ZoomableImage.coil(
+ *     ImageRequest.Builder(context)
+ *       .data("https://dog.ceo")
+ *       .build()
+ *   ),
+ *   contentDescription = …
+ * )
  * ```
+ *
+ * Consider using [ZoomableAsyncImage] directly.
  */
 @Stable
 fun ZoomableImage.Companion.coil(
@@ -129,7 +156,9 @@ private data class CoilImageResolver(
           // Image is present somewhere on the disk, but not in coil's
           // disk cache. Possibly an asset or an image shared by another app?
           RequiresSubSampling(ImageSource.contentUri(requestData))
-        } else {
+        } /*else if (result.dataSource == DataSource.DISK && requestData is Int) {  // todo: make this nicer and make it work.
+          RequiresSubSampling(ImageSource.resource(requestData))
+        }*/ else {
           GenericImage(result.drawable.asPainter())
         }
       } else {

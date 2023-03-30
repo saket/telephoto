@@ -25,35 +25,35 @@ import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampli
  * If sub-sampling is always desired, you could also use [SubSamplingImage] directly.
  */
 @Composable
-fun Image(
-  zoomableImage: ZoomableImage,
+fun ZoomableImage(
+  image: ZoomableImage,
   contentDescription: String?,
   modifier: Modifier = Modifier,
-  viewportState: ZoomableViewportState = rememberZoomableViewportState(),
+  state: ZoomableViewportState = rememberZoomableViewportState(),
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
   alignment: Alignment = Alignment.Center,
   contentScale: ContentScale = ContentScale.Fit,
 ) {
-  viewportState.let {
+  state.let {
     it.contentAlignment = alignment
     it.contentScale = contentScale
   }
 
-  val resolved = key(zoomableImage) {
-    zoomableImage.resolve()
+  val resolved = key(image) {
+    image.resolve()
   }
   when (resolved) {
     is GenericImage -> {
       LaunchedEffect(resolved.painter.intrinsicSize) {
-        viewportState.setContentLocation(
+        state.setContentLocation(
           ZoomableContentLocation.scaledInsideAndCenterAligned(resolved.painter.intrinsicSize)
         )
       }
       Image(
         modifier = modifier
-          .zoomable(viewportState)
-          .applyTransformation(viewportState.contentTransformation),
+          .zoomable(state)
+          .applyTransformation(state.contentTransformation),
         painter = resolved.painter,
         contentDescription = contentDescription,
         alignment = Alignment.Center,
@@ -65,10 +65,10 @@ fun Image(
 
     is RequiresSubSampling -> {
       SubSamplingImage(
-        modifier = modifier.zoomable(viewportState),
+        modifier = modifier.zoomable(state),
         state = rememberSubSamplingImageState(
           imageSource = resolved.source,
-          viewportState = viewportState
+          viewportState = state
         ),
         contentDescription = contentDescription,
         alpha = alpha,
@@ -79,7 +79,7 @@ fun Image(
 }
 
 /**
- * A zoomable image that can be displayed using [me.saket.telephoto.zoomable.Image].
+ * A zoomable image that can be displayed using [me.saket.telephoto.zoomable.ZoomableImage].
  *
  * If you're using Coil for loading images, Telephoto provides a default implementation
  * through `me.saket.telephoto:zoomable-image-coil`:
