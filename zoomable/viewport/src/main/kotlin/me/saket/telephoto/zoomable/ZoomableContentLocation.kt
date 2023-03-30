@@ -46,6 +46,22 @@ interface ZoomableContentLocation {
     }
 
     @Stable
+    fun relative(
+      size: Size?,
+      alignment: Alignment,
+      contentScale: ContentScale,
+    ): ZoomableContentLocation {
+      return when {
+        size == null || size.isUnspecified -> Unspecified
+        else -> RelativeContentLocation(
+          size = size,
+          scale = contentScale,
+          alignment = alignment,
+        )
+      }
+    }
+
+    @Stable
     val Unspecified = object : ZoomableContentLocation {
       override fun boundsIn(parent: Rect, direction: LayoutDirection) =
         error("location is unspecified")
