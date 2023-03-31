@@ -142,7 +142,7 @@ class ZoomableViewportState internal constructor(
   internal var unscaledContentLocation by mutableStateOf(ZoomableContentLocation.Unspecified)
 
   /**
-   * Bounds of [ZoomableViewport]'s content composable in the layout hierarchy, without any scaling applied.
+   * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
    */
   internal var contentLayoutBounds by mutableStateOf(Rect.Zero)
 

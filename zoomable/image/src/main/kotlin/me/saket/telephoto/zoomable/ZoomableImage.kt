@@ -1,12 +1,15 @@
 package me.saket.telephoto.zoomable
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.painter.Painter
@@ -22,6 +25,10 @@ import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampli
  * For images that are large enough to not fit in memory, sub-sampling is automatically enabled
  * so that they're displayed without any loss of detail when fully zoomed in.
  *
+ * Because `Modifier.zoomable()` consumes all gestures including double-taps, [Modifier.clickable]
+ * and [Modifier.combinedClickable] will not work on this composable. As an alternative, [onClick]
+ * and [onLongClick] parameters can be used instead.
+ *
  * If sub-sampling is always desired, you could also use [SubSamplingImage] directly.
  */
 @Composable
@@ -34,6 +41,8 @@ fun ZoomableImage(
   colorFilter: ColorFilter? = null,
   alignment: Alignment = Alignment.Center,
   contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
 ) {
   state.let {
     it.contentAlignment = alignment
@@ -43,6 +52,11 @@ fun ZoomableImage(
   val resolved = key(image) {
     image.resolve()
   }
+  val commonModifiers = modifier.zoomable(
+    state = state,
+    onClick = onClick,
+    onLongClick = onLongClick,
+  )
   when (resolved) {
     is GenericImage -> {
       LaunchedEffect(resolved.painter.intrinsicSize) {
@@ -51,8 +65,8 @@ fun ZoomableImage(
         )
       }
       Image(
-        modifier = modifier
-          .zoomable(state)
+        modifier = Modifier
+          .then(commonModifiers)
           .applyTransformation(state.contentTransformation),
         painter = resolved.painter,
         contentDescription = contentDescription,
@@ -65,7 +79,7 @@ fun ZoomableImage(
 
     is RequiresSubSampling -> {
       SubSamplingImage(
-        modifier = modifier.zoomable(state),
+        modifier = commonModifiers,
         state = rememberSubSamplingImageState(
           imageSource = resolved.source,
           viewportState = state

@@ -5,7 +5,6 @@ import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +24,6 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
@@ -43,7 +41,6 @@ import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
-import androidx.compose.ui.unit.toSize
 import com.dropbox.dropshots.Dropshots
 import com.dropbox.dropshots.ResultValidator
 import com.dropbox.dropshots.ThresholdValidator
@@ -52,9 +49,12 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
-import me.saket.telephoto.zoomable.ZoomableViewportTest.ScrollDirection
-import me.saket.telephoto.zoomable.ZoomableViewportTest.ScrollDirection.LeftToRight
-import me.saket.telephoto.zoomable.ZoomableViewportTest.ScrollDirection.RightToLeft
+import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
+import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
+import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
+import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -64,7 +64,7 @@ import org.junit.runner.RunWith
 
 @ExperimentalFoundationApi
 @RunWith(TestParameterInjector::class)
-class ZoomableViewportTest {
+class ZoomableImageTest {
   private val rule = createAndroidComposeRule<ComponentActivity>()
   private val testName = TestName()
   private val dropshots = Dropshots(
@@ -93,16 +93,11 @@ class ZoomableViewportTest {
   @Test fun canary() {
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
-        ZoomableViewport(
-          state = viewportState,
-          contentScale = ContentScale.Fit,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = "fox_1500.jpg"
-          )
-        }
+        ZoomableImage(
+          state = rememberZoomableViewportState(maxZoomFactor = 1f),
+          image = ZoomableImage.asset("fox_1500.jpg"),
+          contentDescription = null,
+        )
       }
     }
     rule.runOnIdle {
@@ -115,25 +110,20 @@ class ZoomableViewportTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
-        ZoomableViewport(
-          modifier = Modifier.testTag("viewport"),
+        val viewportState = rememberZoomableViewportState()
+        ZoomableImage(
+          modifier = Modifier.testTag("image"),
+          image = ZoomableImage.asset("fox_1500.jpg"),
           state = viewportState,
-          contentScale = ContentScale.Fit,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = "fox_1500.jpg"
-          )
-        }
-
+          contentDescription = null,
+        )
         LaunchedEffect(viewportState.contentTransformation) {
           finalScale = viewportState.contentTransformation.scale
         }
       }
     }
 
-    rule.onNodeWithTag("viewport").performTouchInput {
+    rule.onNodeWithTag("image").performTouchInput {
       pinchToZoomBy(visibleSize.center / 2f)
     }
     rule.runOnIdle {
@@ -148,21 +138,15 @@ class ZoomableViewportTest {
 
     stateRestorationTester.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
-        ZoomableViewport(
-          modifier = Modifier.testTag("viewport"),
-          state = viewportState,
-          contentScale = ContentScale.Fit,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = "fox_1500.jpg"
-          )
-        }
+        ZoomableImage(
+          modifier = Modifier.testTag("image"),
+          image = ZoomableImage.asset("fox_1500.jpg"),
+          contentDescription = null,
+        )
       }
     }
 
-    with(rule.onNodeWithTag("viewport")) {
+    with(rule.onNodeWithTag("image")) {
       performTouchInput {
         pinchToZoomBy(visibleSize.center / 2f)
       }
@@ -189,24 +173,21 @@ class ZoomableViewportTest {
     rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
-        ZoomableViewport(
-          modifier = Modifier.testTag("viewport"),
+        ZoomableImage(
+          modifier = Modifier.testTag("image"),
+          image = ZoomableImage.asset(assetName = imageAsset.assetName),
+          contentDescription = null,
           state = viewportState,
           contentScale = contentScale.value,
-          contentAlignment = alignment.value,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = imageAsset.assetName,
-          )
-        }
+          alignment = alignment.value,
+        )
       }
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName)
     }
 
-    with(rule.onNodeWithTag("viewport")) {
+    with(rule.onNodeWithTag("image")) {
       performTouchInput {
         val by = visibleSize.center / 2f
         pinch(
@@ -221,7 +202,7 @@ class ZoomableViewportTest {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
 
-    with(rule.onNodeWithTag("viewport")) {
+    with(rule.onNodeWithTag("image")) {
       performTouchInput {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
@@ -236,17 +217,13 @@ class ZoomableViewportTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
-        ZoomableViewport(
-          state = viewportState,
+        ZoomableImage(
+          image = ZoomableImage.asset("fox_1500.jpg"),
+          state = rememberZoomableViewportState(maxZoomFactor = 1f),
           contentScale = ContentScale.Fit,
-          contentAlignment = contentAlignment,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = "fox_1500.jpg"
-          )
-        }
+          alignment = contentAlignment,
+          contentDescription = null,
+        )
       }
     }
     dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_updating_alignment")
@@ -262,16 +239,12 @@ class ZoomableViewportTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
-        ZoomableViewport(
-          state = viewportState,
+        ZoomableImage(
+          image = ZoomableImage.asset("fox_1500.jpg"),
+          state = rememberZoomableViewportState(maxZoomFactor = 1f),
           contentScale = contentScale,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = "fox_1500.jpg"
-          )
-        }
+          contentDescription = null,
+        )
       }
     }
     dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_updating_scale")
@@ -298,16 +271,12 @@ class ZoomableViewportTest {
           state = rememberPagerState(initialPage = 1),
           pageCount = assetNames.size
         ) { pageNum ->
-          val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
-          ZoomableViewport(
-            state = viewportState,
+          ZoomableImage(
+            image = ZoomableImage.asset(assetNames[pageNum]),
+            state = rememberZoomableViewportState(maxZoomFactor = 1f),
             contentScale = ContentScale.Fit,
-          ) {
-            ImageAsset(
-              viewportState = viewportState,
-              assetName = assetNames[pageNum]
-            )
-          }
+            contentDescription = null,
+          )
         }
       }
     }
@@ -337,16 +306,12 @@ class ZoomableViewportTest {
           state = rememberPagerState(initialPage = 1),
           pageCount = assetNames.size
         ) { pageNum ->
-          val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
-          ZoomableViewport(
-            state = viewportState,
+          ZoomableImage(
+            image = ZoomableImage.asset(assetNames[pageNum]),
+            state = rememberZoomableViewportState(maxZoomFactor = 2f),
             contentScale = ContentScale.Fit,
-          ) {
-            ImageAsset(
-              viewportState = viewportState,
-              assetName = assetNames[pageNum]
-            )
-          }
+            contentDescription = null,
+          )
         }
       }
     }
@@ -382,16 +347,12 @@ class ZoomableViewportTest {
           state = rememberPagerState(initialPage = 1),
           pageCount = assetNames.size
         ) { pageNum ->
-          val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
-          ZoomableViewport(
-            state = viewportState,
+          ZoomableImage(
+            image = ZoomableImage.asset(assetNames[pageNum]),
+            state = rememberZoomableViewportState(maxZoomFactor = 1.5f),
             contentScale = ContentScale.Fit,
-          ) {
-            ImageAsset(
-              viewportState = viewportState,
-              assetName = assetNames[pageNum]
-            )
-          }
+            contentDescription = null,
+          )
         }
       }
     }
@@ -424,16 +385,13 @@ class ZoomableViewportTest {
     rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
-        ZoomableViewport(
-          modifier = Modifier.testTag("viewport"),
+        ZoomableImage(
+          modifier = Modifier.testTag("image"),
+          image = ZoomableImage.asset(assetName),
+          contentDescription = null,
           state = viewportState,
           contentScale = ContentScale.Fit,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = assetName
-          )
-        }
+        )
 
         LaunchedEffect(viewportState.contentTransformation) {
           imageScale = viewportState.contentTransformation.scale
@@ -441,7 +399,7 @@ class ZoomableViewportTest {
       }
     }
 
-    rule.onNodeWithTag("viewport").performTouchInput {
+    rule.onNodeWithTag("image").performTouchInput {
       doubleClick()
     }
     rule.runOnIdle {
@@ -467,16 +425,13 @@ class ZoomableViewportTest {
     rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
-        ZoomableViewport(
-          modifier = Modifier.testTag("viewport"),
+        ZoomableImage(
+          modifier = Modifier.testTag("image"),
           state = viewportState,
           contentScale = ContentScale.Fit,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = "fox_1500.jpg"
-          )
-        }
+          image = ZoomableImage.asset("fox_1500.jpg"),
+          contentDescription = null,
+        )
 
         LaunchedEffect(viewportState.contentTransformation) {
           imageScale = viewportState.contentTransformation.scale
@@ -488,7 +443,7 @@ class ZoomableViewportTest {
       }
     }
 
-    rule.onNodeWithTag("viewport").performTouchInput {
+    rule.onNodeWithTag("image").performTouchInput {
       doubleClick()
     }
     rule.runOnIdle {
@@ -507,16 +462,13 @@ class ZoomableViewportTest {
     rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 3f)
-        ZoomableViewport(
-          modifier = Modifier.testTag("viewport"),
+        ZoomableImage(
+          modifier = Modifier.testTag("image"),
+          image = ZoomableImage.asset("fox_1500.jpg"),
           state = viewportState,
           contentScale = ContentScale.Fit,
-        ) {
-          ImageAsset(
-            viewportState = viewportState,
-            assetName = "fox_1500.jpg"
-          )
-        }
+          contentDescription = null,
+        )
 
         LaunchedEffect(viewportState.zoomFraction) {
           zoomFraction = viewportState.zoomFraction
@@ -528,14 +480,14 @@ class ZoomableViewportTest {
       assertThat(zoomFraction).isEqualTo(0f)
     }
 
-    rule.onNodeWithTag("viewport").performTouchInput {
+    rule.onNodeWithTag("image").performTouchInput {
       pinchToZoomBy(IntOffset(0, 5))
     }
     rule.runOnIdle {
       assertThat(zoomFraction).isWithin(0.1f).of(0.6f)
     }
 
-    rule.onNodeWithTag("viewport").performTouchInput {
+    rule.onNodeWithTag("image").performTouchInput {
       doubleClick()
     }
     rule.runOnIdle {
@@ -549,26 +501,18 @@ class ZoomableViewportTest {
 
     rule.setContent {
       val state = rememberZoomableViewportState(maxZoomFactor = 1f)
-      ZoomableViewport(
+      ZoomableImage(
+        modifier = Modifier.testTag("zoomable_image"),
+        image = ZoomableImage.asset("fox_1500.jpg"),
+        contentDescription = null,
         state = state,
         contentScale = ContentScale.Inside,
         onClick = { onClickCalled = true },
         onLongClick = { onLongClickCalled = true }
-      ) {
-        Box(
-          Modifier
-            .testTag("content")
-            .fillMaxSize()
-            .onSizeChanged {
-              state.setContentLocation(
-                ZoomableContentLocation.scaledInsideAndCenterAligned(it.toSize())
-              )
-            }
-        )
-      }
+      )
     }
 
-    rule.onNodeWithTag("content").performClick()
+    rule.onNodeWithTag("zoomable_image").performClick()
     rule.runOnIdle {
       // Clicks are delayed until they're confirmed to not be double clicks
       // so make sure that onClick does not get called prematurely.
@@ -580,7 +524,7 @@ class ZoomableViewportTest {
       assertThat(onLongClickCalled).isFalse()
     }
 
-    rule.onNodeWithTag("content").performTouchInput { longClick() }
+    rule.onNodeWithTag("zoomable_image").performTouchInput { longClick() }
     rule.runOnIdle {
       assertThat(onLongClickCalled).isTrue()
     }
@@ -595,28 +539,6 @@ class ZoomableViewportTest {
     ) {
       content()
     }
-  }
-
-  @Composable
-  private fun ImageAsset(
-    viewportState: ZoomableViewportState,
-    assetName: String
-  ) {
-    val painter = assetPainter(assetName)
-    LaunchedEffect(painter) {
-      viewportState.setContentLocation(
-        ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
-      )
-    }
-
-    Image(
-      modifier = Modifier
-        .fillMaxSize()
-        .applyTransformation(viewportState.contentTransformation),
-      painter = painter,
-      contentDescription = null,
-      contentScale = ContentScale.Inside,
-    )
   }
 
   @Suppress("unused")
@@ -694,11 +616,22 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 }
 
 @Composable
-private fun assetPainter(assetName: String): Painter {
-  val context = LocalContext.current
-  return remember(assetName) {
-    context.assets.open(assetName).use { stream ->
-      BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+private fun ZoomableImage.Companion.asset(assetName: String): ZoomableImage {
+  return remember {
+    object : ZoomableImage {
+      @Composable
+      override fun resolve(): ZoomableImage.ResolvedImage {
+        val context = LocalContext.current
+        return remember {
+          // Note to self: this image must not be sub-sampled.
+          // Tests for sub-sampled images are present in :subsamplingimage.
+          GenericImage(
+            context.assets.open(assetName).use { stream ->
+              BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+            }
+          )
+        }
+      }
     }
   }
 }

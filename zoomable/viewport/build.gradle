@@ -10,13 +10,6 @@ apply plugin: 'com.vanniktech.maven.publish'
 
 android {
   namespace "me.saket.telephoto.zoomable.viewport"
-
-  defaultConfig {
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-  testOptions {
-    animationsDisabled = true
-  }
 }
 
 dependencies {
@@ -28,13 +21,4 @@ dependencies {
   testImplementation "junit:junit:$versions.junit"
   testImplementation "com.google.truth:truth:$versions.truth"
   testImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
-
-  androidTestImplementation "androidx.test:core-ktx:1.5.0"
-  androidTestImplementation "androidx.test:rules:1.5.0"
-  androidTestImplementation "androidx.test.ext:junit-ktx:1.1.5"
-  androidTestImplementation "com.google.truth:truth:$versions.truth"
-  androidTestImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
-  androidTestImplementation "com.squareup.leakcanary:leakcanary-android-instrumentation:$versions.leakCanary"
-  androidTestImplementation "androidx.compose.ui:ui-test-junit4:$versions.composeUi"
-  debugImplementation("androidx.compose.ui:ui-test-manifest:$versions.composeUi")
 }
