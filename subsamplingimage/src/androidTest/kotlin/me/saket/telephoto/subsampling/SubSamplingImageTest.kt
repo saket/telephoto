@@ -25,7 +25,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -56,8 +55,8 @@ import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
-import me.saket.telephoto.zoomable.ZoomableViewport
 import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import me.saket.telephoto.zoomable.zoomable
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
@@ -116,17 +115,13 @@ class SubSamplingImageTest {
           isImageDisplayed = imageState.isImageDisplayed
         }
 
-        ZoomableViewport(
-          modifier = Modifier.fillMaxSize(),
-          state = viewportState,
-          contentScale = ContentScale.Inside,
-        ) {
-          SubSamplingImage(
-            modifier = Modifier.fillMaxSize(),
-            state = imageState,
-            contentDescription = null,
-          )
-        }
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .zoomable(viewportState),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 
@@ -153,17 +148,13 @@ class SubSamplingImageTest {
           isImageDisplayed = imageState.isImageDisplayed
         }
 
-        ZoomableViewport(
-          modifier = Modifier.fillMaxSize(),
-          state = viewportState,
-          contentScale = ContentScale.Inside,
-        ) {
-          SubSamplingImage(
-            modifier = layoutSize.modifier.border(1.dp, Color.Yellow),
-            state = imageState,
-            contentDescription = null,
-          )
-        }
+        SubSamplingImage(
+          modifier = layoutSize.modifier
+            .zoomable(viewportState)
+            .border(1.dp, Color.Yellow),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 
@@ -182,7 +173,9 @@ class SubSamplingImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f)
+        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1f).also {
+          it.contentAlignment = alignment.value
+        }
         val imageState = rememberSubSamplingImageState(
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpg"),
@@ -194,20 +187,14 @@ class SubSamplingImageTest {
           tiles = imageState.tiles
         }
 
-        ZoomableViewport(
-          modifier = Modifier.fillMaxSize(),
-          state = viewportState,
-          contentAlignment = alignment.value,
-          contentScale = ContentScale.Inside,
-        ) {
-          SubSamplingImage(
-            modifier = Modifier
-              .then(size.modifier)
-              .testTag("image"),
-            state = imageState,
-            contentDescription = null,
-          )
-        }
+        SubSamplingImage(
+          modifier = Modifier
+            .then(size.modifier)
+            .zoomable(viewportState)
+            .testTag("image"),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 
@@ -247,17 +234,13 @@ class SubSamplingImageTest {
           isImageDisplayed = imageState.isImageDisplayed
         }
 
-        ZoomableViewport(
-          modifier = Modifier.fillMaxSize(),
-          state = viewportState,
-          contentScale = ContentScale.Inside,
-        ) {
-          SubSamplingImage(
-            modifier = Modifier.fillMaxSize(),
-            state = imageState,
-            contentDescription = null,
-          )
-        }
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .zoomable(viewportState),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
     rule.waitUntil(2.seconds) { isImageDisplayed }
@@ -276,27 +259,24 @@ class SubSamplingImageTest {
   }
 
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
-    class FakeRegionDecoderFactory(val shouldIgnore: (BitmapRegionTile) -> Boolean) : ImageRegionDecoder.Factory {
-      override suspend fun create(context: Context, imageSource: ImageSource): ImageRegionDecoder {
-        val real = SkiaImageRegionDecoders.Factory.create(context, imageSource)
-        return object : ImageRegionDecoder by real {
-          override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
-            return if (shouldIgnore(region)) {
-              delay(Long.MAX_VALUE)
-              error("shouldn't reach here")
-            } else {
-              real.decodeRegion(region)
-            }
+    // This fake factory will ignore decoding of selected tiles.
+    val shouldIgnore: (BitmapRegionTile) -> Boolean = { region ->
+      region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648f
+    }
+    val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { context, imageSource ->
+      val real = SkiaImageRegionDecoders.Factory.create(context, imageSource)
+      object : ImageRegionDecoder by real {
+        override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+          return if (shouldIgnore(region)) {
+            delay(Long.MAX_VALUE)
+            error("shouldn't reach here")
+          } else {
+            real.decodeRegion(region)
           }
         }
       }
     }
 
-    val fakeRegionDecoderFactory = FakeRegionDecoderFactory(
-      shouldIgnore = { region ->
-        region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648f
-      }
-    )
     var isImageDisplayed = false
 
     rule.setContent {
@@ -313,19 +293,14 @@ class SubSamplingImageTest {
             isImageDisplayed = imageState.isImageDisplayed
           }
 
-          ZoomableViewport(
-            modifier = Modifier.fillMaxSize(),
-            state = viewportState,
-            contentScale = ContentScale.Inside,
-          ) {
-            SubSamplingImage(
-              modifier = Modifier
-                .fillMaxSize()
-                .testTag("image"),
-              state = imageState,
-              contentDescription = null,
-            )
-          }
+          SubSamplingImage(
+            modifier = Modifier
+              .fillMaxSize()
+              .zoomable(viewportState)
+              .testTag("image"),
+            state = imageState,
+            contentDescription = null,
+          )
         }
       }
     }
@@ -402,18 +377,13 @@ class SubSamplingImageTest {
           isImageDisplayed = imageState.isImageDisplayed
         }
 
-        ZoomableViewport(
-          state = viewportState,
-          modifier = Modifier.fillMaxSize(),
-          contentAlignment = Alignment.Center,
-          contentScale = ContentScale.Inside,
-        ) {
-          SubSamplingImage(
-            modifier = Modifier.wrapContentSize(),
-            state = imageState,
-            contentDescription = null,
-          )
-        }
+        SubSamplingImage(
+          modifier = Modifier
+            .wrapContentSize()
+            .zoomable(viewportState),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 
@@ -441,19 +411,14 @@ class SubSamplingImageTest {
           isImageDisplayed = imageState.isImageDisplayed
         }
 
-        ZoomableViewport(
-          modifier = Modifier.fillMaxSize(),
-          state = viewportState,
-          contentScale = ContentScale.Inside,
-        ) {
-          SubSamplingImage(
-            modifier = Modifier
-              .then(size.modifier)
-              .testTag("image"),
-            state = imageState,
-            contentDescription = null,
-          )
-        }
+        SubSamplingImage(
+          modifier = Modifier
+            .then(size.modifier)
+            .zoomable(viewportState)
+            .testTag("image"),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 

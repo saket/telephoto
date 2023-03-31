@@ -146,6 +146,7 @@ class ZoomableViewportState internal constructor(
    */
   internal var contentLayoutBounds by mutableStateOf(Rect.Zero)
 
+  // todo: replace this with contentLayoutBounds
   internal val viewportBounds: Rect get() = Rect(Offset.Zero, size = contentLayoutBounds.size)
 
   /** todo: doc. */

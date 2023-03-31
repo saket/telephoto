@@ -11,7 +11,7 @@ internal interface ImageRegionDecoder {
   val imageSize: Size
   suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap
 
-  interface Factory {
+  fun interface Factory {
     suspend fun create(context: Context, imageSource: ImageSource): ImageRegionDecoder
   }
 }
