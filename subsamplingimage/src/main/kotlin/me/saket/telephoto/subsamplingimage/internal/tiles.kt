@@ -18,11 +18,13 @@ internal data class CanvasRegionTile(
   val bitmap: ImageBitmap?,
   val bitmapRegion: BitmapRegionTile,
   val bounds: IntRect,
+  val isBaseTile: Boolean,
 ) {
   constructor(
     bitmap: ImageBitmap?,
     bitmapRegion: BitmapRegionTile,
     bounds: Rect,
+    isBaseTile: Boolean,
   ) : this(
     bitmap = bitmap,
     bitmapRegion = bitmapRegion,
@@ -31,6 +33,7 @@ internal data class CanvasRegionTile(
     // the next tile will also move back by a pixel. This would cause the last
     // tiles on X and Y axes to be 1px short, but that's unnoticeable to eyes.
     bounds = bounds.discardFractionalValues(),
+    isBaseTile = isBaseTile,
   )
 }
 

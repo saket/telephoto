@@ -41,7 +41,7 @@ interface ZoomableContentLocation {
         size == null || size.isUnspecified -> Unspecified
         else -> RelativeContentLocation(
           size = size,
-          scale = ContentScale.None,
+          scale = ContentScale.Inside,
           alignment = Alignment.Center,
         )
       }

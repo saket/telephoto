@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -133,7 +134,8 @@ fun rememberSubSamplingImageState(
               CanvasRegionTile(
                 bounds = drawBounds,
                 bitmap = bitmaps[tile],
-                bitmapRegion = tile
+                bitmapRegion = tile,
+                isBaseTile = false,
               )
             } else {
               null
@@ -152,6 +154,7 @@ fun rememberSubSamplingImageState(
                 bounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset),
                 bitmap = bitmaps[tile],
                 bitmapRegion = tile,
+                isBaseTile = true,
               )
             }
           } else null
@@ -211,7 +214,8 @@ class SubSamplingImageState internal constructor() {
   internal fun maybeSendFirstDrawEvent() {
     if (!isImageDisplayed
       && canvasSize.minDimension > 0f // Wait until content size is measured in case of wrap_content.
-      && tiles.isNotEmpty() && tiles.all { it.bitmap != null }
+      && tiles.isNotEmpty()
+      && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
     ) {
       isImageDisplayed = true
     }

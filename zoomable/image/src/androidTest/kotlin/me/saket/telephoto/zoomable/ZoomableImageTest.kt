@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
@@ -49,9 +48,7 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
-import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
-import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
@@ -94,8 +91,9 @@ class ZoomableImageTest {
     rule.setContent {
       ScreenScaffold {
         ZoomableImage(
+          modifier = Modifier.fillMaxSize(),
           state = rememberZoomableViewportState(maxZoomFactor = 1f),
-          image = ZoomableImage.asset("fox_1500.jpg"),
+          image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           contentDescription = null,
         )
       }
@@ -112,8 +110,10 @@ class ZoomableImageTest {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState()
         ZoomableImage(
-          modifier = Modifier.testTag("image"),
-          image = ZoomableImage.asset("fox_1500.jpg"),
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           state = viewportState,
           contentDescription = null,
         )
@@ -139,8 +139,10 @@ class ZoomableImageTest {
     stateRestorationTester.setContent {
       ScreenScaffold {
         ZoomableImage(
-          modifier = Modifier.testTag("image"),
-          image = ZoomableImage.asset("fox_1500.jpg"),
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           contentDescription = null,
         )
       }
@@ -174,8 +176,10 @@ class ZoomableImageTest {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
         ZoomableImage(
-          modifier = Modifier.testTag("image"),
-          image = ZoomableImage.asset(assetName = imageAsset.assetName),
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImage.nonSubSampledAsset(assetName = imageAsset.assetName),
           contentDescription = null,
           state = viewportState,
           contentScale = contentScale.value,
@@ -218,7 +222,10 @@ class ZoomableImageTest {
     rule.setContent {
       ScreenScaffold {
         ZoomableImage(
-          image = ZoomableImage.asset("fox_1500.jpg"),
+          modifier = Modifier
+            .fillMaxSize()
+            .fillMaxSize(),
+          image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           state = rememberZoomableViewportState(maxZoomFactor = 1f),
           contentScale = ContentScale.Fit,
           alignment = contentAlignment,
@@ -240,7 +247,8 @@ class ZoomableImageTest {
     rule.setContent {
       ScreenScaffold {
         ZoomableImage(
-          image = ZoomableImage.asset("fox_1500.jpg"),
+          modifier = Modifier.fillMaxSize(),
+          image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           state = rememberZoomableViewportState(maxZoomFactor = 1f),
           contentScale = contentScale,
           contentDescription = null,
@@ -272,7 +280,8 @@ class ZoomableImageTest {
           pageCount = assetNames.size
         ) { pageNum ->
           ZoomableImage(
-            image = ZoomableImage.asset(assetNames[pageNum]),
+            modifier = Modifier.fillMaxSize(),
+            image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
             state = rememberZoomableViewportState(maxZoomFactor = 1f),
             contentScale = ContentScale.Fit,
             contentDescription = null,
@@ -307,7 +316,8 @@ class ZoomableImageTest {
           pageCount = assetNames.size
         ) { pageNum ->
           ZoomableImage(
-            image = ZoomableImage.asset(assetNames[pageNum]),
+            modifier = Modifier.fillMaxSize(),
+            image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
             state = rememberZoomableViewportState(maxZoomFactor = 2f),
             contentScale = ContentScale.Fit,
             contentDescription = null,
@@ -348,7 +358,8 @@ class ZoomableImageTest {
           pageCount = assetNames.size
         ) { pageNum ->
           ZoomableImage(
-            image = ZoomableImage.asset(assetNames[pageNum]),
+            modifier = Modifier.fillMaxSize(),
+            image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
             state = rememberZoomableViewportState(maxZoomFactor = 1.5f),
             contentScale = ContentScale.Fit,
             contentDescription = null,
@@ -385,9 +396,14 @@ class ZoomableImageTest {
     rule.setContent {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
+        LaunchedEffect(assetName) {
+          println("assetName launched to $assetName")
+        }
         ZoomableImage(
-          modifier = Modifier.testTag("image"),
-          image = ZoomableImage.asset(assetName),
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImage.nonSubSampledAsset(assetName),
           contentDescription = null,
           state = viewportState,
           contentScale = ContentScale.Fit,
@@ -406,6 +422,8 @@ class ZoomableImageTest {
       assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
     }
 
+    Thread.sleep(2_000)
+
     // It sounds weird that changing the image does not auto-reset transformations,
     // but the idea is that in the future it should be possible to load a low-quality
     // preview as a placeholder before loading the full image.
@@ -415,6 +433,7 @@ class ZoomableImageTest {
       assertThat(imageScale).isEqualTo(ScaleFactor(2f, 2f))
       dropshots.assertSnapshot(rule.activity)
     }
+    Thread.sleep(4_000)
   }
 
   @Test fun reset_content_transformations() {
@@ -426,10 +445,12 @@ class ZoomableImageTest {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
         ZoomableImage(
-          modifier = Modifier.testTag("image"),
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
           state = viewportState,
           contentScale = ContentScale.Fit,
-          image = ZoomableImage.asset("fox_1500.jpg"),
+          image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           contentDescription = null,
         )
 
@@ -437,6 +458,7 @@ class ZoomableImageTest {
           imageScale = viewportState.contentTransformation.scale
         }
         LaunchedEffect(resetTriggers) {
+          println("Reset received. Resetting…")
           resetTriggers.receive()
           viewportState.resetZoomAndPanImmediately()
         }
@@ -463,8 +485,10 @@ class ZoomableImageTest {
       ScreenScaffold {
         val viewportState = rememberZoomableViewportState(maxZoomFactor = 3f)
         ZoomableImage(
-          modifier = Modifier.testTag("image"),
-          image = ZoomableImage.asset("fox_1500.jpg"),
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           state = viewportState,
           contentScale = ContentScale.Fit,
           contentDescription = null,
@@ -502,8 +526,10 @@ class ZoomableImageTest {
     rule.setContent {
       val state = rememberZoomableViewportState(maxZoomFactor = 1f)
       ZoomableImage(
-        modifier = Modifier.testTag("zoomable_image"),
-        image = ZoomableImage.asset("fox_1500.jpg"),
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("zoomable_image"),
+        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
         contentDescription = null,
         state = state,
         contentScale = ContentScale.Inside,
@@ -616,8 +642,8 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 }
 
 @Composable
-private fun ZoomableImage.Companion.asset(assetName: String): ZoomableImage {
-  return remember {
+private fun ZoomableImage.Companion.nonSubSampledAsset(assetName: String): ZoomableImage {
+  return remember(assetName) {
     object : ZoomableImage {
       @Composable
       override fun resolve(): ZoomableImage.ResolvedImage {
