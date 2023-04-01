@@ -29,7 +29,7 @@ dependencies {
   testImplementation "junit:junit:$versions.junit"
   testImplementation "com.google.truth:truth:$versions.truth"
   testImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
-  testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutines"
+  testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutinesTest"
   testImplementation "app.cash.turbine:turbine:$versions.turbine"
 
   androidTestImplementation "androidx.test:core-ktx:1.5.0"

@@ -34,5 +34,5 @@ dependencies {
   implementation "androidx.compose.material:material-icons-extended:$versions.composeUi"
 
   implementation "io.coil-kt:coil-compose:2.2.2"
-  implementation "com.bumble.appyx:core:1.0.4"
+  implementation "com.bumble.appyx:core:$versions.appyx"
 }
