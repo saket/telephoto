@@ -48,6 +48,7 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
+import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage
 import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
@@ -646,11 +647,9 @@ private fun ZoomableImage.Companion.nonSubSampledAsset(assetName: String): Zooma
   return remember(assetName) {
     object : ZoomableImage {
       @Composable
-      override fun resolve(): ZoomableImage.ResolvedImage {
+      override fun resolve(): ResolvedImage {
         val context = LocalContext.current
         return remember {
-          // Note to self: this image must not be sub-sampled.
-          // Tests for sub-sampled images are present in :subsamplingimage.
           GenericImage(
             context.assets.open(assetName).use { stream ->
               BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())

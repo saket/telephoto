@@ -18,6 +18,9 @@ buildscript {
     truth: '1.1.3',
     leakCanary: '2.10',
     coil: '2.2.2',
+    turbine: '0.12.1',
+    coroutines: '1.6.4',
+    okio: '3.3.0',
   ]
 
   repositories {

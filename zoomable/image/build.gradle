@@ -4,6 +4,7 @@ plugins {
 
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'app.cash.paparazzi'
 apply plugin: 'com.vanniktech.maven.publish'
 
 android {
@@ -22,6 +23,9 @@ dependencies {
   api project(':subsamplingimage')  // todo: does this still need to be exposed?
 
   api "androidx.compose.foundation:foundation:$versions.composeUi"
+
+  testImplementation "junit:junit:$versions.junit"
+  testImplementation "com.google.truth:truth:$versions.truth"
 
   androidTestImplementation "androidx.test:core-ktx:1.5.0"
   androidTestImplementation "androidx.test:rules:1.5.0"
