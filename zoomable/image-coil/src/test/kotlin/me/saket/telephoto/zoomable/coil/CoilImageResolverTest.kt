@@ -3,6 +3,12 @@ package me.saket.telephoto.zoomable.coil
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import app.cash.molecule.RecompositionClock.Immediate
 import app.cash.molecule.launchMolecule
 import app.cash.paparazzi.Paparazzi
@@ -23,8 +29,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.runTest
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
-import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
-import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.Rule
 import org.junit.Test
@@ -56,7 +60,7 @@ class CoilImageResolverTest {
         ImageRequest.Builder(context)
           .data("foo")
           .build()
-      ).resolve()
+      )
     }
     images.test {
       skipItems(1)
@@ -85,13 +89,13 @@ class CoilImageResolverTest {
         buildImageRequest {
           data("fake_image").placeholderMemoryCacheKey(placeholderKey)
         }
-      ).resolve()
+      )
     }.test {
       // Default value.
-      assertThat(awaitItem()).isEqualTo(GenericImage(EmptyPainter))
+      assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
 
       with(awaitItem()) {
-        check(this is GenericImage)
+        check(this is ZoomableImage.Generic)
         (painter as DrawablePainter).let { painter ->
           (painter.drawable as BitmapDrawable).let { drawable ->
             assertThat(drawable.bitmap.width).isEqualTo(fakeBitmap().width)
@@ -135,16 +139,50 @@ class CoilImageResolverTest {
         ImageRequest.Builder(context)
           .data("ignored")
           .build()
-      ).resolve()
+      )
     }
 
     images.test {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
-        RequiresSubSampling(
+        ZoomableImage.RequiresSubSampling(
           ImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data)
         )
       )
+    }
+  }
+
+  @Test fun `reload image when image request changes`() = runTest {
+    Coil.setImageLoader(buildImageLoader {
+      components {
+        add(buildFakeImageEngine {
+          addInterceptor {
+            SuccessResult(
+              drawable = ColorDrawable(Color.Yellow.toArgb()),
+              request = it.request,
+              dataSource = DataSource.DISK,
+            )
+          }
+        })
+      }
+    })
+
+    var imageUrl by mutableStateOf("image_one")
+    val images = backgroundScope.launchMolecule(clock = Immediate) {
+      ZoomableImage.coil(
+        ImageRequest.Builder(context)
+          .data(imageUrl)
+          .build()
+      )
+    }
+
+    images.test {
+      assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
+      assertThat(awaitItem()).isInstanceOf(ZoomableImage.Generic::class.java)
+
+      imageUrl = "image_two"
+      assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
+      assertThat(awaitItem()).isInstanceOf(ZoomableImage.Generic::class.java)
     }
   }
 

@@ -1,7 +1,6 @@
 package me.saket.telephoto.zoomable
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -11,7 +10,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.google.common.truth.Truth.assertThat
-import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
 import org.junit.Rule
 import org.junit.Test
 
@@ -32,7 +30,9 @@ class ZoomableImagePreviewTest {
       CompositionLocalProvider(LocalInspectionMode provides true) {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
-          image = ZoomableImage.colorPainter(Color.Yellow),
+          image = remember(Color.Yellow) {
+            ZoomableImage.Generic(ColorPainter(Color.Yellow))
+          },
           contentDescription = null,
         )
       }
@@ -41,12 +41,3 @@ class ZoomableImagePreviewTest {
   }
 }
 
-@Composable
-private fun ZoomableImage.Companion.colorPainter(color: Color): ZoomableImage {
-  return remember(color) {
-    object : ZoomableImage {
-      @Composable
-      override fun resolve() = remember { GenericImage(ColorPainter(color)) }
-    }
-  }
-}
