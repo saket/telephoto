@@ -59,9 +59,7 @@ fun ZoomableImage(
         )
       }
       Image(
-        modifier = Modifier
-          .then(commonModifiers)
-          .applyTransformation(state.contentTransformation),
+        modifier = commonModifiers,
         painter = image.painter,
         contentDescription = contentDescription,
         alignment = Alignment.Center,

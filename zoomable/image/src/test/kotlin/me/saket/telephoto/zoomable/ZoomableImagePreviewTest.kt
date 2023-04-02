@@ -40,4 +40,3 @@ class ZoomableImagePreviewTest {
     assertThat(error).isNull()
   }
 }
-

@@ -93,6 +93,9 @@ class ZoomableViewportState internal constructor(
     }
   }
 
+  // todo: doc.
+  var autoApplyTransformations: Boolean by mutableStateOf(true)
+
   /**
    * Single source of truth for your content's aspect ratio. If you're using `Modifier.zoomable()`
    * with `Image()` or other composables that also accept [ContentScale], they should be set to
@@ -101,11 +104,11 @@ class ZoomableViewportState internal constructor(
    * A visual guide of the various scale values can be found
    * [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
    */
-  var contentScale by mutableStateOf<ContentScale>(ContentScale.None)
+  var contentScale: ContentScale by mutableStateOf(ContentScale.None)
 
   // todo: doc
   //  explain how the alignment affects zooming.
-  var contentAlignment by mutableStateOf(Alignment.Center)
+  var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
 
   /**
    * The content's current zoom as a fraction of its min and max allowed zoom factors.
@@ -310,15 +313,6 @@ class ZoomableViewportState internal constructor(
   private operator fun Offset.times(zoom: ContentZoom): Offset = times(zoom.finalZoom())
   private operator fun Size.times(zoom: ContentZoom): Size = times(zoom.finalZoom())
 
-  // todo: doc
-  /** Update content position by using its current zoom and offset values. */
-  internal suspend fun refreshContentPosition() {
-    check(isReadyToInteract)
-    transformableState.transform(MutatePriority.PreventUserInput) {
-      transformBy(/* default values */)
-    }
-  }
-
   /** todo: doc */
   fun setContentLocation(location: ZoomableContentLocation) {
     unscaledContentLocation = location
@@ -334,6 +328,15 @@ class ZoomableViewportState internal constructor(
       shouldZoomIn = false,
       centroidInViewport = Offset.Zero,
     )
+  }
+
+  // todo: doc
+  /** Update content position by using its current zoom and offset values. */
+  internal suspend fun refreshContentPosition() {
+    check(isReadyToInteract)
+    transformableState.transform(MutatePriority.PreventUserInput) {
+      transformBy(/* default values */)
+    }
   }
 
   internal suspend fun handleDoubleTapZoomTo(centroidInViewport: Offset) {

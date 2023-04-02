@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -70,10 +71,29 @@ fun Modifier.zoomable(
     Modifier
   }
 
-  Modifier
+  this
     .let { if (clipToBounds) it.clipToBounds() else it }
     .onGloballyPositioned { state.contentLayoutBounds = it.boundsInParent() }
     .then(zoomableModifier)
+    .then(
+      if (state.autoApplyTransformations) {
+        Modifier.applyTransformation(state.contentTransformation)
+      } else {
+        Modifier
+      }
+    )
+}
+
+private fun Modifier.applyTransformation(transformation: ZoomableContentTransformation): Modifier {
+  // todo: optimize these. use graphicsLayer only when necessary.
+  return graphicsLayer {
+    scaleX = transformation.scale.scaleX
+    scaleY = transformation.scale.scaleY
+    rotationZ = transformation.rotationZ
+    translationX = transformation.offset.x
+    translationY = transformation.offset.y
+    transformOrigin = transformation.transformOrigin
+  }
 }
 
 private object HapticFeedbackConstantsCompat {

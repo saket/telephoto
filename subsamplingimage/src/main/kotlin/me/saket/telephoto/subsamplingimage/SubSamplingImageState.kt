@@ -63,6 +63,9 @@ fun rememberSubSamplingImageState(
     transformation = viewportState.contentTransformation,
   )
 
+  // SubSamplingImage will apply the transformations on its own.
+  viewportState.autoApplyTransformations = false
+
   LaunchedEffect(state.imageSize) {
     val contentLocation = state.imageSize?.let { imageSize ->
       // Assuming that there is no padding between this composable
