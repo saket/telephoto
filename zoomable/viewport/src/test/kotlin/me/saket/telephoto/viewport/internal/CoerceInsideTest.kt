@@ -1,11 +1,11 @@
-package me.saket.telephoto.zoomable.internal
+package me.saket.telephoto.viewport.internal
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.LayoutDirection
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class CoerceInsideTest {
@@ -14,31 +14,31 @@ class CoerceInsideTest {
     val viewport = Rect(Offset.Zero, Size(1000f, 2000f))
     val contentSize = Size(1000f, 500f)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset.Zero, contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset.Zero.copy(x = 100f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset.Zero.copy(y = 100f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = 100f, y = 100f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset.Zero.copy(x = -100f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset.Zero.copy(y = -100f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -100f, y = -100f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
   }
@@ -47,25 +47,25 @@ class CoerceInsideTest {
     val viewport = Rect(Offset.Zero, Size(1000f, 2000f))
     val contentSize = Size(2000f, 1000f)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset.Zero, contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -500f, y = 0f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(x = -500f, y = 0f))
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -1000f, y = 0f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(x = -1000f, y = 0f))
 
     // Shouldn't be able to go left any further.
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -1001f, y = 0f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(x = -1000f, y = 0f))
 
     // Same for the right side.
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = 500f, y = 0f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(x = 0f, y = 0f))
   }
@@ -81,34 +81,34 @@ class CoerceInsideTest {
     val viewport = Rect(Offset.Zero, Size(1000f, 2000f))
     val contentSize = Size(2000f, 3000f)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset.Zero, contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
     // When content is at 0,0 it can't be panned R-to-L any further.
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = 10f, 20f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset.Zero)
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -250f, y = -400f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(x = -250f, y = -400f))
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -750f, y = -600f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(x = -750f, y = -600f))
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -1005f, y = -1007f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(x = -1000f, y = -1000f))
 
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -1000f, y = 0f), contentSize).topLeftCoercedInside(viewport, Alignment.TopCenter)
     ).isEqualTo(Offset(-1000f, 0f))
   }
 
   @Test fun `2d movement when zoomed content is bigger than viewport in width`() {
-    Truth.assertThat(
+    assertThat(
       Rect(Offset(x = -100f, y = 0f), Size(800f, 1300f)).topLeftCoercedInside(
         viewport = Rect(Offset.Zero, Size(640.0f, 1500.0f)),
         alignment = Alignment.TopCenter

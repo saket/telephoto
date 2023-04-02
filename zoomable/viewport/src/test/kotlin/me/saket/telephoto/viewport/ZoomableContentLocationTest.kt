@@ -1,7 +1,8 @@
-package me.saket.telephoto.zoomable
+package me.saket.telephoto.viewport
 
 import androidx.compose.ui.geometry.Size
 import com.google.common.truth.Truth.assertThat
+import me.saket.telephoto.zoomable.ZoomableContentLocation
 import org.junit.Test
 
 class ZoomableContentLocationTest {

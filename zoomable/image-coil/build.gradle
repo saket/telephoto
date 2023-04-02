@@ -1,5 +1,10 @@
+plugins {
+  id("app.cash.molecule") version "0.8.0"
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'app.cash.paparazzi'
 apply plugin: 'com.vanniktech.maven.publish'
 
 android {
@@ -8,7 +13,14 @@ android {
 
 dependencies {
   api project(':zoomable:image')
+  api "io.coil-kt:coil-compose:$versions.coil"
 
-  implementation "io.coil-kt:coil-compose:$versions.coil"
   implementation "com.google.accompanist:accompanist-drawablepainter:$versions.accompanist"
+
+  testImplementation "junit:junit:$versions.junit"
+  testImplementation "com.google.truth:truth:$versions.truth"
+  testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutinesTest"
+  testImplementation "app.cash.turbine:turbine:$versions.turbine"
+  testImplementation "io.coil-kt:coil-test:$versions.coil"
+  testImplementation "com.squareup.okio:okio-fakefilesystem:$versions.okio"
 }

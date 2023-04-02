@@ -19,7 +19,7 @@ buildscript {
     leakCanary: '2.10',
     coil: '2.3.0',
     turbine: '0.12.3',
-    coroutinesTest: '1.6.4',
+    coroutinesTest: '1.7.0-Beta',
     okio: '3.3.0',
     appyx: '1.1.1',
   ]

@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable.coil
 
+import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -27,6 +28,7 @@ import coil.decode.DataSource
 import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.request.ImageResult
 import coil.request.SuccessResult
 import com.google.accompanist.drawablepainter.DrawablePainter
 import me.saket.telephoto.subsamplingimage.ImageSource
@@ -36,6 +38,8 @@ import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.GenericImage
 import me.saket.telephoto.zoomable.ZoomableImage.ResolvedImage.RequiresSubSampling
 import me.saket.telephoto.zoomable.ZoomableViewportState
 import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import coil.size.Size.Companion as CoilSize
 
 /**
@@ -107,10 +111,9 @@ private data class CoilImageResolver(
 ) : ZoomableImage {
 
   @Composable
-  @OptIn(ExperimentalCoilApi::class)
   override fun resolve(): ResolvedImage {
     var resolved: ResolvedImage by remember {
-      mutableStateOf(GenericImage(request.placeholder.asPainter()))
+      mutableStateOf(GenericImage(EmptyPainter))
     }
 
     LaunchedEffect(this) {
@@ -140,41 +143,64 @@ private data class CoilImageResolver(
           )
           .build()
       )
-
-      val requestData = result.request.data
-      resolved = if (result is SuccessResult && result.drawable is BitmapDrawable) {
-        // Prefer reading of images directly from files whenever possible because
-        // that is significantly faster than reading from their input streams.
-        if (result.diskCacheKey != null) {
-          val diskCache = imageLoader.diskCache!!
-          val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
-          RequiresSubSampling(ImageSource.file(cached.data))
-          // todo: use request.bitmapConfig?
-          // todo: read cross-fade.
-
-        } else if (result.dataSource == DataSource.DISK && requestData is Uri) {
-          // Image is present somewhere on the disk, but not in coil's
-          // disk cache. Possibly an asset or an image shared by another app?
-          RequiresSubSampling(ImageSource.contentUri(requestData))
-        } /*else if (result.dataSource == DataSource.DISK && requestData is Int) {  // todo: make this nicer and make it work.
-          RequiresSubSampling(ImageSource.resource(requestData))
-        }*/ else {
-          GenericImage(result.drawable.asPainter())
-        }
-      } else {
-        GenericImage(result.drawable.asPainter())
-      }
+      resolved = result.toResolvedImage()
     }
 
     return resolved
   }
 
+  @OptIn(ExperimentalCoilApi::class)
+  private fun ImageResult.toResolvedImage(): ResolvedImage {
+    val result = this
+    val requestData = result.request.data
+
+    if (result is SuccessResult && result.drawable is BitmapDrawable) {
+      // Prefer reading of images directly from files whenever possible because
+      // that is significantly faster than reading from their input streams.
+      if (result.diskCacheKey != null) {
+        val diskCache = imageLoader.diskCache!!
+        val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
+        return RequiresSubSampling(ImageSource.file(cached.data))
+        // todo: use request.bitmapConfig?
+        // todo: read cross-fade.
+      }
+
+      if (result.dataSource == DataSource.DISK) {
+        // Image is present somewhere on the disk, but not in coil's disk cache.
+        // Possibly an asset, a resource or an image shared by another app?
+        if (requestData is Uri) {
+          return RequiresSubSampling(ImageSource.contentUri(requestData))
+        }
+        if (request.context.isResourceId(requestData)) {  // todo: test this.
+          return RequiresSubSampling(ImageSource.resource(requestData))
+        }
+      }
+    }
+
+    return GenericImage(result.drawable.asPainter())
+  }
+
   private fun Drawable?.asPainter(): Painter {
     return if (this == null) EmptyPainter else DrawablePainter(mutate())
   }
+}
 
-  private object EmptyPainter : Painter() {
-    override val intrinsicSize: Size get() = Size.Unspecified
-    override fun DrawScope.onDraw() = Unit
+internal object EmptyPainter : Painter() {
+  override val intrinsicSize: Size get() = Size.Unspecified
+  override fun DrawScope.onDraw() = Unit
+}
+
+@OptIn(ExperimentalContracts::class)
+private fun Context.isResourceId(data: Any): Boolean {
+  contract {
+    returns(true) implies (data is Int)
   }
+
+  if (data is Int) {
+    runCatching {
+      resources.getResourceEntryName(data)
+      return true
+    }
+  }
+  return false
 }
