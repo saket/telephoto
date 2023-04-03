@@ -24,9 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
-import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -85,7 +83,7 @@ class ZoomableViewportState internal constructor(
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
       ZoomableContentTransformation(
-        layoutSize = contentLayoutSize.takeOrElse { Size.Zero },
+        layoutSize = contentLayoutSize,
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
@@ -104,7 +102,7 @@ class ZoomableViewportState internal constructor(
    * A visual guide of the various scale values can be found
    * [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
    */
-  var contentScale: ContentScale by mutableStateOf(ContentScale.None)
+  var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
 
   // todo: doc
   //  explain how the alignment affects zooming.
@@ -147,11 +145,11 @@ class ZoomableViewportState internal constructor(
   /**
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
    */
-  internal var contentLayoutSize by mutableStateOf(Size.Unspecified)
+  internal var contentLayoutSize by mutableStateOf(Size.Zero)
 
   /** todo: doc. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    contentLayoutSize.isSpecified
+    contentLayoutSize != Size.Zero  // Protects against division by zero errors.
   }
 
   @Suppress("NAME_SHADOWING")

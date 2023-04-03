@@ -110,8 +110,8 @@ class SubSamplingImageTest {
           viewportState = viewportState,
           imageSource = remember { imageSource.source(context) }
         )
-        LaunchedEffect(imageState.isImageDisplayed) {
-          isImageDisplayed = imageState.isImageDisplayed
+        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+          isImageDisplayed = imageState.isImageDisplayedInFullQuality
         }
 
         SubSamplingImage(
@@ -143,8 +143,8 @@ class SubSamplingImageTest {
           viewportState = viewportState,
           imageSource = imageSize.source,
         )
-        LaunchedEffect(imageState.isImageDisplayed) {
-          isImageDisplayed = imageState.isImageDisplayed
+        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+          isImageDisplayed = imageState.isImageDisplayedInFullQuality
         }
 
         SubSamplingImage(
@@ -179,8 +179,8 @@ class SubSamplingImageTest {
           viewportState = viewportState,
           imageSource = ImageSource.asset("pahade.jpg"),
         )
-        LaunchedEffect(imageState.isImageDisplayed) {
-          isImageDisplayed = imageState.isImageDisplayed
+        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+          isImageDisplayed = imageState.isImageDisplayedInFullQuality
         }
         LaunchedEffect(imageState.tiles) {
           tiles = imageState.tiles
@@ -229,8 +229,8 @@ class SubSamplingImageTest {
           viewportState = viewportState,
           imageSource = imageSource,
         )
-        LaunchedEffect(imageState.isImageDisplayed) {
-          isImageDisplayed = imageState.isImageDisplayed
+        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+          isImageDisplayed = imageState.isImageDisplayedInFullQuality
         }
 
         SubSamplingImage(
@@ -331,8 +331,8 @@ class SubSamplingImageTest {
               transformOrigin = TransformOrigin(0f, 0f)
             ),
           )
-          LaunchedEffect(imageState.isImageDisplayed) {
-            isImageDisplayed = imageState.isImageDisplayed
+          LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+            isImageDisplayed = imageState.isImageDisplayedInFullQuality
           }
           LaunchedEffect(imageState.tiles) {
             imageTiles = imageState.tiles
@@ -372,10 +372,14 @@ class SubSamplingImageTest {
           viewportState = viewportState,
           imageSource = ImageSource.asset("smol.jpg"),
         )
-        LaunchedEffect(imageState.isImageDisplayed) {
-          isImageDisplayed = imageState.isImageDisplayed
+        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+          isImageDisplayed = imageState.isImageDisplayedInFullQuality
         }
 
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.Center
+        ) {
         SubSamplingImage(
           modifier = Modifier
             .wrapContentSize()
@@ -384,6 +388,7 @@ class SubSamplingImageTest {
           contentDescription = null,
         )
       }
+    }
     }
 
     rule.waitUntil(2.seconds) { isImageDisplayed }
@@ -395,7 +400,7 @@ class SubSamplingImageTest {
   @Test fun bitmap_tiles_should_be_at_least_half_of_viewport_size(
     @TestParameter size: LayoutSizeParam,
   ) {
-    var isImageDisplayed = false
+    var isImageDisplayedInFullQuality = false
 
     rule.setContent {
       ScreenScaffold {
@@ -406,8 +411,8 @@ class SubSamplingImageTest {
         ).also {
           it.showTileBounds = true
         }
-        LaunchedEffect(imageState.isImageDisplayed) {
-          isImageDisplayed = imageState.isImageDisplayed
+        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+          isImageDisplayedInFullQuality = imageState.isImageDisplayedInFullQuality
         }
 
         SubSamplingImage(
@@ -421,7 +426,7 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil { isImageDisplayedInFullQuality }
     rule.onNodeWithTag("image").performTouchInput {
       pinch(
         start0 = center,
@@ -430,6 +435,7 @@ class SubSamplingImageTest {
         end1 = center + Offset(0f, 30f),
       )
     }
+    rule.waitUntil { isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -214,6 +215,10 @@ class SubSamplingImageState internal constructor() {
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
   internal var showTileBounds = false  // Only used by tests.
+
+  internal val isImageDisplayedInFullQuality: Boolean by derivedStateOf {
+    isImageDisplayed && tiles.fastAll { it.bitmap != null }
+  }
 
   internal fun maybeSendFirstDrawEvent() {
     if (!isImageDisplayed
