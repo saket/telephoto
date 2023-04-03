@@ -24,7 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -38,7 +40,6 @@ import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.ZoomableViewportSavedState
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.maxScale
-import me.saket.telephoto.zoomable.internal.relativeTo
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
@@ -59,8 +60,7 @@ fun rememberZoomableViewportState(
 
   if (state.isReadyToInteract) {
     LaunchedEffect(
-      state.viewportBounds,
-      state.contentLayoutBounds,
+      state.contentLayoutSize,
       state.unscaledContentLocation,
       state.contentAlignment,
       state.contentScale,
@@ -85,7 +85,7 @@ class ZoomableViewportState internal constructor(
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
       ZoomableContentTransformation(
-        viewportBounds = viewportBounds.relativeTo(contentLayoutBounds),
+        layoutSize = contentLayoutSize.takeOrElse { Size.Zero },
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
@@ -147,16 +147,11 @@ class ZoomableViewportState internal constructor(
   /**
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
    */
-  internal var contentLayoutBounds by mutableStateOf(Rect.Zero)
-
-  // todo: replace this with contentLayoutBounds
-  internal val viewportBounds: Rect get() = Rect(Offset.Zero, size = contentLayoutBounds.size)
+  internal var contentLayoutSize by mutableStateOf(Size.Unspecified)
 
   /** todo: doc. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    unscaledContentLocation.isSpecified
-      && contentLayoutBounds != Rect.Zero
-      && viewportBounds != Rect.Zero
+    contentLayoutSize.isSpecified
   }
 
   @Suppress("NAME_SHADOWING")
@@ -170,14 +165,14 @@ class ZoomableViewportState internal constructor(
 
         // todo: this piece of code is duplicated with onGesture.
         val newOffsetWithinBounds = run {
-          val unscaledContentBounds = unscaledContentLocation.boundsIn(
-            parent = contentLayoutBounds,
+          val unscaledContentBounds = unscaledContentLocation.calculateBoundsInside(
+            layoutSize = contentLayoutSize,
             direction = layoutDirection
           )
-          val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * current.zoom)
+          val drawRegionOffset = unscaledContentBounds.topLeft * current.zoom
           newOffset.withZoomAndTranslate(zoom = -current.zoom.finalZoom(), translate = drawRegionOffset) {
             val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * current.zoom)
-            expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
+            expectedDrawRegion.topLeftCoercedInside(contentLayoutSize, contentAlignment, layoutDirection)
           }
         }
 
@@ -198,8 +193,8 @@ class ZoomableViewportState internal constructor(
       }
     },
     onTransformation = { zoomDelta, panDelta, _, centroid ->
-      val unscaledContentBounds = unscaledContentLocation.boundsIn(
-        parent = contentLayoutBounds,
+      val unscaledContentBounds = unscaledContentLocation.calculateBoundsInside(
+        layoutSize = contentLayoutSize,
         direction = layoutDirection
       )
 
@@ -207,7 +202,7 @@ class ZoomableViewportState internal constructor(
       // content within its viewport w.r.t. its content scale.
       val baseZoom = contentScale.computeScaleFactor(
         srcSize = unscaledContentBounds.size,
-        dstSize = contentLayoutBounds.size,
+        dstSize = contentLayoutSize,
       )
 
       val oldZoom = ContentZoom(
@@ -248,7 +243,7 @@ class ZoomableViewportState internal constructor(
         } else {
           val defaultAlignmentOffset = contentAlignment.align(
             size = (unscaledContentBounds.size * baseZoom).roundToIntSize(),
-            space = (viewportBounds.size).roundToIntSize(),
+            space = contentLayoutSize.roundToIntSize(),
             layoutDirection = layoutDirection
           )
           // Take the content's top-left into account because it may not start at 0,0.
@@ -294,13 +289,13 @@ class ZoomableViewportState internal constructor(
           // To ensure that the content always stays within the viewport, the content's actual draw
           // region will need to be calculated. This is important because the content's draw region may
           // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 viewport
-          // will have a lot of empty space on both vertical sides.
-          val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * newZoom)
+          // will have empty spaces on both vertical sides.
+          val drawRegionOffset = unscaledContentBounds.topLeft * newZoom
 
           // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
           newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
             val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom)
-            expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
+            expectedDrawRegion.topLeftCoercedInside(contentLayoutSize, contentAlignment, layoutDirection)
           }
         },
         zoom = newZoom,
@@ -365,17 +360,17 @@ class ZoomableViewportState internal constructor(
     // todo: this piece of code is duplicated with onGesture.
     val targetOffset = run {
       val proposedOffset = (start.offset + centroidInViewport / start.zoom) - (centroidInViewport / targetZoom)
-      val unscaledContentBounds = unscaledContentLocation.boundsIn(
-        parent = contentLayoutBounds,
+      val unscaledContentBounds = unscaledContentLocation.calculateBoundsInside(
+        layoutSize = contentLayoutSize,
         direction = layoutDirection
       )
 
-      val drawRegionOffset = contentLayoutBounds.topLeft + (unscaledContentBounds.topLeft * targetZoom)
+      val drawRegionOffset = unscaledContentBounds.topLeft * targetZoom
 
       // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
       proposedOffset.withZoomAndTranslate(zoom = -targetZoom.finalZoom(), translate = drawRegionOffset) {
         val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * targetZoom)
-        expectedDrawRegion.topLeftCoercedInside(viewportBounds, contentAlignment, layoutDirection)
+        expectedDrawRegion.topLeftCoercedInside(contentLayoutSize, contentAlignment, layoutDirection)
       }
     }
 

@@ -48,5 +48,18 @@ internal fun Rect.discardFractionalValues(): IntRect {
   )
 }
 
+/**
+ * Equivalent to `Rect#overlaps(Rect(Offset.Zero, size))`.
+ *
+ * Copied from [Rect.overlaps]
+ */
+internal fun Rect.overlaps(other: Size): Boolean {
+  if (right <= 0 || other.width <= left)
+    return false
+  if (bottom <= 0 || other.height <= top)
+    return false
+  return true
+}
+
 internal val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)

@@ -651,5 +651,5 @@ private fun ZoomableImage.Companion.nonSubSampledAsset(assetName: String): Zooma
   }
 }
 
-private fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
+internal fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
   ThresholdValidator(threshold = thresholdPercent / 100)

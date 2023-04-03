@@ -42,6 +42,7 @@ import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.maxScale
+import me.saket.telephoto.subsamplingimage.internal.overlaps
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
@@ -73,7 +74,7 @@ fun rememberSubSamplingImageState(
       // because SubSamplingImage draws its content from top-start.
       val imageBoundsInParent = Rect(Offset.Zero, imageSize)
       object : ZoomableContentLocation {
-        override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect = imageBoundsInParent
+        override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect = imageBoundsInParent
       }
     }
     viewportState.setContentLocation(contentLocation ?: ZoomableContentLocation.Unspecified)
@@ -115,11 +116,11 @@ fun rememberSubSamplingImageState(
         .filter { it.minDimension > 0f }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
-        val tileGrids = transformations.distinctUntilChangedBy { it.viewportBounds }.map {
+        val tileGrids = transformations.distinctUntilChangedBy { it.layoutSize }.map {
           BitmapRegionTileGrid.generate(
             canvasSize = canvasSize,
             unscaledImageSize = decoder.imageSize,
-            minTileSize = it.viewportBounds.size / 2f,
+            minTileSize = it.layoutSize / 2f,
           )
         }
 
@@ -133,7 +134,7 @@ fun rememberSubSamplingImageState(
 
           val foregroundTiles = foregroundRegions.fastMapNotNull { tile ->
             val drawBounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset)
-            if (drawBounds.overlaps(transformation.viewportBounds)) {
+            if (drawBounds.overlaps(transformation.layoutSize)) {
               CanvasRegionTile(
                 bounds = drawBounds,
                 bitmap = bitmaps[tile],

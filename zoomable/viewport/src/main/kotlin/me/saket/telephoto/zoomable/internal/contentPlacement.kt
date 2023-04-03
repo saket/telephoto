@@ -3,16 +3,17 @@ package me.saket.telephoto.zoomable.internal
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.LayoutDirection
 import kotlin.LazyThreadSafetyMode.NONE
 
 internal fun Rect.topLeftCoercedInside(
-  viewport: Rect,
+  destination: Size,
   alignment: Alignment,
   layoutDirection: LayoutDirection,
 ): Offset {
   return coerceInside(
-    viewport = viewport,
+    destination = destination,
     targetOffset = topLeft,
     alignment = alignment,
     layoutDirection = layoutDirection
@@ -22,7 +23,7 @@ internal fun Rect.topLeftCoercedInside(
 // todo: doc.
 // TODO: consider inlining this into topLeftCoercedInside().
 internal fun Rect.coerceInside(
-  viewport: Rect,
+  destination: Size,
   targetOffset: Offset,
   alignment: Alignment,
   layoutDirection: LayoutDirection,
@@ -33,23 +34,23 @@ internal fun Rect.coerceInside(
     // The alternative would be to copy Alignment's code to work with floats.
     alignment.align(
       size = size.roundToIntSize(),
-      space = viewport.size.roundToIntSize(),
+      space = destination.roundToIntSize(),
       layoutDirection = layoutDirection,
     )
   }
 
   return targetOffset.copy(
-    x = if (width >= viewport.width) {
+    x = if (width >= destination.width) {
       targetOffset.x.coerceIn(
-        minimumValue = (viewport.width - width).coerceAtMost(0f),
+        minimumValue = (destination.width - width).coerceAtMost(0f),
         maximumValue = 0f
       )
     } else {
       alignedOffset.x.toFloat()
     },
-    y = if (height >= viewport.height) {
+    y = if (height >= destination.height) {
       targetOffset.y.coerceIn(
-        minimumValue = (viewport.height - height).coerceAtMost(0f),
+        minimumValue = (destination.height - height).coerceAtMost(0f),
         maximumValue = 0f
       )
     } else {

@@ -12,17 +12,16 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInParent
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.transformable
 
 // todo: doc.
 /**
- * `Modifier.zoomable()` is a building block for designing zoomable media experiences. It listens to zoom
- * & pan gestures while being agnostic to how the resulting transformations are applied to its content.
+ * A building block for designing zoomable media experiences.
  *
  * Because `Modifier.zoomable()` consumes all gestures including double-taps, [Modifier.clickable] and
  * [Modifier.combinedClickable] will not work on the composable `Modifier.zoomable()` is applied to.
@@ -73,7 +72,7 @@ fun Modifier.zoomable(
 
   this
     .let { if (clipToBounds) it.clipToBounds() else it }
-    .onGloballyPositioned { state.contentLayoutBounds = it.boundsInParent() }
+    .onSizeChanged { state.contentLayoutSize = it.toSize() }
     .then(zoomableModifier)
     .then(
       if (state.autoApplyTransformations) {

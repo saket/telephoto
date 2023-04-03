@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isUnspecified
@@ -49,12 +50,14 @@ interface ZoomableContentLocation {
 
     @Stable
     val Unspecified = object : ZoomableContentLocation {
-      override fun boundsIn(parent: Rect, direction: LayoutDirection) =
-        error("location is unspecified")
+      override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect {
+        return Rect(Offset.Zero, layoutSize)
+      }
     }
   }
 
-  fun boundsIn(parent: Rect, direction: LayoutDirection): Rect
+  // todo: think of a better name that makes it clear this isn't the layout bounds.
+  fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect
 }
 
 @Immutable
@@ -63,15 +66,15 @@ internal data class RelativeContentLocation(
   val scale: ContentScale,
   val alignment: Alignment,
 ) : ZoomableContentLocation {
-  override fun boundsIn(parent: Rect, direction: LayoutDirection): Rect {
+  override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect {
     val scaleFactor = scale.computeScaleFactor(
       srcSize = size,
-      dstSize = parent.size,
+      dstSize = layoutSize,
     )
     val scaledSize = size.times(scaleFactor)
     val alignedOffset = alignment.align(
       size = scaledSize.discardFractionalParts(),
-      space = parent.size.discardFractionalParts(),
+      space = layoutSize.discardFractionalParts(),
       layoutDirection = direction,
     )
     return Rect(
@@ -80,5 +83,3 @@ internal data class RelativeContentLocation(
     )
   }
 }
-
-internal val ZoomableContentLocation.isSpecified get() = this !== ZoomableContentLocation.Unspecified
