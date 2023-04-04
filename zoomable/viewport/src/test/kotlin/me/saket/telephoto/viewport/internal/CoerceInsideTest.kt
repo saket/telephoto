@@ -43,7 +43,7 @@ class CoerceInsideTest {
     ).isEqualTo(Offset.Zero)
   }
 
-  @Test fun `horizontal movement when zoomed content is bigger than viewport in width`() {
+  @Test fun `horizontal movement when zoomed content is bigger than layout size in width`() {
     val layoutSize = Size(1000f, 2000f)
     val contentSize = Size(2000f, 1000f)
 
@@ -70,14 +70,14 @@ class CoerceInsideTest {
     ).isEqualTo(Offset(x = 0f, y = 0f))
   }
 
-  @Test fun `vertical movement when zoomed content is bigger than viewport in height`() {
-    val viewport = Rect(Offset.Zero, Size(1000f, 2000f))
+  @Test fun `vertical movement when zoomed content is bigger than layout size in height`() {
+    val layoutSize = Rect(Offset.Zero, Size(1000f, 2000f))
     val contentSize = Size(1000f, 3000f)
 
     // todo.
   }
 
-  @Test fun `2d movement when zoomed content is bigger than viewport in both width and height`() {
+  @Test fun `2d movement when zoomed content is bigger than layout size in both width and height`() {
     val layoutSize = Size(1000f, 2000f)
     val contentSize = Size(2000f, 3000f)
 
@@ -107,7 +107,7 @@ class CoerceInsideTest {
     ).isEqualTo(Offset(-1000f, 0f))
   }
 
-  @Test fun `2d movement when zoomed content is bigger than viewport in width`() {
+  @Test fun `2d movement when zoomed content is bigger than layout size in width`() {
     assertThat(
       Rect(Offset(x = -100f, y = 0f), Size(800f, 1300f)).topLeftCoercedInside(
         destination = Size(640.0f, 1500.0f),

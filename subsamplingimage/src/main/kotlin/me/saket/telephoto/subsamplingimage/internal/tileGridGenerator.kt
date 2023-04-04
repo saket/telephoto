@@ -64,7 +64,7 @@ internal fun BitmapRegionTileGrid.Companion.generate(
   )
 }
 
-/** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
+/** Calculates a [BitmapSampleSize] for fitting a source image in its layout bounds. */
 internal fun BitmapSampleSize.Companion.calculateFor(
   canvasSize: Size,
   scaledImageSize: Size
@@ -78,7 +78,7 @@ internal fun BitmapSampleSize.Companion.calculateFor(
   return calculateFor(zoom)
 }
 
-/** Calculates a [BitmapSampleSize] for fitting the source image in its viewport's bounds. */
+/** Calculates a [BitmapSampleSize] for fitting a source image in its layout bounds. */
 internal fun BitmapSampleSize.Companion.calculateFor(zoom: Float): BitmapSampleSize {
   if (zoom == 0f) {
     return BitmapSampleSize(1)

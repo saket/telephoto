@@ -31,7 +31,7 @@ import me.saket.telephoto.zoomable.internal.transformable
  * space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  * */
 fun Modifier.zoomable(
-  state: ZoomableViewportState,
+  state: ZoomableState,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
@@ -61,7 +61,7 @@ fun Modifier.zoomable(
           onLongPress = onLongClick,
           onDoubleTap = { centroid ->
             scope.launch {
-              state.handleDoubleTapZoomTo(centroidInViewport = centroid)
+              state.handleDoubleTapZoomTo(centroid = centroid)
             }
           }
         )

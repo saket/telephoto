@@ -8,10 +8,10 @@ import me.saket.telephoto.zoomable.ContentZoom
 import me.saket.telephoto.zoomable.GestureTransformation
 
 @Parcelize
-internal data class ZoomableViewportSavedState(
+internal data class ZoomableSavedState(
   private val offsetX: Float?,
   private val offsetY: Float?,
-  val viewportZoom: Float?,
+  private val userZoom: Float?,
 ) : Parcelable {
 
   fun gestureTransformation(): GestureTransformation? {
@@ -23,16 +23,16 @@ internal data class ZoomableViewportSavedState(
       zoom = ContentZoom(
         // Base multiplier will be replaced by the actual value when this restored state is consumed.
         baseZoom = ScaleFactor(0f, 0f),
-        viewportZoom = viewportZoom ?: return null
+        userZoom = userZoom ?: return null
       ),
       lastCentroid = Offset.Zero
     )
   }
 }
 
-internal fun ZoomableViewportSavedState(transformation: GestureTransformation?) =
-  ZoomableViewportSavedState(
+internal fun ZoomableSavedState(transformation: GestureTransformation?) =
+  ZoomableSavedState(
     offsetX = transformation?.offset?.x,
     offsetY = transformation?.offset?.y,
-    viewportZoom = transformation?.zoom?.viewportZoom
+    userZoom = transformation?.zoom?.userZoom
   )

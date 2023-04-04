@@ -47,26 +47,26 @@ import me.saket.telephoto.subsamplingimage.internal.overlaps
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
-import me.saket.telephoto.zoomable.ZoomableViewportState
+import me.saket.telephoto.zoomable.ZoomableState
 import java.io.IOException
 
 // todo: doc.
 // todo: should this accept a ZoomableContentTransformationProvider?
-//  - the provider can have a setContentLocation function and a viewportSize field.
+//  - the provider can have a setContentLocation function and a layoutSize field.
 @Composable
 fun rememberSubSamplingImageState(
   imageSource: ImageSource,
-  viewportState: ZoomableViewportState,
+  zoomableState: ZoomableState,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
 ): SubSamplingImageState {
   val state = rememberSubSamplingImageState(
     imageSource = imageSource,
     errorReporter = errorReporter,
-    transformation = viewportState.contentTransformation,
+    transformation = zoomableState.contentTransformation,
   )
 
   // SubSamplingImage will apply the transformations on its own.
-  viewportState.autoApplyTransformations = false
+  zoomableState.autoApplyTransformations = false
 
   LaunchedEffect(state.imageSize) {
     val contentLocation = state.imageSize?.let { imageSize ->
@@ -78,7 +78,7 @@ fun rememberSubSamplingImageState(
         override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect = imageBoundsInParent
       }
     }
-    viewportState.setContentLocation(contentLocation ?: ZoomableContentLocation.Unspecified)
+    zoomableState.setContentLocation(contentLocation ?: ZoomableContentLocation.Unspecified)
   }
 
   return state

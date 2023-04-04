@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import me.saket.telephoto.zoomable.GestureTransformation.Companion.ZeroScaleFactor
 import me.saket.telephoto.zoomable.internal.TransformableState
-import me.saket.telephoto.zoomable.internal.ZoomableViewportSavedState
+import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.roundToIntSize
@@ -46,11 +46,11 @@ import kotlin.math.abs
 
 /** todo: doc */
 @Composable
-fun rememberZoomableViewportState(
+fun rememberZoomableState(
   maxZoomFactor: Float = 2f,
-): ZoomableViewportState {
-  val state = rememberSaveable(saver = ZoomableViewportState.Saver) {
-    ZoomableViewportState()
+): ZoomableState {
+  val state = rememberSaveable(saver = ZoomableState.Saver) {
+    ZoomableState()
   }.also {
     it.zoomRange = ZoomRange(maxZoomAsRatioOfSize = maxZoomFactor)
     it.layoutDirection = LocalLayoutDirection.current
@@ -72,12 +72,12 @@ fun rememberZoomableViewportState(
 }
 
 @Stable
-class ZoomableViewportState internal constructor(
+class ZoomableState internal constructor(
   initialTransformation: GestureTransformation? = null
 ) {
 
   /**
-   * Transformations that should be applied to viewport's content.
+   * Transformations that should be applied to [Modifier.zoomable]'s content.
    */
   // todo: doc
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
@@ -196,8 +196,8 @@ class ZoomableViewportState internal constructor(
         direction = layoutDirection
       )
 
-      // This is the minimum scale needed to position the
-      // content within its viewport w.r.t. its content scale.
+      // This is the minimum scale needed to position the content
+      // within its layout bounds w.r.t. its content scale.
       val baseZoom = contentScale.computeScaleFactor(
         srcSize = unscaledContentBounds.size,
         dstSize = contentLayoutSize,
@@ -205,7 +205,7 @@ class ZoomableViewportState internal constructor(
 
       val oldZoom = ContentZoom(
         baseZoom = baseZoom,
-        viewportZoom = gestureTransformation?.zoom?.viewportZoom ?: 1f
+        userZoom = gestureTransformation?.zoom?.userZoom ?: 1f
       )
 
       val isZoomingOut = zoomDelta < 1f
@@ -221,7 +221,7 @@ class ZoomableViewportState internal constructor(
       }
       val newZoom = ContentZoom(
         baseZoom = baseZoom,
-        viewportZoom = oldZoom.viewportZoom * zoomDelta
+        userZoom = oldZoom.userZoom * zoomDelta
       ).let {
         if (isAtMinZoom || isAtMaxZoom) {
           // Apply a hard-stop after a limit.
@@ -284,9 +284,9 @@ class ZoomableViewportState internal constructor(
 
       gestureTransformation = GestureTransformation(
         offset = run {
-          // To ensure that the content always stays within the viewport, the content's actual draw
+          // To ensure that the content always stays within its layout bounds, the content's actual draw
           // region will need to be calculated. This is important because the content's draw region may
-          // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 viewport
+          // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 layout
           // will have empty spaces on both vertical sides.
           val drawRegionOffset = unscaledContentBounds.topLeft * newZoom
 
@@ -319,7 +319,7 @@ class ZoomableViewportState internal constructor(
   suspend fun zoomOut() {
     smoothlyToggleZoom(
       shouldZoomIn = false,
-      centroidInViewport = Offset.Zero,
+      centroid = Offset.Zero,
     )
   }
 
@@ -332,17 +332,17 @@ class ZoomableViewportState internal constructor(
     }
   }
 
-  internal suspend fun handleDoubleTapZoomTo(centroidInViewport: Offset) {
+  internal suspend fun handleDoubleTapZoomTo(centroid: Offset) {
     val start = gestureTransformation ?: return
     smoothlyToggleZoom(
       shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange),
-      centroidInViewport = centroidInViewport
+      centroid = centroid
     )
   }
 
   private suspend fun smoothlyToggleZoom(
     shouldZoomIn: Boolean,
-    centroidInViewport: Offset
+    centroid: Offset
   ) {
     val start = gestureTransformation ?: return
 
@@ -352,12 +352,12 @@ class ZoomableViewportState internal constructor(
       zoomRange.minZoom(baseZoom = start.zoom.baseZoom)
     }
     val targetZoom = start.zoom.copy(
-      viewportZoom = targetZoomFactor / (start.zoom.baseZoom.maxScale)
+      userZoom = targetZoomFactor / (start.zoom.baseZoom.maxScale)
     )
 
     // todo: this piece of code is duplicated with onGesture.
     val targetOffset = run {
-      val proposedOffset = (start.offset + centroidInViewport / start.zoom) - (centroidInViewport / targetZoom)
+      val proposedOffset = (start.offset + centroid / start.zoom) - (centroid / targetZoom)
       val unscaledContentBounds = unscaledContentLocation.calculateBoundsInside(
         layoutSize = contentLayoutSize,
         direction = layoutDirection
@@ -380,9 +380,9 @@ class ZoomableViewportState internal constructor(
         animationSpec = spring(stiffness = StiffnessMediumLow, visibilityThreshold = 0.0001f)
       ) {
         val animatedZoom = start.zoom.copy(
-          viewportZoom = lerp(
-            start = start.zoom.viewportZoom,
-            stop = targetZoom.viewportZoom,
+          userZoom = lerp(
+            start = start.zoom.userZoom,
+            stop = targetZoom.userZoom,
             fraction = value
           )
         )
@@ -398,7 +398,7 @@ class ZoomableViewportState internal constructor(
         gestureTransformation = GestureTransformation(
           offset = (-animatedOffsetForUi) / animatedZoom,
           zoom = animatedZoom,
-          lastCentroid = centroidInViewport,
+          lastCentroid = centroid,
         )
       }
     }
@@ -406,18 +406,18 @@ class ZoomableViewportState internal constructor(
 
   internal fun isZoomOutsideRange(): Boolean {
     val currentZoom = gestureTransformation!!.zoom
-    val viewportZoomWithinBounds = currentZoom.coercedIn(zoomRange).viewportZoom
-    return currentZoom.viewportZoom != viewportZoomWithinBounds
+    val userZoomWithinBounds = currentZoom.coercedIn(zoomRange).userZoom
+    return currentZoom.userZoom != userZoomWithinBounds
   }
 
   internal suspend fun smoothlySettleZoomOnGestureEnd() {
     val start = gestureTransformation!!
-    val viewportZoomWithinBounds = start.zoom.coercedIn(zoomRange).viewportZoom
+    val userZoomWithinBounds = start.zoom.coercedIn(zoomRange).userZoom
 
     transformableState.transform {
-      var previous = start.zoom.viewportZoom
+      var previous = start.zoom.userZoom
       AnimationState(initialValue = previous).animateTo(
-        targetValue = viewportZoomWithinBounds,
+        targetValue = userZoomWithinBounds,
         animationSpec = spring()
       ) {
         transformBy(
@@ -448,9 +448,9 @@ class ZoomableViewportState internal constructor(
   }
 
   companion object {
-    internal val Saver = Saver<ZoomableViewportState, ZoomableViewportSavedState>(
-      save = { ZoomableViewportSavedState(it.gestureTransformation) },
-      restore = { ZoomableViewportState(initialTransformation = it.gestureTransformation()) }
+    internal val Saver = Saver<ZoomableState, ZoomableSavedState>(
+      save = { ZoomableSavedState(it.gestureTransformation) },
+      restore = { ZoomableState(initialTransformation = it.gestureTransformation()) }
     )
   }
 }
@@ -468,12 +468,12 @@ internal data class GestureTransformation(
 
 // todo: doc
 internal data class ContentZoom(
-  val baseZoom: ScaleFactor,
-  val viewportZoom: Float,
+  val baseZoom: ScaleFactor,  // Calculated using ZoomableState's ContentScale.
+  val userZoom: Float,        // Zoom applied using gestures.
 ) {
   // todo: doc
   fun finalZoom(): ScaleFactor {
-    return baseZoom * viewportZoom
+    return baseZoom * userZoom
   }
 
   fun coercedIn(
@@ -481,13 +481,13 @@ internal data class ContentZoom(
     leewayPercentForMinZoom: Float = 0f,
     leewayPercentForMaxZoom: Float = leewayPercentForMinZoom,
   ): ContentZoom {
-    val minViewportZoom = range.minZoom(baseZoom) / baseZoom.maxScale
-    val maxViewportZoom = range.maxZoom(baseZoom) / baseZoom.maxScale
+    val minUserZoom = range.minZoom(baseZoom) / baseZoom.maxScale
+    val maxUserZoom = range.maxZoom(baseZoom) / baseZoom.maxScale
     return copy(
       baseZoom = baseZoom,
-      viewportZoom = viewportZoom.coerceIn(
-        minimumValue = minViewportZoom * (1 - leewayPercentForMinZoom),
-        maximumValue = maxViewportZoom * (1 + leewayPercentForMaxZoom),
+      userZoom = userZoom.coerceIn(
+        minimumValue = minUserZoom * (1 - leewayPercentForMinZoom),
+        maximumValue = maxUserZoom * (1 + leewayPercentForMaxZoom),
       )
     )
   }

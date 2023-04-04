@@ -33,7 +33,7 @@ fun ZoomableImage(
   image: ZoomableImage,
   contentDescription: String?,
   modifier: Modifier = Modifier,
-  state: ZoomableViewportState = rememberZoomableViewportState(),
+  state: ZoomableState = rememberZoomableState(),
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
   alignment: Alignment = Alignment.Center,
@@ -74,7 +74,7 @@ fun ZoomableImage(
         modifier = commonModifiers,
         state = rememberSubSamplingImageState(
           imageSource = image.source,
-          viewportState = state
+          zoomableState = state
         ),
         contentDescription = contentDescription,
         alpha = alpha,

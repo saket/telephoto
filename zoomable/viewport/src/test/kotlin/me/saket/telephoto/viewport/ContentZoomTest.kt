@@ -12,7 +12,7 @@ class ContentZoomTest {
     assertThat(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 1f
+        userZoom = 1f
       ).coercedIn(
         ZoomRange(
           minZoomAsRatioOfBaseZoom = 1f,
@@ -22,7 +22,7 @@ class ContentZoomTest {
     ).isEqualTo(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 1f
+        userZoom = 1f
       )
     )
 
@@ -30,7 +30,7 @@ class ContentZoomTest {
     assertThat(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 0.8f
+        userZoom = 0.8f
       ).coercedIn(
         ZoomRange(
           minZoomAsRatioOfBaseZoom = 1f,
@@ -40,7 +40,7 @@ class ContentZoomTest {
     ).isEqualTo(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 1f
+        userZoom = 1f
       )
     )
 
@@ -48,7 +48,7 @@ class ContentZoomTest {
     assertThat(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 0.8f
+        userZoom = 0.8f
       ).coercedIn(
         range = ZoomRange(
           minZoomAsRatioOfBaseZoom = 1f,
@@ -59,7 +59,7 @@ class ContentZoomTest {
     ).isEqualTo(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 0.8f
+        userZoom = 0.8f
       )
     )
 
@@ -67,7 +67,7 @@ class ContentZoomTest {
     assertThat(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 0.5f
+        userZoom = 0.5f
       ).coercedIn(
         range = ZoomRange(
           minZoomAsRatioOfBaseZoom = 1f,
@@ -78,7 +78,7 @@ class ContentZoomTest {
     ).isEqualTo(
       ContentZoom(
         baseZoom = ScaleFactor(4f, 4f),
-        viewportZoom = 0.8f
+        userZoom = 0.8f
       )
     )
   }

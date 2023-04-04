@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import me.saket.telephoto.sample.R
-import me.saket.telephoto.zoomable.ZoomableViewportState
+import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
+import me.saket.telephoto.zoomable.rememberZoomableState
+import me.saket.telephoto.zoomable.zoomable
 
 @Composable
 fun NormalSizedLocalImage(
-  viewportState: ZoomableViewportState,
+  zoomableState: ZoomableState,
 ) {
   ZoomableAsyncImage(
     modifier = Modifier.fillMaxSize(),
@@ -21,7 +23,7 @@ fun NormalSizedLocalImage(
 
 @Composable
 fun NormalSizedRemoteImage(
-  viewportState: ZoomableViewportState
+  zoomableState: ZoomableState
 ) {
   ZoomableAsyncImage(
     model = "https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1500",
@@ -32,7 +34,7 @@ fun NormalSizedRemoteImage(
 
 @Composable
 fun LargeImage(
-  viewportState: ZoomableViewportState
+  zoomableState: ZoomableState
 ) {
   // TODO: handle errors here.
   // TODO: show loading.

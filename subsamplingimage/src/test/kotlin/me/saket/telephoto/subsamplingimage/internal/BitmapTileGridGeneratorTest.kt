@@ -25,7 +25,7 @@ class BitmapTileGridGeneratorTest {
     }
   }
 
-  @Test fun `image smaller than viewport`() {
+  @Test fun `image smaller than layout bounds`() {
     val tileGrid = BitmapRegionTileGrid.generate(
       canvasSize = Size(
         width = 1080f,
@@ -41,7 +41,7 @@ class BitmapTileGridGeneratorTest {
     assertThat(tileGrid.foreground).isEmpty()
   }
 
-  @Test fun `image larger than viewport`() {
+  @Test fun `image larger than layout bounds`() {
     val imageSize = Size(
       width = 9734f,
       height = 3265f

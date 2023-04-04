@@ -7,7 +7,7 @@ import app.cash.paparazzi.Paparazzi
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
-import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import me.saket.telephoto.zoomable.rememberZoomableState
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,7 +29,7 @@ class SubSamplingImagePreviewTest {
     paparazzi.snapshot {
       CompositionLocalProvider(LocalInspectionMode provides true) {
         val state = rememberSubSamplingImageState(
-          viewportState = rememberZoomableViewportState(),
+          zoomableState = rememberZoomableState(),
           imageSource = source.source
         )
         SubSamplingImage(

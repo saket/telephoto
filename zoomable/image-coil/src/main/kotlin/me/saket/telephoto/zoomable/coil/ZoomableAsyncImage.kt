@@ -31,8 +31,8 @@ import coil.request.SuccessResult
 import com.google.accompanist.drawablepainter.DrawablePainter
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
-import me.saket.telephoto.zoomable.ZoomableViewportState
-import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import me.saket.telephoto.zoomable.ZoomableState
+import me.saket.telephoto.zoomable.rememberZoomableState
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import coil.size.Size.Companion as CoilSize
@@ -61,7 +61,7 @@ fun ZoomableAsyncImage(
   model: Any?,
   contentDescription: String?,
   modifier: Modifier = Modifier,
-  state: ZoomableViewportState = rememberZoomableViewportState(),
+  state: ZoomableState = rememberZoomableState(),
   imageLoader: ImageLoader = LocalContext.current.imageLoader,
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,

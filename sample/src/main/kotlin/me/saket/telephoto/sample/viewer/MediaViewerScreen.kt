@@ -16,13 +16,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
-import me.saket.telephoto.zoomable.rememberZoomableViewportState
+import me.saket.telephoto.zoomable.rememberZoomableState
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -68,18 +66,18 @@ private fun MediaPage(
   modifier: Modifier = Modifier,
   isActivePage: Boolean,
 ) {
-  val viewportState = rememberZoomableViewportState(maxZoomFactor = 2f)
+  val zoomableState = rememberZoomableState(maxZoomFactor = 2f)
   Box(modifier) {
     when (model) {
-      is MediaItem.NormalSizedLocalImage -> NormalSizedLocalImage(viewportState)
-      is MediaItem.NormalSizedRemoteImage -> NormalSizedRemoteImage(viewportState)
-      is MediaItem.SubSampledImage -> LargeImage(viewportState)
+      is MediaItem.NormalSizedLocalImage -> NormalSizedLocalImage(zoomableState)
+      is MediaItem.NormalSizedRemoteImage -> NormalSizedRemoteImage(zoomableState)
+      is MediaItem.SubSampledImage -> LargeImage(zoomableState)
     }
   }
 
   if (!isActivePage) {
     LaunchedEffect(Unit) {
-      viewportState.resetZoomAndPanImmediately()
+      zoomableState.resetZoomAndPanImmediately()
     }
   }
 }

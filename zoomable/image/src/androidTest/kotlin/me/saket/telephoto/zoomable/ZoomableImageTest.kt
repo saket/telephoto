@@ -91,7 +91,7 @@ class ZoomableImageTest {
       ScreenScaffold {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
-          state = rememberZoomableViewportState(maxZoomFactor = 1f),
+          state = rememberZoomableState(maxZoomFactor = 1f),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           contentDescription = null,
         )
@@ -107,17 +107,17 @@ class ZoomableImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState()
+        val zoomableState = rememberZoomableState()
         ZoomableImage(
           modifier = Modifier
             .fillMaxSize()
             .testTag("image"),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = viewportState,
+          state = zoomableState,
           contentDescription = null,
         )
-        LaunchedEffect(viewportState.contentTransformation) {
-          finalScale = viewportState.contentTransformation.scale
+        LaunchedEffect(zoomableState.contentTransformation) {
+          finalScale = zoomableState.contentTransformation.scale
         }
       }
     }
@@ -173,14 +173,14 @@ class ZoomableImageTest {
   ) {
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 1.5f)
+        val zoomableState = rememberZoomableState(maxZoomFactor = 1.5f)
         ZoomableImage(
           modifier = Modifier
             .fillMaxSize()
             .testTag("image"),
           image = ZoomableImage.nonSubSampledAsset(assetName = imageAsset.assetName),
           contentDescription = null,
-          state = viewportState,
+          state = zoomableState,
           contentScale = contentScale.value,
           alignment = alignment.value,
         )
@@ -225,7 +225,7 @@ class ZoomableImageTest {
             .fillMaxSize()
             .fillMaxSize(),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = rememberZoomableViewportState(maxZoomFactor = 1f),
+          state = rememberZoomableState(maxZoomFactor = 1f),
           contentScale = ContentScale.Fit,
           alignment = contentAlignment,
           contentDescription = null,
@@ -248,7 +248,7 @@ class ZoomableImageTest {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = rememberZoomableViewportState(maxZoomFactor = 1f),
+          state = rememberZoomableState(maxZoomFactor = 1f),
           contentScale = contentScale,
           contentDescription = null,
         )
@@ -281,7 +281,7 @@ class ZoomableImageTest {
           ZoomableImage(
             modifier = Modifier.fillMaxSize(),
             image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
-            state = rememberZoomableViewportState(maxZoomFactor = 1f),
+            state = rememberZoomableState(maxZoomFactor = 1f),
             contentScale = ContentScale.Fit,
             contentDescription = null,
           )
@@ -317,7 +317,7 @@ class ZoomableImageTest {
           ZoomableImage(
             modifier = Modifier.fillMaxSize(),
             image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
-            state = rememberZoomableViewportState(maxZoomFactor = 2f),
+            state = rememberZoomableState(maxZoomFactor = 2f),
             contentScale = ContentScale.Fit,
             contentDescription = null,
           )
@@ -359,7 +359,7 @@ class ZoomableImageTest {
           ZoomableImage(
             modifier = Modifier.fillMaxSize(),
             image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
-            state = rememberZoomableViewportState(maxZoomFactor = 1.5f),
+            state = rememberZoomableState(maxZoomFactor = 1.5f),
             contentScale = ContentScale.Fit,
             contentDescription = null,
           )
@@ -394,7 +394,7 @@ class ZoomableImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
+        val zoomableState = rememberZoomableState(maxZoomFactor = maxZoomFactor)
         LaunchedEffect(assetName) {
           println("assetName launched to $assetName")
         }
@@ -404,12 +404,12 @@ class ZoomableImageTest {
             .testTag("image"),
           image = ZoomableImage.nonSubSampledAsset(assetName),
           contentDescription = null,
-          state = viewportState,
+          state = zoomableState,
           contentScale = ContentScale.Fit,
         )
 
-        LaunchedEffect(viewportState.contentTransformation) {
-          imageScale = viewportState.contentTransformation.scale
+        LaunchedEffect(zoomableState.contentTransformation) {
+          imageScale = zoomableState.contentTransformation.scale
         }
       }
     }
@@ -442,24 +442,24 @@ class ZoomableImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = maxZoomFactor)
+        val zoomableState = rememberZoomableState(maxZoomFactor = maxZoomFactor)
         ZoomableImage(
           modifier = Modifier
             .fillMaxSize()
             .testTag("image"),
-          state = viewportState,
+          state = zoomableState,
           contentScale = ContentScale.Fit,
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           contentDescription = null,
         )
 
-        LaunchedEffect(viewportState.contentTransformation) {
-          imageScale = viewportState.contentTransformation.scale
+        LaunchedEffect(zoomableState.contentTransformation) {
+          imageScale = zoomableState.contentTransformation.scale
         }
         LaunchedEffect(resetTriggers) {
           println("Reset received. Resetting…")
           resetTriggers.receive()
-          viewportState.resetZoomAndPanImmediately()
+          zoomableState.resetZoomAndPanImmediately()
         }
       }
     }
@@ -482,19 +482,19 @@ class ZoomableImageTest {
 
     rule.setContent {
       ScreenScaffold {
-        val viewportState = rememberZoomableViewportState(maxZoomFactor = 3f)
+        val zoomableState = rememberZoomableState(maxZoomFactor = 3f)
         ZoomableImage(
           modifier = Modifier
             .fillMaxSize()
             .testTag("image"),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = viewportState,
+          state = zoomableState,
           contentScale = ContentScale.Fit,
           contentDescription = null,
         )
 
-        LaunchedEffect(viewportState.zoomFraction) {
-          zoomFraction = viewportState.zoomFraction
+        LaunchedEffect(zoomableState.zoomFraction) {
+          zoomFraction = zoomableState.zoomFraction
         }
       }
     }
@@ -523,7 +523,7 @@ class ZoomableImageTest {
     var onLongClickCalled = false
 
     rule.setContent {
-      val state = rememberZoomableViewportState(maxZoomFactor = 1f)
+      val state = rememberZoomableState(maxZoomFactor = 1f)
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()

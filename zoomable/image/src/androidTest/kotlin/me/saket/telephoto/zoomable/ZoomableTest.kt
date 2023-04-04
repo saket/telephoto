@@ -43,7 +43,7 @@ class ZoomableTest {
         Modifier
           .padding(16.dp)
           .fillMaxSize()
-          .zoomable(rememberZoomableViewportState())
+          .zoomable(rememberZoomableState())
           .background(
             Brush.linearGradient(
               colors = listOf(
