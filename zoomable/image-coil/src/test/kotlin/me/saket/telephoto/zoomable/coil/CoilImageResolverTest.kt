@@ -1,14 +1,22 @@
+@file:SuppressLint("ComposableNaming")
+
 package me.saket.telephoto.zoomable.coil
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.InternalComposeApi
+import androidx.compose.runtime.ProvidedValue
+import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import app.cash.molecule.RecompositionClock.Immediate
 import app.cash.molecule.launchMolecule
 import app.cash.paparazzi.Paparazzi
@@ -32,6 +40,7 @@ import me.saket.telephoto.zoomable.ZoomableImage
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.Rule
 import org.junit.Test
+import kotlin.time.Duration.Companion.seconds
 import coil.size.Size.Companion as CoilSize
 
 @OptIn(ExperimentalCoilApi::class)
@@ -56,13 +65,15 @@ class CoilImageResolverTest {
     })
 
     val images = backgroundScope.launchMolecule(clock = Immediate) {
-      ZoomableImage.coil(
-        ImageRequest.Builder(context)
-          .data("foo")
-          .build()
-      )
+      ProvideContext {
+        ZoomableImage.coil(
+          ImageRequest.Builder(context)
+            .data("foo")
+            .build(),
+        )
+      }
     }
-    images.test {
+    images.test(1.seconds) {
       skipItems(1)
       cancelAndIgnoreRemainingEvents()
     }
@@ -85,12 +96,14 @@ class CoilImageResolverTest {
     context.imageLoader.memoryCache!![placeholderKey] = MemoryCache.Value(fakeBitmap())
 
     backgroundScope.launchMolecule(clock = Immediate) {
-      ZoomableImage.coil(
-        buildImageRequest {
-          data("fake_image").placeholderMemoryCacheKey(placeholderKey)
-        }
-      )
-    }.test {
+      ProvideContext {
+        ZoomableImage.coil(
+          buildImageRequest {
+            data("fake_image").placeholderMemoryCacheKey(placeholderKey)
+          }
+        )
+      }
+    }.test(1.seconds) {
       // Default value.
       assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
 
@@ -135,14 +148,16 @@ class CoilImageResolverTest {
     })
 
     val images = backgroundScope.launchMolecule(clock = Immediate) {
-      ZoomableImage.coil(
-        ImageRequest.Builder(context)
-          .data("ignored")
-          .build()
-      )
+      ProvideContext {
+        ZoomableImage.coil(
+          ImageRequest.Builder(context)
+            .data("ignored")
+            .build()
+        )
+      }
     }
 
-    images.test {
+    images.test(1.seconds) {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
         ZoomableImage.RequiresSubSampling(
@@ -169,20 +184,29 @@ class CoilImageResolverTest {
 
     var imageUrl by mutableStateOf("image_one")
     val images = backgroundScope.launchMolecule(clock = Immediate) {
-      ZoomableImage.coil(
-        ImageRequest.Builder(context)
-          .data(imageUrl)
-          .build()
-      )
+      ProvideContext {
+        ZoomableImage.coil(
+          ImageRequest.Builder(context)
+            .data(imageUrl)
+            .build()
+        )
+      }
     }
 
-    images.test {
+    images.test(1.seconds) {
       assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
       assertThat(awaitItem()).isInstanceOf(ZoomableImage.Generic::class.java)
 
       imageUrl = "image_two"
       assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
       assertThat(awaitItem()).isInstanceOf(ZoomableImage.Generic::class.java)
+    }
+  }
+
+  @Composable
+  private fun <T> ProvideContext(content: @Composable () -> T): T {
+    return CompositionLocalProviderReturnable(LocalContext provides context) {
+      content()
     }
   }
 
@@ -205,4 +229,16 @@ class CoilImageResolverTest {
   private fun fakeBitmap(): Bitmap {
     return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
   }
+}
+
+@Composable
+@OptIn(InternalComposeApi::class)
+private fun <T> CompositionLocalProviderReturnable(
+  vararg values: ProvidedValue<*>,
+  content: @Composable () -> T
+): T {
+  currentComposer.startProviders(values)
+  val t = content()
+  currentComposer.endProviders()
+  return t
 }
