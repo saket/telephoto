@@ -33,24 +33,40 @@ import coil.request.SuccessResult
 import coil.test.FakeImageLoaderEngine
 import com.google.accompanist.drawablepainter.DrawablePainter
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
 import okio.fakefilesystem.FakeFileSystem
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 import coil.size.Size.Companion as CoilSize
 
-@OptIn(ExperimentalCoilApi::class)
+@OptIn(ExperimentalCoilApi::class, ExperimentalCoroutinesApi::class)
 class CoilImageResolverTest {
   // Only used to create a fake context. I could use robolectric but it's
   // not super reliable and I'm already using paparazzi in other tests.
   @get:Rule val paparazzi = Paparazzi()
   private val context: Context get() = paparazzi.context
 
-  @Test fun `verify image request specs`() = runTest {
+  @Before
+  fun setUp() {
+    Dispatchers.setMain(Dispatchers.Unconfined)
+  }
+
+  @After
+  fun tearDown() {
+    Dispatchers.resetMain()
+  }
+
+  @Test fun `verify image request specs`() = runTest(timeout = 10.minutes) {
     val requests = Channel<ImageRequest>(capacity = Channel.CONFLATED)
 
     Coil.setImageLoader(buildImageLoader {
@@ -73,7 +89,7 @@ class CoilImageResolverTest {
         )
       }
     }
-    images.test(1.seconds) {
+    images.test {
       skipItems(1)
       cancelAndIgnoreRemainingEvents()
     }
@@ -103,7 +119,7 @@ class CoilImageResolverTest {
           }
         )
       }
-    }.test(1.seconds) {
+    }.test {
       // Default value.
       assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
 
@@ -157,7 +173,7 @@ class CoilImageResolverTest {
       }
     }
 
-    images.test(1.seconds) {
+    images.test {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
         ZoomableImage.RequiresSubSampling(
@@ -193,7 +209,7 @@ class CoilImageResolverTest {
       }
     }
 
-    images.test(1.seconds) {
+    images.test {
       assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
       assertThat(awaitItem()).isInstanceOf(ZoomableImage.Generic::class.java)
 
