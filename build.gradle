@@ -39,16 +39,16 @@ buildscript {
   }
 }
 
+plugins {
+  id("com.dropbox.affectedmoduledetector") version "0.2.1"
+}
+
 allprojects {
   repositories {
     google()
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
   }
-}
-
-task clean(type: Delete) {
-  delete rootProject.buildDir
 }
 
 subprojects { subproject ->
@@ -94,4 +94,8 @@ subprojects { subproject ->
       ]
     }
   }
+}
+
+task clean(type: Delete) {
+  delete rootProject.buildDir
 }
