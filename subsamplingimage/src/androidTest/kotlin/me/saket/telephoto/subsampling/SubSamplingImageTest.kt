@@ -1,16 +1,15 @@
 package me.saket.telephoto.subsampling
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -89,6 +88,7 @@ class SubSamplingImageTest {
   fun setup() {
     rule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
+      it.window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
 
       // Remove any space occupied by system bars to reduce differences
       // in from screenshots generated on different devices.
@@ -103,25 +103,23 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
 
     rule.setContent {
-      ScreenScaffold {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
-        val context = LocalContext.current
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = remember { imageSource.source(context) }
-        )
-        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-          isImageDisplayed = imageState.isImageDisplayedInFullQuality
-        }
-
-        SubSamplingImage(
-          modifier = Modifier
-            .fillMaxSize()
-            .zoomable(zoomableState),
-          state = imageState,
-          contentDescription = null,
-        )
+      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val context = LocalContext.current
+      val imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = remember { imageSource.source(context) }
+      )
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
       }
+
+      SubSamplingImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState),
+        state = imageState,
+        contentDescription = null,
+      )
     }
 
     rule.waitUntil(2.seconds) { isImageDisplayed }
@@ -137,24 +135,22 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
 
     rule.setContent {
-      ScreenScaffold {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = imageSize.source,
-        )
-        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-          isImageDisplayed = imageState.isImageDisplayedInFullQuality
-        }
-
-        SubSamplingImage(
-          modifier = layoutSize.modifier
-            .zoomable(zoomableState)
-            .border(1.dp, Color.Yellow),
-          state = imageState,
-          contentDescription = null,
-        )
+      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = imageSize.source,
+      )
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
       }
+
+      SubSamplingImage(
+        modifier = layoutSize.modifier
+          .zoomable(zoomableState)
+          .border(1.dp, Color.Yellow),
+        state = imageState,
+        contentDescription = null,
+      )
     }
 
     rule.waitUntil(2.seconds) { isImageDisplayed }
@@ -171,30 +167,28 @@ class SubSamplingImageTest {
     var tiles: List<CanvasRegionTile> = emptyList()
 
     rule.setContent {
-      ScreenScaffold {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1f).also {
-          it.contentAlignment = alignment.value
-        }
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = ImageSource.asset("pahade.jpg"),
-        )
-        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-          isImageDisplayed = imageState.isImageDisplayedInFullQuality
-        }
-        LaunchedEffect(imageState.tiles) {
-          tiles = imageState.tiles
-        }
-
-        SubSamplingImage(
-          modifier = Modifier
-            .then(size.modifier)
-            .zoomable(zoomableState)
-            .testTag("image"),
-          state = imageState,
-          contentDescription = null,
-        )
+      val zoomableState = rememberZoomableState(maxZoomFactor = 1f).also {
+        it.contentAlignment = alignment.value
       }
+      val imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = ImageSource.asset("pahade.jpg"),
+      )
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
+      }
+      LaunchedEffect(imageState.tiles) {
+        tiles = imageState.tiles
+      }
+
+      SubSamplingImage(
+        modifier = Modifier
+          .then(size.modifier)
+          .zoomable(zoomableState)
+          .testTag("image"),
+        state = imageState,
+        contentDescription = null,
+      )
     }
 
     rule.waitUntil(2.seconds) { isImageDisplayed }
@@ -219,24 +213,22 @@ class SubSamplingImageTest {
     var imageSource by mutableStateOf(ImageSource.asset("smol.jpg"))
 
     rule.setContent {
-      ScreenScaffold {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = imageSource,
-        )
-        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-          isImageDisplayed = imageState.isImageDisplayedInFullQuality
-        }
-
-        SubSamplingImage(
-          modifier = Modifier
-            .fillMaxSize()
-            .zoomable(zoomableState),
-          state = imageState,
-          contentDescription = null,
-        )
+      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = imageSource,
+      )
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
       }
+
+      SubSamplingImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState),
+        state = imageState,
+        contentDescription = null,
+      )
     }
     rule.waitUntil(2.seconds) { isImageDisplayed }
 
@@ -275,28 +267,26 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
 
     rule.setContent {
-      ScreenScaffold {
-        CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
-          val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
-          val imageState = rememberSubSamplingImageState(
-            zoomableState = zoomableState,
-            imageSource = ImageSource.asset("pahade.jpg"),
-          ).also {
-            it.showTileBounds = true
-          }
-          LaunchedEffect(imageState.isImageDisplayed) {
-            isImageDisplayed = imageState.isImageDisplayed
-          }
-
-          SubSamplingImage(
-            modifier = Modifier
-              .fillMaxSize()
-              .zoomable(zoomableState)
-              .testTag("image"),
-            state = imageState,
-            contentDescription = null,
-          )
+      CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
+        val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+        val imageState = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = ImageSource.asset("pahade.jpg"),
+        ).also {
+          it.showTileBounds = true
         }
+        LaunchedEffect(imageState.isImageDisplayed) {
+          isImageDisplayed = imageState.isImageDisplayed
+        }
+
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .zoomable(zoomableState)
+            .testTag("image"),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 
@@ -315,31 +305,29 @@ class SubSamplingImageTest {
     var imageTiles: List<CanvasRegionTile>? = null
 
     rule.setContent {
-      ScreenScaffold {
-        BoxWithConstraints {
-          val imageState = rememberSubSamplingImageState(
-            imageSource = ImageSource.asset("path.jpg"),
-            transformation = ZoomableContentTransformation(
-              layoutSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
-              scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
-              offset = Offset(x = -2749.3718f, y = -1045.4058f),
-              rotationZ = 0f,
-              transformOrigin = TransformOrigin(0f, 0f)
-            ),
-          )
-          LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-            isImageDisplayed = imageState.isImageDisplayedInFullQuality
-          }
-          LaunchedEffect(imageState.tiles) {
-            imageTiles = imageState.tiles
-          }
-
-          SubSamplingImage(
-            modifier = Modifier.fillMaxSize(),
-            state = imageState,
-            contentDescription = null,
-          )
+      BoxWithConstraints {
+        val imageState = rememberSubSamplingImageState(
+          imageSource = ImageSource.asset("path.jpg"),
+          transformation = ZoomableContentTransformation(
+            layoutSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
+            scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
+            offset = Offset(x = -2749.3718f, y = -1045.4058f),
+            rotationZ = 0f,
+            transformOrigin = TransformOrigin(0f, 0f)
+          ),
+        )
+        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+          isImageDisplayed = imageState.isImageDisplayedInFullQuality
         }
+        LaunchedEffect(imageState.tiles) {
+          imageTiles = imageState.tiles
+        }
+
+        SubSamplingImage(
+          modifier = Modifier.fillMaxSize(),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 
@@ -362,28 +350,26 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
 
     rule.setContent {
-      ScreenScaffold {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = ImageSource.asset("smol.jpg"),
-        )
-        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-          isImageDisplayed = imageState.isImageDisplayedInFullQuality
-        }
+      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = ImageSource.asset("smol.jpg"),
+      )
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
+      }
 
-        Box(
-          modifier = Modifier.fillMaxSize(),
-          contentAlignment = Alignment.Center
-        ) {
-          SubSamplingImage(
-            modifier = Modifier
-              .wrapContentSize()
-              .zoomable(zoomableState),
-            state = imageState,
-            contentDescription = null,
-          )
-        }
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
+        SubSamplingImage(
+          modifier = Modifier
+            .wrapContentSize()
+            .zoomable(zoomableState),
+          state = imageState,
+          contentDescription = null,
+        )
       }
     }
 
@@ -399,27 +385,25 @@ class SubSamplingImageTest {
     var isImageDisplayedInFullQuality = false
 
     rule.setContent {
-      ScreenScaffold {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = ImageSource.asset("pahade.jpg"),
-        ).also {
-          it.showTileBounds = true
-        }
-        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-          isImageDisplayedInFullQuality = imageState.isImageDisplayedInFullQuality
-        }
-
-        SubSamplingImage(
-          modifier = Modifier
-            .then(size.modifier)
-            .zoomable(zoomableState)
-            .testTag("image"),
-          state = imageState,
-          contentDescription = null,
-        )
+      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = ImageSource.asset("pahade.jpg"),
+      ).also {
+        it.showTileBounds = true
       }
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayedInFullQuality = imageState.isImageDisplayedInFullQuality
+      }
+
+      SubSamplingImage(
+        modifier = Modifier
+          .then(size.modifier)
+          .zoomable(zoomableState)
+          .testTag("image"),
+        state = imageState,
+        contentDescription = null,
+      )
     }
 
     rule.waitUntil { isImageDisplayedInFullQuality }
@@ -434,17 +418,6 @@ class SubSamplingImageTest {
     rule.waitUntil { isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
-    }
-  }
-
-  @Composable
-  private fun ScreenScaffold(content: @Composable () -> Unit) {
-    Box(
-      Modifier
-        .fillMaxSize()
-        .background(Color(0xFF1C1A25))
-    ) {
-      content()
     }
   }
 
