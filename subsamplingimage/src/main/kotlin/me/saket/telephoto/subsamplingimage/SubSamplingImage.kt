@@ -73,7 +73,6 @@ fun SubSamplingImage(
       .onSizeChanged { state.canvasSize = it.toSize() }
       .alpha(animatedAlpha)
       .drawBehind(onDraw)
-      .drawBehind { state.maybeSendFirstDrawEvent() }
       .wrapContentSizeIfNeeded(state.imageSize)
   )
 }

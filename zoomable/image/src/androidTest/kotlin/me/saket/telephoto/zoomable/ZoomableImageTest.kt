@@ -8,6 +8,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -48,9 +49,12 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
+import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
+import me.saket.telephoto.zoomable.ZoomableImageTest.SubSamplingStatus.SubSamplingDisabled
+import me.saket.telephoto.zoomable.ZoomableImageTest.SubSamplingStatus.SubSamplingEnabled
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -91,7 +95,6 @@ class ZoomableImageTest {
       ScreenScaffold {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
-          state = rememberZoomableState(maxZoomFactor = 1f),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           contentDescription = null,
         )
@@ -113,7 +116,7 @@ class ZoomableImageTest {
             .fillMaxSize()
             .testTag("image"),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = zoomableState,
+          state = rememberZoomableImageState(zoomableState),
           contentDescription = null,
         )
         LaunchedEffect(zoomableState.contentTransformation) {
@@ -166,25 +169,50 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun various_alignments_and_scales(
+  @Test fun various_image_sizes_and_alignments(
     @TestParameter alignment: AlignmentParam,
     @TestParameter contentScale: ContentScaleParam,
     @TestParameter imageAsset: ImageAssetParam,
+    @TestParameter layoutSize: LayoutSizeParam,
+    @TestParameter subSamplingStatus: SubSamplingStatus,
   ) {
+    var isImageDisplayed = false
+
     rule.setContent {
       ScreenScaffold {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1.5f)
+        val state = rememberZoomableImageState()
         ZoomableImage(
           modifier = Modifier
-            .fillMaxSize()
+            .then(layoutSize.modifier)
             .testTag("image"),
-          image = ZoomableImage.nonSubSampledAsset(assetName = imageAsset.assetName),
+          image = when (subSamplingStatus) {
+            SubSamplingEnabled -> ZoomableImage.subSampledAsset(imageAsset.assetName)
+            SubSamplingDisabled -> ZoomableImage.nonSubSampledAsset(imageAsset.assetName)
+          },
           contentDescription = null,
-          state = zoomableState,
+          state = state,
           contentScale = contentScale.value,
           alignment = alignment.value,
         )
+
+        when (subSamplingStatus) {
+          SubSamplingEnabled -> {
+            state.subSamplingState?.let { subSamplingState ->
+              isImageDisplayed = subSamplingState.isImageDisplayedInFullQuality
+            }
+          }
+
+          SubSamplingDisabled -> {
+            isImageDisplayed = state.zoomableState.contentTransformation.scale.let {
+              it.scaleX > 0f && it.scaleY > 0f
+            }
+          }
+        }
       }
+    }
+
+    if (subSamplingStatus == SubSamplingEnabled) {
+      rule.waitUntil { isImageDisplayed }
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName)
@@ -201,6 +229,9 @@ class ZoomableImageTest {
         )
       }
     }
+    if (subSamplingStatus == SubSamplingEnabled) {
+      rule.waitUntil { isImageDisplayed }
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -209,6 +240,9 @@ class ZoomableImageTest {
       performTouchInput {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
+    }
+    if (subSamplingStatus == SubSamplingEnabled) {
+      rule.waitUntil { isImageDisplayed }
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
@@ -225,7 +259,6 @@ class ZoomableImageTest {
             .fillMaxSize()
             .fillMaxSize(),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = rememberZoomableState(maxZoomFactor = 1f),
           contentScale = ContentScale.Fit,
           alignment = contentAlignment,
           contentDescription = null,
@@ -248,7 +281,6 @@ class ZoomableImageTest {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = rememberZoomableState(maxZoomFactor = 1f),
           contentScale = contentScale,
           contentDescription = null,
         )
@@ -281,7 +313,7 @@ class ZoomableImageTest {
           ZoomableImage(
             modifier = Modifier.fillMaxSize(),
             image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
-            state = rememberZoomableState(maxZoomFactor = 1f),
+            state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1f)),
             contentScale = ContentScale.Fit,
             contentDescription = null,
           )
@@ -317,7 +349,7 @@ class ZoomableImageTest {
           ZoomableImage(
             modifier = Modifier.fillMaxSize(),
             image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
-            state = rememberZoomableState(maxZoomFactor = 2f),
+            state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 2f)),
             contentScale = ContentScale.Fit,
             contentDescription = null,
           )
@@ -359,7 +391,7 @@ class ZoomableImageTest {
           ZoomableImage(
             modifier = Modifier.fillMaxSize(),
             image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
-            state = rememberZoomableState(maxZoomFactor = 1.5f),
+            state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1.5f)),
             contentScale = ContentScale.Fit,
             contentDescription = null,
           )
@@ -404,7 +436,7 @@ class ZoomableImageTest {
             .testTag("image"),
           image = ZoomableImage.nonSubSampledAsset(assetName),
           contentDescription = null,
-          state = zoomableState,
+          state = rememberZoomableImageState(zoomableState),
           contentScale = ContentScale.Fit,
         )
 
@@ -447,7 +479,7 @@ class ZoomableImageTest {
           modifier = Modifier
             .fillMaxSize()
             .testTag("image"),
-          state = zoomableState,
+          state = rememberZoomableImageState(zoomableState),
           contentScale = ContentScale.Fit,
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
           contentDescription = null,
@@ -488,7 +520,7 @@ class ZoomableImageTest {
             .fillMaxSize()
             .testTag("image"),
           image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
-          state = zoomableState,
+          state = rememberZoomableImageState(zoomableState),
           contentScale = ContentScale.Fit,
           contentDescription = null,
         )
@@ -530,7 +562,7 @@ class ZoomableImageTest {
           .testTag("zoomable_image"),
         image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
         contentDescription = null,
-        state = state,
+        state = rememberZoomableImageState(state),
         contentScale = ContentScale.Inside,
         onClick = { onClickCalled = true },
         onLongClick = { onLongClickCalled = true }
@@ -567,6 +599,12 @@ class ZoomableImageTest {
   }
 
   @Suppress("unused")
+  enum class LayoutSizeParam(val modifier: Modifier) {
+    FillMaxSize(Modifier.fillMaxSize()),
+    WrapContent(Modifier.wrapContentSize()),
+  }
+
+  @Suppress("unused")
   enum class AlignmentParam(val value: Alignment) {
     TopCenter(Alignment.TopCenter),
     Center(Alignment.Center),
@@ -583,8 +621,14 @@ class ZoomableImageTest {
 
   @Suppress("unused")
   enum class ImageAssetParam(val assetName: String) {
-    SmallerThanViewport("fox_250.jpg"),
-    LargerThanViewport("cat_1920.jpg")
+    SmallerThanLayoutSize("fox_250.jpg"),
+    LargerThanLayoutSize("cat_1920.jpg")
+  }
+
+  @Suppress("unused")
+  enum class SubSamplingStatus(val enabled: Boolean) {
+    SubSamplingEnabled(enabled = true),
+    SubSamplingDisabled(enabled = false),
   }
 
   @Suppress("unused")
@@ -648,6 +692,13 @@ private fun ZoomableImage.Companion.nonSubSampledAsset(assetName: String): Zooma
       BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
     }
     ZoomableImage.Generic(painter)
+  }
+}
+
+@Composable
+private fun ZoomableImage.Companion.subSampledAsset(assetName: String): ZoomableImage {
+  return remember(assetName) {
+    ZoomableImage.RequiresSubSampling(ImageSource.asset(assetName))
   }
 }
 

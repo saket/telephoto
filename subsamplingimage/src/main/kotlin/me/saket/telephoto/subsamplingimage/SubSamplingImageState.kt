@@ -102,7 +102,6 @@ fun rememberSubSamplingImageState(
   // Reset everything when a new image is set.
   LaunchedEffect(state, decoder) {
     state.imageSize = decoder?.imageSize
-    state.isImageDisplayed = false
     state.tiles = emptyList()
   }
 
@@ -210,23 +209,20 @@ private fun createRegionDecoder(
 @Stable
 class SubSamplingImageState internal constructor() {
   var imageSize: Size? by mutableStateOf(null)
-  var isImageDisplayed: Boolean by mutableStateOf(false)
+
+  // todo: doc
+  val isImageDisplayed: Boolean by derivedStateOf {
+    canvasSize.isSpecified // Wait until content size is measured in case of wrap_content.
+      && tiles.isNotEmpty()
+      && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
+  }
+
+  // todo: doc
+  val isImageDisplayedInFullQuality: Boolean by derivedStateOf {
+    isImageDisplayed && tiles.fastAll { it.bitmap != null }
+  }
 
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
   internal var canvasSize by mutableStateOf(Size.Unspecified)
   internal var showTileBounds = false  // Only used by tests.
-
-  internal val isImageDisplayedInFullQuality: Boolean by derivedStateOf {
-    isImageDisplayed && tiles.fastAll { it.bitmap != null }
-  }
-
-  internal fun maybeSendFirstDrawEvent() {
-    if (!isImageDisplayed
-      && canvasSize.minDimension > 0f // Wait until content size is measured in case of wrap_content.
-      && tiles.isNotEmpty()
-      && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
-    ) {
-      isImageDisplayed = true
-    }
-  }
 }

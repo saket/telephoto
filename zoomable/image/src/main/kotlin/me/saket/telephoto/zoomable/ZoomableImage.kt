@@ -33,7 +33,7 @@ fun ZoomableImage(
   image: ZoomableImage,
   contentDescription: String?,
   modifier: Modifier = Modifier,
-  state: ZoomableState = rememberZoomableState(),
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
   alignment: Alignment = Alignment.Center,
@@ -41,25 +41,26 @@ fun ZoomableImage(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
 ) {
-  state.let {
-    it.contentAlignment = alignment
-    it.contentScale = contentScale
+  state.apply {
+    zoomableState.contentAlignment = alignment
+    zoomableState.contentScale = contentScale
   }
 
-  val commonModifiers = modifier.zoomable(
-    state = state,
+  val zoomable = modifier.zoomable(
+    state = state.zoomableState,
     onClick = onClick,
     onLongClick = onLongClick,
   )
   when (image) {
     is ZoomableImage.Generic -> {
+      state.subSamplingState = null
       LaunchedEffect(image.painter.intrinsicSize) {
-        state.setContentLocation(
+        state.zoomableState.setContentLocation(
           ZoomableContentLocation.scaledInsideAndCenterAligned(image.painter.intrinsicSize)
         )
       }
       Image(
-        modifier = commonModifiers,
+        modifier = zoomable,
         painter = image.painter,
         contentDescription = contentDescription,
         alignment = Alignment.Center,
@@ -70,12 +71,14 @@ fun ZoomableImage(
     }
 
     is ZoomableImage.RequiresSubSampling -> {
+      val subSamplingState = rememberSubSamplingImageState(
+        imageSource = image.source,
+        zoomableState = state.zoomableState
+      ).also { state.subSamplingState = it }
+
       SubSamplingImage(
-        modifier = commonModifiers,
-        state = rememberSubSamplingImageState(
-          imageSource = image.source,
-          zoomableState = state
-        ),
+        modifier = zoomable,
+        state = subSamplingState,
         contentDescription = contentDescription,
         alpha = alpha,
         colorFilter = colorFilter,
