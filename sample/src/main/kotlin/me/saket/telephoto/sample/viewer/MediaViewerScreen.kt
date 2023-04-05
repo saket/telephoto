@@ -14,9 +14,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
@@ -25,14 +27,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 fun MediaViewerScreen(key: MediaViewerScreenKey) {
-  Scaffold(
-    topBar = {
-      TopAppBar(
-        title = {},
-        navigationIcon = { CloseNavIconButton() }
-      )
-    }
-  ) { contentPadding ->
+  Scaffold { contentPadding ->
     val pagerState = rememberPagerState(initialPage = key.initialIndex)
     HorizontalPager(
       modifier = Modifier
@@ -49,6 +44,12 @@ fun MediaViewerScreen(key: MediaViewerScreenKey) {
         isActivePage = pagerState.settledPage == pageNum,
       )
     }
+
+    TopAppBar(
+      title = {},
+      navigationIcon = { CloseNavIconButton() },
+      colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+    )
   }
 }
 
