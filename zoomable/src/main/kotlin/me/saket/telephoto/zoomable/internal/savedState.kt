@@ -21,7 +21,7 @@ internal data class ZoomableSavedState(
         y = offsetY ?: return null
       ),
       zoom = ContentZoom(
-        // Base multiplier will be replaced by the actual value when this restored state is consumed.
+        // Base zoom will be replaced by a real value when this restored state is consumed.
         baseZoom = ScaleFactor(0f, 0f),
         userZoom = userZoom ?: return null
       ),

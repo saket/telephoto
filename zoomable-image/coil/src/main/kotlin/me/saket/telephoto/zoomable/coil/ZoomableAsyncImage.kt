@@ -32,7 +32,6 @@ import com.google.accompanist.drawablepainter.DrawablePainter
 import me.saket.telephoto.subsamplingimage.ImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageState
-import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import kotlin.contracts.ExperimentalContracts
@@ -40,7 +39,8 @@ import kotlin.contracts.contract
 import coil.size.Size.Companion as CoilSize
 
 /**
- * An extension of [me.saket.telephoto.zoomable.ZoomableImage] that uses Coil for loading images.
+ * An extension of `ZoomableImage()` that uses Coil for loading images.
+ * Full documentation can be found in [me.saket.telephoto.zoomable.ZoomableImage].
  *
  * Example usages:
  *
@@ -88,7 +88,6 @@ fun ZoomableAsyncImage(
 
 /**
  * A zoomable image that can be loaded by Coil and displayed using [me.saket.telephoto.zoomable.ZoomableImage].
- * It's recommended to use [ZoomableAsyncImage] instead.
  *
  * Example usage:
  *

@@ -13,8 +13,6 @@ android {
 }
 
 dependencies {
-  api project(":zoomable:api")
-
   implementation "androidx.compose.ui:ui-util:$versions.composeUi"
   api "androidx.compose.foundation:foundation:$versions.composeUi"
 

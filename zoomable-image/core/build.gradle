@@ -19,8 +19,8 @@ android {
 }
 
 dependencies {
-  api project(':zoomable:viewport')
-  api project(':subsamplingimage')  // todo: does this still need to be exposed?
+  api project(':zoomable')
+  api project(':zoomable-image:sub-sampling-image')
 
   api "androidx.compose.foundation:foundation:$versions.composeUi"
 
