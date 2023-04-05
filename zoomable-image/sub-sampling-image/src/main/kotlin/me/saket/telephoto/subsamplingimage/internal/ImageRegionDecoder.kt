@@ -1,6 +1,7 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
@@ -12,7 +13,11 @@ internal interface ImageRegionDecoder {
   suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap
 
   fun interface Factory {
-    suspend fun create(context: Context, imageSource: ImageSource): ImageRegionDecoder
+    suspend fun create(
+      context: Context,
+      imageSource: ImageSource,
+      bitmapConfig: Bitmap.Config
+    ): ImageRegionDecoder
   }
 }
 

@@ -165,23 +165,27 @@ private fun ImageResult.toResolvedImage(imageLoader: ImageLoader): ZoomableImage
   if (result is SuccessResult && result.drawable is BitmapDrawable) {
     // Prefer reading of images directly from files whenever possible because
     // that is significantly faster than reading from their input streams.
-    if (result.diskCacheKey != null) {
-      val diskCache = imageLoader.diskCache!!
-      val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
-      return ZoomableImage.RequiresSubSampling(ImageSource.file(cached.data))
-      // todo: use request.bitmapConfig?
-      // todo: read cross-fade.
+    val imageSource = when {
+      result.diskCacheKey != null -> {
+        val diskCache = imageLoader.diskCache!!
+        val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
+        ImageSource.file(cached.data)
+      }
+      result.dataSource == DataSource.DISK -> when {
+        requestData is Uri -> ImageSource.contentUri(requestData)
+        request.context.isResourceId(requestData) -> ImageSource.resource(requestData)
+        else -> null
+      }
+      else -> null
     }
 
-    if (result.dataSource == DataSource.DISK) {
-      // Image is present somewhere on the disk, but not in coil's disk cache.
-      // Possibly an asset, a resource or an image shared by another app?
-      if (requestData is Uri) {
-        return ZoomableImage.RequiresSubSampling(ImageSource.contentUri(requestData))
-      }
-      if (request.context.isResourceId(requestData)) {  // todo: test this.
-        return ZoomableImage.RequiresSubSampling(ImageSource.resource(requestData))
-      }
+    if (imageSource != null) {
+      // todo: read cross-fade.
+      // todo: read color space.
+      return ZoomableImage.RequiresSubSampling(
+        source = imageSource,
+        bitmapConfig = request.bitmapConfig,
+      )
     }
   }
 

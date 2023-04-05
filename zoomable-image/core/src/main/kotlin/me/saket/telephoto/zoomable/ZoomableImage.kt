@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -113,5 +114,8 @@ sealed interface ZoomableImage {
 
   /** Full resolution bitmaps that should be rendered using [SubSamplingImage]. */
   @Immutable
-  data class RequiresSubSampling(val source: ImageSource) : ZoomableImage
+  data class RequiresSubSampling(
+    val source: ImageSource,
+    val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+  ) : ZoomableImage
 }

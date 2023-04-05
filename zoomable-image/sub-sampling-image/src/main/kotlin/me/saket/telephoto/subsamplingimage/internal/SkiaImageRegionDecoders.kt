@@ -25,13 +25,14 @@ internal class SkiaImageRegionDecoders private constructor(
   override val imageSize: Size,
   private val imageSource: ImageSource,
   private val decoders: ResourcePool<BitmapRegionDecoder>,
-  private val dispatcher: CoroutineDispatcher
+  private val dispatcher: CoroutineDispatcher,
+  private val bitmapConfig: Bitmap.Config
 ) : ImageRegionDecoder {
 
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
     val options = BitmapFactory.Options().apply {
       inSampleSize = region.sampleSize.size
-      inPreferredConfig = Bitmap.Config.ARGB_8888
+      inPreferredConfig = bitmapConfig
     }
     val bitmap = decoders.borrow { decoder ->
       withContext(dispatcher) {
@@ -47,7 +48,11 @@ internal class SkiaImageRegionDecoders private constructor(
 
   object Factory : ImageRegionDecoder.Factory {
     @OptIn(ExperimentalCoroutinesApi::class)
-    override suspend fun create(context: Context, imageSource: ImageSource): SkiaImageRegionDecoders {
+    override suspend fun create(
+      context: Context,
+      imageSource: ImageSource,
+      bitmapConfig: Bitmap.Config
+    ): SkiaImageRegionDecoders {
       val decoderCount = max(Runtime.getRuntime().availableProcessors(), 2) // Same number used by Dispatchers.Default.
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
@@ -61,6 +66,7 @@ internal class SkiaImageRegionDecoders private constructor(
         imageSize = decoders.first().size(),
         decoders = ResourcePool(decoders),
         dispatcher = dispatcher,
+        bitmapConfig = bitmapConfig,
       )
     }
   }

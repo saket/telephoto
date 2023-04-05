@@ -97,6 +97,7 @@ class CoilImageResolverTest {
     val request = requests.receive()
     assertThat(request.diskCachePolicy.writeEnabled).isTrue()
     assertThat(request.sizeResolver.size()).isEqualTo(CoilSize.ORIGINAL)
+    assertThat(request.bitmapConfig).isEqualTo(Bitmap.Config.HARDWARE)
   }
 
   @Test fun `start with the placeholder image`() = runTest {
@@ -177,7 +178,8 @@ class CoilImageResolverTest {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
         ZoomableImage.RequiresSubSampling(
-          ImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data)
+          source = ImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
+          bitmapConfig = Bitmap.Config.HARDWARE,
         )
       )
     }
