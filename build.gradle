@@ -39,10 +39,6 @@ buildscript {
   }
 }
 
-plugins {
-  id("com.dropbox.affectedmoduledetector") version "0.2.1"
-}
-
 allprojects {
   repositories {
     google()

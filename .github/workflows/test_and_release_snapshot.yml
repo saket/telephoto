@@ -22,7 +22,7 @@ jobs:
       - uses: gradle/gradle-build-action@v2
 
       - name: Run unit tests
-        run: ./gradlew runAffectedUnitTests
+        run: ./gradlew check
 
       - name: Run paparazzi screenshot tests
         run: ./gradlew verifyPaparazziDebug
@@ -59,7 +59,7 @@ jobs:
           ram-size: 4096M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot-save
           emulator-build: 9475343 # https://dl.google.com/android/repository/repository2-3.xml
-          script: ./gradlew runAffectedAndroidTests --stacktrace
+          script: ./gradlew connectedDebugAndroidTest --stacktrace
 
       - name: (Fail-only) Bundle instrumented test reports
         if: failure()
