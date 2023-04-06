@@ -1,14 +1,14 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.toSize
 
 internal fun BitmapRegionTileGrid.Companion.generate(
-  canvasSize: Size,
-  unscaledImageSize: Size,
-  minTileSize: Size,
+  canvasSize: IntSize,
+  unscaledImageSize: IntSize,
+  minTileSize: IntSize,
 ): BitmapRegionTileGrid {
   val baseSampleSize = BitmapSampleSize.calculateFor(
     canvasSize = canvasSize,
@@ -17,7 +17,7 @@ internal fun BitmapRegionTileGrid.Companion.generate(
 
   val baseTile = BitmapRegionTile(
     sampleSize = baseSampleSize,
-    bounds = Rect(Offset.Zero, unscaledImageSize)
+    bounds = IntRect(IntOffset.Zero, unscaledImageSize)
   )
 
   // Apart from the base layer, tiles are generated for all possible levels of
@@ -27,15 +27,15 @@ internal fun BitmapRegionTileGrid.Companion.generate(
   }.drop(1) // Skip base size.
 
   val foregroundTiles = possibleSampleSizes.associateWith { sampleSize ->
-    val tileSize: IntSize = (unscaledImageSize * (sampleSize.size / baseSampleSize.size.toFloat()))
+    val tileSize: IntSize = (unscaledImageSize.toSize() * (sampleSize.size / baseSampleSize.size.toFloat()))
       .coerceAtLeast(minTileSize.coerceAtMost(unscaledImageSize))
       .discardFractionalParts()
 
     // Number of tiles can be fractional. To avoid this, the fractional
     // part is discarded and the last tiles on each axis are stretched
     // to cover any remaining space of the image.
-    val xTileCount: Int = (unscaledImageSize.width / tileSize.width).toInt()
-    val yTileCount: Int = (unscaledImageSize.height / tileSize.height).toInt()
+    val xTileCount: Int = unscaledImageSize.width / tileSize.width
+    val yTileCount: Int = unscaledImageSize.height / tileSize.height
 
     val tileGrid = ArrayList<BitmapRegionTile>(xTileCount * yTileCount)
     for (x in 0 until xTileCount) {
@@ -44,12 +44,12 @@ internal fun BitmapRegionTileGrid.Companion.generate(
         val isLastYTile = y == yTileCount - 1
         val tile = BitmapRegionTile(
           sampleSize = sampleSize,
-          bounds = Rect(
-            left = x * tileSize.width.toFloat(),
-            top = y * tileSize.height.toFloat(),
+          bounds = IntRect(
+            left = x * tileSize.width,
+            top = y * tileSize.height,
             // Stretch the last tiles to cover any remaining space.
-            right = (if (isLastXTile) unscaledImageSize.width.toInt() else (x + 1) * tileSize.width).toFloat(),
-            bottom = (if (isLastYTile) unscaledImageSize.height.toInt() else (y + 1) * tileSize.height).toFloat()
+            right = if (isLastXTile) unscaledImageSize.width else (x + 1) * tileSize.width,
+            bottom = if (isLastYTile) unscaledImageSize.height else (y + 1) * tileSize.height,
           )
         )
         tileGrid.add(tile)
@@ -66,14 +66,14 @@ internal fun BitmapRegionTileGrid.Companion.generate(
 
 /** Calculates a [BitmapSampleSize] for fitting a source image in its layout bounds. */
 internal fun BitmapSampleSize.Companion.calculateFor(
-  canvasSize: Size,
-  scaledImageSize: Size
+  canvasSize: IntSize,
+  scaledImageSize: IntSize
 ): BitmapSampleSize {
   check(canvasSize.minDimension > 0f) { "Can't calculate a sample size for $canvasSize" }
 
   val zoom = minOf(
-    canvasSize.width / scaledImageSize.width,
-    canvasSize.height / scaledImageSize.height
+    canvasSize.width / scaledImageSize.width.toFloat(),
+    canvasSize.height / scaledImageSize.height.toFloat()
   )
   return calculateFor(zoom)
 }

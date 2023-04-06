@@ -19,10 +19,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
@@ -42,6 +44,7 @@ import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.maxScale
+import me.saket.telephoto.subsamplingimage.internal.minDimension
 import me.saket.telephoto.subsamplingimage.internal.overlaps
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
 import me.saket.telephoto.zoomable.ZoomableContentLocation
@@ -74,7 +77,7 @@ fun rememberSubSamplingImageState(
       // Assuming that there is no padding between this composable
       // and its viewport, the content location is reported as 0,0
       // because SubSamplingImage draws its content from top-start.
-      val imageBoundsInParent = Rect(Offset.Zero, imageSize)
+      val imageBoundsInParent = Rect(Offset.Zero, imageSize.toSize())
       object : ZoomableContentLocation {
         override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect = imageBoundsInParent
       }
@@ -113,14 +116,14 @@ internal fun rememberSubSamplingImageState(
     LaunchedEffect(state, transformations, decoder) {
       val bitmapLoader = BitmapLoader(decoder, scope)
       val canvasSizeChanges = snapshotFlow { state.canvasSize }
-        .filter { it.isSpecified }
+        .filterNotNull()
         .filter { it.minDimension > 0f }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
         val tileGrid = BitmapRegionTileGrid.generate(
           canvasSize = canvasSize,
           unscaledImageSize = decoder.imageSize,
-          minTileSize = canvasSize / 2f,
+          minTileSize = canvasSize / 2,
         )
 
         combine(
@@ -207,11 +210,11 @@ private fun createRegionDecoder(
 // todo: doc.
 @Stable
 class SubSamplingImageState internal constructor() {
-  var imageSize: Size? by mutableStateOf(null)
+  var imageSize: IntSize? by mutableStateOf(null)
 
   // todo: doc
   val isImageDisplayed: Boolean by derivedStateOf {
-    canvasSize.isSpecified // Wait until content size is measured in case of wrap_content.
+    canvasSize != null // Wait until content size is measured in case of wrap_content.
       && tiles.isNotEmpty()
       && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
   }
@@ -222,6 +225,6 @@ class SubSamplingImageState internal constructor() {
   }
 
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
-  internal var canvasSize by mutableStateOf(Size.Unspecified)
+  internal var canvasSize: IntSize? by mutableStateOf(null)
   internal var showTileBounds = false  // Only used by tests.
 }

@@ -70,8 +70,8 @@ fun SubSamplingImage(
   Box(
     modifier
       .contentDescription(contentDescription)
-      .onSizeChanged { state.canvasSize = it.toSize() }
       .alpha(animatedAlpha)
+      .onSizeChanged { state.canvasSize = it }
       .drawBehind(onDraw)
       .wrapContentSizeIfNeeded(state.imageSize)
   )
@@ -91,7 +91,7 @@ private fun Modifier.contentDescription(contentDescription: String?): Modifier {
 
 @Stable
 @Suppress("NAME_SHADOWING")
-private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size?): Modifier {
+private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
   if (imageSize == null) {
     return this
   }
@@ -99,8 +99,8 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: Size?): Modifier {
   return layout { measurable, constraints ->
     val constraints = if (!constraints.hasFixedSize) {
       val scaleToFitImage = minOf(
-        constraints.maxWidth / imageSize.width,
-        constraints.maxHeight / imageSize.height
+        constraints.maxWidth / imageSize.width.toFloat(),
+        constraints.maxHeight / imageSize.height.toFloat()
       ).coerceAtMost(1f)
       constraints.constrain(
         Constraints(

@@ -4,10 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toAndroidRect
+import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,7 +22,7 @@ import kotlin.math.max
  * */
 // todo: doc
 internal class SkiaImageRegionDecoders private constructor(
-  override val imageSize: Size,
+  override val imageSize: IntSize,
   private val imageSource: ImageSource,
   private val decoders: ResourcePool<BitmapRegionDecoder>,
   private val dispatcher: CoroutineDispatcher,
@@ -72,10 +72,10 @@ internal class SkiaImageRegionDecoders private constructor(
   }
 }
 
-private fun BitmapRegionDecoder.size(): Size {
-  return Size(
-    width = width.toFloat(),
-    height = height.toFloat()
+private fun BitmapRegionDecoder.size(): IntSize {
+  return IntSize(
+    width = width,
+    height = height,
   )
 }
 

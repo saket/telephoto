@@ -247,7 +247,7 @@ class SubSamplingImageTest {
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
     // This fake factory will ignore decoding of selected tiles.
     val shouldIgnore: (BitmapRegionTile) -> Boolean = { region ->
-      region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648f
+      region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
     }
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
       val real = SkiaImageRegionDecoders.Factory.create(context, imageSource, bitmapConfig)

@@ -3,10 +3,11 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.colorspace.ColorSpace
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.testIn
 import com.google.common.truth.Truth.assertThat
@@ -110,13 +111,13 @@ class BitmapLoaderTest {
     val random = Random(seed = System.nanoTime())
     return BitmapRegionTile(
       sampleSize = BitmapSampleSize(random.nextInt(from = 0, until = 10) * 2),
-      bounds = Rect(random.nextFloat(), random.nextFloat(), random.nextFloat(), random.nextFloat())
+      bounds = IntRect(random.nextInt(), random.nextInt(), random.nextInt(), random.nextInt())
     )
   }
 }
 
 private class FakeImageRegionDecoder : ImageRegionDecoder {
-  override val imageSize: Size get() = error("unused")
+  override val imageSize: IntSize get() = error("unused")
   val requestedRegions = MutableSharedFlow<BitmapRegionTile>()
   val decodedBitmaps = Channel<ImageBitmap>()
 

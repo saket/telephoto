@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.IntRect
 // todo: doc
 internal data class BitmapRegionTile(
   val sampleSize: BitmapSampleSize,
-  val bounds: Rect,
+  val bounds: IntRect,
 )
 
 // todo: doc
