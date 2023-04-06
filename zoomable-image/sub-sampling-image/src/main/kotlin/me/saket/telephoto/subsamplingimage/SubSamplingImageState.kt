@@ -20,7 +20,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.LayoutDirection
@@ -30,11 +29,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -120,25 +117,22 @@ internal fun rememberSubSamplingImageState(
         .filter { it.minDimension > 0f }
 
       canvasSizeChanges.flatMapLatest { canvasSize ->
-        val tileGrids = transformations.distinctUntilChangedBy { it.layoutSize }.map {
-          BitmapRegionTileGrid.generate(
-            canvasSize = canvasSize,
-            unscaledImageSize = decoder.imageSize,
-            minTileSize = it.layoutSize / 2f,
-          )
-        }
+        val tileGrid = BitmapRegionTileGrid.generate(
+          canvasSize = canvasSize,
+          unscaledImageSize = decoder.imageSize,
+          minTileSize = canvasSize / 2f,
+        )
 
         combine(
-          tileGrids,
           transformations,
           bitmapLoader.cachedBitmaps()
-        ) { tileGrid, transformation, bitmaps ->
+        ) { transformation, bitmaps ->
           val sampleSize = BitmapSampleSize.calculateFor(transformation.scale.maxScale)
           val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
 
           val foregroundTiles = foregroundRegions.fastMapNotNull { tile ->
             val drawBounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset)
-            if (drawBounds.overlaps(transformation.layoutSize)) {
+            if (drawBounds.overlaps(canvasSize)) {
               CanvasRegionTile(
                 bounds = drawBounds,
                 bitmap = bitmaps[tile],

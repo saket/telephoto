@@ -83,7 +83,6 @@ class ZoomableState internal constructor(
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
       ZoomableContentTransformation(
-        layoutSize = contentLayoutSize,
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
