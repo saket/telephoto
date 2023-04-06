@@ -202,7 +202,7 @@ class ZoomableImageTest {
       }
     }
 
-      rule.waitUntil { isImageDisplayed }
+    rule.waitUntil { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName)
     }
@@ -218,7 +218,7 @@ class ZoomableImageTest {
         )
       }
     }
-      rule.waitUntil { isImageDisplayed }
+    rule.waitUntil { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -228,7 +228,7 @@ class ZoomableImageTest {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-      rule.waitUntil { isImageDisplayed }
+    rule.waitUntil { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }

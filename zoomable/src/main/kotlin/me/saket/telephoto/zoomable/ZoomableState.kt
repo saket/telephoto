@@ -139,7 +139,7 @@ class ZoomableState internal constructor(
    * Used only for ensuring that the content does not pan/zoom outside its limits.
    */
   // TODO: verify doc.
-  internal var unscaledContentLocation by mutableStateOf(ZoomableContentLocation.Unspecified)
+  internal var unscaledContentLocation by mutableStateOf(ZoomableContentLocation.sameAsLayoutBounds())
 
   /**
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
@@ -148,7 +148,8 @@ class ZoomableState internal constructor(
 
   /** todo: doc. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    contentLayoutSize != Size.Zero  // Protects against division by zero errors.
+    unscaledContentLocation.isSpecified
+      && contentLayoutSize != Size.Zero  // Protects against division by zero errors.
   }
 
   @Suppress("NAME_SHADOWING")

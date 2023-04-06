@@ -48,16 +48,28 @@ interface ZoomableContentLocation {
       }
     }
 
+    // todo: doc
     @Stable
+    fun sameAsLayoutBounds(): ZoomableContentLocation = LayoutBoundsAsContentLocation()
+
+    // todo: doc
     val Unspecified = object : ZoomableContentLocation {
-      override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect {
-        return Rect(Offset.Zero, layoutSize)
-      }
+      override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
+        throw UnsupportedOperationException()
     }
   }
 
   // todo: think of a better name that makes it clear this isn't the layout bounds.
   fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect
+}
+
+internal val ZoomableContentLocation.isSpecified
+  get() = this !== ZoomableContentLocation.Unspecified
+
+@Immutable
+internal class LayoutBoundsAsContentLocation : ZoomableContentLocation {
+  override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
+    Rect(Offset.Zero, layoutSize)
 }
 
 @Immutable
