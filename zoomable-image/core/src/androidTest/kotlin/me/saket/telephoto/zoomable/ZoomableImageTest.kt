@@ -202,9 +202,7 @@ class ZoomableImageTest {
       }
     }
 
-    if (subSamplingStatus == SubSamplingEnabled) {
       rule.waitUntil { isImageDisplayed }
-    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName)
     }
@@ -220,9 +218,7 @@ class ZoomableImageTest {
         )
       }
     }
-    if (subSamplingStatus == SubSamplingEnabled) {
       rule.waitUntil { isImageDisplayed }
-    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -232,9 +228,7 @@ class ZoomableImageTest {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-    if (subSamplingStatus == SubSamplingEnabled) {
       rule.waitUntil { isImageDisplayed }
-    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
