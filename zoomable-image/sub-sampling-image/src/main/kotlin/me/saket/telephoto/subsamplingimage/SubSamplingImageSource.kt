@@ -10,7 +10,6 @@ import android.os.ParcelFileDescriptor
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import me.saket.telephoto.subsamplingimage.SubSamplingImageSource.Companion.definitelySupportedMimeTypes
 import okio.Path
 
 /**
@@ -22,9 +21,7 @@ import okio.Path
  * * [SubSamplingImageSource.contentUri]
  *
  * Raw input streams aren't supported because reading from files is significantly faster.
- *
- * See [definitelySupportedMimeTypes] for supported image formats.
- * */
+ */
 sealed interface SubSamplingImageSource {
   companion object {
     /**
@@ -79,20 +76,6 @@ sealed interface SubSamplingImageSource {
     fun contentUri(uri: Uri): SubSamplingImageSource {
       val assetPath = uri.asAssetPathOrNull()
       return if (assetPath != null) AssetImageSource(assetPath) else UriImageSource(uri)
-    }
-
-    /**
-     * Formats supported by [BitmapRegionDecoder] at the time of writing this. This should
-     * not be used as the only source of truth as [BitmapRegionDecoder] may add new formats
-     * in future Android versions.
-     */
-    fun definitelySupportedMimeTypes(): Set<String> {
-      return setOf(
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/heic",
-      )
     }
   }
 
