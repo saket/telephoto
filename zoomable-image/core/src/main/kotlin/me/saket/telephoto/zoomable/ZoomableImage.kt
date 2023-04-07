@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 
@@ -115,7 +115,7 @@ sealed interface ZoomableImage {
   /** Full resolution bitmaps that should be rendered using [SubSamplingImage]. */
   @Immutable
   data class RequiresSubSampling(
-    val source: ImageSource,
+    val source: SubSamplingImageSource,
     val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
   ) : ZoomableImage
 }

@@ -10,22 +10,22 @@ import android.os.ParcelFileDescriptor
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import me.saket.telephoto.subsamplingimage.ImageSource.Companion.definitelySupportedMimeTypes
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource.Companion.definitelySupportedMimeTypes
 import okio.Path
 
 /**
  * Image to display with [SubSamplingImage]. Can be one of:
  *
- * * [ImageSource.file]
- * * [ImageSource.asset]
- * * [ImageSource.resource]
- * * [ImageSource.contentUri]
+ * * [SubSamplingImageSource.file]
+ * * [SubSamplingImageSource.asset]
+ * * [SubSamplingImageSource.resource]
+ * * [SubSamplingImageSource.contentUri]
  *
  * Raw input streams aren't supported because reading from files is significantly faster.
  *
  * See [definitelySupportedMimeTypes] for supported image formats.
  * */
-sealed interface ImageSource {
+sealed interface SubSamplingImageSource {
   companion object {
     /**
      * Images stored on the device file system.
@@ -51,7 +51,7 @@ sealed interface ImageSource {
      * The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun file(path: Path): ImageSource = FileImageSource(path)
+    fun file(path: Path): SubSamplingImageSource = FileImageSource(path)
 
     /**
      * Images stored in `src/main/assets`.
@@ -59,7 +59,7 @@ sealed interface ImageSource {
      * The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun asset(name: String): ImageSource = AssetImageSource(AssetPath(name))
+    fun asset(name: String): SubSamplingImageSource = AssetImageSource(AssetPath(name))
 
     /**
      * Images stored in `src/main/res/drawable*` directories.
@@ -67,7 +67,7 @@ sealed interface ImageSource {
      * The returned value is stable and does not need to be remembered.
      * */
     @Stable
-    fun resource(@DrawableRes id: Int): ImageSource = ResourceImageSource(id)
+    fun resource(@DrawableRes id: Int): SubSamplingImageSource = ResourceImageSource(id)
 
     /**
      * Images exposed by content providers. A common use-case for this
@@ -76,7 +76,7 @@ sealed interface ImageSource {
      * The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun contentUri(uri: Uri): ImageSource {
+    fun contentUri(uri: Uri): SubSamplingImageSource {
       val assetPath = uri.asAssetPathOrNull()
       return if (assetPath != null) AssetImageSource(assetPath) else UriImageSource(uri)
     }
@@ -101,7 +101,7 @@ sealed interface ImageSource {
 }
 
 @Immutable
-internal data class FileImageSource(val path: Path) : ImageSource {
+internal data class FileImageSource(val path: Path) : SubSamplingImageSource {
   init {
     check(path.isAbsolute)
   }
@@ -114,7 +114,7 @@ internal data class FileImageSource(val path: Path) : ImageSource {
 }
 
 @Immutable
-internal data class AssetImageSource(private val asset: AssetPath) : ImageSource {
+internal data class AssetImageSource(private val asset: AssetPath) : SubSamplingImageSource {
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return context.assets.open(asset.path, AssetManager.ACCESS_RANDOM).use { stream ->
       if (BuildConfig.DEBUG && stream !is AssetManager.AssetInputStream) {
@@ -126,7 +126,7 @@ internal data class AssetImageSource(private val asset: AssetPath) : ImageSource
 }
 
 @Immutable
-internal data class ResourceImageSource(@DrawableRes val id: Int) : ImageSource {
+internal data class ResourceImageSource(@DrawableRes val id: Int) : SubSamplingImageSource {
   @SuppressLint("ResourceType")
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return context.resources.openRawResource(id).use { stream ->
@@ -136,7 +136,7 @@ internal data class ResourceImageSource(@DrawableRes val id: Int) : ImageSource 
 }
 
 @Immutable
-internal data class UriImageSource(val uri: Uri) : ImageSource {
+internal data class UriImageSource(val uri: Uri) : SubSamplingImageSource {
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return context.contentResolver.openInputStream(uri)
       ?.use { stream -> BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!! }

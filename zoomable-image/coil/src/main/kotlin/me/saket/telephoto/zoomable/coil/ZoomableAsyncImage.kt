@@ -29,7 +29,7 @@ import coil.request.ImageRequest
 import coil.request.ImageResult
 import coil.request.SuccessResult
 import com.google.accompanist.drawablepainter.DrawablePainter
-import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableImageState
@@ -169,11 +169,11 @@ private fun ImageResult.toResolvedImage(imageLoader: ImageLoader): ZoomableImage
       result.diskCacheKey != null -> {
         val diskCache = imageLoader.diskCache!!
         val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
-        ImageSource.file(cached.data)
+        SubSamplingImageSource.file(cached.data)
       }
       result.dataSource == DataSource.DISK -> when {
-        requestData is Uri -> ImageSource.contentUri(requestData)
-        request.context.isResourceId(requestData) -> ImageSource.resource(requestData)
+        requestData is Uri -> SubSamplingImageSource.contentUri(requestData)
+        request.context.isResourceId(requestData) -> SubSamplingImageSource.resource(requestData)
         else -> null
       }
       else -> null

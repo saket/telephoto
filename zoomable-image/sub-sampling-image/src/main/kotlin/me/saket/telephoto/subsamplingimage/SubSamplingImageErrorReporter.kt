@@ -5,11 +5,11 @@ import java.io.IOException
 // todo: docs.
 interface SubSamplingImageErrorReporter {
   // todo: docs.
-  fun onImageLoadingFailed(e: IOException, imageSource: ImageSource) = Unit
+  fun onImageLoadingFailed(e: IOException, imageSource: SubSamplingImageSource) = Unit
 
   companion object {
     val NoOpInRelease = object : SubSamplingImageErrorReporter {
-      override fun onImageLoadingFailed(e: IOException, imageSource: ImageSource) {
+      override fun onImageLoadingFailed(e: IOException, imageSource: SubSamplingImageSource) {
         if (BuildConfig.DEBUG) {
           // I'm not entirely convinced with this, but I think failure
           // in loading of bitmaps from local storage is not a good sign

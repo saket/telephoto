@@ -41,7 +41,7 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
-import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -171,7 +171,7 @@ class SubSamplingImageTest {
       }
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
-        imageSource = ImageSource.asset("pahade.jpg"),
+        imageSource = SubSamplingImageSource.asset("pahade.jpg"),
       )
       LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
         isImageDisplayed = imageState.isImageDisplayedInFullQuality
@@ -209,7 +209,7 @@ class SubSamplingImageTest {
 
   @Test fun updating_of_image_works() {
     var isImageDisplayed = false
-    var imageSource by mutableStateOf(ImageSource.asset("smol.jpg"))
+    var imageSource by mutableStateOf(SubSamplingImageSource.asset("smol.jpg"))
 
     rule.setContent {
       val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
@@ -231,7 +231,7 @@ class SubSamplingImageTest {
     }
     rule.waitUntil(2.seconds) { isImageDisplayed }
 
-    imageSource = ImageSource.asset("path.jpg")
+    imageSource = SubSamplingImageSource.asset("path.jpg")
 
     rule.waitUntil { !isImageDisplayed }
     rule.waitUntil { isImageDisplayed }
@@ -270,7 +270,7 @@ class SubSamplingImageTest {
         val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
         val imageState = rememberSubSamplingImageState(
           zoomableState = zoomableState,
-          imageSource = ImageSource.asset("pahade.jpg"),
+          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
         ).also {
           it.showTileBounds = true
         }
@@ -306,7 +306,7 @@ class SubSamplingImageTest {
     rule.setContent {
       BoxWithConstraints {
         val imageState = rememberSubSamplingImageState(
-          imageSource = ImageSource.asset("path.jpg"),
+          imageSource = SubSamplingImageSource.asset("path.jpg"),
           transformation = ZoomableContentTransformation(
             scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
             offset = Offset(x = -2749.3718f, y = -1045.4058f),
@@ -351,7 +351,7 @@ class SubSamplingImageTest {
       val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
-        imageSource = ImageSource.asset("smol.jpg"),
+        imageSource = SubSamplingImageSource.asset("smol.jpg"),
       )
       LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
         isImageDisplayed = imageState.isImageDisplayedInFullQuality
@@ -386,7 +386,7 @@ class SubSamplingImageTest {
       val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
-        imageSource = ImageSource.asset("pahade.jpg"),
+        imageSource = SubSamplingImageSource.asset("pahade.jpg"),
       ).also {
         it.showTileBounds = true
       }
@@ -433,18 +433,18 @@ class SubSamplingImageTest {
   }
 
   @Suppress("unused")
-  enum class ImageSourceParam(val source: Context.() -> ImageSource) {
-    Asset({ ImageSource.asset("pahade.jpg") }),
-    Resource({ ImageSource.resource(R.drawable.cat_1920) }),
-    ContentUri({ ImageSource.contentUri(Uri.parse("""android.resource://${packageName}/${R.drawable.cat_1920}""")) }),
-    File({ ImageSource.file(createFileFromAsset("pahade.jpg")) })
+  enum class ImageSourceParam(val source: Context.() -> SubSamplingImageSource) {
+    Asset({ SubSamplingImageSource.asset("pahade.jpg") }),
+    Resource({ SubSamplingImageSource.resource(R.drawable.cat_1920) }),
+    ContentUri({ SubSamplingImageSource.contentUri(Uri.parse("""android.resource://${packageName}/${R.drawable.cat_1920}""")) }),
+    File({ SubSamplingImageSource.file(createFileFromAsset("pahade.jpg")) })
   }
 
   @Suppress("unused")
-  enum class ImageSizeParam(val source: ImageSource) {
-    LargeLandscapeImage(ImageSource.asset("pahade.jpg")),
-    LargePortraitImage(ImageSource.resource(R.drawable.cat_1920)),
-    SmallSquareImage(ImageSource.asset("smol.jpg")),
+  enum class ImageSizeParam(val source: SubSamplingImageSource) {
+    LargeLandscapeImage(SubSamplingImageSource.asset("pahade.jpg")),
+    LargePortraitImage(SubSamplingImageSource.resource(R.drawable.cat_1920)),
+    SmallSquareImage(SubSamplingImageSource.asset("smol.jpg")),
   }
 }
 

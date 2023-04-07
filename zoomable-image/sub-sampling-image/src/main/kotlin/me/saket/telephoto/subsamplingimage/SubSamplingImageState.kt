@@ -57,7 +57,7 @@ import java.io.IOException
 //  - the provider can have a setContentLocation function and a layoutSize field.
 @Composable
 fun rememberSubSamplingImageState(
-  imageSource: ImageSource,
+  imageSource: SubSamplingImageSource,
   zoomableState: ZoomableState,
   bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
@@ -90,7 +90,7 @@ fun rememberSubSamplingImageState(
 
 @Composable
 internal fun rememberSubSamplingImageState(
-  imageSource: ImageSource,
+  imageSource: SubSamplingImageSource,
   transformation: ZoomableContentTransformation,
   bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
@@ -183,7 +183,7 @@ internal fun rememberSubSamplingImageState(
 
 @Composable
 private fun createRegionDecoder(
-  imageSource: ImageSource,
+  imageSource: SubSamplingImageSource,
   bitmapConfig: Bitmap.Config,
   errorReporter: SubSamplingImageErrorReporter
 ): State<ImageRegionDecoder?> {

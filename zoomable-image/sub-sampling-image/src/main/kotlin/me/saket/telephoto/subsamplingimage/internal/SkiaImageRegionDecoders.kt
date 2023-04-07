@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
-import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import kotlin.math.max
 
 /**
@@ -23,7 +23,7 @@ import kotlin.math.max
 // todo: doc
 internal class SkiaImageRegionDecoders private constructor(
   override val imageSize: IntSize,
-  private val imageSource: ImageSource,
+  private val imageSource: SubSamplingImageSource,
   private val decoders: ResourcePool<BitmapRegionDecoder>,
   private val dispatcher: CoroutineDispatcher,
   private val bitmapConfig: Bitmap.Config
@@ -50,7 +50,7 @@ internal class SkiaImageRegionDecoders private constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun create(
       context: Context,
-      imageSource: ImageSource,
+      imageSource: SubSamplingImageSource,
       bitmapConfig: Bitmap.Config
     ): SkiaImageRegionDecoders {
       val decoderCount = max(Runtime.getRuntime().availableProcessors(), 2) // Same number used by Dispatchers.Default.

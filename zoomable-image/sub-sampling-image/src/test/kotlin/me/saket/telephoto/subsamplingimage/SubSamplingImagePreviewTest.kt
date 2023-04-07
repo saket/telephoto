@@ -43,8 +43,8 @@ class SubSamplingImagePreviewTest {
   }
 
   @Suppress("unused")
-  enum class ImageSourceParam(val source: ImageSource) {
-    NonExistentImage(ImageSource.asset("asset_that_does_not_exist.jpg")),
-    ExistentImage(ImageSource.asset("pixel.jpg")),
+  enum class ImageSourceParam(val source: SubSamplingImageSource) {
+    NonExistentImage(SubSamplingImageSource.asset("asset_that_does_not_exist.jpg")),
+    ExistentImage(SubSamplingImageSource.asset("pixel.jpg")),
   }
 }

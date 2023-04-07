@@ -39,7 +39,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.After
@@ -178,7 +178,7 @@ class CoilImageResolverTest {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
         ZoomableImage.RequiresSubSampling(
-          source = ImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
+          source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
           bitmapConfig = Bitmap.Config.HARDWARE,
         )
       )

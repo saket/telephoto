@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntSize
-import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 
 // todo: doc.
 internal interface ImageRegionDecoder {
@@ -15,7 +15,7 @@ internal interface ImageRegionDecoder {
   fun interface Factory {
     suspend fun create(
       context: Context,
-      imageSource: ImageSource,
+      imageSource: SubSamplingImageSource,
       bitmapConfig: Bitmap.Config
     ): ImageRegionDecoder
   }

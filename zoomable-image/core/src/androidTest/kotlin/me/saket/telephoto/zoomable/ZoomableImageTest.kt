@@ -47,7 +47,7 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
-import me.saket.telephoto.subsamplingimage.ImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
@@ -656,7 +656,7 @@ private fun ZoomableImage.Companion.nonSubSampledAsset(assetName: String): Zooma
 @Composable
 private fun ZoomableImage.Companion.subSampledAsset(assetName: String): ZoomableImage {
   return remember(assetName) {
-    ZoomableImage.RequiresSubSampling(ImageSource.asset(assetName))
+    ZoomableImage.RequiresSubSampling(SubSamplingImageSource.asset(assetName))
   }
 }
 
