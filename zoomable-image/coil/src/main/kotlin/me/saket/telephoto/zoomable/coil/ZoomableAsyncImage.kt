@@ -39,8 +39,8 @@ import kotlin.contracts.contract
 import coil.size.Size.Companion as CoilSize
 
 /**
- * An extension of `ZoomableImage()` that uses Coil for loading images.
- * Full documentation can be found in [me.saket.telephoto.zoomable.ZoomableImage].
+ * A zoomable image that can be loaded by Coil and displayed using
+ * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage].
  *
  * Example usages:
  *
@@ -57,6 +57,9 @@ import coil.size.Size.Companion as CoilSize
  *   contentDescription = …
  * )
  * ```
+ *
+ * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage]
+ * for full documentation.
  */
 @Composable
 fun ZoomableAsyncImage(
@@ -87,7 +90,8 @@ fun ZoomableAsyncImage(
 }
 
 /**
- * A zoomable image that can be loaded by Coil and displayed using [me.saket.telephoto.zoomable.ZoomableImage].
+ * A zoomable image that can be loaded by Coil and displayed using
+ * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage].
  *
  * Example usage:
  *
@@ -106,6 +110,9 @@ fun ZoomableAsyncImage(
  *   contentDescription = …
  * )
  * ```
+ *
+ * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage]
+ * for full documentation.
  */
 @Composable
 fun ZoomableImage.Companion.coil(

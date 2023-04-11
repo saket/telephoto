@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import me.saket.telephoto.zoomable.GestureTransformation.Companion.ZeroScaleFactor
+import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.div
@@ -139,7 +140,7 @@ class ZoomableState internal constructor(
    * Used only for ensuring that the content does not pan/zoom outside its limits.
    */
   // TODO: verify doc.
-  internal var unscaledContentLocation by mutableStateOf(ZoomableContentLocation.sameAsLayoutBounds())
+  internal var unscaledContentLocation: ZoomableContentLocation by mutableStateOf(SameAsLayoutBounds)
 
   /**
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.

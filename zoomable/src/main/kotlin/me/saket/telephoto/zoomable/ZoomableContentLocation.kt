@@ -48,15 +48,33 @@ interface ZoomableContentLocation {
       }
     }
 
-    // todo: doc
     @Stable
-    fun sameAsLayoutBounds(): ZoomableContentLocation = LayoutBoundsAsContentLocation()
-
-    // todo: doc
-    val Unspecified = object : ZoomableContentLocation {
-      override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
-        throw UnsupportedOperationException()
+    fun unscaledAndTopStartAligned(size: Size?): ZoomableContentLocation {
+      return when {
+        size == null || size.isUnspecified -> Unspecified
+        else -> RelativeContentLocation(
+          size = size,
+          scale = ContentScale.None,
+          alignment = Alignment.TopStart,
+        )
+      }
     }
+  }
+
+  // todo: doc
+  object Unspecified : ZoomableContentLocation {
+    override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
+      throw UnsupportedOperationException()
+
+    override fun toString(): String {
+      return this::class.simpleName!!
+    }
+  }
+
+  // todo: doc
+  object SameAsLayoutBounds : ZoomableContentLocation {
+    override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
+      Rect(Offset.Zero, layoutSize)
   }
 
   // todo: think of a better name that makes it clear this isn't the layout bounds.
@@ -64,14 +82,12 @@ interface ZoomableContentLocation {
 }
 
 internal val ZoomableContentLocation.isSpecified
-  get() = this !== ZoomableContentLocation.Unspecified
+  get() = this !is ZoomableContentLocation.Unspecified
 
-@Immutable
-internal class LayoutBoundsAsContentLocation : ZoomableContentLocation {
-  override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
-    Rect(Offset.Zero, layoutSize)
-}
-
+/**
+ * This isn't public because only a few combinations of [ContentScale]
+ * and [Alignment] work perfectly for all kinds of content.
+ */
 @Immutable
 internal data class RelativeContentLocation(
   val size: Size,

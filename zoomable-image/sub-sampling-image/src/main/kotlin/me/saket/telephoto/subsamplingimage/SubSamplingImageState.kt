@@ -16,13 +16,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
@@ -73,16 +69,9 @@ fun rememberSubSamplingImageState(
   zoomableState.autoApplyTransformations = false
 
   LaunchedEffect(state.imageSize) {
-    val contentLocation = state.imageSize?.let { imageSize ->
-      // Assuming that there is no padding between this composable
-      // and its viewport, the content location is reported as 0,0
-      // because SubSamplingImage draws its content from top-start.
-      val imageBoundsInParent = Rect(Offset.Zero, imageSize.toSize())
-      object : ZoomableContentLocation {
-        override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect = imageBoundsInParent
-      }
-    }
-    zoomableState.setContentLocation(contentLocation ?: ZoomableContentLocation.Unspecified)
+    zoomableState.setContentLocation(
+      ZoomableContentLocation.unscaledAndTopStartAligned(state.imageSize?.toSize())
+    )
   }
 
   return state
