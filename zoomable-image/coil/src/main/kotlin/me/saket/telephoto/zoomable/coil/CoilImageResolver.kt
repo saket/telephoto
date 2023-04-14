@@ -8,7 +8,7 @@ import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -17,9 +17,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.ImageResult
 import coil.request.SuccessResult
-import coil.size.Size
 import coil.transition.CrossfadeTransition
-import coil.transition.TransitionTarget
 import com.google.accompanist.drawablepainter.DrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +30,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import coil.size.Size as CoilSize
 
 internal class CoilImageResolver(
   private val request: ImageRequest,
@@ -41,7 +40,7 @@ internal class CoilImageResolver(
   var resolved by mutableStateOf(
     ZoomableImageSource(
       source = null,
-      placeholder = EmptyPainter,
+      placeholder = null,
       bitmapConfig = request.bitmapConfig,
     )
   )
@@ -52,7 +51,7 @@ internal class CoilImageResolver(
         // Prevent coil from spending any extra effort in downsizing images.
         // For bitmaps, the result will be discarded anyway in favor of their raw files.
         // For animated images, we still want them in full quality so that they can be zoomed.
-        .size(Size.ORIGINAL)
+        .size(CoilSize.ORIGINAL)
         // There's no easy way to be certain whether an image will require sub-sampling in
         // advance so assume it'll be needed and that the image will be read from the disk.
         .diskCachePolicy(
@@ -68,7 +67,7 @@ internal class CoilImageResolver(
         // Placeholder images should be small in size so sub-sampling isn't needed here.
         .target(
           onStart = {
-            resolved = resolved.copy(placeholder = it.asPainter())
+            resolved = resolved.copy(placeholder = it?.asPainter())
           }
         )
         .build()
@@ -83,7 +82,7 @@ internal class CoilImageResolver(
       )
     } else {
       resolved.copy(
-        placeholder = result.drawable.asPainter(),
+        placeholder = result.drawable?.asPainter(),
         source = null,
       )
     }
@@ -120,27 +119,24 @@ internal class CoilImageResolver(
   }
 
   private fun ImageResult.crossfadeDuration(): Duration {
-    val fakeTransitionTarget = object : TransitionTarget {
-      override val view get() = throw UnsupportedOperationException()
-      override val drawable: Drawable? get() = null
+    val transitionFactory = request.transitionFactory
+    return if (this is SuccessResult && transitionFactory is CrossfadeTransition.Factory) {
+      // I'm intentionally not using factory.create() because it optimizes crossfade duration
+      // to zero if the image was fetched from memory cache. SubSamplingImage will only read
+      // bitmaps from the disk so there will always be some delay in showing the image.
+      transitionFactory.durationMillis.milliseconds
+    } else {
+      Duration.ZERO
     }
-
-    val transition = request.transitionFactory.create(fakeTransitionTarget, this)
-    return if (transition is CrossfadeTransition) transition.durationMillis.milliseconds else Duration.ZERO
   }
 }
 
-private fun Drawable?.asPainter(): Painter {
-  return if (this == null) EmptyPainter else DrawablePainter(mutate())
+private fun Drawable.asPainter(): Painter {
+  return DrawablePainter(mutate())
 }
 
-internal object EmptyPainter : Painter() {
-  override val intrinsicSize: androidx.compose.ui.geometry.Size get() = androidx.compose.ui.geometry.Size.Unspecified
-  override fun DrawScope.onDraw() = Unit
-}
-
-private val Drawable.intrinsicSize: androidx.compose.ui.geometry.Size
-  get() = androidx.compose.ui.geometry.Size(width = intrinsicWidth.toFloat(), height = intrinsicHeight.toFloat())
+private val Drawable.intrinsicSize
+  get() = Size(width = intrinsicWidth.toFloat(), height = intrinsicHeight.toFloat())
 
 @OptIn(ExperimentalContracts::class)
 private fun Context.isResourceId(data: Any): Boolean {

@@ -122,7 +122,7 @@ class CoilImageResolverTest {
       }
     }.test {
       // Default value.
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(EmptyPainter))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(source = null))
 
       (awaitItem().placeholder as DrawablePainter).let { placeholder ->
         (placeholder.drawable as BitmapDrawable).let { drawable ->
@@ -175,7 +175,7 @@ class CoilImageResolverTest {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
         ZoomableImageSource(
-          placeholder = EmptyPainter,
+          placeholder = null,
           source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
           bitmapConfig = Bitmap.Config.HARDWARE,
         )
@@ -210,11 +210,11 @@ class CoilImageResolverTest {
     }
 
     images.test {
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(EmptyPainter))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(source = null))
       assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
 
       imageUrl = "image_two"
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(EmptyPainter))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(source = null))
       assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
     }
   }

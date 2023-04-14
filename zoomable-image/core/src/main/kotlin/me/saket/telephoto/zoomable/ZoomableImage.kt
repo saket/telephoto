@@ -2,6 +2,8 @@ package me.saket.telephoto.zoomable
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,10 +12,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +27,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.toSize
@@ -77,8 +81,12 @@ fun ZoomableImage(
         imageSource = image.source,
         transformation = state.zoomableState.contentTransformation,
         bitmapConfig = image.bitmapConfig
-      ).also {
-        state.subSamplingState = it
+      )
+      DisposableEffect(subSamplingState) {
+        state.subSamplingState = subSamplingState
+        onDispose {
+          state.subSamplingState = null
+        }
       }
       LaunchedEffect(subSamplingState.imageSize) {
         state.zoomableState.setContentLocation(
@@ -87,23 +95,27 @@ fun ZoomableImage(
           )
         )
       }
+      val initialAlpha = if (image.placeholder == null) 0f else 1f
+      val animatedAlpha by animateFloatAsState(
+        initialValue = initialAlpha,
+        targetValue = if (isSubSampledImageLoaded) 1f else initialAlpha,
+        animationSpec = tween(image.crossfadeDurationMs)
+      )
       SubSamplingImage(
         modifier = zoomable,
         state = subSamplingState,
         contentDescription = contentDescription,
-        alpha = alpha,
+        alpha = alpha * animatedAlpha,
         colorFilter = colorFilter,
       )
     }
 
     AnimatedVisibility(
-      visible = !isSubSampledImageDisplayed,
-      enter = fadeIn(tween(image.crossfadeDuration.inWholeMilliseconds.toInt())),
-      exit = fadeOut(tween(image.crossfadeDuration.inWholeMilliseconds.toInt())),
+      visible = image.placeholder != null && !isSubSampledImageLoaded,
+      enter = fadeIn(tween(image.crossfadeDurationMs)),
+      exit = fadeOut(tween(image.crossfadeDurationMs)),
     ) {
-      LaunchedEffect(Unit) {
-        state.subSamplingState = null
-      }
+      checkNotNull(image.placeholder)
       val placeholderSize = image.expectedSize.takeOrElse { image.placeholder.intrinsicSize }
       LaunchedEffect(placeholderSize) {
         state.zoomableState.setContentLocation(
@@ -146,12 +158,14 @@ fun ZoomableImage(
 @Immutable
 data class ZoomableImageSource(
   val source: SubSamplingImageSource?,
-  val placeholder: Painter = EmptyPainter,
+  val placeholder: Painter? = null,
   val expectedSize: Size = Size.Unspecified,
   val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
   val crossfadeDuration: Duration = Duration.ZERO,
 ) {
   companion object; // For extensions.
+
+  internal val crossfadeDurationMs: Int get() = crossfadeDuration.inWholeMilliseconds.toInt()
 
   /** Images that aren't bitmaps (for e.g., GIFs) and should be rendered without sub-sampling. */
   constructor(painter: Painter) : this(
@@ -160,7 +174,19 @@ data class ZoomableImageSource(
   )
 }
 
-private object EmptyPainter : Painter() {
-  override val intrinsicSize: Size get() = Size.Unspecified
-  override fun DrawScope.onDraw() = Unit
+@Composable
+fun animateFloatAsState(
+  initialValue: Float,
+  targetValue: Float,
+  animationSpec: AnimationSpec<Float>
+): State<Float> {
+  val state = remember { mutableStateOf(initialValue) }
+  if (initialValue != targetValue) {
+    LaunchedEffect(Unit) {
+      Animatable(initialValue = state.value).animateTo(1f, animationSpec) {
+        state.value = value
+      }
+    }
+  }
+  return state
 }
