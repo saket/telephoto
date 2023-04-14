@@ -1,14 +1,10 @@
 package me.saket.telephoto.subsamplingimage
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
@@ -40,11 +36,10 @@ fun SubSamplingImage(
   colorFilter: ColorFilter? = null,
 ) {
   val density = LocalDensity.current
-  val animatedAlpha by animateFloatAsState(if (state.isImageDisplayed) 1f else 0f)
 
   val onDraw: DrawScope.() -> Unit = {
     state.tiles.fastForEach { tile ->
-      if (tile.bitmap != null) {
+      if (tile.bitmap != null && state.canTilesBeDrawn) {
         drawImage(
           image = tile.bitmap,
           srcOffset = IntOffset.Zero,
@@ -70,7 +65,6 @@ fun SubSamplingImage(
   Box(
     modifier
       .contentDescription(contentDescription)
-      .alpha(animatedAlpha)
       .onSizeChanged { state.canvasSize = it }
       .drawBehind(onDraw)
       .wrapContentSizeIfNeeded(state.imageSize)

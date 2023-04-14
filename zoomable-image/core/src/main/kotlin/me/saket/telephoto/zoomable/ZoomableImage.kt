@@ -1,22 +1,35 @@
 package me.saket.telephoto.zoomable
 
 import android.graphics.Bitmap
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import androidx.compose.ui.unit.toSize
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
+import kotlin.time.Duration
 
 /**
  * An image composable that handles zoom & pan gestures using [Modifier.zoomable].
@@ -31,7 +44,7 @@ import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
  */
 @Composable
 fun ZoomableImage(
-  image: ZoomableImage,
+  image: ZoomableImageSource,
   contentDescription: String?,
   modifier: Modifier = Modifier,
   state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
@@ -42,9 +55,10 @@ fun ZoomableImage(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
 ) {
-  state.apply {
-    zoomableState.contentAlignment = alignment
-    zoomableState.contentScale = contentScale
+  state.zoomableState.also {
+    it.contentAlignment = alignment
+    it.contentScale = contentScale
+    it.autoApplyTransformations = false
   }
 
   val zoomable = modifier.zoomable(
@@ -52,31 +66,27 @@ fun ZoomableImage(
     onClick = onClick,
     onLongClick = onLongClick,
   )
-  when (image) {
-    is ZoomableImage.Generic -> {
-      state.subSamplingState = null
-      LaunchedEffect(image.painter.intrinsicSize) {
-        state.zoomableState.setContentLocation(
-          ZoomableContentLocation.scaledInsideAndCenterAligned(image.painter.intrinsicSize)
-        )
-      }
-      Image(
-        modifier = zoomable,
-        painter = image.painter,
-        contentDescription = contentDescription,
-        alignment = Alignment.Center,
-        contentScale = ContentScale.Inside,
-        alpha = alpha,
-        colorFilter = colorFilter,
-      )
-    }
 
-    is ZoomableImage.RequiresSubSampling -> {
+  val isSubSampledImageDisplayed by remember(state) {
+    derivedStateOf { state.subSamplingState?.isImageDisplayed ?: false }
+  }
+
+  Box {
+    if (image.source != null) {
       val subSamplingState = rememberSubSamplingImageState(
         imageSource = image.source,
-        zoomableState = state.zoomableState
-      ).also { state.subSamplingState = it }
-
+        transformation = state.zoomableState.contentTransformation,
+        bitmapConfig = image.bitmapConfig
+      ).also {
+        state.subSamplingState = it
+      }
+      LaunchedEffect(subSamplingState.imageSize) {
+        state.zoomableState.setContentLocation(
+          ZoomableContentLocation.unscaledAndTopStartAligned(
+            subSamplingState.imageSize?.toSize() ?: image.expectedSize
+          )
+        )
+      }
       SubSamplingImage(
         modifier = zoomable,
         state = subSamplingState,
@@ -85,17 +95,46 @@ fun ZoomableImage(
         colorFilter = colorFilter,
       )
     }
+
+    AnimatedVisibility(
+      visible = !isSubSampledImageDisplayed,
+      enter = fadeIn(tween(image.crossfadeDuration.inWholeMilliseconds.toInt())),
+      exit = fadeOut(tween(image.crossfadeDuration.inWholeMilliseconds.toInt())),
+    ) {
+      LaunchedEffect(Unit) {
+        state.subSamplingState = null
+      }
+      val placeholderSize = image.expectedSize.takeOrElse { image.placeholder.intrinsicSize }
+      LaunchedEffect(placeholderSize) {
+        state.zoomableState.setContentLocation(
+          ZoomableContentLocation.unscaledAndTopStartAligned(placeholderSize)
+        )
+      }
+      Image(
+        modifier = zoomable,
+        painter = zoomablePainter(
+          painter = image.placeholder,
+          transformation = state.zoomableState.contentTransformation
+        ),
+        contentDescription = contentDescription,
+        alignment = Alignment.TopStart,
+        contentScale = ContentScale.None,
+        alpha = alpha,
+        colorFilter = colorFilter,
+      )
+    }
   }
 }
 
 /**
- * An image that can be displayed using `ZoomableImage()`.
+ * An image that can be displayed using [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
  *
  * Keep in mind that this shouldn't be used directly. It is designed to provide an
  * abstraction over your favorite image loading library.
  *
  * If you're using Coil for loading images, Telephoto provides a default implementation
- * through `me.saket.telephoto:zoomable-image-coil`:
+ * through [ZoomableAsyncImage()][me.saket.telephoto.zoomable.coil.ZoomableAsyncImage]
+ * (`me.saket.telephoto:zoomable-image-coil`).
  *
  * ```kotlin
  * ZoomableAsyncImage(
@@ -104,18 +143,24 @@ fun ZoomableImage(
  *)
  * ```
  */
-sealed interface ZoomableImage {
+@Immutable
+data class ZoomableImageSource(
+  val source: SubSamplingImageSource?,
+  val placeholder: Painter = EmptyPainter,
+  val expectedSize: Size = Size.Unspecified,
+  val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+  val crossfadeDuration: Duration = Duration.ZERO,
+) {
   companion object; // For extensions.
 
   /** Images that aren't bitmaps (for e.g., GIFs) and should be rendered without sub-sampling. */
-  @JvmInline
-  @Immutable
-  value class Generic(val painter: Painter) : ZoomableImage
+  constructor(painter: Painter) : this(
+    placeholder = painter,
+    source = null
+  )
+}
 
-  /** Full resolution bitmaps that should be rendered using [SubSamplingImage]. */
-  @Immutable
-  data class RequiresSubSampling(
-    val source: SubSamplingImageSource,
-    val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
-  ) : ZoomableImage
+private object EmptyPainter : Painter() {
+  override val intrinsicSize: Size get() = Size.Unspecified
+  override fun DrawScope.onDraw() = Unit
 }

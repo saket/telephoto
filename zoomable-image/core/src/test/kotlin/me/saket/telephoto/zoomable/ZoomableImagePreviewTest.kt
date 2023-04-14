@@ -31,7 +31,7 @@ class ZoomableImagePreviewTest {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
           image = remember(Color.Yellow) {
-            ZoomableImage.Generic(ColorPainter(Color.Yellow))
+            ZoomableImageSource.Generic(ColorPainter(Color.Yellow))
           },
           contentDescription = null,
         )

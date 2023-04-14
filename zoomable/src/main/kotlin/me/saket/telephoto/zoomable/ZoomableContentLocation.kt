@@ -63,22 +63,21 @@ interface ZoomableContentLocation {
 
   // todo: doc
   object Unspecified : ZoomableContentLocation {
-    override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
-      throw UnsupportedOperationException()
-
-    override fun toString(): String {
-      return this::class.simpleName!!
-    }
+    override fun size(layoutSize: Size) = throw UnsupportedOperationException()
+    override fun calculateBounds(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
+    override fun toString(): String = this::class.simpleName!!
   }
 
   // todo: doc
   object SameAsLayoutBounds : ZoomableContentLocation {
-    override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection) =
-      Rect(Offset.Zero, layoutSize)
+    override fun size(layoutSize: Size): Size = layoutSize
+    override fun calculateBounds(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
   }
 
+  fun size(layoutSize: Size): Size
+
   // todo: think of a better name that makes it clear this isn't the layout bounds.
-  fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect
+  fun calculateBounds(layoutSize: Size, direction: LayoutDirection): Rect
 }
 
 internal val ZoomableContentLocation.isSpecified
@@ -90,11 +89,13 @@ internal val ZoomableContentLocation.isSpecified
  */
 @Immutable
 internal data class RelativeContentLocation(
-  val size: Size,
-  val scale: ContentScale,
-  val alignment: Alignment,
+  private val size: Size,
+  private val scale: ContentScale,
+  private val alignment: Alignment,
 ) : ZoomableContentLocation {
-  override fun calculateBoundsInside(layoutSize: Size, direction: LayoutDirection): Rect {
+  override fun size(layoutSize: Size): Size = size
+
+  override fun calculateBounds(layoutSize: Size, direction: LayoutDirection): Rect {
     val scaleFactor = scale.computeScaleFactor(
       srcSize = size,
       dstSize = layoutSize,

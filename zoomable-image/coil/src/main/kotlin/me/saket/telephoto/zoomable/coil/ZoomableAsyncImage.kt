@@ -28,19 +28,24 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.ImageResult
 import coil.request.SuccessResult
+import coil.transition.CrossfadeTransition
+import coil.transition.TransitionTarget
 import com.google.accompanist.drawablepainter.DrawablePainter
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImage
+import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import coil.size.Size.Companion as CoilSize
 
 /**
  * A zoomable image that can be loaded by Coil and displayed using
- * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage].
+ * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
  *
  * Example usages:
  *
@@ -58,7 +63,7 @@ import coil.size.Size.Companion as CoilSize
  * )
  * ```
  *
- * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage]
+ * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource]
  * for full documentation.
  */
 @Composable
@@ -76,7 +81,7 @@ fun ZoomableAsyncImage(
   onLongClick: ((Offset) -> Unit)? = null,
 ) {
   ZoomableImage(
-    image = ZoomableImage.coil(model, imageLoader),
+    image = ZoomableImageSource.coil(model, imageLoader),
     contentDescription = contentDescription,
     modifier = modifier,
     state = state,
@@ -91,7 +96,7 @@ fun ZoomableAsyncImage(
 
 /**
  * A zoomable image that can be loaded by Coil and displayed using
- * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage].
+ * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
  *
  * Example usage:
  *
@@ -111,14 +116,14 @@ fun ZoomableAsyncImage(
  * )
  * ```
  *
- * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage]
+ * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource]
  * for full documentation.
  */
 @Composable
-fun ZoomableImage.Companion.coil(
+fun ZoomableImageSource.Companion.coil(
   model: Any?,
   imageLoader: ImageLoader = LocalContext.current.imageLoader
-): ZoomableImage {
+): ZoomableImageSource {
   val context = LocalContext.current
   val request = remember(model) {
     model as? ImageRequest
@@ -127,8 +132,14 @@ fun ZoomableImage.Companion.coil(
         .build()
   }
 
-  var resolved: ZoomableImage by remember(request) {
-    mutableStateOf(ZoomableImage.Generic(EmptyPainter))
+  var resolved by remember(request) {
+    mutableStateOf(
+      ZoomableImageSource(
+        source = null,
+        placeholder = EmptyPainter,
+        bitmapConfig = request.bitmapConfig,
+      )
+    )
   }
 
   LaunchedEffect(request) {
@@ -152,20 +163,34 @@ fun ZoomableImage.Companion.coil(
         // way to read placeholder images set using ImageRequest#placeholderMemoryCacheKey.
         // Placeholder images should be small in size so sub-sampling isn't needed here.
         .target(
-          onStart = { placeholder ->
-            resolved = ZoomableImage.Generic(placeholder.asPainter())
+          onStart = {
+            resolved = resolved.copy(placeholder = it.asPainter())
           }
         )
         .build()
     )
-    resolved = result.toResolvedImage(imageLoader)
+
+    val imageSource = result.toSubSamplingImageSource(imageLoader)
+    resolved = if (result is SuccessResult && imageSource != null) {
+      resolved.copy(
+        source = imageSource,
+        expectedSize = result.drawable.intrinsicSize,
+        crossfadeDuration = result.crossfadeDuration(),
+      )
+    } else {
+      resolved.copy(
+        placeholder = result.drawable.asPainter(),
+        source = null,
+      )
+    }
   }
 
+  // todo: read color space.
   return resolved
 }
 
 @OptIn(ExperimentalCoilApi::class)
-private fun ImageResult.toResolvedImage(imageLoader: ImageLoader): ZoomableImage {
+private fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): SubSamplingImageSource? {
   val result = this
   val requestData = result.request.data
 
@@ -180,23 +205,28 @@ private fun ImageResult.toResolvedImage(imageLoader: ImageLoader): ZoomableImage
       }
       result.dataSource == DataSource.DISK -> when {
         requestData is Uri -> SubSamplingImageSource.contentUri(requestData)
-        request.context.isResourceId(requestData) -> SubSamplingImageSource.resource(requestData)
+        result.request.context.isResourceId(requestData) -> SubSamplingImageSource.resource(requestData)
         else -> null
       }
       else -> null
     }
 
     if (imageSource != null) {
-      // todo: read cross-fade.
-      // todo: read color space.
-      return ZoomableImage.RequiresSubSampling(
-        source = imageSource,
-        bitmapConfig = request.bitmapConfig,
-      )
+      return imageSource
     }
   }
 
-  return ZoomableImage.Generic(result.drawable.asPainter())
+  return null
+}
+
+private fun ImageResult.crossfadeDuration(): Duration {
+  val fakeTransitionTarget = object : TransitionTarget {
+    override val view get() = throw UnsupportedOperationException()
+    override val drawable: Drawable? get() = null
+  }
+
+  val transition = request.transitionFactory.create(fakeTransitionTarget, this)
+  return if (transition is CrossfadeTransition) transition.durationMillis.milliseconds else Duration.ZERO
 }
 
 private fun Drawable?.asPainter(): Painter {
@@ -207,6 +237,9 @@ internal object EmptyPainter : Painter() {
   override val intrinsicSize: Size get() = Size.Unspecified
   override fun DrawScope.onDraw() = Unit
 }
+
+private val Drawable.intrinsicSize: Size
+  get() = Size(width = intrinsicWidth.toFloat(), height = intrinsicHeight.toFloat())
 
 @OptIn(ExperimentalContracts::class)
 private fun Context.isResourceId(data: Any): Boolean {

@@ -7,7 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 
-/** State for [ZoomableImage]. */
+/** State for [ZoomableImageSource]. */
 @Composable
 fun rememberZoomableImageState(
   zoomableState: ZoomableState = rememberZoomableState()

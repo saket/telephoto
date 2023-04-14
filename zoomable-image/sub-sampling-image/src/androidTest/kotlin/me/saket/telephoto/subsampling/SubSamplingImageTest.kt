@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -308,6 +309,7 @@ class SubSamplingImageTest {
         val imageState = rememberSubSamplingImageState(
           imageSource = SubSamplingImageSource.asset("path.jpg"),
           transformation = ZoomableContentTransformation(
+            contentSize = Size.Unspecified,
             scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
             offset = Offset(x = -2749.3718f, y = -1045.4058f),
             rotationZ = 0f,

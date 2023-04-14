@@ -77,8 +77,9 @@ fun rememberSubSamplingImageState(
   return state
 }
 
+// todo: doc.
 @Composable
-internal fun rememberSubSamplingImageState(
+fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   transformation: ZoomableContentTransformation,
   bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
@@ -200,12 +201,16 @@ private fun createRegionDecoder(
 @Stable
 class SubSamplingImageState internal constructor() {
   var imageSize: IntSize? by mutableStateOf(null)
+    internal set
+
+  internal val canTilesBeDrawn by derivedStateOf {
+    tiles.isNotEmpty()
+      && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
+  }
 
   // todo: doc
   val isImageDisplayed: Boolean by derivedStateOf {
-    canvasSize != null // Wait until content size is measured in case of wrap_content.
-      && tiles.isNotEmpty()
-      && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
+    canvasSize != null && canTilesBeDrawn
   }
 
   // todo: doc

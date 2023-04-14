@@ -93,7 +93,7 @@ class ZoomableImageTest {
     rule.setContent {
       ZoomableImage(
         modifier = Modifier.fillMaxSize(),
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         contentDescription = null,
       )
     }
@@ -111,7 +111,7 @@ class ZoomableImageTest {
         modifier = Modifier
           .fillMaxSize()
           .testTag("image"),
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         state = rememberZoomableImageState(zoomableState),
         contentDescription = null,
       )
@@ -138,7 +138,7 @@ class ZoomableImageTest {
         modifier = Modifier
           .fillMaxSize()
           .testTag("image"),
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         contentDescription = null,
       )
     }
@@ -178,8 +178,8 @@ class ZoomableImageTest {
           .then(layoutSize.modifier)
           .testTag("image"),
         image = when (subSamplingStatus) {
-          SubSamplingEnabled -> ZoomableImage.subSampledAsset(imageAsset.assetName)
-          SubSamplingDisabled -> ZoomableImage.nonSubSampledAsset(imageAsset.assetName)
+          SubSamplingEnabled -> ZoomableImageSource.subSampledAsset(imageAsset.assetName)
+          SubSamplingDisabled -> ZoomableImageSource.nonSubSampledAsset(imageAsset.assetName)
         },
         contentDescription = null,
         state = state,
@@ -242,7 +242,7 @@ class ZoomableImageTest {
         modifier = Modifier
           .fillMaxSize()
           .fillMaxSize(),
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         contentScale = ContentScale.Fit,
         alignment = contentAlignment,
         contentDescription = null,
@@ -262,7 +262,7 @@ class ZoomableImageTest {
     rule.setContent {
       ZoomableImage(
         modifier = Modifier.fillMaxSize(),
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         contentScale = contentScale,
         contentDescription = null,
       )
@@ -292,7 +292,7 @@ class ZoomableImageTest {
       ) { pageNum ->
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
-          image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
+          image = ZoomableImageSource.nonSubSampledAsset(assetNames[pageNum]),
           state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1f)),
           contentScale = ContentScale.Fit,
           contentDescription = null,
@@ -326,7 +326,7 @@ class ZoomableImageTest {
       ) { pageNum ->
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
-          image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
+          image = ZoomableImageSource.nonSubSampledAsset(assetNames[pageNum]),
           state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 2f)),
           contentScale = ContentScale.Fit,
           contentDescription = null,
@@ -366,7 +366,7 @@ class ZoomableImageTest {
       ) { pageNum ->
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
-          image = ZoomableImage.nonSubSampledAsset(assetNames[pageNum]),
+          image = ZoomableImageSource.nonSubSampledAsset(assetNames[pageNum]),
           state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1.5f)),
           contentScale = ContentScale.Fit,
           contentDescription = null,
@@ -408,7 +408,7 @@ class ZoomableImageTest {
         modifier = Modifier
           .fillMaxSize()
           .testTag("image"),
-        image = ZoomableImage.nonSubSampledAsset(assetName),
+        image = ZoomableImageSource.nonSubSampledAsset(assetName),
         contentDescription = null,
         state = rememberZoomableImageState(zoomableState),
         contentScale = ContentScale.Fit,
@@ -453,7 +453,7 @@ class ZoomableImageTest {
           .testTag("image"),
         state = rememberZoomableImageState(zoomableState),
         contentScale = ContentScale.Fit,
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         contentDescription = null,
       )
 
@@ -489,7 +489,7 @@ class ZoomableImageTest {
         modifier = Modifier
           .fillMaxSize()
           .testTag("image"),
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         state = rememberZoomableImageState(zoomableState),
         contentScale = ContentScale.Fit,
         contentDescription = null,
@@ -529,7 +529,7 @@ class ZoomableImageTest {
         modifier = Modifier
           .fillMaxSize()
           .testTag("zoomable_image"),
-        image = ZoomableImage.nonSubSampledAsset("fox_1500.jpg"),
+        image = ZoomableImageSource.nonSubSampledAsset("fox_1500.jpg"),
         contentDescription = null,
         state = rememberZoomableImageState(state),
         contentScale = ContentScale.Inside,
@@ -643,20 +643,20 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 }
 
 @Composable
-private fun ZoomableImage.Companion.nonSubSampledAsset(assetName: String): ZoomableImage {
+private fun ZoomableImageSource.Companion.nonSubSampledAsset(assetName: String): ZoomableImageSource {
   val context = LocalContext.current
   return remember(assetName) {
     val painter = context.assets.open(assetName).use { stream ->
       BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
     }
-    ZoomableImage.Generic(painter)
+    ZoomableImageSource(painter)
   }
 }
 
 @Composable
-private fun ZoomableImage.Companion.subSampledAsset(assetName: String): ZoomableImage {
+private fun ZoomableImageSource.Companion.subSampledAsset(assetName: String): ZoomableImageSource {
   return remember(assetName) {
-    ZoomableImage.RequiresSubSampling(SubSamplingImageSource.asset(assetName))
+    ZoomableImageSource(SubSamplingImageSource.asset(assetName))
   }
 }
 

@@ -60,13 +60,13 @@ fun rememberZoomableState(
   if (state.isReadyToInteract) {
     LaunchedEffect(
       state.contentLayoutSize,
-      state.unscaledContentLocation,
+      //state.unscaledContentLocation,
       state.contentAlignment,
       state.contentScale,
       state.layoutDirection,
       state.gestureTransformation == null,
     ) {
-      state.refreshContentPosition()
+      state.refreshContentTransformation()
     }
   }
   return state
@@ -84,6 +84,7 @@ class ZoomableState internal constructor(
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
       ZoomableContentTransformation(
+        contentSize = if (unscaledContentLocation.isSpecified) unscaledContentLocation.size(contentLayoutSize) else Size.Zero,
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
@@ -164,7 +165,7 @@ class ZoomableState internal constructor(
 
         // todo: this piece of code is duplicated with onGesture.
         val newOffsetWithinBounds = run {
-          val unscaledContentBounds = unscaledContentLocation.calculateBoundsInside(
+          val unscaledContentBounds = unscaledContentLocation.calculateBounds(
             layoutSize = contentLayoutSize,
             direction = layoutDirection
           )
@@ -192,7 +193,7 @@ class ZoomableState internal constructor(
       }
     },
     onTransformation = { zoomDelta, panDelta, _, centroid ->
-      val unscaledContentBounds = unscaledContentLocation.calculateBoundsInside(
+      val unscaledContentBounds = unscaledContentLocation.calculateBounds(
         layoutSize = contentLayoutSize,
         direction = layoutDirection
       )
@@ -308,8 +309,14 @@ class ZoomableState internal constructor(
   private operator fun Size.times(zoom: ContentZoom): Size = times(zoom.finalZoom())
 
   /** todo: doc */
-  fun setContentLocation(location: ZoomableContentLocation) {
+  suspend fun setContentLocation(location: ZoomableContentLocation) {
     unscaledContentLocation = location
+
+    // Refresh content transformation synchronously so that it is available immediately.
+    // Otherwise, the old position will be used with this new size and cause a flicker.
+    if (isReadyToInteract) {
+      refreshContentTransformation()
+    }
   }
 
   /** Reset content to its minimum zoom and zero offset values **without** any animation. */
@@ -326,7 +333,7 @@ class ZoomableState internal constructor(
 
   // todo: doc
   /** Update content position by using its current zoom and offset values. */
-  internal suspend fun refreshContentPosition() {
+  internal suspend fun refreshContentTransformation() {
     check(isReadyToInteract)
     transformableState.transform(MutatePriority.PreventUserInput) {
       transformBy(/* default values */)
@@ -359,7 +366,7 @@ class ZoomableState internal constructor(
     // todo: this piece of code is duplicated with onGesture.
     val targetOffset = run {
       val proposedOffset = (start.offset + centroid / start.zoom) - (centroid / targetZoom)
-      val unscaledContentBounds = unscaledContentLocation.calculateBoundsInside(
+      val unscaledContentBounds = unscaledContentLocation.calculateBounds(
         layoutSize = contentLayoutSize,
         direction = layoutDirection
       )

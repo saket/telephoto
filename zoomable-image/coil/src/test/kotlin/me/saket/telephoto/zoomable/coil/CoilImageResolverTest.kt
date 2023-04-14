@@ -40,7 +40,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
-import me.saket.telephoto.zoomable.ZoomableImage
+import me.saket.telephoto.zoomable.ZoomableImageSource
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.After
 import org.junit.Before
@@ -82,7 +82,7 @@ class CoilImageResolverTest {
 
     val images = backgroundScope.launchMolecule(clock = Immediate) {
       ProvideContext {
-        ZoomableImage.coil(
+        ZoomableImageSource.coil(
           ImageRequest.Builder(context)
             .data("foo")
             .build(),
@@ -114,7 +114,7 @@ class CoilImageResolverTest {
 
     backgroundScope.launchMolecule(clock = Immediate) {
       ProvideContext {
-        ZoomableImage.coil(
+        ZoomableImageSource.coil(
           buildImageRequest {
             data("fake_image").placeholderMemoryCacheKey(placeholderKey)
           }
@@ -122,15 +122,12 @@ class CoilImageResolverTest {
       }
     }.test {
       // Default value.
-      assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(EmptyPainter))
 
-      with(awaitItem()) {
-        check(this is ZoomableImage.Generic)
-        (painter as DrawablePainter).let { painter ->
-          (painter.drawable as BitmapDrawable).let { drawable ->
-            assertThat(drawable.bitmap.width).isEqualTo(fakeBitmap().width)
-            assertThat(drawable.bitmap.height).isEqualTo(fakeBitmap().height)
-          }
+      (awaitItem().placeholder as DrawablePainter).let { placeholder ->
+        (placeholder.drawable as BitmapDrawable).let { drawable ->
+          assertThat(drawable.bitmap.width).isEqualTo(fakeBitmap().width)
+          assertThat(drawable.bitmap.height).isEqualTo(fakeBitmap().height)
         }
       }
       cancelAndIgnoreRemainingEvents()
@@ -166,7 +163,7 @@ class CoilImageResolverTest {
 
     val images = backgroundScope.launchMolecule(clock = Immediate) {
       ProvideContext {
-        ZoomableImage.coil(
+        ZoomableImageSource.coil(
           ImageRequest.Builder(context)
             .data("ignored")
             .build()
@@ -177,7 +174,8 @@ class CoilImageResolverTest {
     images.test {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
-        ZoomableImage.RequiresSubSampling(
+        ZoomableImageSource(
+          placeholder = EmptyPainter,
           source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
           bitmapConfig = Bitmap.Config.HARDWARE,
         )
@@ -203,7 +201,7 @@ class CoilImageResolverTest {
     var imageUrl by mutableStateOf("image_one")
     val images = backgroundScope.launchMolecule(clock = Immediate) {
       ProvideContext {
-        ZoomableImage.coil(
+        ZoomableImageSource.coil(
           ImageRequest.Builder(context)
             .data(imageUrl)
             .build()
@@ -212,12 +210,12 @@ class CoilImageResolverTest {
     }
 
     images.test {
-      assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
-      assertThat(awaitItem()).isInstanceOf(ZoomableImage.Generic::class.java)
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(EmptyPainter))
+      assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
 
       imageUrl = "image_two"
-      assertThat(awaitItem()).isEqualTo(ZoomableImage.Generic(EmptyPainter))
-      assertThat(awaitItem()).isInstanceOf(ZoomableImage.Generic::class.java)
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(EmptyPainter))
+      assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
     }
   }
 
