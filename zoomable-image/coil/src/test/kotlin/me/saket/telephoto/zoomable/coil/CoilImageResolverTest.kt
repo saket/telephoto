@@ -219,6 +219,10 @@ class CoilImageResolverTest {
     }
   }
 
+  @Test fun `show error drawable if request fails`() {
+    // TODO.
+  }
+
   @Composable
   private fun <T> ProvideContext(content: @Composable () -> T): T {
     return CompositionLocalProviderReturnable(LocalContext provides context) {

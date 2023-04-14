@@ -3,6 +3,8 @@ package me.saket.telephoto.sample.viewer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import coil.request.ImageRequest
 import me.saket.telephoto.sample.R
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
@@ -26,7 +28,10 @@ fun NormalSizedRemoteImage(
 ) {
   ZoomableAsyncImage(
     modifier = Modifier.fillMaxSize(),
-    model = "https://images.unsplash.com/photo-1674560109079-0b1cd708cc2d?w=1500",
+    model = ImageRequest.Builder(LocalContext.current)
+      .data("https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65?w=100")
+      .memoryCacheKey("placeholder")
+      .build(),
     state = rememberZoomableImageState(zoomableState),
     contentDescription = null,
   )
@@ -41,7 +46,11 @@ fun LargeImage(
 
   ZoomableAsyncImage(
     modifier = Modifier.fillMaxSize(),
-    model = "https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65",
+    model = ImageRequest.Builder(LocalContext.current)
+      .data("https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65")
+      .placeholderMemoryCacheKey("placeholder")
+      .crossfade(1_000)
+      .build(),
     state = rememberZoomableImageState(zoomableState),
     contentDescription = null,
   )
