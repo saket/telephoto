@@ -190,7 +190,7 @@ class ZoomableImageTest {
       when (subSamplingStatus) {
         SubSamplingEnabled -> {
           state.subSamplingState?.let { subSamplingState ->
-            isImageDisplayed = subSamplingState.isImageDisplayedInFullQuality
+            isImageDisplayed = subSamplingState.isImageLoadedInFullQuality
           }
         }
 

@@ -203,19 +203,15 @@ class SubSamplingImageState internal constructor() {
   var imageSize: IntSize? by mutableStateOf(null)
     internal set
 
-  internal val canTilesBeDrawn by derivedStateOf {
-    tiles.isNotEmpty()
+  // todo: doc
+  val isImageLoaded: Boolean by derivedStateOf {
+    canvasSize != null && tiles.isNotEmpty()
       && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
   }
 
   // todo: doc
-  val isImageDisplayed: Boolean by derivedStateOf {
-    canvasSize != null && canTilesBeDrawn
-  }
-
-  // todo: doc
-  val isImageDisplayedInFullQuality: Boolean by derivedStateOf {
-    isImageDisplayed && tiles.fastAll { it.bitmap != null }
+  val isImageLoadedInFullQuality: Boolean by derivedStateOf {
+    isImageLoaded && tiles.fastAll { it.bitmap != null }
   }
 
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())

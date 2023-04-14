@@ -109,8 +109,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = remember { imageSource.source(context) }
       )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
+      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+        isImageDisplayed = imageState.isImageLoadedInFullQuality
       }
 
       SubSamplingImage(
@@ -140,8 +140,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = imageSize.source,
       )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
+      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+        isImageDisplayed = imageState.isImageLoadedInFullQuality
       }
 
       SubSamplingImage(
@@ -174,8 +174,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = SubSamplingImageSource.asset("pahade.jpg"),
       )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
+      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+        isImageDisplayed = imageState.isImageLoadedInFullQuality
       }
       LaunchedEffect(imageState.tiles) {
         tiles = imageState.tiles
@@ -218,8 +218,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = imageSource,
       )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
+      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+        isImageDisplayed = imageState.isImageLoadedInFullQuality
       }
 
       SubSamplingImage(
@@ -275,8 +275,8 @@ class SubSamplingImageTest {
         ).also {
           it.showTileBounds = true
         }
-        LaunchedEffect(imageState.isImageDisplayed) {
-          isImageDisplayed = imageState.isImageDisplayed
+        LaunchedEffect(imageState.isImageLoaded) {
+          isImageDisplayed = imageState.isImageLoaded
         }
 
         SubSamplingImage(
@@ -316,8 +316,8 @@ class SubSamplingImageTest {
             transformOrigin = TransformOrigin(0f, 0f)
           ),
         )
-        LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-          isImageDisplayed = imageState.isImageDisplayedInFullQuality
+        LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+          isImageDisplayed = imageState.isImageLoadedInFullQuality
         }
         LaunchedEffect(imageState.tiles) {
           imageTiles = imageState.tiles
@@ -355,8 +355,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = SubSamplingImageSource.asset("smol.jpg"),
       )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
+      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+        isImageDisplayed = imageState.isImageLoadedInFullQuality
       }
 
       Box(
@@ -392,8 +392,8 @@ class SubSamplingImageTest {
       ).also {
         it.showTileBounds = true
       }
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayedInFullQuality = imageState.isImageDisplayedInFullQuality
+      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+        isImageDisplayedInFullQuality = imageState.isImageLoadedInFullQuality
       }
 
       SubSamplingImage(

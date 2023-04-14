@@ -67,8 +67,8 @@ fun ZoomableImage(
     onLongClick = onLongClick,
   )
 
-  val isSubSampledImageDisplayed by remember(state) {
-    derivedStateOf { state.subSamplingState?.isImageDisplayed ?: false }
+  val isSubSampledImageLoaded by remember(state) {
+    derivedStateOf { state.subSamplingState?.isImageLoaded ?: false }
   }
 
   Box {

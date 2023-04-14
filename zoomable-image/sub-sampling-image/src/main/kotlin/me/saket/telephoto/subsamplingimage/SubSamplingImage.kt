@@ -36,10 +36,9 @@ fun SubSamplingImage(
   colorFilter: ColorFilter? = null,
 ) {
   val density = LocalDensity.current
-
   val onDraw: DrawScope.() -> Unit = {
     state.tiles.fastForEach { tile ->
-      if (tile.bitmap != null && state.canTilesBeDrawn) {
+      if (tile.bitmap != null && state.isImageLoaded) {
         drawImage(
           image = tile.bitmap,
           srcOffset = IntOffset.Zero,
