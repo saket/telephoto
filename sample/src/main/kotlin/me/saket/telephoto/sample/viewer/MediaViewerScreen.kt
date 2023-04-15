@@ -70,7 +70,7 @@ private fun MediaPage(
   val zoomableState = rememberZoomableState(maxZoomFactor = 2f)
   Box(modifier) {
     when (model) {
-      is MediaItem.NormalSizedLocalImage -> NormalSizedLocalImage(zoomableState)
+      is MediaItem.NormalSizedLocalImage -> Gif(zoomableState)
       is MediaItem.NormalSizedRemoteImage -> NormalSizedRemoteImage(zoomableState)
       is MediaItem.SubSampledImage -> LargeImage(zoomableState)
     }

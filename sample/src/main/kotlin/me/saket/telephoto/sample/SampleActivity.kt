@@ -10,6 +10,9 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
+import coil.Coil
+import coil.ImageLoader
+import coil.decode.ImageDecoderDecoder
 import com.bumble.appyx.core.integration.NodeHost
 import com.bumble.appyx.core.integrationpoint.ActivityIntegrationPoint
 import me.saket.telephoto.sample.gallery.MediaAlbum
@@ -21,10 +24,16 @@ class SampleActivity : AppCompatActivity() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
     super.onCreate(savedInstanceState)
 
+    Coil.setImageLoader(
+      ImageLoader.Builder(this)
+        .components { add(ImageDecoderDecoder.Factory()) }
+        .build()
+    )
+
     val album = MediaAlbum(
       items = listOf(
         // todo: pass ZoomableImageSources instead?
-        MediaItem.NormalSizedLocalImage(caption = "Normal sized local image"),
+        MediaItem.NormalSizedLocalImage(caption = "GIF"),
         MediaItem.NormalSizedRemoteImage(caption = "Normal sized remote image"),
         MediaItem.SubSampledImage(caption = "Sub sampled image"),
       )

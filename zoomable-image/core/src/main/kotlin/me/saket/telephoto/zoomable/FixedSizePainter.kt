@@ -1,6 +1,8 @@
 package me.saket.telephoto.zoomable
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.RememberObserver
+import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.graphics.ColorFilter
@@ -8,21 +10,22 @@ import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 
-@Stable
+@Composable
 internal fun Painter.withFixedSize(size: Size): Painter {
-  return ForwardingPainter(
-    painter = this,
-    overriddenSize = size.takeOrElse { intrinsicSize },
-  )
+  // remember() is necessary for animated painters that use
+  // RememberObserver's APIs for starting & stopping their animation(s).
+  return remember {
+    FixedSizePainter(
+      painter = this,
+      overriddenSize = size.takeOrElse { intrinsicSize },
+    )
+  }
 }
 
-/**
- * Copied from [Coil](https://gist.github.com/colinrtwhite/c2966e0b8584b4cdf0a5b05786b20ae1).
- */
-private class ForwardingPainter(
+private class FixedSizePainter(
   private val painter: Painter,
-  private val overriddenSize: Size = painter.intrinsicSize,
-) : Painter() {
+  private val overriddenSize: Size,
+) : Painter(), RememberObserver {
 
   private var alpha: Float = DefaultAlpha
   private var colorFilter: ColorFilter? = null
@@ -43,5 +46,17 @@ private class ForwardingPainter(
     with(painter) {
       draw(size, alpha, colorFilter)
     }
+  }
+
+  override fun onAbandoned() {
+    (painter as? RememberObserver)?.onAbandoned()
+  }
+
+  override fun onForgotten() {
+    (painter as? RememberObserver)?.onForgotten()
+  }
+
+  override fun onRemembered() {
+    (painter as? RememberObserver)?.onRemembered()
   }
 }

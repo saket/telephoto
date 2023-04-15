@@ -35,5 +35,9 @@ dependencies {
   implementation "androidx.compose.material:material-icons-extended:$versions.composeUi"
 
   implementation "io.coil-kt:coil-compose:$versions.coil"
+  implementation "io.coil-kt:coil-gif:$versions.coil"
   implementation "com.bumble.appyx:core:$versions.appyx"
+
+  // todo: remove!
+  implementation "com.google.accompanist:accompanist-drawablepainter:$versions.accompanist"
 }
