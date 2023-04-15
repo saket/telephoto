@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable.internal
 
 import android.os.Parcelable
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ScaleFactor
 import kotlinx.parcelize.Parcelize
 import me.saket.telephoto.zoomable.ContentZoom
@@ -21,11 +22,11 @@ internal data class ZoomableSavedState(
         y = offsetY ?: return null
       ),
       zoom = ContentZoom(
-        // Base zoom will be replaced by a real value when this restored state is consumed.
-        baseZoom = ScaleFactor(0f, 0f),
+        baseZoom = ScaleFactor(0f, 0f), // Will get recalculated after restoration.
         userZoom = userZoom ?: return null
       ),
-      lastCentroid = Offset.Zero
+      lastCentroid = Offset.Zero,
+      contentSize = Size.Zero,  // Will get recalculated after restoration.
     )
   }
 }

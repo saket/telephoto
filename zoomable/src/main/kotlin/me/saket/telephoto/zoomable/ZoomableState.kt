@@ -84,7 +84,7 @@ class ZoomableState internal constructor(
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
       ZoomableContentTransformation(
-        contentSize = if (unscaledContentLocation.isSpecified) unscaledContentLocation.size(contentLayoutSize) else Size.Zero,
+        contentSize = it?.contentSize ?: Size.Unspecified,
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
@@ -151,7 +151,7 @@ class ZoomableState internal constructor(
   /** todo: doc. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
     unscaledContentLocation.isSpecified
-      && contentLayoutSize != Size.Zero  // Protects against division by zero errors.
+      && contentLayoutSize.minDimension != 0f  // Protects against division by zero errors.
   }
 
   @Suppress("NAME_SHADOWING")
@@ -300,6 +300,7 @@ class ZoomableState internal constructor(
         },
         zoom = newZoom,
         lastCentroid = centroid,
+        contentSize = unscaledContentLocation.size(contentLayoutSize),
       )
     }
   )
@@ -403,7 +404,7 @@ class ZoomableState internal constructor(
           fraction = value
         )
 
-        gestureTransformation = GestureTransformation(
+        gestureTransformation = gestureTransformation!!.copy(
           offset = (-animatedOffsetForUi) / animatedZoom,
           zoom = animatedZoom,
           lastCentroid = centroid,
@@ -468,7 +469,9 @@ internal data class GestureTransformation(
   val offset: Offset,
   val zoom: ContentZoom,
   val lastCentroid: Offset,
+  val contentSize: Size,
 ) {
+
   companion object {
     val ZeroScaleFactor = ScaleFactor(0f, 0f)
   }

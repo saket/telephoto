@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.painter.Painter
@@ -65,17 +64,13 @@ fun ZoomableImage(
     it.autoApplyTransformations = false
   }
 
-  val zoomable = modifier.zoomable(
-    state = state.zoomableState,
-    onClick = onClick,
-    onLongClick = onLongClick,
-  )
-
-  val isSubSampledImageLoaded by remember(state) {
-    derivedStateOf { state.subSamplingState?.isImageLoaded ?: false }
-  }
-
-  Box {
+  Box(
+    modifier = modifier,
+    propagateMinConstraints = true,
+  ) {
+    val isSubSampledImageLoaded by remember(state) {
+      derivedStateOf { state.subSamplingState?.isImageLoaded ?: false }
+    }
     if (image.source != null) {
       val subSamplingState = rememberSubSamplingImageState(
         imageSource = image.source,
@@ -95,11 +90,15 @@ fun ZoomableImage(
           )
         )
       }
-      val initialAlpha = if (image.placeholder == null) 0f else 1f
       val animatedAlpha by animateFloatAsState(
-        initialValue = initialAlpha,
-        targetValue = if (isSubSampledImageLoaded) 1f else initialAlpha,
+        initialValue = if (image.placeholder == null) 0f else 1f,
+        targetValue = if (isSubSampledImageLoaded) 1f else 0f,
         animationSpec = tween(image.crossfadeDurationMs)
+      )
+      val zoomable = Modifier.zoomable(
+        state = state.zoomableState,
+        onClick = onClick,
+        onLongClick = onLongClick,
       )
       SubSamplingImage(
         modifier = zoomable,
@@ -115,22 +114,15 @@ fun ZoomableImage(
       enter = fadeIn(tween(image.crossfadeDurationMs)),
       exit = fadeOut(tween(image.crossfadeDurationMs)),
     ) {
-      checkNotNull(image.placeholder)
-      val placeholderSize = image.expectedSize.takeOrElse { image.placeholder.intrinsicSize }
-      LaunchedEffect(placeholderSize) {
-        state.zoomableState.setContentLocation(
-          ZoomableContentLocation.unscaledAndTopStartAligned(placeholderSize)
-        )
-      }
       Image(
-        modifier = zoomable,
-        painter = zoomablePainter(
-          painter = image.placeholder,
-          transformation = state.zoomableState.contentTransformation
+        painter = image.placeholder!!.withFixedSize(
+          // Align with the full-quality image even if the placeholder is smaller in size.
+          // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
+          state.zoomableState.contentTransformation.contentSize
         ),
         contentDescription = contentDescription,
-        alignment = Alignment.TopStart,
-        contentScale = ContentScale.None,
+        alignment = alignment,
+        contentScale = contentScale,
         alpha = alpha,
         colorFilter = colorFilter,
       )
@@ -175,17 +167,15 @@ data class ZoomableImageSource(
 }
 
 @Composable
-fun animateFloatAsState(
+private fun animateFloatAsState(
   initialValue: Float,
   targetValue: Float,
   animationSpec: AnimationSpec<Float>
 ): State<Float> {
   val state = remember { mutableStateOf(initialValue) }
-  if (initialValue != targetValue) {
-    LaunchedEffect(Unit) {
-      Animatable(initialValue = state.value).animateTo(1f, animationSpec) {
-        state.value = value
-      }
+  LaunchedEffect(targetValue) {
+    Animatable(initialValue = state.value).animateTo(targetValue, animationSpec) {
+      state.value = value
     }
   }
   return state
