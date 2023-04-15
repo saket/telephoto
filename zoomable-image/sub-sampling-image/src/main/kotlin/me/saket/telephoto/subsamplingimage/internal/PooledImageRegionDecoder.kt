@@ -1,19 +1,13 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
-import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import kotlin.math.max
 
 /**
@@ -21,62 +15,44 @@ import kotlin.math.max
  * A single decoder can only be used for one region at a time because it synchronizes its APIs internally.
  * */
 // todo: doc
-internal class SkiaImageRegionDecoders private constructor(
+internal class PooledImageRegionDecoder private constructor(
   override val imageSize: IntSize,
-  private val imageSource: SubSamplingImageSource,
-  private val decoders: ResourcePool<BitmapRegionDecoder>,
+  private val decoders: ResourcePool<ImageRegionDecoder>,
   private val dispatcher: CoroutineDispatcher,
-  private val bitmapConfig: Bitmap.Config
 ) : ImageRegionDecoder {
 
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
-    val options = BitmapFactory.Options().apply {
-      inSampleSize = region.sampleSize.size
-      inPreferredConfig = bitmapConfig
-    }
-    val bitmap = decoders.borrow { decoder ->
+    return decoders.borrow { decoder ->
       withContext(dispatcher) {
-        decoder.decodeRegion(region.bounds.toAndroidRect(), options)
+        decoder.decodeRegion(region)
       }
     }
-
-    checkNotNull(bitmap) {
-      "BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource."
-    }
-    return bitmap.asImageBitmap()
   }
 
-  object Factory : ImageRegionDecoder.Factory {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override suspend fun create(
-      context: Context,
-      imageSource: SubSamplingImageSource,
-      bitmapConfig: Bitmap.Config
-    ): SkiaImageRegionDecoders {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  companion object {
+    fun Factory(
+      delegate: ImageRegionDecoder.Factory,
+    ) = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
       val decoderCount = max(Runtime.getRuntime().availableProcessors(), 2) // Same number used by Dispatchers.Default.
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
       val decoders = withContext(dispatcher) {
-        List(decoderCount) { i ->
-          imageSource.decoder(context)
+        List(decoderCount) {
+          delegate.create(
+            context = context,
+            imageSource = imageSource,
+            bitmapConfig = bitmapConfig,
+          )
         }
       }
-      return SkiaImageRegionDecoders(
-        imageSource = imageSource,
-        imageSize = decoders.first().size(),
+      PooledImageRegionDecoder(
+        imageSize = decoders.first().imageSize,
         decoders = ResourcePool(decoders),
         dispatcher = dispatcher,
-        bitmapConfig = bitmapConfig,
       )
     }
   }
-}
-
-private fun BitmapRegionDecoder.size(): IntSize {
-  return IntSize(
-    width = width,
-    height = height,
-  )
 }
 
 private class ResourcePool<T>(resources: List<T>) {

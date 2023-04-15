@@ -44,12 +44,13 @@ import kotlinx.coroutines.delay
 import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
-import me.saket.telephoto.subsamplingimage.internal.SkiaImageRegionDecoders
+import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
@@ -251,7 +252,8 @@ class SubSamplingImageTest {
       region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
     }
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
-      val real = SkiaImageRegionDecoders.Factory.create(context, imageSource, bitmapConfig)
+      val realFactory = PooledImageRegionDecoder.Factory(AndroidImageRegionDecoder.Factory)
+      val real = realFactory.create(context, imageSource, bitmapConfig)
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
           return if (shouldIgnore(region)) {
