@@ -12,8 +12,6 @@ import androidx.compose.ui.graphics.painter.Painter
 
 @Composable
 internal fun Painter.withFixedSize(size: Size): Painter {
-  // remember() is necessary for animated painters that use
-  // RememberObserver's APIs for starting & stopping their animation(s).
   return remember {
     FixedSizePainter(
       painter = this,

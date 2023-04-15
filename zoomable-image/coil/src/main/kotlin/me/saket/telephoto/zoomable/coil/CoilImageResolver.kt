@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -37,11 +38,10 @@ internal class CoilImageResolver(
   private val imageLoader: ImageLoader,
 ) : RememberWorker() {
 
-  var resolved by mutableStateOf(
-    ZoomableImageSource(
-      source = null,
+  var resolved: ZoomableImageSource by mutableStateOf(
+    ZoomableImageSource.Generic(
+      image = EmptyPainter,
       placeholder = null,
-      bitmapConfig = request.bitmapConfig,
     )
   )
 
@@ -67,7 +67,10 @@ internal class CoilImageResolver(
         // Placeholder images should be small in size so sub-sampling isn't needed here.
         .target(
           onStart = {
-            resolved = resolved.copy(placeholder = it?.asPainter())
+            resolved = ZoomableImageSource.Generic(
+              image = EmptyPainter,
+              placeholder = it?.asPainter(),
+            )
           }
         )
         .build()
@@ -75,15 +78,18 @@ internal class CoilImageResolver(
 
     val imageSource = result.toSubSamplingImageSource(imageLoader)
     resolved = if (result is SuccessResult && imageSource != null) {
-      resolved.copy(
+      ZoomableImageSource.RequiresSubSampling(
         source = imageSource,
+        placeholder = resolved.placeholder,
         expectedSize = result.drawable.intrinsicSize,
         crossfadeDuration = result.crossfadeDuration(),
+        bitmapConfig = request.bitmapConfig,
       )
     } else {
-      resolved.copy(
-        placeholder = result.drawable?.asPainter(),
-        source = null,
+      ZoomableImageSource.Generic(
+        placeholder = resolved.placeholder,
+        image = result.drawable?.asPainter() ?: EmptyPainter,
+        crossfadeDuration = result.crossfadeDuration(),
       )
     }
   }
@@ -133,6 +139,11 @@ internal class CoilImageResolver(
 
 private fun Drawable.asPainter(): Painter {
   return DrawablePainter(mutate())
+}
+
+private object EmptyPainter : Painter() {
+  override val intrinsicSize: Size get() = Size.Unspecified
+  override fun DrawScope.onDraw() = Unit
 }
 
 private val Drawable.intrinsicSize

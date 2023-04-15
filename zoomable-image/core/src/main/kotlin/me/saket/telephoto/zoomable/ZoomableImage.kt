@@ -13,13 +13,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -71,42 +71,62 @@ fun ZoomableImage(
     val isSubSampledImageLoaded by remember(state) {
       derivedStateOf { state.subSamplingState?.isImageLoaded ?: false }
     }
-    if (image.source != null) {
-      val subSamplingState = rememberSubSamplingImageState(
-        imageSource = image.source,
-        transformation = state.zoomableState.contentTransformation,
-        bitmapConfig = image.bitmapConfig
-      )
-      DisposableEffect(subSamplingState) {
-        state.subSamplingState = subSamplingState
-        onDispose {
-          state.subSamplingState = null
-        }
-      }
-      LaunchedEffect(subSamplingState.imageSize) {
-        state.zoomableState.setContentLocation(
-          ZoomableContentLocation.unscaledAndTopStartAligned(
-            subSamplingState.imageSize?.toSize() ?: image.expectedSize
+    val zoomable = Modifier.zoomable(
+      state = state.zoomableState,
+      onClick = onClick,
+      onLongClick = onLongClick,
+    )
+
+    when (image) {
+      is ZoomableImageSource.Generic -> {
+        LaunchedEffect(image.image.intrinsicSize) {
+          state.zoomableState.setContentLocation(
+            ZoomableContentLocation.unscaledAndTopStartAligned(image.image.intrinsicSize)
           )
+        }
+        Image(
+          modifier = zoomable.applyTransformation(state.zoomableState.contentTransformation),
+          painter = animatedPainter(image.image),
+          contentDescription = contentDescription,
+          alignment = Alignment.TopStart,
+          contentScale = ContentScale.None,
+          alpha = alpha,
+          colorFilter = colorFilter,
         )
       }
-      val animatedAlpha by animateFloatAsState(
-        initialValue = if (image.placeholder == null) 0f else 1f,
-        targetValue = if (isSubSampledImageLoaded) 1f else 0f,
-        animationSpec = tween(image.crossfadeDurationMs)
-      )
-      val zoomable = Modifier.zoomable(
-        state = state.zoomableState,
-        onClick = onClick,
-        onLongClick = onLongClick,
-      )
-      SubSamplingImage(
-        modifier = zoomable,
-        state = subSamplingState,
-        contentDescription = contentDescription,
-        alpha = alpha * animatedAlpha,
-        colorFilter = colorFilter,
-      )
+
+      is ZoomableImageSource.RequiresSubSampling -> {
+        val subSamplingState = rememberSubSamplingImageState(
+          imageSource = image.source,
+          transformation = state.zoomableState.contentTransformation,
+          bitmapConfig = image.bitmapConfig
+        )
+        DisposableEffect(subSamplingState) {
+          state.subSamplingState = subSamplingState
+          onDispose {
+            state.subSamplingState = null
+          }
+        }
+        LaunchedEffect(subSamplingState.imageSize) {
+          state.zoomableState.setContentLocation(
+            ZoomableContentLocation.unscaledAndTopStartAligned(
+              subSamplingState.imageSize?.toSize() ?: image.expectedSize
+            )
+          )
+        }
+        val animatedAlpha by animateFloatAsState(
+          initialValue = if (image.placeholder == null) 0f else 1f,
+          targetValue = if (isSubSampledImageLoaded) 1f else 0f,
+          animationSpec = tween(image.crossfadeDurationMs)
+        )
+        SubSamplingImage(
+          modifier = zoomable,
+          state = subSamplingState,
+          contentDescription = contentDescription,
+          alpha = alpha * animatedAlpha,
+          colorFilter = colorFilter,
+        )
+      }
     }
 
     AnimatedVisibility(
@@ -115,7 +135,7 @@ fun ZoomableImage(
       exit = fadeOut(tween(image.crossfadeDurationMs)),
     ) {
       Image(
-        painter = image.placeholder!!.withFixedSize(
+        painter = animatedPainter(image.placeholder!!).withFixedSize(
           // Align with the full-quality image even if the placeholder is smaller in size.
           // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
           state.zoomableState.contentTransformation.contentSize
@@ -147,23 +167,36 @@ fun ZoomableImage(
  *)
  * ```
  */
-@Immutable
-data class ZoomableImageSource(
-  val source: SubSamplingImageSource?,
-  val placeholder: Painter? = null,
-  val expectedSize: Size = Size.Unspecified,
-  val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
-  val crossfadeDuration: Duration = Duration.ZERO,
-) {
+sealed interface ZoomableImageSource {
   companion object; // For extensions.
 
-  internal val crossfadeDurationMs: Int get() = crossfadeDuration.inWholeMilliseconds.toInt()
+  val placeholder: Painter?
+  val crossfadeDuration: Duration
+  val crossfadeDurationMs: Int get() = crossfadeDuration.inWholeMilliseconds.toInt()
 
   /** Images that aren't bitmaps (for e.g., GIFs) and should be rendered without sub-sampling. */
-  constructor(painter: Painter) : this(
-    placeholder = painter,
-    source = null
-  )
+  // todo: doc
+  data class Generic(
+    val image: Painter,
+    override val placeholder: Painter?,
+    override val crossfadeDuration: Duration = Duration.ZERO,
+  ) : ZoomableImageSource
+
+  // todo: doc
+  data class RequiresSubSampling(
+    val source: SubSamplingImageSource,
+    override val placeholder: Painter?,
+    override val crossfadeDuration: Duration = Duration.ZERO,
+    val expectedSize: Size = Size.Unspecified,
+    val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+  ) : ZoomableImageSource
+}
+
+@Composable
+private fun animatedPainter(painter: Painter): Painter {
+  // remember() is necessary for animated painters that use
+  // RememberObserver's APIs for starting & stopping their animation(s).
+  return remember(painter) { painter }
 }
 
 @Composable
