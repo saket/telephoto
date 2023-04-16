@@ -13,13 +13,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.painter.Painter
@@ -64,17 +64,13 @@ fun ZoomableImage(
     modifier = modifier,
     propagateMinConstraints = true,
   ) {
-    val isSubSampledImageLoaded by remember(state) {
-      derivedStateOf { state.subSamplingState?.isImageLoaded ?: false }
+    val isFullQualityImageLoaded = when (image) {
+      is ZoomableImageSource.Generic -> image.image.intrinsicSize.isSpecified
+      is ZoomableImageSource.RequiresSubSampling -> state.subSamplingState?.isImageLoaded ?: false
     }
-    val zoomable = Modifier.zoomable(
-      state = state.zoomableState,
-      onClick = onClick,
-      onLongClick = onLongClick,
-    )
 
     AnimatedVisibility(
-      visible = image.placeholder != null && !isSubSampledImageLoaded,
+      visible = image.placeholder != null && !isFullQualityImageLoaded,
       enter = fadeIn(tween(image.crossfadeDurationMs)),
       exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = image.crossfadeDurationMs)),
     ) {
@@ -92,6 +88,11 @@ fun ZoomableImage(
       )
     }
 
+    val zoomable = Modifier.zoomable(
+      state = state.zoomableState,
+      onClick = onClick,
+      onLongClick = onLongClick,
+    )
     when (image) {
       is ZoomableImageSource.Generic -> {
         LaunchedEffect(image.image.intrinsicSize) {
@@ -130,7 +131,7 @@ fun ZoomableImage(
           )
         }
         val animatedAlpha by animateFloatAsState(
-          targetValue = if (isSubSampledImageLoaded) 1f else 0f,
+          targetValue = if (isFullQualityImageLoaded) 1f else 0f,
           animationSpec = tween(image.crossfadeDurationMs)
         )
         SubSamplingImage(

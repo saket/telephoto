@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.painter.Painter
 
 @Composable
 internal fun Painter.withFixedSize(size: Size): Painter {
-  return remember {
+  return remember(this, size) {
     FixedSizePainter(
       painter = this,
       overriddenSize = size.takeOrElse { intrinsicSize },
