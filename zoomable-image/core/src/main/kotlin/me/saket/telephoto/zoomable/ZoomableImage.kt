@@ -71,7 +71,7 @@ fun ZoomableImage(
 
     AnimatedVisibility(
       visible = image.placeholder != null && !isFullQualityImageLoaded,
-      enter = fadeIn(tween(image.crossfadeDurationMs)),
+      enter = fadeIn(tween(0)),
       exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = image.crossfadeDurationMs)),
     ) {
       Image(
