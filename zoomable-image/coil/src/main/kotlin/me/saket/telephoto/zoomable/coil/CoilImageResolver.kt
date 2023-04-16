@@ -104,8 +104,9 @@ internal class CoilImageResolver(
           val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
           SubSamplingImageSource.file(cached.data)
         }
-        result.dataSource == DataSource.DISK -> when {
+        result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> when {
           requestData is Uri -> SubSamplingImageSource.contentUri(requestData)
+          requestData is String -> SubSamplingImageSource.contentUri(Uri.parse(requestData))
           result.request.context.isResourceId(requestData) -> SubSamplingImageSource.resource(requestData)
           else -> null
         }

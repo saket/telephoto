@@ -155,7 +155,7 @@ class CoilImageResolverTest {
             SuccessResult(
               drawable = BitmapDrawable(context.resources, fakeBitmap()),
               request = it.request,
-              dataSource = DataSource.DISK,
+              dataSource = DataSource.MEMORY_CACHE,
               diskCacheKey = imageDiskCacheKey,
             )
           }
