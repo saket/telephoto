@@ -2,8 +2,7 @@ package me.saket.telephoto.zoomable
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,12 +13,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -77,6 +73,25 @@ fun ZoomableImage(
       onLongClick = onLongClick,
     )
 
+    AnimatedVisibility(
+      visible = image.placeholder != null && !isSubSampledImageLoaded,
+      enter = fadeIn(tween(image.crossfadeDurationMs)),
+      exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = image.crossfadeDurationMs)),
+    ) {
+      Image(
+        painter = animatedPainter(image.placeholder!!).withFixedSize(
+          // Align with the full-quality image even if the placeholder is smaller in size.
+          // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
+          state.zoomableState.contentTransformation.contentSize
+        ),
+        contentDescription = contentDescription,
+        alignment = alignment,
+        contentScale = contentScale,
+        alpha = alpha,
+        colorFilter = colorFilter,
+      )
+    }
+
     when (image) {
       is ZoomableImageSource.Generic -> {
         LaunchedEffect(image.image.intrinsicSize) {
@@ -115,7 +130,6 @@ fun ZoomableImage(
           )
         }
         val animatedAlpha by animateFloatAsState(
-          initialValue = if (image.placeholder == null) 0f else 1f,
           targetValue = if (isSubSampledImageLoaded) 1f else 0f,
           animationSpec = tween(image.crossfadeDurationMs)
         )
@@ -127,25 +141,6 @@ fun ZoomableImage(
           colorFilter = colorFilter,
         )
       }
-    }
-
-    AnimatedVisibility(
-      visible = image.placeholder != null && !isSubSampledImageLoaded,
-      enter = fadeIn(tween(image.crossfadeDurationMs)),
-      exit = fadeOut(tween(image.crossfadeDurationMs)),
-    ) {
-      Image(
-        painter = animatedPainter(image.placeholder!!).withFixedSize(
-          // Align with the full-quality image even if the placeholder is smaller in size.
-          // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
-          state.zoomableState.contentTransformation.contentSize
-        ),
-        contentDescription = contentDescription,
-        alignment = alignment,
-        contentScale = contentScale,
-        alpha = alpha,
-        colorFilter = colorFilter,
-      )
     }
   }
 }
@@ -197,19 +192,4 @@ private fun animatedPainter(painter: Painter): Painter {
   // remember() is necessary for animated painters that use
   // RememberObserver's APIs for starting & stopping their animation(s).
   return remember(painter) { painter }
-}
-
-@Composable
-private fun animateFloatAsState(
-  initialValue: Float,
-  targetValue: Float,
-  animationSpec: AnimationSpec<Float>
-): State<Float> {
-  val state = remember { mutableStateOf(initialValue) }
-  LaunchedEffect(targetValue) {
-    Animatable(initialValue = state.value).animateTo(targetValue, animationSpec) {
-      state.value = value
-    }
-  }
-  return state
 }
