@@ -46,7 +46,7 @@ internal class CoilImageResolver(
     val result = imageLoader.execute(
       request.newBuilder()
         // There's no easy way to be certain whether an image will require sub-sampling in
-        // advance so assume it'll be needed and that the image will be read from the disk.
+        // advance so assume it'll be needed and force Coil to write this image to disk.
         .diskCachePolicy(
           when (request.diskCachePolicy) {
             CachePolicy.ENABLED -> CachePolicy.ENABLED

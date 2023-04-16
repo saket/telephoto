@@ -27,6 +27,7 @@ dependencies {
   implementation project(':zoomable')
   implementation project(':zoomable-image:core')
   implementation project(':zoomable-image:coil')
+  implementation project(':zoomable-image:glide')
 
   implementation "androidx.appcompat:appcompat:$versions.appCompat"
   implementation "androidx.core:core-ktx:1.9.0"

@@ -13,7 +13,7 @@ android {
 
 dependencies {
   api project(':zoomable-image:core')
-  implementation project (':zoomable-image:sub-sampling-image')
+  implementation project(':zoomable-image:sub-sampling-image')
 
   api "io.coil-kt:coil-compose:$versions.coil"
   implementation "com.google.accompanist:accompanist-drawablepainter:$versions.accompanist"
