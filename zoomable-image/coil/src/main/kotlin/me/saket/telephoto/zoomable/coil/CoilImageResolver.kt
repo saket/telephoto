@@ -32,7 +32,6 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import coil.size.Size as CoilSize
 
 internal class CoilImageResolver(
   private val request: ImageRequest,
@@ -49,10 +48,6 @@ internal class CoilImageResolver(
   override suspend fun work() {
     val result = imageLoader.execute(
       request.newBuilder()
-        // Prevent coil from spending any extra effort in downsizing images.
-        // For bitmaps, the result will be discarded anyway in favor of their raw files.
-        // For animated images, we still want them in full quality so that they can be zoomed.
-        .size(CoilSize.ORIGINAL)
         // There's no easy way to be certain whether an image will require sub-sampling in
         // advance so assume it'll be needed and that the image will be read from the disk.
         .diskCachePolicy(

@@ -31,6 +31,7 @@ import coil.imageLoader
 import coil.memory.MemoryCache
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import coil.size.Dimension
 import coil.test.FakeImageLoaderEngine
 import com.google.accompanist.drawablepainter.DrawablePainter
 import com.google.common.truth.Truth.assertThat
@@ -48,7 +49,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import kotlin.time.Duration.Companion.minutes
-import coil.size.Size.Companion as CoilSize
+import coil.size.Size as CoilSize
 
 @OptIn(ExperimentalCoilApi::class, ExperimentalCoroutinesApi::class)
 class CoilImageResolverTest {
@@ -97,7 +98,7 @@ class CoilImageResolverTest {
 
     val request = requests.receive()
     assertThat(request.diskCachePolicy.writeEnabled).isTrue()
-    assertThat(request.sizeResolver.size()).isEqualTo(CoilSize.ORIGINAL)
+    assertThat(request.sizeResolver.size()).isEqualTo(CoilSize(Dimension.Pixels(1920), Dimension.Pixels(1920)))
     assertThat(request.bitmapConfig).isEqualTo(Bitmap.Config.HARDWARE)
   }
 
