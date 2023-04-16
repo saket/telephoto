@@ -4,6 +4,7 @@
 package me.saket.telephoto.subsamplingimage
 
 import android.graphics.Bitmap
+import androidx.annotation.RestrictTo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -79,6 +80,7 @@ fun rememberSubSamplingImageState(
 
 // todo: doc.
 @Composable
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   transformation: ZoomableContentTransformation,
