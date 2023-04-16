@@ -1,8 +1,8 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Ignore
@@ -19,21 +19,21 @@ class BitmapTileGridGeneratorTest {
   @Test fun `empty canvas size`() {
     assertThrows {
       BitmapRegionTileGrid.generate(
-        canvasSize = Size(1080f, 0f),
-        unscaledImageSize = Size(10f, 10f),
+        canvasSize = IntSize(1080, 0),
+        unscaledImageSize = IntSize(10, 10),
       )
     }
   }
 
   @Test fun `image smaller than layout bounds`() {
     val tileGrid = BitmapRegionTileGrid.generate(
-      canvasSize = Size(
-        width = 1080f,
-        height = 2214f
+      canvasSize = IntSize(
+        width = 1080,
+        height = 2214
       ),
-      unscaledImageSize = Size(
-        width = 500f,
-        height = 400f
+      unscaledImageSize = IntSize(
+        width = 500,
+        height = 400
       )
     )
 
@@ -42,14 +42,14 @@ class BitmapTileGridGeneratorTest {
   }
 
   @Test fun `image larger than layout bounds`() {
-    val imageSize = Size(
-      width = 9734f,
-      height = 3265f
+    val imageSize = IntSize(
+      width = 9734,
+      height = 3265
     )
     val tileGrid = BitmapRegionTileGrid.generate(
-      canvasSize = Size(
-        width = 1080f,
-        height = 2214f
+      canvasSize = IntSize(
+        width = 1080,
+        height = 2214
       ),
       unscaledImageSize = imageSize
     )
@@ -68,17 +68,17 @@ class BitmapTileGridGeneratorTest {
       1 to 16,
     )
 
-    assertThat(tileGrid.base.bounds).isEqualTo(Rect(Offset.Zero, imageSize))
+    assertThat(tileGrid.base.bounds).isEqualTo(IntRect(IntOffset.Zero, imageSize))
 
     tileGrid.foreground.forEach { (sampleSize, tiles) ->
       val assert = assertWithMessage("Sample size = ${sampleSize.size}")
 
       // Verify that the tiles cover the entire image without any gaps.
-      assert.that(tiles.minOf { it.bounds.left }).isEqualTo(0f)
-      assert.that(tiles.minOf { it.bounds.top }).isEqualTo(0f)
+      assert.that(tiles.minOf { it.bounds.left }).isEqualTo(0)
+      assert.that(tiles.minOf { it.bounds.top }).isEqualTo(0)
       assert.that(tiles.maxOf { it.bounds.right }).isEqualTo(imageSize.width)
       assert.that(tiles.maxOf { it.bounds.bottom }).isEqualTo(imageSize.height)
-      assert.that(tiles.sumOf { it.bounds.area.toInt() }).isEqualTo(imageSize.area.toInt())
+      assert.that(tiles.sumOf { it.bounds.area }).isEqualTo(imageSize.area)
 
       // Verify that the tiles don't have any overlap.
       val overlappingTiles: List<BitmapRegionTile> = tiles.flatMap { tile ->
@@ -95,13 +95,13 @@ class BitmapTileGridGeneratorTest {
     val time = measureTime {
       repeat(1_000) {
         BitmapRegionTileGrid.generate(
-          canvasSize = Size(
-            width = 1080f - (Random.nextInt(0..100)),
-            height = 2214f - (Random.nextInt(0..100))
+          canvasSize = IntSize(
+            width = 1080 - (Random.nextInt(0..100)),
+            height = 2214 - (Random.nextInt(0..100))
           ),
-          unscaledImageSize = Size(
-            width = 9734f - (Random.nextInt(0..100)),
-            height = 3265f - (Random.nextInt(0..100))
+          unscaledImageSize = IntSize(
+            width = 9734 - (Random.nextInt(0..100)),
+            height = 3265 - (Random.nextInt(0..100))
           )
         )
       }
@@ -113,12 +113,12 @@ class BitmapTileGridGeneratorTest {
   }
 }
 
-internal fun BitmapRegionTileGrid.Companion.generate(canvasSize: Size, unscaledImageSize: Size) =
-  generate(
+internal fun BitmapRegionTileGrid.Companion.generate(canvasSize: IntSize, unscaledImageSize: IntSize) =
+  BitmapRegionTileGrid.generate(
     canvasSize = canvasSize,
     unscaledImageSize = unscaledImageSize,
-    minTileSize = canvasSize / 2f
+    minTileSize = canvasSize / 2
   )
 
-private val Size.area: Float get() = width * height
-private val Rect.area: Float get() = size.area
+private val IntSize.area: Int get() = width * height
+private val IntRect.area: Int get() = size.area
