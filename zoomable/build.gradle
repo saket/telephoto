@@ -9,7 +9,7 @@ apply plugin: 'app.cash.paparazzi'
 apply plugin: 'com.vanniktech.maven.publish'
 
 android {
-  namespace "me.saket.telephoto.zoomable.viewport"
+  namespace "me.saket.telephoto.zoomable"
 }
 
 dependencies {

@@ -17,7 +17,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-// TODO: move these tests to :zoomable:viewport
+// TODO: move these tests to :zoomable
 class ZoomableTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val dropshots = Dropshots(
