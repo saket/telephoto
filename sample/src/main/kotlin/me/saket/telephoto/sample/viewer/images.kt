@@ -17,7 +17,6 @@ fun Gif(
     modifier = Modifier.fillMaxSize(),
     model = ImageRequest.Builder(LocalContext.current)
       .data("https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTAxMWYwZDk5N2NlYTM1MWZmZDJhMTNlZmQ2ODZmN2Q0NGYwYjRiMiZjdD1n/OJNNOaOJx8AgWFXZui/giphy.gif")
-      .placeholderMemoryCacheKey("placeholder")
       .crossfade(200)
       .build(),
     state = rememberZoomableImageState(zoomableState),
