@@ -1,4 +1,4 @@
-package me.saket.telephoto.viewport.internal
+package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
@@ -6,7 +6,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.LayoutDirection
 import com.google.common.truth.Truth.assertThat
-import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
 import org.junit.Test
 
 class CoerceInsideTest {
