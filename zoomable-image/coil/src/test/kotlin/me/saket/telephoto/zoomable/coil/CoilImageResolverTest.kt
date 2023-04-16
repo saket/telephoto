@@ -124,7 +124,7 @@ class CoilImageResolverTest {
       }
     }.test {
       // Default value.
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = EmptyPainter, placeholder = null))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(EmptyPainter))
 
       (awaitItem().placeholder as DrawablePainter).let { placeholder ->
         (placeholder.drawable as BitmapDrawable).let { drawable ->
@@ -213,11 +213,11 @@ class CoilImageResolverTest {
     }
 
     images.test {
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = EmptyPainter, placeholder = null))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(EmptyPainter))
       assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
 
       imageUrl = "image_two"
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = EmptyPainter, placeholder = null))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(EmptyPainter))
       assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
     }
   }

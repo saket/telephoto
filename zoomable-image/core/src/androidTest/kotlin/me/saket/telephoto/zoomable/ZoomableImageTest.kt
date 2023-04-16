@@ -640,12 +640,10 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 private fun ZoomableImageSource.Companion.nonSubSampledAsset(assetName: String): ZoomableImageSource {
   val context = LocalContext.current
   return remember(assetName) {
-    ZoomableImageSource.Generic(
-      image = context.assets.open(assetName).use { stream ->
-        BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
-      },
-      placeholder = null
-    )
+    val painter = context.assets.open(assetName).use { stream ->
+      BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+    }
+    ZoomableImageSource.Generic(painter)
   }
 }
 

@@ -39,10 +39,7 @@ internal class CoilImageResolver(
 ) : RememberWorker() {
 
   var resolved: ZoomableImageSource by mutableStateOf(
-    ZoomableImageSource.Generic(
-      image = EmptyPainter,
-      placeholder = null,
-    )
+    ZoomableImageSource.Generic(EmptyPainter)
   )
 
   override suspend fun work() {

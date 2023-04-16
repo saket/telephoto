@@ -174,7 +174,7 @@ sealed interface ZoomableImageSource {
   // todo: doc
   data class Generic(
     val image: Painter,
-    override val placeholder: Painter?,
+    override val placeholder: Painter? = null,
     override val crossfadeDuration: Duration = Duration.ZERO,
   ) : ZoomableImageSource
 
