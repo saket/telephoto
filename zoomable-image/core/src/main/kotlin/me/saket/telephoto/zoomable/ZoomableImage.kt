@@ -97,15 +97,15 @@ fun ZoomableImage(
       is ZoomableImageSource.Generic -> {
         LaunchedEffect(image.image.intrinsicSize) {
           state.zoomableState.setContentLocation(
-            ZoomableContentLocation.unscaledAndTopStartAligned(image.image.intrinsicSize)
+            ZoomableContentLocation.scaledInsideAndCenterAligned(image.image.intrinsicSize)
           )
         }
         Image(
           modifier = zoomable.applyTransformation(state.zoomableState.contentTransformation),
           painter = animatedPainter(image.image),
           contentDescription = contentDescription,
-          alignment = Alignment.TopStart,
-          contentScale = ContentScale.None,
+          alignment = Alignment.Center,
+          contentScale = ContentScale.Inside,
           alpha = alpha,
           colorFilter = colorFilter,
         )

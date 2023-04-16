@@ -60,7 +60,7 @@ import org.junit.rules.RuleChain
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
-@ExperimentalFoundationApi
+@OptIn(ExperimentalFoundationApi::class)
 @RunWith(TestParameterInjector::class)
 class ZoomableImageTest {
   private val rule = createAndroidComposeRule<ComponentActivity>()
@@ -401,9 +401,6 @@ class ZoomableImageTest {
 
     rule.setContent {
       val zoomableState = rememberZoomableState(maxZoomFactor = maxZoomFactor)
-      LaunchedEffect(assetName) {
-        println("assetName launched to $assetName")
-      }
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -461,7 +458,6 @@ class ZoomableImageTest {
         imageScale = zoomableState.contentTransformation.scale
       }
       LaunchedEffect(resetTriggers) {
-        println("Reset received. Resetting…")
         resetTriggers.receive()
         zoomableState.resetZoomAndPanImmediately()
       }
@@ -596,7 +592,6 @@ class ZoomableImageTest {
   }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 private fun TouchInjectionScope.swipeWithVelocity(
   direction: ScrollDirection,
   velocity: Float = 5_000f,
@@ -616,7 +611,6 @@ private fun TouchInjectionScope.swipeWithVelocity(
   }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 private fun TouchInjectionScope.swipe(
   direction: ScrollDirection
 ) {
@@ -646,17 +640,22 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 private fun ZoomableImageSource.Companion.nonSubSampledAsset(assetName: String): ZoomableImageSource {
   val context = LocalContext.current
   return remember(assetName) {
-    val painter = context.assets.open(assetName).use { stream ->
-      BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
-    }
-    ZoomableImageSource(painter)
+    ZoomableImageSource.Generic(
+      image = context.assets.open(assetName).use { stream ->
+        BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+      },
+      placeholder = null
+    )
   }
 }
 
 @Composable
 private fun ZoomableImageSource.Companion.subSampledAsset(assetName: String): ZoomableImageSource {
   return remember(assetName) {
-    ZoomableImageSource(SubSamplingImageSource.asset(assetName))
+    ZoomableImageSource.RequiresSubSampling(
+      source = SubSamplingImageSource.asset(assetName),
+      placeholder = null
+    )
   }
 }
 

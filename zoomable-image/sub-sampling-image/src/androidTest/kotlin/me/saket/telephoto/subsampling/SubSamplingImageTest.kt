@@ -252,7 +252,7 @@ class SubSamplingImageTest {
       region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
     }
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
-      val realFactory = PooledImageRegionDecoder.Factory(AndroidImageRegionDecoder.Factory)
+      val realFactory = PooledImageRegionDecoder.Factory(delegate = AndroidImageRegionDecoder.Factory)
       val real = realFactory.create(context, imageSource, bitmapConfig)
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {

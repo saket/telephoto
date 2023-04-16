@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -141,7 +142,8 @@ private fun Drawable.asPainter(): Painter {
   return DrawablePainter(mutate())
 }
 
-private object EmptyPainter : Painter() {
+@VisibleForTesting
+internal object EmptyPainter : Painter() {
   override val intrinsicSize: Size get() = Size.Unspecified
   override fun DrawScope.onDraw() = Unit
 }

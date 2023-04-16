@@ -14,6 +14,7 @@ import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -122,7 +123,7 @@ class CoilImageResolverTest {
       }
     }.test {
       // Default value.
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(source = null))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = EmptyPainter, placeholder = null))
 
       (awaitItem().placeholder as DrawablePainter).let { placeholder ->
         (placeholder.drawable as BitmapDrawable).let { drawable ->
@@ -174,10 +175,11 @@ class CoilImageResolverTest {
     images.test {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
-        ZoomableImageSource(
+        ZoomableImageSource.RequiresSubSampling(
           placeholder = null,
           source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
           bitmapConfig = Bitmap.Config.HARDWARE,
+          expectedSize = Size(3f, 3f),
         )
       )
     }
@@ -210,11 +212,11 @@ class CoilImageResolverTest {
     }
 
     images.test {
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(source = null))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = EmptyPainter, placeholder = null))
       assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
 
       imageUrl = "image_two"
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource(source = null))
+      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = EmptyPainter, placeholder = null))
       assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
     }
   }
