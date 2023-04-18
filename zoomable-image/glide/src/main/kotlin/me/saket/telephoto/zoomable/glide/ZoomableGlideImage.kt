@@ -102,7 +102,6 @@ fun ZoomableImageSource.Companion.glide(model: Any?): ZoomableImageSource {
     GlideImageResolver(
       request = model as? RequestBuilder<Drawable> ?: requestManager.load(model),
       requestManager = requestManager,
-      context = context,
     )
   }
   return resolver.resolved
