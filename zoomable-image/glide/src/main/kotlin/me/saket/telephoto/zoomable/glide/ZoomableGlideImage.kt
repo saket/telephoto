@@ -76,12 +76,12 @@ fun ZoomableGlideImage(
  *
  * ```kotlin
  * ZoomableImage(
- *   image = ZoomableImage.glide("https://example.com/image.jpg"),
+ *   image = ZoomableImageSource.glide("https://example.com/image.jpg"),
  *   contentDescription = …
  * )
  *
  * ZoomableImage(
- *   image = ZoomableImage.glide(
+ *   image = ZoomableImageSource.glide(
  *     Glide
  *       .with(LocalContext.current)
  *       .load("https://example.com/image.jpg")

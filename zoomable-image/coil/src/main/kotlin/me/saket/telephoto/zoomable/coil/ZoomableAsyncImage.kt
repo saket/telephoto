@@ -77,12 +77,12 @@ fun ZoomableAsyncImage(
  *
  * ```kotlin
  * ZoomableImage(
- *   image = ZoomableImage.coil("https://example.com/image.jpg"),
+ *   image = ZoomableImageSource.coil("https://example.com/image.jpg"),
  *   contentDescription = …
  * )
  *
  * ZoomableImage(
- *   image = ZoomableImage.coil(
+ *   image = ZoomableImageSource.coil(
  *     ImageRequest.Builder(LocalContext.current)
  *       .data("https://example.com/image.jpg")
  *       .build()
