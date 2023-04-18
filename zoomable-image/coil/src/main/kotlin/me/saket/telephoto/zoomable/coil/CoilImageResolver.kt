@@ -4,13 +4,11 @@ import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -39,7 +37,7 @@ internal class CoilImageResolver(
 ) : RememberWorker() {
 
   var resolved: ZoomableImageSource by mutableStateOf(
-    ZoomableImageSource.Generic(EmptyPainter)
+    ZoomableImageSource.Generic(image = null)
   )
 
   override suspend fun work() {
@@ -61,7 +59,7 @@ internal class CoilImageResolver(
         .target(
           onStart = {
             resolved = ZoomableImageSource.Generic(
-              image = EmptyPainter,
+              image = null,
               placeholder = it?.asPainter(),
             )
           }
@@ -81,7 +79,7 @@ internal class CoilImageResolver(
     } else {
       ZoomableImageSource.Generic(
         placeholder = resolved.placeholder,
-        image = result.drawable?.asPainter() ?: EmptyPainter,
+        image = result.drawable?.asPainter(),
         crossfadeDuration = result.crossfadeDuration(),
       )
     }
@@ -133,12 +131,6 @@ internal class CoilImageResolver(
 
 private fun Drawable.asPainter(): Painter {
   return DrawablePainter(mutate())
-}
-
-@VisibleForTesting
-internal object EmptyPainter : Painter() {
-  override val intrinsicSize: Size get() = Size.Unspecified
-  override fun DrawScope.onDraw() = Unit
 }
 
 private val Drawable.intrinsicSize

@@ -13,15 +13,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.toSize
@@ -65,7 +66,7 @@ fun ZoomableImage(
     propagateMinConstraints = true,
   ) {
     val isFullQualityImageLoaded = when (image) {
-      is ZoomableImageSource.Generic -> image.image.intrinsicSize.isSpecified
+      is ZoomableImageSource.Generic -> image.image != null
       is ZoomableImageSource.RequiresSubSampling -> state.subSamplingState?.isImageLoaded ?: false
     }
 
@@ -95,14 +96,15 @@ fun ZoomableImage(
     )
     when (image) {
       is ZoomableImageSource.Generic -> {
-        LaunchedEffect(image.image.intrinsicSize) {
+        val painter = image.image ?: EmptyPainter
+        LaunchedEffect(painter.intrinsicSize) {
           state.zoomableState.setContentLocation(
-            ZoomableContentLocation.scaledInsideAndCenterAligned(image.image.intrinsicSize)
+            ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
           )
         }
         Image(
           modifier = zoomable.applyTransformation(state.zoomableState.contentTransformation),
-          painter = animatedPainter(image.image),
+          painter = animatedPainter(painter),
           contentDescription = contentDescription,
           alignment = Alignment.Center,
           contentScale = ContentScale.Inside,
@@ -173,7 +175,7 @@ sealed interface ZoomableImageSource {
   /** Images that aren't bitmaps (for e.g., GIFs) and should be rendered without sub-sampling. */
   // todo: doc
   data class Generic(
-    val image: Painter,
+    val image: Painter?,
     override val placeholder: Painter? = null,
     override val crossfadeDuration: Duration = Duration.ZERO,
   ) : ZoomableImageSource
@@ -190,7 +192,15 @@ sealed interface ZoomableImageSource {
 
 @Composable
 private fun animatedPainter(painter: Painter): Painter {
-  // remember() is necessary for animated painters that use
-  // RememberObserver's APIs for starting & stopping their animation(s).
-  return remember(painter) { painter }
+  if (painter is RememberObserver) {
+    // Animated painters use RememberObserver's APIs
+    // for starting & stopping their animations.
+    return remember(painter) { painter }
+  }
+  return painter
+}
+
+private object EmptyPainter : Painter() {
+  override val intrinsicSize: Size get() = Size.Unspecified
+  override fun DrawScope.onDraw() = Unit
 }

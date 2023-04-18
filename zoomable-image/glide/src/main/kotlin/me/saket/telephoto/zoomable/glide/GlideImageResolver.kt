@@ -2,13 +2,11 @@ package me.saket.telephoto.zoomable.glide
 
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
@@ -42,7 +40,7 @@ internal class GlideImageResolver(
 ) : RememberWorker() {
 
   var resolved: ZoomableImageSource by mutableStateOf(
-    ZoomableImageSource.Generic(EmptyPainter)
+    ZoomableImageSource.Generic(image = null)
   )
 
   override suspend fun work() {
@@ -64,7 +62,7 @@ internal class GlideImageResolver(
             if (instant.placeholder != null) {
               // Placeholder images should be small in size so sub-sampling isn't needed here.
               resolved = ZoomableImageSource.Generic(
-                image = EmptyPainter,
+                image = null,
                 placeholder = instant.placeholder.asPainter(),
               )
             }
@@ -95,7 +93,7 @@ internal class GlideImageResolver(
             } else {
               // This must be a thumbnail. Treat this as a placeholder.
               ZoomableImageSource.Generic(
-                image = EmptyPainter,
+                image = null,
                 placeholder = instant.resource.asPainter(),
               )
             }
@@ -143,12 +141,6 @@ internal class GlideImageResolver(
 
 private fun Drawable.asPainter(): Painter {
   return DrawablePainter(mutate())
-}
-
-@VisibleForTesting
-internal object EmptyPainter : Painter() {
-  override val intrinsicSize: Size get() = Size.Unspecified
-  override fun DrawScope.onDraw() = Unit
 }
 
 private val Drawable.intrinsicSize
