@@ -75,10 +75,10 @@ fun ZoomableImage(
       exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = image.crossfadeDurationMs)),
     ) {
       Image(
-        painter = animatedPainter(image.placeholder!!).withFixedSize(
+        painter = animatedPainter(image.placeholder!!).scaledToMatch(
           // Align with the full-quality image even if the placeholder is smaller in size.
           // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
-          state.zoomableState.contentTransformation.contentSize
+          state.zoomableState.contentTransformation.contentSize,
         ),
         contentDescription = contentDescription,
         alignment = alignment,
