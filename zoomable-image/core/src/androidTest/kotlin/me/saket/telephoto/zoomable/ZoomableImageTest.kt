@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -61,6 +62,8 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalFoundationApi::class)
 @RunWith(TestParameterInjector::class)
@@ -204,7 +207,7 @@ class ZoomableImageTest {
       }
     }
 
-    rule.waitUntil { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName)
     }
@@ -220,7 +223,7 @@ class ZoomableImageTest {
         )
       }
     }
-    rule.waitUntil { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -230,7 +233,7 @@ class ZoomableImageTest {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-    rule.waitUntil { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
@@ -425,8 +428,6 @@ class ZoomableImageTest {
       assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
     }
 
-    Thread.sleep(2_000)
-
     // It sounds weird that changing the image does not auto-reset transformations,
     // but the idea is that in the future it should be possible to load a low-quality
     // preview as a placeholder before loading the full image.
@@ -436,7 +437,6 @@ class ZoomableImageTest {
       assertThat(imageScale).isEqualTo(ScaleFactor(2f, 2f))
       dropshots.assertSnapshot(rule.activity)
     }
-    Thread.sleep(4_000)
   }
 
   @Test fun reset_content_transformations() {
@@ -663,3 +663,7 @@ private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Bo
 
 internal fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
   ThresholdValidator(threshold = thresholdPercent / 100)
+
+private fun AndroidComposeTestRule<*, *>.waitUntil(timeout: Duration, condition: () -> Boolean) {
+  this.waitUntil(timeoutMillis = timeout.inWholeMilliseconds, condition)
+}
