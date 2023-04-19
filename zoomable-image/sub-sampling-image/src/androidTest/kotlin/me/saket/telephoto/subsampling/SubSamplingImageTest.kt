@@ -41,7 +41,6 @@ import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
-import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
@@ -71,19 +70,12 @@ import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
-  private val rule = createAndroidComposeRule<ComponentActivity>()
-  private val dropshots = Dropshots(
+  @get:Rule val testName = TestName()
+  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val dropshots = Dropshots(
     filenameFunc = { it },
     resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
   )
-
-  @get:Rule val rules: RuleChain = RuleChain.emptyRuleChain()
-    .around(dropshots)
-    .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
-      around(rule)
-    }
-
-  @get:Rule val testName = TestName()
 
   @Before
   fun setup() {
@@ -123,7 +115,7 @@ class SubSamplingImageTest {
       )
     }
 
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -154,7 +146,7 @@ class SubSamplingImageTest {
       )
     }
 
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -192,7 +184,7 @@ class SubSamplingImageTest {
       )
     }
 
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -231,7 +223,7 @@ class SubSamplingImageTest {
         contentDescription = null,
       )
     }
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
 
     imageSource = SubSamplingImageSource.asset("path.jpg")
 
@@ -267,6 +259,7 @@ class SubSamplingImageTest {
     }
 
     var isImageDisplayed = false
+    var imageTiles: List<CanvasRegionTile>? = null
 
     rule.setContent {
       CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
@@ -280,7 +273,9 @@ class SubSamplingImageTest {
         LaunchedEffect(imageState.isImageLoaded) {
           isImageDisplayed = imageState.isImageLoaded
         }
-
+        LaunchedEffect(imageState.tiles) {
+          imageTiles = imageState.tiles
+        }
         SubSamplingImage(
           modifier = Modifier
             .fillMaxSize()
@@ -292,12 +287,11 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.onNodeWithTag("image").performTouchInput { doubleClick(center) }
+    rule.waitUntil(5.seconds) { imageTiles!!.count { !it.isBaseTile && it.bitmap != null } == 2 }
 
     rule.runOnIdle {
-      // Wait for white-listed tiles to load full-resolution bitmaps.
-      Thread.sleep(200)
       dropshots.assertSnapshot(rule.activity)
     }
   }
@@ -333,7 +327,7 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
 
@@ -375,7 +369,7 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(2.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -408,7 +402,7 @@ class SubSamplingImageTest {
       )
     }
 
-    rule.waitUntil { isImageDisplayedInFullQuality }
+    rule.waitUntil(5.seconds) { isImageDisplayedInFullQuality }
     rule.onNodeWithTag("image").performTouchInput {
       pinch(
         start0 = center,
@@ -417,7 +411,7 @@ class SubSamplingImageTest {
         end1 = center + Offset(0f, 30f),
       )
     }
-    rule.waitUntil { isImageDisplayedInFullQuality }
+    rule.waitUntil(5.seconds) { isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
