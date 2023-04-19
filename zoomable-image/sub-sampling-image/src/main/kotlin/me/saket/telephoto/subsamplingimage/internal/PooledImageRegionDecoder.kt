@@ -7,8 +7,11 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlin.math.max
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 /**
  * Pools multiple [BitmapRegionDecoder]s to concurrently load multiple bitmap regions at the same time.
@@ -21,10 +24,17 @@ internal class PooledImageRegionDecoder private constructor(
   private val dispatcher: CoroutineDispatcher,
 ) : ImageRegionDecoder {
 
+  @OptIn(ExperimentalTime::class)
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
     return decoders.borrow { decoder ->
       withContext(dispatcher) {
-        decoder.decodeRegion(region)
+        println("decodeRegion(region=${region.bounds})")
+        measureTimedValue {
+          decoder.decodeRegion(region)
+        }.let {
+          println("Decoded bitmap in ${it.duration}")
+          it.value
+        }
       }
     }
   }
@@ -37,6 +47,7 @@ internal class PooledImageRegionDecoder private constructor(
       val decoderCount = max(Runtime.getRuntime().availableProcessors(), 2) // Same number used by Dispatchers.Default.
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
+      println("decoderCount = $decoderCount")
       val decoders = withContext(dispatcher) {
         List(decoderCount) {
           delegate.create(
