@@ -14,17 +14,24 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.toSize
+import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 
@@ -57,22 +64,31 @@ fun ZoomableImage(
     it.contentScale = contentScale
   }
 
+  var canvasSize by remember { mutableStateOf(Size.Unspecified) }
+  val resolvedImage = key(image) {
+    image.resolve(
+      canvasSize = remember {
+        snapshotFlow { canvasSize }.filter { it.isSpecified }
+      }
+    )
+  }
+
   Box(
-    modifier = modifier,
+    modifier = modifier.onMeasure { canvasSize = it },
     propagateMinConstraints = true,
   ) {
-    val isFullQualityImageLoaded = when (image) {
-      is ZoomableImageSource.Generic -> image.image != null
+    val isFullQualityImageLoaded = when (resolvedImage) {
+      is ZoomableImageSource.Generic -> resolvedImage.image != null
       is ZoomableImageSource.RequiresSubSampling -> state.subSamplingState?.isImageLoaded ?: false
     }
 
     AnimatedVisibility(
-      visible = image.placeholder != null && !isFullQualityImageLoaded,
+      visible = resolvedImage.placeholder != null && !isFullQualityImageLoaded,
       enter = fadeIn(tween(0)),
-      exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = image.crossfadeDurationMs)),
+      exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = resolvedImage.crossfadeDurationMs)),
     ) {
       Image(
-        painter = animatedPainter(image.placeholder!!).scaledToMatch(
+        painter = animatedPainter(resolvedImage.placeholder!!).scaledToMatch(
           // Align with the full-quality image even if the placeholder is smaller in size.
           // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
           state.zoomableState.contentTransformation.contentSize,
@@ -90,16 +106,16 @@ fun ZoomableImage(
       onClick = onClick,
       onLongClick = onLongClick,
     )
-    when (image) {
+    when (resolvedImage) {
       is ZoomableImageSource.Generic -> {
-        val painter = image.image ?: EmptyPainter
+        val painter = resolvedImage.image ?: EmptyPainter
         LaunchedEffect(painter.intrinsicSize) {
           state.zoomableState.setContentLocation(
             ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
           )
         }
         Image(
-          modifier = zoomable.applyTransformation(state.zoomableState.contentTransformation),
+          modifier = zoomable,
           painter = animatedPainter(painter),
           contentDescription = contentDescription,
           alignment = Alignment.Center,
@@ -111,9 +127,9 @@ fun ZoomableImage(
 
       is ZoomableImageSource.RequiresSubSampling -> {
         val subSamplingState = rememberSubSamplingImageState(
-          imageSource = image.source,
+          imageSource = resolvedImage.source,
           transformation = state.zoomableState.contentTransformation,
-          bitmapConfig = image.bitmapConfig
+          bitmapConfig = resolvedImage.bitmapConfig
         )
         DisposableEffect(subSamplingState) {
           state.subSamplingState = subSamplingState
@@ -126,13 +142,13 @@ fun ZoomableImage(
         LaunchedEffect(subSamplingState.imageSize) {
           state.zoomableState.setContentLocation(
             ZoomableContentLocation.unscaledAndTopStartAligned(
-              subSamplingState.imageSize?.toSize() ?: image.expectedSize
+              subSamplingState.imageSize?.toSize() ?: resolvedImage.expectedSize
             )
           )
         }
         val animatedAlpha by animateFloatAsState(
           targetValue = if (isFullQualityImageLoaded) 1f else 0f,
-          animationSpec = tween(image.crossfadeDurationMs)
+          animationSpec = tween(resolvedImage.crossfadeDurationMs)
         )
         SubSamplingImage(
           modifier = zoomable,
@@ -142,6 +158,24 @@ fun ZoomableImage(
           colorFilter = colorFilter,
         )
       }
+    }
+  }
+}
+
+private fun Modifier.onMeasure(action: (Size) -> Unit): Modifier {
+  return layout { measurable, constraints ->
+    val maxSize = when {
+      constraints.isZero -> Size.Unspecified
+      else -> Size(
+        width = if (constraints.hasBoundedWidth) constraints.maxWidth.toFloat() else Float.NaN,
+        height = if (constraints.hasBoundedHeight) constraints.maxHeight.toFloat() else Float.NaN
+      )
+    }
+    action(maxSize)
+
+    val placeable = measurable.measure(constraints)
+    layout(placeable.width, placeable.height) {
+      placeable.place(0, 0)
     }
   }
 }
@@ -161,5 +195,5 @@ private object EmptyPainter : Painter() {
   override fun DrawScope.onDraw() = Unit
 }
 
-private val ZoomableImageSource.crossfadeDurationMs: Int
+private val ZoomableImageSource.ResolveResult.crossfadeDurationMs: Int
   get() = crossfadeDuration.inWholeMilliseconds.toInt()

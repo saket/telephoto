@@ -1,8 +1,10 @@
 package me.saket.telephoto.zoomable
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
+import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import kotlin.time.Duration
 
@@ -11,6 +13,8 @@ import kotlin.time.Duration
  *
  * Keep in mind that this shouldn't be used directly. It is designed to provide an
  * abstraction over your favorite image loading library.
+ *
+ * TODO: mention glide and picasso.
  *
  * If you're using Coil for loading images, Telephoto provides a default implementation
  * through [ZoomableAsyncImage()][me.saket.telephoto.zoomable.coil.ZoomableAsyncImage]
@@ -23,11 +27,17 @@ import kotlin.time.Duration
  *)
  * ```
  */
-sealed interface ZoomableImageSource {
+interface ZoomableImageSource {
   companion object; // For extensions.
 
-  val placeholder: Painter?
-  val crossfadeDuration: Duration
+  // todo: doc.
+  @Composable
+  fun resolve(canvasSize: Flow<Size>): ResolveResult
+
+  sealed interface ResolveResult {
+    val placeholder: Painter?
+    val crossfadeDuration: Duration
+  }
 
   /** Images that aren't bitmaps (for e.g., GIFs) and should be rendered without sub-sampling. */
   // todo: doc
@@ -35,7 +45,7 @@ sealed interface ZoomableImageSource {
     val image: Painter?,
     override val placeholder: Painter? = null,
     override val crossfadeDuration: Duration = Duration.ZERO,
-  ) : ZoomableImageSource
+  ) : ResolveResult
 
   // todo: doc
   data class RequiresSubSampling(
@@ -44,5 +54,5 @@ sealed interface ZoomableImageSource {
     override val crossfadeDuration: Duration = Duration.ZERO,
     val expectedSize: Size = Size.Unspecified,
     val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
-  ) : ZoomableImageSource
+  ) : ResolveResult
 }

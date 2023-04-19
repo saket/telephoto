@@ -11,7 +11,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
 import coil.imageLoader
-import coil.request.ImageRequest
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
@@ -99,15 +98,7 @@ fun ZoomableImageSource.Companion.coil(
   model: Any?,
   imageLoader: ImageLoader = LocalContext.current.imageLoader
 ): ZoomableImageSource {
-  val context = LocalContext.current
-  val resolver = remember(model) {
-    CoilImageResolver(
-      request = model as? ImageRequest
-        ?: ImageRequest.Builder(context)
-          .data(model)
-          .build(),
-      imageLoader = imageLoader
-    )
+  return remember(model, imageLoader) {
+    CoilImageSource(model, imageLoader)
   }
-  return resolver.resolved
 }

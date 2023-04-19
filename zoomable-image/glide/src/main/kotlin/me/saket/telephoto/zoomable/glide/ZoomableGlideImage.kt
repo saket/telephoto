@@ -1,6 +1,5 @@
 package me.saket.telephoto.zoomable.glide
 
-import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -9,9 +8,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestBuilder
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
@@ -94,15 +90,8 @@ fun ZoomableGlideImage(
  * for full documentation.
  */
 @Composable
-@Suppress("UNCHECKED_CAST")
 fun ZoomableImageSource.Companion.glide(model: Any?): ZoomableImageSource {
-  val context = LocalContext.current
-  val resolver = remember(model) {
-    val requestManager = Glide.with(context)
-    GlideImageResolver(
-      request = model as? RequestBuilder<Drawable> ?: requestManager.load(model),
-      requestManager = requestManager,
-    )
+  return remember(model) {
+    GlideImageSource(model)
   }
-  return resolver.resolved
 }

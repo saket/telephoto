@@ -4,12 +4,14 @@ import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import androidx.compose.runtime.RememberObserver
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.decode.DataSource
@@ -17,32 +19,64 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.ImageResult
 import coil.request.SuccessResult
+import coil.size.Dimension
+import coil.size.SizeResolver
 import coil.transition.CrossfadeTransition
 import com.google.accompanist.drawablepainter.DrawablePainter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
+import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
+import me.saket.telephoto.zoomable.internal.RememberWorker
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import coil.size.Size as CoilSize
 
-internal class CoilImageResolver(
+internal class CoilImageSource(
+  private val model: Any?,
+  private val imageLoader: ImageLoader,
+) : ZoomableImageSource {
+
+  @Composable
+  override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+    val context = LocalContext.current
+    val resolver = remember(this) {
+      Resolver(
+        request = model as? ImageRequest
+          ?: ImageRequest.Builder(context)
+            .data(model)
+            .build(),
+        imageLoader = imageLoader,
+        sizeResolver = { canvasSize.first().toCoilSize() }
+      )
+    }
+    return resolver.resolved
+  }
+
+  private fun Size.toCoilSize() = CoilSize(
+    width = if (width.isFinite()) Dimension(width.roundToInt()) else Dimension.Undefined,
+    height = if (height.isFinite()) Dimension(height.roundToInt()) else Dimension.Undefined
+  )
+}
+
+internal class Resolver(
   private val request: ImageRequest,
   private val imageLoader: ImageLoader,
+  private val sizeResolver: SizeResolver,
 ) : RememberWorker() {
 
-  var resolved: ZoomableImageSource by mutableStateOf(
+  internal var resolved: ResolveResult by mutableStateOf(
     ZoomableImageSource.Generic(image = null)
   )
 
   override suspend fun work() {
     val result = imageLoader.execute(
       request.newBuilder()
+        .size(request.defined.sizeResolver ?: sizeResolver)
         // There's no easy way to be certain whether an image will require sub-sampling in
         // advance so assume it'll be needed and force Coil to write this image to disk.
         .diskCachePolicy(
@@ -149,19 +183,4 @@ private fun Context.isResourceId(data: Any): Boolean {
     }
   }
   return false
-}
-
-internal abstract class RememberWorker : RememberObserver {
-  private lateinit var job: Job
-
-  abstract suspend fun work()
-
-  override fun onRemembered() {
-    check(!::job.isInitialized) // Shouldn't be remembered in multiple locations.
-    job = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch { work() }
-  }
-
-  override fun onAbandoned() = job.cancel()
-
-  override fun onForgotten() = job.cancel()
 }

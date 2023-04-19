@@ -38,6 +38,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -88,7 +89,7 @@ class CoilImageResolverTest {
           ImageRequest.Builder(context)
             .data("foo")
             .build(),
-        )
+        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
       }
     }
     images.test {
@@ -98,7 +99,7 @@ class CoilImageResolverTest {
 
     val request = requests.receive()
     assertThat(request.diskCachePolicy.writeEnabled).isTrue()
-    assertThat(request.sizeResolver.size()).isEqualTo(CoilSize(Dimension.Pixels(1920), Dimension.Pixels(1920)))
+    assertThat(request.sizeResolver.size()).isEqualTo(CoilSize(Dimension.Pixels(1080), Dimension.Pixels(1920)))
     assertThat(request.bitmapConfig).isEqualTo(Bitmap.Config.HARDWARE)
   }
 
@@ -120,7 +121,7 @@ class CoilImageResolverTest {
           buildImageRequest {
             data("fake_image").placeholderMemoryCacheKey(placeholderKey)
           }
-        )
+        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
       }
     }.test {
       // Default value.
@@ -169,7 +170,7 @@ class CoilImageResolverTest {
           ImageRequest.Builder(context)
             .data("ignored")
             .build()
-        )
+        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
       }
     }
 
@@ -208,17 +209,17 @@ class CoilImageResolverTest {
           ImageRequest.Builder(context)
             .data(imageUrl)
             .build()
-        )
+        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
       }
     }
 
     images.test {
       assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = null))
-      assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
+      skipItems(1)
 
       imageUrl = "image_two"
       assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = null))
-      assertThat(awaitItem()).isInstanceOf(ZoomableImageSource::class.java)
+      skipItems(1)
     }
   }
 

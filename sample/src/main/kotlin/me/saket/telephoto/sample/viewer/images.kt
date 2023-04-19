@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import coil.request.ImageRequest
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
@@ -28,9 +27,7 @@ fun Gif(
 ) {
   ZoomableGlideImage(
     modifier = Modifier.fillMaxSize(),
-    model = thumbnailRequest()
-      .thumbnail(Glide.with(LocalContext.current).load(R.drawable.fox_smol))
-      .error(R.drawable.smol),
+    model = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTAxMWYwZDk5N2NlYTM1MWZmZDJhMTNlZmQ2ODZmN2Q0NGYwYjRiMiZjdD1n/OJNNOaOJx8AgWFXZui/giphy.gif",
     state = rememberZoomableImageState(zoomableState),
     contentDescription = null,
   )
@@ -48,7 +45,7 @@ fun NormalSizedRemoteImage(
       .error(R.drawable.smol)
       .skipMemoryCache(true)  // todo: remove
       .thumbnail(thumbnailRequest())
-      .transition(withCrossFade()),
+      .transition(withCrossFade(300)),
     state = rememberZoomableImageState(zoomableState),
     contentDescription = null,
   )

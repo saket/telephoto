@@ -2,12 +2,15 @@ package me.saket.telephoto.zoomable.glide
 
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import androidx.compose.runtime.RememberObserver
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
+import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
@@ -16,30 +19,57 @@ import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.transition.DrawableCrossFadeTransition
 import com.bumptech.glide.request.transition.Transition
 import com.google.accompanist.drawablepainter.DrawablePainter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
+import me.saket.telephoto.zoomable.internal.RememberWorker
 import okio.Path.Companion.toOkioPath
 import java.io.File
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import me.saket.telephoto.zoomable.glide.Size as GlideSize
 
-internal class GlideImageResolver(
+internal class GlideImageSource(
+  private val model: Any?
+) : ZoomableImageSource {
+
+  @Composable
+  @Suppress("UNCHECKED_CAST")
+  override fun resolve(canvasSize: Flow<Size>): ZoomableImageSource.ResolveResult {
+    val context = LocalContext.current
+    val resolver = remember(this) {
+      val requestManager = Glide.with(context)
+      GlideImageResolver(
+        request = model as? RequestBuilder<Drawable> ?: requestManager.load(model),
+        requestManager = requestManager,
+        size = { canvasSize.first().toGlideSize() },
+        ioDispatcher = Dispatchers.IO,
+      )
+    }
+    return resolver.resolved
+  }
+
+  private fun Size.toGlideSize() = GlideSize(
+    width = if (width.isFinite()) width.roundToInt() else Target.SIZE_ORIGINAL,
+    height = if (height.isFinite()) height.roundToInt() else Target.SIZE_ORIGINAL
+  )
+}
+
+private class GlideImageResolver(
   private val request: RequestBuilder<Drawable>,
   private val requestManager: RequestManager,
-  private val ioDispatcher: CoroutineContext = Dispatchers.IO,
+  private val size: suspend () -> GlideSize,
+  private val ioDispatcher: CoroutineContext,
 ) : RememberWorker() {
 
-  var resolved: ZoomableImageSource by mutableStateOf(
+  var resolved: ZoomableImageSource.ResolveResult by mutableStateOf(
     ZoomableImageSource.Generic(image = null)
   )
 
@@ -53,7 +83,7 @@ internal class GlideImageResolver(
         }
       )
       .flow(
-        waitForSize = { GlideSize(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL) },
+        waitForSize = size,
         requestManager = requestManager,
       )
       .collect { instant ->
@@ -145,18 +175,3 @@ private fun Drawable.asPainter(): Painter {
 
 private val Drawable.intrinsicSize
   get() = Size(width = intrinsicWidth.toFloat(), height = intrinsicHeight.toFloat())
-
-internal abstract class RememberWorker : RememberObserver {
-  private lateinit var job: Job
-
-  abstract suspend fun work()
-
-  override fun onRemembered() {
-    check(!::job.isInitialized) // Shouldn't be remembered in multiple locations.
-    job = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch { work() }
-  }
-
-  override fun onAbandoned() = job.cancel()
-
-  override fun onForgotten() = job.cancel()
-}

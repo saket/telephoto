@@ -254,6 +254,6 @@ private class FlowTarget<ResourceT : Any>(
 
 internal data class Size(val width: Int, val height: Int)
 
-internal sealed class ResolvableGlideSize
+private sealed class ResolvableGlideSize
 
-internal data class AsyncGlideSize(val asyncSize: suspend () -> Size) : ResolvableGlideSize()
+private data class AsyncGlideSize(val asyncSize: suspend () -> Size) : ResolvableGlideSize()
