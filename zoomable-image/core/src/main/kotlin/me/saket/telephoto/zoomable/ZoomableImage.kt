@@ -55,7 +55,6 @@ fun ZoomableImage(
   state.zoomableState.also {
     it.contentAlignment = alignment
     it.contentScale = contentScale
-    it.autoApplyTransformations = false
   }
 
   Box(
@@ -118,8 +117,10 @@ fun ZoomableImage(
         )
         DisposableEffect(subSamplingState) {
           state.subSamplingState = subSamplingState
+          state.zoomableState.autoApplyTransformations = false
           onDispose {
             state.subSamplingState = null
+            state.zoomableState.autoApplyTransformations = true
           }
         }
         LaunchedEffect(subSamplingState.imageSize) {

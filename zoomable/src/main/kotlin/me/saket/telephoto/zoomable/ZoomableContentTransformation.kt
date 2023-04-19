@@ -29,7 +29,7 @@ data class ZoomableContentTransformation(
 }
 
 // todo: doc.
-fun Modifier.applyTransformation(transformation: ZoomableContentTransformation): Modifier {
+internal fun Modifier.applyTransformation(transformation: ZoomableContentTransformation): Modifier {
   // todo: optimize these. use graphicsLayer only when necessary.
   return graphicsLayer {
     scaleX = transformation.scale.scaleX
