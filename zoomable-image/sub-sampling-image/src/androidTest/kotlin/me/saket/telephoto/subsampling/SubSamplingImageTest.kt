@@ -7,7 +7,6 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.CompositionLocalProvider
@@ -41,8 +40,8 @@ import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
-import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -62,7 +61,6 @@ import okio.source
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import kotlin.time.Duration
@@ -194,7 +192,7 @@ class SubSamplingImageTest {
     }
     rule.runOnIdle {
       // Wait for full-resolution tiles to load.
-      rule.waitUntil { tiles.all { it.bitmap != null } }
+      rule.waitUntil(5.seconds) { tiles.all { it.bitmap != null } }
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed")
@@ -228,7 +226,7 @@ class SubSamplingImageTest {
     imageSource = SubSamplingImageSource.asset("path.jpg")
 
     rule.waitUntil { !isImageDisplayed }
-    rule.waitUntil { isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -301,30 +299,28 @@ class SubSamplingImageTest {
     var imageTiles: List<CanvasRegionTile>? = null
 
     rule.setContent {
-      BoxWithConstraints {
-        val imageState = rememberSubSamplingImageState(
-          imageSource = SubSamplingImageSource.asset("path.jpg"),
-          transformation = ZoomableContentTransformation(
-            contentSize = Size.Unspecified,
-            scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
-            offset = Offset(x = -2749.3718f, y = -1045.4058f),
-            rotationZ = 0f,
-            transformOrigin = TransformOrigin(0f, 0f)
-          ),
-        )
-        LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-          isImageDisplayed = imageState.isImageLoadedInFullQuality
-        }
-        LaunchedEffect(imageState.tiles) {
-          imageTiles = imageState.tiles
-        }
-
-        SubSamplingImage(
-          modifier = Modifier.fillMaxSize(),
-          state = imageState,
-          contentDescription = null,
-        )
+      val imageState = rememberSubSamplingImageState(
+        imageSource = SubSamplingImageSource.asset("path.jpg"),
+        transformation = ZoomableContentTransformation(
+          contentSize = Size.Unspecified,
+          scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
+          offset = Offset(x = -2749.3718f, y = -1045.4058f),
+          rotationZ = 0f,
+          transformOrigin = TransformOrigin(0f, 0f)
+        ),
+      )
+      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+        isImageDisplayed = imageState.isImageLoadedInFullQuality
       }
+      LaunchedEffect(imageState.tiles) {
+        imageTiles = imageState.tiles
+      }
+
+      SubSamplingImage(
+        modifier = Modifier.fillMaxSize(),
+        state = imageState,
+        contentDescription = null,
+      )
     }
 
     rule.waitUntil(5.seconds) { isImageDisplayed }

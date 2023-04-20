@@ -182,10 +182,7 @@ class ZoomableImageTest {
         modifier = Modifier
           .then(layoutSize.modifier)
           .testTag("image"),
-        image = when (subSamplingStatus) {
-          SubSamplingEnabled -> ZoomableImageSource.asset(imageAsset.assetName, subSample = true)
-          SubSamplingDisabled -> ZoomableImageSource.asset(imageAsset.assetName, subSample = false)
-        },
+        image = ZoomableImageSource.asset(imageAsset.assetName, subSample = subSamplingStatus.enabled),
         contentDescription = null,
         state = state,
         contentScale = contentScale.value,
@@ -198,7 +195,6 @@ class ZoomableImageTest {
             isImageDisplayed = subSamplingState.isImageLoadedInFullQuality
           }
         }
-
         SubSamplingDisabled -> {
           isImageDisplayed = state.zoomableState.contentTransformation.scale.let {
             it.scaleX > 0f && it.scaleY > 0f
