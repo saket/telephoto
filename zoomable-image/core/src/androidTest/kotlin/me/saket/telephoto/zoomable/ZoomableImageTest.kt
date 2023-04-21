@@ -59,6 +59,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
+import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -67,6 +68,7 @@ import kotlin.time.Duration.Companion.seconds
 @RunWith(TestParameterInjector::class)
 class ZoomableImageTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { it },
