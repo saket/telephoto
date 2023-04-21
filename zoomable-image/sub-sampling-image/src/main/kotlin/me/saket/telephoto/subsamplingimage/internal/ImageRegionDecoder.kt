@@ -11,6 +11,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 internal interface ImageRegionDecoder {
   val imageSize: IntSize
   suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap
+  fun recycle()
 
   fun interface Factory {
     suspend fun create(

@@ -328,12 +328,12 @@ class SubSamplingImageTest {
       dropshots.assertSnapshot(rule.activity)
 
       assertThat(imageTiles!!.map { it.bounds }).containsExactly(
-        IntRect(-1122, -1045, 503, 340),
-        IntRect(-1122, 340, 503, 1726),
-        IntRect(-1122, 1726, 503, 3293),
-        IntRect(503, -1045, 2129, 340),
-        IntRect(503, 340, 2129, 1726),
-        IntRect(503, 1726, 2129, 3293),
+        IntRect(-1122, -1045, 503, 376),
+        IntRect(-1122, 376, 503, 1797),
+        IntRect(-1122, 1797, 503, 3293),
+        IntRect(503, -1045, 2129, 376),
+        IntRect(503, 376, 2129, 1797),
+        IntRect(503, 1797, 2129, 3293),
       )
     }
   }

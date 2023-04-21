@@ -29,6 +29,14 @@ internal class AndroidImageRegionDecoder private constructor(
     return bitmap.asImageBitmap()
   }
 
+  override fun recycle() {
+    // FYI BitmapRegionDecoder's documentation says explicit recycling is not needed,
+    // but that is a lie. Instrumentation tests for SubSamplingImage() on API 31 run into
+    // low memory because the native state of decoders aren't cleared after each test,
+    // causing Android to kill all processes (including the test).
+    decoder.recycle()
+  }
+
   companion object {
     val Factory = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
       AndroidImageRegionDecoder(

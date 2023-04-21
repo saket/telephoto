@@ -6,6 +6,7 @@ package me.saket.telephoto.subsamplingimage
 import android.graphics.Bitmap
 import androidx.annotation.RestrictTo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -181,17 +182,20 @@ private fun createRegionDecoder(
 ): State<ImageRegionDecoder?> {
   val context = LocalContext.current
   val errorReporter by rememberUpdatedState(errorReporter)
-
   val decoder = remember(imageSource) { mutableStateOf<ImageRegionDecoder?>(null) }
-  val isInPreviewMode = LocalInspectionMode.current
 
-  if (!isInPreviewMode) {
+  if (!LocalInspectionMode.current) {
     val factory = LocalImageRegionDecoderFactory.current
     LaunchedEffect(imageSource) {
       try {
         decoder.value = factory.create(context, imageSource, bitmapConfig)
       } catch (e: IOException) {
         errorReporter.onImageLoadingFailed(e, imageSource)
+      }
+    }
+    DisposableEffect(imageSource) {
+      onDispose {
+        decoder.value?.recycle()
       }
     }
   }
