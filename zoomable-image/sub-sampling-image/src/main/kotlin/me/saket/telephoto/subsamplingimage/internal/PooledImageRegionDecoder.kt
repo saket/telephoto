@@ -1,8 +1,11 @@
 package me.saket.telephoto.subsamplingimage.internal
 
+import android.app.ActivityManager
+import android.content.Context
 import android.graphics.BitmapRegionDecoder
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntSize
+import androidx.core.content.getSystemService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,10 +26,10 @@ internal class PooledImageRegionDecoder private constructor(
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
     return decoders.borrow { decoder ->
       withContext(dispatcher) {
-          decoder.decodeRegion(region)
-        }
+        decoder.decodeRegion(region)
       }
     }
+  }
 
   override fun recycle() {
     decoders.resources.forEach { it.recycle() }
@@ -37,7 +40,10 @@ internal class PooledImageRegionDecoder private constructor(
     fun Factory(
       delegate: ImageRegionDecoder.Factory,
     ) = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
-      val decoderCount = max(Runtime.getRuntime().availableProcessors(), 2) // Same number used by Dispatchers.Default.
+      val decoderCount = when {
+        context.isDeviceInLowMemory() -> 1
+        else -> maxOf(Runtime.getRuntime().availableProcessors(), 2)  // Same number used by Dispatchers.Default.
+      }
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
       val decoders = withContext(dispatcher) {
@@ -54,6 +60,17 @@ internal class PooledImageRegionDecoder private constructor(
         decoders = ResourcePool(decoders),
         dispatcher = dispatcher,
       )
+    }
+
+    private fun Context.isDeviceInLowMemory(): Boolean {
+      val activityManager = getSystemService<ActivityManager>()!!
+      if (activityManager.isLowRamDevice) {
+        return true
+      }
+
+      val memoryInfo = ActivityManager.MemoryInfo()
+      activityManager.getMemoryInfo(memoryInfo)
+      return memoryInfo.lowMemory
     }
   }
 }

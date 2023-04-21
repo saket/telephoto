@@ -7,6 +7,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.CompositionLocalProvider
@@ -299,28 +300,34 @@ class SubSamplingImageTest {
     var imageTiles: List<CanvasRegionTile>? = null
 
     rule.setContent {
-      val imageState = rememberSubSamplingImageState(
-        imageSource = SubSamplingImageSource.asset("path.jpg"),
-        transformation = ZoomableContentTransformation(
-          contentSize = Size.Unspecified,
-          scale = ScaleFactor(scaleX = 1.1845919f, scaleY = 1.1845919f),
-          offset = Offset(x = -2749.3718f, y = -1045.4058f),
-          rotationZ = 0f,
-          transformOrigin = TransformOrigin(0f, 0f)
-        ),
-      )
-      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-        isImageDisplayed = imageState.isImageLoadedInFullQuality
-      }
-      LaunchedEffect(imageState.tiles) {
-        imageTiles = imageState.tiles
-      }
+      BoxWithConstraints {
+        check(constraints.maxWidth == 1080 && constraints.maxHeight == 2400) {
+          "This test was written for a 1080x2400 display."
+        }
 
-      SubSamplingImage(
-        modifier = Modifier.fillMaxSize(),
-        state = imageState,
-        contentDescription = null,
-      )
+        val imageState = rememberSubSamplingImageState(
+          imageSource = SubSamplingImageSource.asset("path.jpg"),
+          transformation = ZoomableContentTransformation(
+            contentSize = Size.Unspecified,
+            scale = ScaleFactor(scaleX = 0.5949996f, scaleY = 0.5949996f),
+            offset = Offset(x = -1041.2019f, y = -10.483643f),
+            rotationZ = 0f,
+            transformOrigin = TransformOrigin(0f, 0f)
+          ),
+        )
+        LaunchedEffect(imageState.isImageLoadedInFullQuality) {
+          isImageDisplayed = imageState.isImageLoadedInFullQuality
+        }
+        LaunchedEffect(imageState.tiles) {
+          imageTiles = imageState.tiles
+        }
+
+        SubSamplingImage(
+          modifier = Modifier.fillMaxSize(),
+          state = imageState,
+          contentDescription = null,
+        )
+      }
     }
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
@@ -328,12 +335,12 @@ class SubSamplingImageTest {
       dropshots.assertSnapshot(rule.activity)
 
       assertThat(imageTiles!!.map { it.bounds }).containsExactly(
-        IntRect(-1122, -1045, 503, 376),
-        IntRect(-1122, 376, 503, 1797),
-        IntRect(-1122, 1797, 503, 3293),
-        IntRect(503, -1045, 2129, 376),
-        IntRect(503, 376, 2129, 1797),
-        IntRect(503, 1797, 2129, 3293),
+        IntRect(-224, -10, 592, 703),
+        IntRect(-224, 703, 592, 1417),
+        IntRect(-224, 1417, 592, 2169),
+        IntRect(592, -10, 1409, 703),
+        IntRect(592, 703, 1409, 1417),
+        IntRect(592, 1417, 1409, 2169),
       )
     }
   }
