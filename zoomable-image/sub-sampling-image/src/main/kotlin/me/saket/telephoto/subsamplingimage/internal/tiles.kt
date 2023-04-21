@@ -2,12 +2,9 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
 
 // todo: doc
 internal data class BitmapRegionTile(
@@ -20,12 +17,9 @@ internal data class BitmapRegionTile(
 internal data class CanvasRegionTile(
   val bitmap: ImageBitmap?,
   val bitmapRegion: BitmapRegionTile,
+  val bounds: IntRect,
   val isBaseTile: Boolean,
-  private val offset: IntOffset,
-  private val size: IntSize,
 ) {
-  val bounds: IntRect get() = IntRect(offset, size)
-
   constructor(
     bitmap: ImageBitmap?,
     bitmapRegion: BitmapRegionTile,
@@ -38,15 +32,9 @@ internal data class CanvasRegionTile(
     // This is okay because if any fractional part was present and discarded,
     // the next tile will also move back by a pixel. This would cause the last
     // tiles on X and Y axes to be 1px short, but that's unnoticeable to eyes.
-    //bounds = bounds.discardFractionalValues(),
-    offset = bounds.topLeft.discardFractionalParts(),
-    size = bounds.size.discardFractionalParts(),
+    bounds = bounds.discardFractionalValues(),
     isBaseTile = isBaseTile,
   )
-}
-
-private fun Offset.discardFractionalParts(): IntOffset {
-  return IntOffset(x.toInt(), y.toInt())
 }
 
 /** See [BitmapFactory.Options.inSampleSize]. */
