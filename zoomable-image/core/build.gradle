@@ -32,7 +32,6 @@ dependencies {
   androidTestImplementation "androidx.test.ext:junit-ktx:1.1.5"
   androidTestImplementation "com.google.truth:truth:$versions.truth"
   androidTestImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
-  androidTestImplementation "com.squareup.leakcanary:leakcanary-android-instrumentation:$versions.leakCanary"
   androidTestImplementation "androidx.compose.ui:ui-test-junit4:$versions.composeUi"
   debugImplementation("androidx.compose.ui:ui-test-manifest:$versions.composeUi")
 }

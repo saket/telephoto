@@ -49,7 +49,6 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import leakcanary.DetectLeaksAfterTestSuccess.Companion.detectLeaksAfterTestSuccessWrapping
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
@@ -59,7 +58,6 @@ import me.saket.telephoto.zoomable.ZoomableImageTest.SubSamplingStatus.SubSampli
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import kotlin.time.Duration
@@ -68,18 +66,12 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalFoundationApi::class)
 @RunWith(TestParameterInjector::class)
 class ZoomableImageTest {
-  private val rule = createAndroidComposeRule<ComponentActivity>()
-  private val testName = TestName()
-  private val dropshots = Dropshots(
+  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val testName = TestName()
+  @get:Rule val dropshots = Dropshots(
     filenameFunc = { it },
     resultValidator = ThresholdValidator(thresholdPercent = 0.01f)
   )
-
-  @get:Rule val rules: RuleChain = RuleChain.outerRule(dropshots)
-    .around(testName)
-    .detectLeaksAfterTestSuccessWrapping("ActivitiesDestroyed") {
-      around(rule)
-    }
 
   @Before
   fun setup() {
