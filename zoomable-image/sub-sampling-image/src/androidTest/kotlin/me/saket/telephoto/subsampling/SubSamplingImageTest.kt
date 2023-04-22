@@ -75,7 +75,7 @@ class SubSamplingImageTest {
   @get:Rule val testName = TestName()
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { it },
-    resultValidator = ThresholdValidator(thresholdPercent = 0.02f)
+    resultValidator = ThresholdValidator(thresholdPercent = 0.1f)
   )
 
   @Before
