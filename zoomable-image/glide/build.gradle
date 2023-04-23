@@ -12,6 +12,6 @@ dependencies {
   api project(':zoomable-image:core')
   implementation project(':zoomable-image:sub-sampling-image')
 
-  api(libs.glide)
+  api(libs.glide.core)
   implementation(libs.accompanist.drawablePainter)
 }
