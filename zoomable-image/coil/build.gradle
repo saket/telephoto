@@ -1,9 +1,8 @@
 plugins {
+  id("android-library-convention")
   id("app.cash.molecule") version "0.8.0"
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 apply plugin: 'app.cash.paparazzi'
 apply plugin: 'com.vanniktech.maven.publish'
 

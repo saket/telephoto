@@ -1,5 +1,7 @@
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+plugins {
+  id("android-library-convention")
+}
+
 apply plugin: 'com.vanniktech.maven.publish'
 
 android {

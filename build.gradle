@@ -1,8 +1,3 @@
-import com.android.build.gradle.AppPlugin
-import com.android.build.gradle.BaseExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-import com.android.build.gradle.BasePlugin
-
 buildscript {
   ext.versions = [
     minSdk: 24,
@@ -27,12 +22,9 @@ buildscript {
   repositories {
     google()
     mavenCentral()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
   }
 
   dependencies {
-    classpath "com.android.tools.build:gradle:7.4.2"
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
     classpath "com.vanniktech:gradle-maven-publish-plugin:0.24.0"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
     classpath "app.cash.paparazzi:paparazzi-gradle-plugin:1.2.0"
@@ -44,51 +36,6 @@ allprojects {
     google()
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-  }
-}
-
-subprojects { subproject ->
-  plugins.withType(BasePlugin).configureEach { plugin ->
-    def android = project.extensions.getByName("android") as BaseExtension
-    def isApp = plugin instanceof AppPlugin
-
-    if (!isApp) {
-      android.resourcePrefix "telephoto_"
-    }
-
-    android.compileSdk versions.compileSdk
-    android.defaultConfig {
-      minSdk versions.minSdk
-      targetSdk versions.compileSdk
-    }
-    android.compileOptions {
-      sourceCompatibility = JavaVersion.VERSION_11
-      targetCompatibility = JavaVersion.VERSION_11
-    }
-    android.buildFeatures {
-      compose = true
-    }
-    android.composeOptions {
-      kotlinCompilerExtensionVersion versions.composeCompiler
-    }
-    android.lintOptions {
-      abortOnError true
-    }
-  }
-
-  tasks.withType(org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile).configureEach { task ->
-    task.kotlinOptions {
-      jvmTarget = "11"
-    }
-  }
-
-  tasks.withType(KotlinCompile).configureEach { task ->
-    task.kotlinOptions {
-      freeCompilerArgs += [
-        '-Xcontext-receivers',
-        '-Xjvm-default=all'
-      ]
-    }
   }
 }
 

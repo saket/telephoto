@@ -1,21 +1,13 @@
 plugins {
-  id("com.dropbox.dropshots") version "0.4.0"
+  id("android-library-convention")
+  id("device-screenshot-tests-convention")
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 apply plugin: 'app.cash.paparazzi'
 apply plugin: 'com.vanniktech.maven.publish'
 
 android {
   namespace "me.saket.telephoto.subsamplingimage"
-
-  defaultConfig {
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-  testOptions {
-    animationsDisabled = true
-  }
 }
 
 dependencies {
@@ -30,12 +22,4 @@ dependencies {
   testImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
   testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutinesTest"
   testImplementation "app.cash.turbine:turbine:$versions.turbine"
-
-  androidTestImplementation "androidx.test:core-ktx:1.5.0"
-  androidTestImplementation "androidx.test:rules:1.5.0"
-  androidTestImplementation "androidx.test.ext:junit-ktx:1.1.5"
-  androidTestImplementation "com.google.truth:truth:$versions.truth"
-  androidTestImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
-  androidTestImplementation "androidx.compose.ui:ui-test-junit4:$versions.composeUi"
-  debugImplementation("androidx.compose.ui:ui-test-manifest:$versions.composeUi")
 }

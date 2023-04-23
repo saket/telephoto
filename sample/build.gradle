@@ -9,9 +9,8 @@ android {
 
   defaultConfig {
     applicationId namespace
-    applicationId "me.saket.telephoto.sample"
     minSdkVersion 31
-    targetSdkVersion versions.compileSdk
+    compileSdk 33
     versionCode 1
     versionName "1.0"
   }
@@ -23,6 +22,8 @@ android {
   lint {
     lintConfig = file("lint.xml")
   }
+  buildFeatures.compose = true
+  composeOptions.kotlinCompilerExtensionVersion = "1.4.4"
 }
 
 dependencies {
@@ -40,7 +41,4 @@ dependencies {
   implementation "io.coil-kt:coil-compose:$versions.coil"
   implementation "io.coil-kt:coil-gif:$versions.coil"
   implementation "com.bumble.appyx:core:$versions.appyx"
-
-  // todo: remove!
-  implementation "com.google.accompanist:accompanist-drawablepainter:$versions.accompanist"
 }

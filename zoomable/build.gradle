@@ -1,9 +1,7 @@
 plugins {
-  id("com.dropbox.dropshots") version "0.4.0"
+  id("android-library-convention")
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'app.cash.paparazzi'
 apply plugin: 'com.vanniktech.maven.publish'
