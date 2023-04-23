@@ -2,6 +2,9 @@ import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.android
 import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.androidTestImplementation
 import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.debugImplementation
 import java.time.Duration
+import org.gradle.accessors.dm.LibrariesForLibs
+import org.gradle.api.Project
+import org.gradle.kotlin.dsl.getByType
 
 plugins {
   id("com.android.library")
@@ -15,7 +18,7 @@ android {
 }
 
 emulatorwtf {
-  version.set("0.9.8")
+  version.set(libs.versions.emulatorWtf.cli.get())
   devices.set(
     listOf(
       mapOf("model" to "Pixel7Atd", "version" to 31)
@@ -28,11 +31,15 @@ emulatorwtf {
 }
 
 dependencies {
-  androidTestImplementation("androidx.test:core-ktx:1.5.0")
-  androidTestImplementation("androidx.test:rules:1.5.0")
-  androidTestImplementation("androidx.test.ext:junit-ktx:1.1.5")
-  androidTestImplementation("androidx.compose.ui:ui-test-junit4:$1.4.0")
-  androidTestImplementation("com.google.truth:truth:1.1.3")
-  androidTestImplementation("com.google.testparameterinjector:test-parameter-injector:1.11")
-  debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.0")
+  androidTestImplementation(libs.androidx.test.ktx)
+  androidTestImplementation(libs.androidx.test.rules)
+  androidTestImplementation(libs.androidx.test.junit)
+  androidTestImplementation(libs.compose.ui.test.junit)
+  androidTestImplementation(libs.truth)
+  androidTestImplementation(libs.testParamInjector)
+  debugImplementation(libs.compose.ui.test.activityManifest)
 }
+
+// https://github.com/gradle/gradle/issues/15383#issuecomment-779893192
+internal val Project.libs: LibrariesForLibs
+  get() = this.extensions.getByType()

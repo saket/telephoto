@@ -32,13 +32,13 @@ dependencies {
   implementation project(':zoomable-image:coil')
   implementation project(':zoomable-image:glide')
 
-  implementation "androidx.appcompat:appcompat:$versions.appCompat"
-  implementation "androidx.core:core-ktx:1.9.0"
-  implementation "androidx.activity:activity-compose:1.6.1"
-  implementation "androidx.compose.material3:material3:$versions.composeUiMaterial3"
-  implementation "androidx.compose.material:material-icons-extended:$versions.composeUi"
+  implementation(libs.androidx.appcompat)
+  implementation(libs.androidx.ktx)
+  implementation(libs.androidx.activity)
+  implementation(libs.compose.ui.material3)
+  implementation(libs.compose.ui.materialIcons)
 
-  implementation "io.coil-kt:coil-compose:$versions.coil"
-  implementation "io.coil-kt:coil-gif:$versions.coil"
-  implementation "com.bumble.appyx:core:$versions.appyx"
+  implementation(libs.coil.compose)
+  implementation(libs.coil.gif)
+  implementation(libs.appyx)
 }

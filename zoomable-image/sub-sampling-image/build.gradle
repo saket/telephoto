@@ -13,13 +13,13 @@ android {
 dependencies {
   api project(":zoomable")
 
-  implementation "androidx.compose.ui:ui-util:$versions.composeUi"
-  api "androidx.compose.foundation:foundation:$versions.composeUi"
-  api "com.squareup.okio:okio:$versions.okio"
+  implementation(libs.compose.ui.util)
+  api(libs.compose.foundation)
+  api(libs.okio)
 
-  testImplementation "junit:junit:$versions.junit"
-  testImplementation "com.google.truth:truth:$versions.truth"
-  testImplementation "com.google.testparameterinjector:test-parameter-injector:$versions.testParamInjector"
-  testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutinesTest"
-  testImplementation "app.cash.turbine:turbine:$versions.turbine"
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.testParamInjector)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.turbine)
 }

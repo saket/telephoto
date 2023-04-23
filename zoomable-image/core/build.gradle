@@ -14,8 +14,8 @@ dependencies {
   api project(':zoomable')
   api project(':zoomable-image:sub-sampling-image')
 
-  api "androidx.compose.foundation:foundation:$versions.composeUi"
+  api(libs.compose.foundation)
 
-  testImplementation "junit:junit:$versions.junit"
-  testImplementation "com.google.truth:truth:$versions.truth"
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
 }

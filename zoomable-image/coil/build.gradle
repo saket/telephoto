@@ -1,10 +1,10 @@
 plugins {
   id("android-library-convention")
+  id("published-library-convention")
   id("app.cash.molecule") version "0.8.0"
 }
 
 apply plugin: 'app.cash.paparazzi'
-apply plugin: 'com.vanniktech.maven.publish'
 
 android {
   namespace "me.saket.telephoto.zoomable.image.coil"
@@ -14,13 +14,13 @@ dependencies {
   api project(':zoomable-image:core')
   implementation project(':zoomable-image:sub-sampling-image')
 
-  api "io.coil-kt:coil-compose:$versions.coil"
-  implementation "com.google.accompanist:accompanist-drawablepainter:$versions.accompanist"
+  api(libs.coil.compose)
+  implementation(libs.accompanist.drawablePainter)
 
-  testImplementation "junit:junit:$versions.junit"
-  testImplementation "com.google.truth:truth:$versions.truth"
-  testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutinesTest"
-  testImplementation "app.cash.turbine:turbine:$versions.turbine"
-  testImplementation "io.coil-kt:coil-test:$versions.coil"
-  testImplementation "com.squareup.okio:okio-fakefilesystem:$versions.okio"
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.turbine)
+  testImplementation(libs.coil.test)
+  testImplementation(libs.okio.fakeFileSystem)
 }

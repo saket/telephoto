@@ -8,8 +8,13 @@ repositories {
 }
 
 dependencies  {
-  implementation("com.android.tools.build:gradle:7.4.2")
-  implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
-  implementation("com.dropbox.dropshots:dropshots-gradle-plugin:0.4.0")
-  implementation("wtf.emulator:gradle-plugin:0.9.5")
+  // https://github.com/gradle/gradle/issues/15383#issuecomment-779893192
+  implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
+
+  implementation(libs.plugin.agp)
+  implementation(libs.plugin.kotlin)
+  implementation(libs.plugin.dokka)
+  implementation(libs.plugin.mavenPublish)
+  implementation(libs.plugin.dropshots)
+  implementation(libs.plugin.emulatorWtf)
 }

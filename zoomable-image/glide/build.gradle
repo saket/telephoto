@@ -12,6 +12,6 @@ dependencies {
   api project(':zoomable-image:core')
   implementation project(':zoomable-image:sub-sampling-image')
 
-  api "com.github.bumptech.glide:glide:$versions.glide"
-  implementation "com.google.accompanist:accompanist-drawablepainter:$versions.accompanist"
+  api(libs.glide)
+  implementation(libs.accompanist.drawablePainter)
 }
