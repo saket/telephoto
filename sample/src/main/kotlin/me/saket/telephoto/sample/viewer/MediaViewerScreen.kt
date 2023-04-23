@@ -2,7 +2,6 @@ package me.saket.telephoto.sample.viewer
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -19,9 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.request.ImageRequest
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
+import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
+import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 
 @Composable
@@ -68,11 +71,20 @@ private fun MediaPage(
   isActivePage: Boolean,
 ) {
   val zoomableState = rememberZoomableState(maxZoomFactor = 2f)
-  Box(modifier) {
-    when (model) {
-      is MediaItem.NormalSizedLocalImage -> Gif(zoomableState)
-      is MediaItem.NormalSizedRemoteImage -> NormalSizedRemoteImage(zoomableState)
-      is MediaItem.SubSampledImage -> LargeImage(zoomableState)
+  when (model) {
+    is MediaItem.Image -> {
+      // TODO: handle errors here.
+      // TODO: show loading.
+      ZoomableAsyncImage(
+        modifier = modifier,
+        state = rememberZoomableImageState(zoomableState),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(model.fullSizedUrl)
+          .placeholderMemoryCacheKey(model.placeholderImageUrl)
+          .crossfade(300)
+          .build(),
+        contentDescription = model.caption,
+      )
     }
   }
 

@@ -1,5 +1,6 @@
 package me.saket.telephoto.sample.gallery
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -22,8 +23,12 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import me.saket.telephoto.sample.GalleryScreenKey
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.Navigator
@@ -72,13 +77,28 @@ private fun AlbumGrid(
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .heightIn(min = 100.dp)
-          .background(MaterialTheme.colorScheme.tertiaryContainer)
-          .clickable { navigator.lfg(MediaViewerScreenKey(album, initialIndex = index)) }
-          .padding(16.dp),
+          .height(200.dp)
+          .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+          .clickable { navigator.lfg(MediaViewerScreenKey(album, initialIndex = index)) },
         contentAlignment = Alignment.BottomStart
       ) {
+        AsyncImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .animateContentSize(),
+          model = ImageRequest.Builder(LocalContext.current)
+            .data(item.placeholderImageUrl)
+            .memoryCacheKey(item.placeholderImageUrl)
+            .crossfade(300)
+            .build(),
+          contentDescription = item.caption,
+          contentScale = ContentScale.Crop,
+        )
         Text(
+          modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(16.dp),
           text = item.caption
         )
       }

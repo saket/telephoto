@@ -10,19 +10,12 @@ data class MediaAlbum(
 
 sealed interface MediaItem : Parcelable {
   val caption: String
+  val placeholderImageUrl: String?
 
   @Parcelize
-  data class NormalSizedLocalImage(
-    override val caption: String
-  ) : MediaItem
-
-  @Parcelize
-  data class NormalSizedRemoteImage(
-    override val caption: String
-  ) : MediaItem
-
-  @Parcelize
-  data class SubSampledImage(
-    override val caption: String
+  data class Image(
+    val fullSizedUrl: String,
+    override val placeholderImageUrl: String?,
+    override val caption: String,
   ) : MediaItem
 }
