@@ -49,6 +49,7 @@ fun ZoomableGlideImage(
   contentScale: ContentScale = ContentScale.Fit,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
 ) {
   ZoomableImage(
     image = ZoomableImageSource.glide(model),
@@ -61,6 +62,7 @@ fun ZoomableGlideImage(
     contentScale = contentScale,
     onClick = onClick,
     onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
   )
 }
 

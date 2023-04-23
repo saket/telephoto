@@ -45,6 +45,9 @@ import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
  * and [onLongClick] parameters can be used instead.
  *
  * If sub-sampling is always desired, you could also use [SubSamplingImage] directly.
+ *
+ * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
+ * space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  */
 @Composable
 fun ZoomableImage(
@@ -58,6 +61,7 @@ fun ZoomableImage(
   contentScale: ContentScale = ContentScale.Fit,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
 ) {
   state.zoomableState.also {
     it.contentAlignment = alignment
@@ -105,6 +109,7 @@ fun ZoomableImage(
       state = state.zoomableState,
       onClick = onClick,
       onLongClick = onLongClick,
+      clipToBounds = clipToBounds,
     )
     when (resolvedImage) {
       is ZoomableImageSource.Generic -> {

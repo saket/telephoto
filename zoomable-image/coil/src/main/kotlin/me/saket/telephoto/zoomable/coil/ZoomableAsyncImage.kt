@@ -53,6 +53,7 @@ fun ZoomableAsyncImage(
   contentScale: ContentScale = ContentScale.Fit,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
 ) {
   ZoomableImage(
     image = ZoomableImageSource.coil(model, imageLoader),
@@ -65,6 +66,7 @@ fun ZoomableAsyncImage(
     contentScale = contentScale,
     onClick = onClick,
     onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
   )
 }
 
