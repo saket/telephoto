@@ -21,6 +21,10 @@ jobs:
           java-version: 11
       - uses: gradle/gradle-build-action@v2
 
+      - uses: oNaiPs/secrets-to-env-action@v1
+        with:
+          secrets: ${{ toJSON(secrets) }}
+
       - name: Run unit tests
         run: ./gradlew check
 
