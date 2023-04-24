@@ -504,11 +504,11 @@ internal data class ContentZoom(
   }
 
   fun isAtMinZoom(range: ZoomRange): Boolean {
-    return finalZoom().maxScale <= range.minZoom(baseZoom = baseZoom)
+    return finalZoom().maxScale - range.minZoom(baseZoom = baseZoom) < 0.01f
   }
 
   fun isAtMaxZoom(range: ZoomRange): Boolean {
-    return finalZoom().maxScale >= range.maxZoom(baseZoom = baseZoom)
+    return range.maxZoom(baseZoom) - finalZoom().maxScale < 0.01f
   }
 }
 
