@@ -2,7 +2,7 @@
 
 For images that are large enough to not fit in memory, `ZoomableImage` automatically divides them into tiles so that they can be lazy loaded. 
 
-If `ZoomableImage` can't be used or if sub-sampling of images is always desired, you could potentially use `SubSamplingImage()` directly:
+If `ZoomableImage` ^^can't^^ be used or if sub-sampling of images is always desired, you could potentially use `SubSamplingImage()` directly:
 
 ```groovy
 implementation("me.saket.telephoto:sub-sampling-image:1.0.0-SNAPSHOT")
