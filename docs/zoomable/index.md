@@ -2,6 +2,7 @@
 
 A modifier for handling pan & zoom gestures, designed to be shared across all your media composables so that your users can use the same familiar gestures throughout your app. It supports,
 
+- Pinch to zoom and flings
 - Double tap to zoom
 - Double tap and hold to quick zoom (work in progress)
 - Compatibility with nested scrolling

@@ -28,35 +28,54 @@ A _drop-in_ replacement for async `Image()` composables with support for pan & z
       )
     ```
 
-### Crossfade transitions
+### Image options
+
+For complex scenarios, the `model` parameter can also be given full image requests. 
 
 === "Coil"
-    ```kotlin hl_lines="4"
+    ```kotlin
+    val imageLoader = LocalContext.current.imageLoader
+      .newBuilder()
+      .components { add(GifDecoder.Factory()) }
+      .build()
+
     ZoomableAsyncImage(
       model = ImageRequest.Builder(LocalContext.current)
         .data("https://example.com/image.jpg")
-        .crossfade(1000)
+        .listener(
+          onStart = { … },
+          onError = { … },
+        )
+        .crossfade(1_000)
+        .memoryCachePolicy(CachePolicy.DISABLED)
+        .allowHardware(true)
         .build(),
+      imageLoader = imageLoader,
       contentDescription = …
     )
     ```
 
 === "Glide"
-    ```kotlin hl_lines="5"
+    ```kotlin
     ZoomableGlideImage(
       model = Glide
         .with(LocalContext.current)
         .load("https://example.com/image.jpg")
-        .transition(withCrossFade(1000)),
+        .addListener(object : RequestListener<Drawable> {
+          override fun onLoadFailed(…): Boolean = TODO()
+          override fun onResourceReady(…): Boolean = TODO()
+        }),
+        .transition(withCrossFade(1_000))
+        .skipMemoryCache(true)
+        .timeout(30_000)
+        .addListener(…),
       contentDescription = …
     )
     ```
 
 ### Placeholders
 
-Full quality images can take a while to load. If an image is available in multiple resolutions, `telephoto` can use its lower resolution as a placeholder while its full quality equivalent loads in the background.
-
-When combined with a cross-fade transition, `telephoto` will also smoothly swap out the placeholder with its full quality version.
+If an image is available in multiple resolutions, it is highly recommended to use a lower resolution as a placeholder while its full quality equivalent is loaded in the background. When combined with a cross-fade transition, `ZoomableImage` will smoothly swap out the placeholder when the full quality version is ready to be displayed.
 
 === "Coil"
     ```kotlin hl_lines="4-5"
@@ -82,4 +101,70 @@ When combined with a cross-fade transition, `telephoto` will also smoothly swap 
       contentDescription = …
     )
     ```
-    More details about `placeholder()` can be found on [Glide's website](https://bumptech.github.io/glide/doc/options.html#thumbnail-requests).
+    More details about `thumbnail()` can be found on [Glide's website](https://bumptech.github.io/glide/doc/options.html#thumbnail-requests).
+
+### Click listeners
+For detecting double taps, `Modifier.zoomable()` is sadly forced to consume all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
+
+=== "Coil"
+    ```kotlin
+    ZoomableAsyncImage(
+      modifier = Modifier.clickable { error("This will not work") },
+      model = "https://example.com/image.jpg",
+      onClick = { … },
+      onLongClick = { … },
+    )
+    ```
+=== "Glide"
+    ```kotlin
+    ZoomableGlideImage(
+      modifier = Modifier.clickable { error("This will not work") },
+      model = "https://example.com/image.jpg",
+      onClick = { … },
+      onLongClick = { … },
+    )
+    ```
+
+
+### Hoisting state
+
+For handling zoom gestures, `Zoomablemage` uses [`Modifier.zoomable()`](../zoomable/index.md) underneath. If your app displays different kinds of media, it is recommended to hoist the `ZoomableState` outside so that it can be shared with all zoomable composables:
+
+=== "Coil"
+    ```kotlin
+    val zoomableState = rememberZoomableState()
+
+    when (media) {
+     is Image -> {
+        ZoomableAsyncImage(
+         model = media.imageUrl,
+         state = rememberZoomableImageState(zoomableState),
+        )
+      }
+      is Video -> {
+        ZoomableExoPlayer(
+          model = media.videoUrl,
+          state = rememberZoomableExoState(zoomableState),
+        )
+      }
+    }
+    ```
+=== "Glide"
+    ```kotlin
+    val zoomableState = rememberZoomableState()
+
+    when (media) {
+     is Image -> {
+        ZoomableGlideImage(
+         model = media.imageUrl,
+         state = rememberZoomableImageState(zoomableState),
+        )
+      }
+      is Video -> {
+        ZoomableExoPlayer(
+          model = media.videoUrl,
+          state = rememberZoomableExoState(zoomableState),
+        )
+      }
+    }
+    ```
