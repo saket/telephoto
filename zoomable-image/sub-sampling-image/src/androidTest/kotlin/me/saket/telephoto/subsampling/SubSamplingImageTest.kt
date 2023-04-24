@@ -314,7 +314,8 @@ class SubSamplingImageTest {
             scale = ScaleFactor(scaleX = 0.5949996f, scaleY = 0.5949996f),
             offset = Offset(x = -1041.2019f, y = -10.483643f),
             rotationZ = 0f,
-            transformOrigin = TransformOrigin(0f, 0f)
+            transformOrigin = TransformOrigin(0f, 0f),
+            isSpecified = true,
           ),
         )
         LaunchedEffect(imageState.isImageLoadedInFullQuality) {

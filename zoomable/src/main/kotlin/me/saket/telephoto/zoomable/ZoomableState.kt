@@ -49,18 +49,20 @@ import kotlin.math.abs
 @Composable
 fun rememberZoomableState(
   maxZoomFactor: Float = 2f,
+  autoApplyTransformations: Boolean = true,
 ): ZoomableState {
   val state = rememberSaveable(saver = ZoomableState.Saver) {
-    ZoomableState()
-  }.also {
-    it.zoomRange = ZoomRange(maxZoomAsRatioOfSize = maxZoomFactor)
-    it.layoutDirection = LocalLayoutDirection.current
+    ZoomableState(
+      autoApplyTransformations = autoApplyTransformations
+    )
+  }.apply {
+    zoomRange = ZoomRange(maxZoomAsRatioOfSize = maxZoomFactor)
+    layoutDirection = LocalLayoutDirection.current
   }
 
   if (state.isReadyToInteract) {
     LaunchedEffect(
       state.contentLayoutSize,
-      //state.unscaledContentLocation,
       state.contentAlignment,
       state.contentScale,
       state.layoutDirection,
@@ -74,7 +76,8 @@ fun rememberZoomableState(
 
 @Stable
 class ZoomableState internal constructor(
-  initialTransformation: GestureTransformation? = null
+  initialTransformation: GestureTransformation? = null,
+  autoApplyTransformations: Boolean = true,
 ) {
 
   /**
@@ -88,12 +91,13 @@ class ZoomableState internal constructor(
         scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
         offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
         rotationZ = 0f,
+        isSpecified = it != null,
       )
     }
   }
 
   // todo: doc.
-  var autoApplyTransformations: Boolean by mutableStateOf(true)
+  var autoApplyTransformations: Boolean by mutableStateOf(autoApplyTransformations)
 
   /**
    * Single source of truth for your content's aspect ratio. If you're using `Modifier.zoomable()`
@@ -141,7 +145,7 @@ class ZoomableState internal constructor(
    * Used only for ensuring that the content does not pan/zoom outside its limits.
    */
   // TODO: verify doc.
-  internal var unscaledContentLocation: ZoomableContentLocation by mutableStateOf(SameAsLayoutBounds)
+  private var unscaledContentLocation: ZoomableContentLocation by mutableStateOf(SameAsLayoutBounds)
 
   /**
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
@@ -320,12 +324,13 @@ class ZoomableState internal constructor(
     }
   }
 
-  /** Reset content to its minimum zoom and zero offset values **without** any animation. */
-  fun resetZoomAndPanImmediately() {
+  /** Reset content to its minimum zoom and zero offset **without** any animation. */
+  fun resetZoomImmediately() {
     gestureTransformation = null
   }
 
-  suspend fun zoomOut() {
+  /** Smoothly reset content to its minimum zoom and zero offset **with** animation. */
+  suspend fun resetZoom() {
     smoothlyToggleZoom(
       shouldZoomIn = false,
       centroid = Offset.Zero,

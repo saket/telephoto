@@ -1,0 +1,57 @@
+site_name: Telephoto
+site_url: https://saket.github.io/telephoto/
+repo_name: telephoto
+repo_url: https://github.com/saket/telephoto
+site_description: 'Building blocks for designing media experiences in Compose UI'
+site_author: Saket Narayan
+copyright: 'Copyright &copy; 2023 Saket Narayan'
+remote_branch: gh-pages
+
+theme:
+  name: 'material'
+  font:
+    code: 'JetBrains Mono'
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      primary: 'teal'
+      accent: 'pink'
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      primary: 'teal'
+      accent: 'pink'
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.tabs.link # Synchronize code tabs
+    - content.code.copy # For showing a copy button in code blocks.
+
+markdown_extensions:
+  - toc:
+      permalink: true # Anchor linking with headings
+  - pymdownx.highlight:
+      use_pygments: true
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - 'Overview': index.md
+
+  - 'Zoomable':
+    - 'Overview': zoomable/index.md
+    - 'Recipes': zoomable/recipes.md
+
+  - 'Zoomable Image':
+      - 'Overview': zoomableimage/index.md
+      - 'Custom image loaders': zoomableimage/custom-image-loaders.md
+      - 'Content alignment': zoomableimage/content-alignment.md

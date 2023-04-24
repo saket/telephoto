@@ -451,7 +451,7 @@ class ZoomableImageTest {
       }
       LaunchedEffect(resetTriggers) {
         resetTriggers.receive()
-        zoomableState.resetZoomAndPanImmediately()
+        zoomableState.resetZoomImmediately()
       }
     }
 

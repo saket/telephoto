@@ -36,7 +36,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 
 /**
- * An image composable that handles zoom & pan gestures using [Modifier.zoomable].
+ * An image composable that handles pan & zoom gestures using [Modifier.zoomable].
  * For images that are large enough to not fit in memory, sub-sampling is automatically enabled
  * so that they're displayed without any loss of detail when fully zoomed in.
  *
@@ -46,8 +46,8 @@ import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
  *
  * If sub-sampling is always desired, you could also use [SubSamplingImage] directly.
  *
- * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
- * space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
+ * @param clipToBounds Defaults to true to act as a reminder that this layout should probably fill all
+ * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  */
 @Composable
 fun ZoomableImage(

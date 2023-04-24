@@ -20,14 +20,14 @@ import me.saket.telephoto.zoomable.internal.transformable
 
 // todo: doc.
 /**
- * A building block for designing zoomable media experiences.
+ * `Modifier.zoomable()` handles pan & zoom gestures for your composable.
  *
  * Because `Modifier.zoomable()` consumes all gestures including double-taps, [Modifier.clickable] and
- * [Modifier.combinedClickable] will not work on the composable `Modifier.zoomable()` is applied to.
+ * [Modifier.combinedClickable] will not work on the composable this `Modifier.zoomable()` is applied to.
  * As an alternative, [onClick] and [onLongClick] parameters can be used instead.
  *
- * @param clipToBounds Defaults to true to act as a reminder that this layout should fill all available
- * space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
+ * @param clipToBounds Defaults to true to act as a reminder that this layout should probably fill all
+ * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  * */
 fun Modifier.zoomable(
   state: ZoomableState,
