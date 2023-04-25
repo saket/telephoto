@@ -78,8 +78,9 @@ For complex scenarios, the `model` parameter can also be given full image reques
 If an image is available in multiple resolutions, it is highly recommended to use a lower resolution as a placeholder while its full quality equivalent is loaded in the background. When combined with a cross-fade transition, `ZoomableImage` will smoothly swap out the placeholder when the full quality version is ready to be displayed.
 
 === "Coil"
-    ```kotlin hl_lines="4-5"
+    ```kotlin hl_lines="5-6"
     ZoomableAsyncImage(
+      modifier = Modifier.fillMaxSize(),
       model = ImageRequest.Builder(LocalContext.current)
         .data("https://example.com/image.jpg")
         .placeholderMemoryCacheKey(…)
@@ -91,8 +92,9 @@ If an image is available in multiple resolutions, it is highly recommended to us
     More details about `placeholderMemoryCacheKey()` can be found on [Coil's website](https://coil-kt.github.io/coil/recipes/#using-a-memory-cache-key-as-a-placeholder).
 
 === "Glide"
-    ```kotlin hl_lines="5-6"
+    ```kotlin hl_lines="6-7"
     ZoomableGlideImage(
+      modifier = Modifier.fillMaxSize(),
       model = Glide
         .with(LocalContext.current)
         .load("https://example.com/image.jpg")
