@@ -92,8 +92,8 @@ fun rememberSubSamplingImageState(
   val transformation by rememberUpdatedState(transformation)
   val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, bitmapConfig, errorReporter)
 
-  val state = remember {
-    SubSamplingImageState()
+  val state = remember(imageSource) {
+    SubSamplingImageState(imageSource)
   }
 
   // Reset everything when a new image is set.
@@ -205,7 +205,7 @@ private fun createRegionDecoder(
 
 // todo: doc.
 @Stable
-class SubSamplingImageState internal constructor() {
+class SubSamplingImageState internal constructor(val imageSource: SubSamplingImageSource) {
   var imageSize: IntSize? by mutableStateOf(null)
     internal set
 
