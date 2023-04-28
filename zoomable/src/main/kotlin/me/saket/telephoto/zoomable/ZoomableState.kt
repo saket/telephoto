@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
+import me.saket.telephoto.zoomable.ContentZoom.Companion.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.GestureTransformation.Companion.ZeroScaleFactor
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.TransformableState
@@ -420,8 +421,8 @@ class ZoomableState internal constructor(
 
   internal fun isZoomOutsideRange(): Boolean {
     val currentZoom = gestureTransformation!!.zoom
-    val userZoomWithinBounds = currentZoom.coercedIn(zoomRange).userZoom
-    return currentZoom.userZoom != userZoomWithinBounds
+    val userZoomWithinBounds = currentZoom.coercedIn(zoomRange)
+    return abs(currentZoom.userZoom - userZoomWithinBounds.userZoom) > ZoomDeltaEpsilon
   }
 
   internal suspend fun smoothlySettleZoomOnGestureEnd() {
@@ -509,11 +510,15 @@ internal data class ContentZoom(
   }
 
   fun isAtMinZoom(range: ZoomRange): Boolean {
-    return finalZoom().maxScale - range.minZoom(baseZoom = baseZoom) < 0.01f
+    return finalZoom().maxScale - range.minZoom(baseZoom = baseZoom) < ZoomDeltaEpsilon
   }
 
   fun isAtMaxZoom(range: ZoomRange): Boolean {
-    return range.maxZoom(baseZoom) - finalZoom().maxScale < 0.01f
+    return range.maxZoom(baseZoom) - finalZoom().maxScale < ZoomDeltaEpsilon
+  }
+
+  companion object {
+    const val ZoomDeltaEpsilon = 0.01f
   }
 }
 
