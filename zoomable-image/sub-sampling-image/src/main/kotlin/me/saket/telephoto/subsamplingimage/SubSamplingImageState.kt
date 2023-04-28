@@ -37,6 +37,7 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
+import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
@@ -182,7 +183,7 @@ private fun createRegionDecoder(
   val decoder = remember(imageSource) { mutableStateOf<ImageRegionDecoder?>(null) }
 
   if (!LocalInspectionMode.current) {
-    val factory = LocalImageRegionDecoderFactory.current
+    val factory = PooledImageRegionDecoder.Factory(LocalImageRegionDecoderFactory.current)
     LaunchedEffect(imageSource) {
       try {
         decoder.value = factory.create(context, imageSource, imageOptions)

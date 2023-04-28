@@ -23,8 +23,4 @@ internal interface ImageRegionDecoder {
 }
 
 // Used for overriding the decoder in screenshot tests.
-internal val LocalImageRegionDecoderFactory = staticCompositionLocalOf {
-  PooledImageRegionDecoder.Factory(
-    AndroidImageRegionDecoder.Factory
-  )
-}
+internal val LocalImageRegionDecoderFactory = staticCompositionLocalOf { AndroidImageRegionDecoder.Factory }

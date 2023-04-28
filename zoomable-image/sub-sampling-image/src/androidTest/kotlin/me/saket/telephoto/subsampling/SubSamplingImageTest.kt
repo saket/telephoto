@@ -49,7 +49,6 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
-import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
@@ -245,8 +244,7 @@ class SubSamplingImageTest {
       region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
     }
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { context, imageSource, imageOptions ->
-      val realFactory = PooledImageRegionDecoder.Factory(delegate = AndroidImageRegionDecoder.Factory)
-      val real = realFactory.create(context, imageSource, imageOptions)
+      val real = AndroidImageRegionDecoder.Factory.create(context, imageSource, imageOptions)
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
           return if (shouldIgnore(region)) {
