@@ -50,6 +50,10 @@ import kotlinx.coroutines.isActive
 import kotlin.math.PI
 import kotlin.math.abs
 
+// TODO: This fork of transformable() can be deleted when these are resolved:
+//  - https://issuetracker.google.com/u/1/issues/266976858
+//  - https://issuetracker.google.com/u/1/issues/266829800
+//  - https://issuetracker.google.com/u/1/issues/266829790
 /**
  * Enable transformation gestures of the modified UI element.
  *
@@ -70,7 +74,7 @@ import kotlin.math.abs
 fun Modifier.transformable(
   state: TransformableState,
   lockRotationOnZoomPan: Boolean = false,
-  onTransformStopped: (velocity: Velocity) -> Unit = {},
+  onTransformStopped: suspend (velocity: Velocity) -> Unit = {},
   enabled: Boolean = true,
 ) = composed(
   factory = {

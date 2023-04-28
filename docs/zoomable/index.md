@@ -4,8 +4,10 @@ A modifier for handling pan & zoom gestures, designed to be shared across all yo
 
 - Pinch to zoom and flings
 - Double tap to zoom
-- Double tap and hold to quick zoom (work in progress)
+- Single finger zoom (double tap and hold)
 - Compatibility with nested scrolling
+- Click listeners
+- Haptic feedback for over/under zoom
 
 ```groovy
 implementation("me.saket.telephoto:zoomable:1.0.0-SNAPSHOT")

@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
@@ -35,6 +36,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeWithVelocity
@@ -507,7 +509,7 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun on_click_works() {
+  @Test fun click_listeners_work() {
     var onClickCalled = false
     var onLongClickCalled = false
 
@@ -541,6 +543,39 @@ class ZoomableImageTest {
     rule.onNodeWithTag("zoomable_image").performTouchInput { longClick() }
     rule.runOnIdle {
       assertThat(onLongClickCalled).isTrue()
+    }
+  }
+
+  @Test fun quick_zooming_works() {
+    val maxZoomFactor = 2f
+    var currentZoom = 0f
+
+    rule.setContent {
+      val state = rememberZoomableState(maxZoomFactor = maxZoomFactor)
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("zoomable"),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        contentDescription = null,
+        state = rememberZoomableImageState(state),
+        onClick = { error("click listener should not get called") },
+        onLongClick = { error("long click listener should not get called") },
+      )
+
+      LaunchedEffect(state.contentTransformation) {
+        currentZoom = state.contentTransformation.scale.scaleY
+      }
+    }
+
+    rule.onNodeWithTag("zoomable").performTouchInput {
+      click(center)
+      advanceEventTime(42)
+      swipeDown(startY = centerY, endY = bottom, durationMillis = 1_000)
+    }
+    rule.runOnIdle {
+      // Zoom should never cross the max zoom even if the gesture above over-zooms.
+      assertThat(currentZoom).isEqualTo(maxZoomFactor)
     }
   }
 
