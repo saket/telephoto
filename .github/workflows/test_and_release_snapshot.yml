@@ -25,20 +25,6 @@ jobs:
         with:
           secrets: ${{ toJSON(secrets) }}
 
-      - name: Run instrumented screenshot tests
-        run: ./gradlew testDebugWithEmulatorWtf
-
-      - name: (Fail-only) Bundle instrumented test reports
-        if: failure()
-        run: find . -type d '(' -name 'reports' -o -name 'test-results' ')' | zip -@ -r instrumentation-test-build-reports.zip
-
-      - name: (Fail-only) Upload instrumented test reports
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: instrumentation-test-report
-          path: instrumentation-test-build-reports.zip
-
       - name: Run unit tests
         run: ./gradlew check
 
@@ -54,6 +40,20 @@ jobs:
             **/build/reports/tests/*/
             **/out/failures/
             paparazzi/paparazzi-gradle-plugin/src/test/projects/**/build/reports/paparazzi/images/
+
+      - name: Run instrumented screenshot tests
+        run: ./gradlew testDebugWithEmulatorWtf
+
+      - name: (Fail-only) Bundle instrumented test reports
+        if: failure()
+        run: find . -type d '(' -name 'reports' -o -name 'test-results' ')' | zip -@ -r instrumentation-test-build-reports.zip
+
+      - name: (Fail-only) Upload instrumented test reports
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: instrumentation-test-report
+          path: instrumentation-test-build-reports.zip
 
   deploy-snapshot:
     name: Deploy snapshot
