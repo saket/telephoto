@@ -242,6 +242,7 @@ class CoilImageResolverTest {
   private fun buildImageLoader(build: ImageLoader.Builder.() -> ImageLoader.Builder): ImageLoader =
     ImageLoader.Builder(context)
       .let(build)
+      .networkObserverEnabled(false)
       .build()
 
   private fun buildFakeImageEngine(
