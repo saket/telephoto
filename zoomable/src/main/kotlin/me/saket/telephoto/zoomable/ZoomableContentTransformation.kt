@@ -1,6 +1,7 @@
 package me.saket.telephoto.zoomable
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -33,6 +34,7 @@ data class ZoomableContentTransformation(
 }
 
 // todo: doc.
+@Stable
 internal fun Modifier.applyTransformation(transformation: ZoomableContentTransformation): Modifier {
   // todo: optimize these. use graphicsLayer only when necessary.
   return graphicsLayer {
