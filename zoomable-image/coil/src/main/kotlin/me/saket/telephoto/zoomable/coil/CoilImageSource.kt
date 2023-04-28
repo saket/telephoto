@@ -25,7 +25,9 @@ import coil.transition.CrossfadeTransition
 import com.google.accompanist.drawablepainter.DrawablePainter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.toComposeConfig
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
@@ -108,7 +110,9 @@ internal class Resolver(
         placeholder = resolved.placeholder,
         expectedSize = result.drawable.intrinsicSize,
         crossfadeDuration = result.crossfadeDuration(),
-        bitmapConfig = request.bitmapConfig,
+        imageOptions = ImageBitmapOptions(
+          config = request.bitmapConfig.toComposeConfig(),
+        ),
       )
     } else {
       ZoomableImageSource.Generic(

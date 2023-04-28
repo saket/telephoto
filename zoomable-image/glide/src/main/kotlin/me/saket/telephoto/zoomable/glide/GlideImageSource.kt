@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.internal.RememberWorker
@@ -112,6 +113,7 @@ private class GlideImageResolver(
                   placeholder = resolved.placeholder,
                   expectedSize = instant.resource.intrinsicSize,
                   crossfadeDuration = instant.transition.crossfadeDuration(),
+                  imageOptions = ImageBitmapOptions.Default // Glide does not expose the config so use a default value.
                 )
               } else {
                 ZoomableImageSource.Generic(

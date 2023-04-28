@@ -2,7 +2,6 @@
 
 package me.saket.telephoto.subsamplingimage.internal
 
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.colorspace.ColorSpace
@@ -11,7 +10,6 @@ import androidx.compose.ui.unit.IntSize
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.testIn
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.drop
@@ -23,7 +21,6 @@ import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class BitmapLoaderTest {
   private val decoder = FakeImageRegionDecoder()
 
@@ -153,7 +150,6 @@ private suspend fun <T> ReceiveTurbine<T>.cancelAndExpectNoEvents() {
   assertThat(cancelAndConsumeRemainingEvents()).isEmpty()
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 private fun runTest(
   timeout: Duration,
   testBody: suspend TestScope.() -> Unit

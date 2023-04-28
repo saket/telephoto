@@ -39,7 +39,7 @@ internal class PooledImageRegionDecoder private constructor(
   companion object {
     fun Factory(
       delegate: ImageRegionDecoder.Factory,
-    ) = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
+    ) = ImageRegionDecoder.Factory { context, imageSource, imageOptions ->
       val decoderCount = when {
         context.isDeviceInLowMemory() -> 1
         else -> maxOf(Runtime.getRuntime().availableProcessors(), 2)  // Same number used by Dispatchers.Default.
@@ -51,7 +51,7 @@ internal class PooledImageRegionDecoder private constructor(
           delegate.create(
             context = context,
             imageSource = imageSource,
-            bitmapConfig = bitmapConfig,
+            imageOptions = imageOptions,
           )
         }
       }

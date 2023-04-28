@@ -671,7 +671,8 @@ private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Bo
         if (subSample) {
           ZoomableImageSource.RequiresSubSampling(
             source = SubSamplingImageSource.asset(assetName),
-            placeholder = null
+            placeholder = null,
+            expectedSize = Size.Unspecified,
           )
         } else {
           val context = LocalContext.current

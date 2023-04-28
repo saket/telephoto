@@ -3,7 +3,6 @@
 
 package me.saket.telephoto.subsamplingimage
 
-import android.graphics.Bitmap
 import androidx.annotation.RestrictTo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -51,19 +50,17 @@ import me.saket.telephoto.zoomable.ZoomableState
 import java.io.IOException
 
 // todo: doc.
-// todo: should this accept a ZoomableContentTransformationProvider?
-//  - the provider can have a setContentLocation function and a layoutSize field.
 @Composable
 fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   zoomableState: ZoomableState,
-  bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+  imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
 ): SubSamplingImageState {
   val state = rememberSubSamplingImageState(
     imageSource = imageSource,
     transformation = zoomableState.contentTransformation,
-    bitmapConfig = bitmapConfig,
+    imageOptions = imageOptions,
     errorReporter = errorReporter,
   )
 
@@ -85,12 +82,12 @@ fun rememberSubSamplingImageState(
 fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   transformation: ZoomableContentTransformation,
-  bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+  imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
 ): SubSamplingImageState {
   val errorReporter by rememberUpdatedState(errorReporter)
   val transformation by rememberUpdatedState(transformation)
-  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, bitmapConfig, errorReporter)
+  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, imageOptions, errorReporter)
 
   val state = remember(imageSource) {
     SubSamplingImageState(imageSource)
@@ -177,7 +174,7 @@ fun rememberSubSamplingImageState(
 @Composable
 private fun createRegionDecoder(
   imageSource: SubSamplingImageSource,
-  bitmapConfig: Bitmap.Config,
+  imageOptions: ImageBitmapOptions,
   errorReporter: SubSamplingImageErrorReporter
 ): State<ImageRegionDecoder?> {
   val context = LocalContext.current
@@ -188,7 +185,7 @@ private fun createRegionDecoder(
     val factory = LocalImageRegionDecoderFactory.current
     LaunchedEffect(imageSource) {
       try {
-        decoder.value = factory.create(context, imageSource, bitmapConfig)
+        decoder.value = factory.create(context, imageSource, imageOptions)
       } catch (e: IOException) {
         errorReporter.onImageLoadingFailed(e, imageSource)
       }

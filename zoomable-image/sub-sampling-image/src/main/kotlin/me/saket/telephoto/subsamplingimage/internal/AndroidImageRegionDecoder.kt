@@ -7,11 +7,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntSize
+import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.toAndroidConfig
 
 internal class AndroidImageRegionDecoder private constructor(
   private val imageSource: SubSamplingImageSource,
-  private val bitmapConfig: Bitmap.Config,
+  private val imageOptions: ImageBitmapOptions,
   private val decoder: BitmapRegionDecoder,
 ) : ImageRegionDecoder {
 
@@ -20,7 +22,7 @@ internal class AndroidImageRegionDecoder private constructor(
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
     val options = BitmapFactory.Options().apply {
       inSampleSize = region.sampleSize.size
-      inPreferredConfig = bitmapConfig
+      inPreferredConfig = imageOptions.config.toAndroidConfig()
     }
     val bitmap = decoder.decodeRegion(region.bounds.toAndroidRect(), options)
     checkNotNull(bitmap) {
@@ -38,10 +40,10 @@ internal class AndroidImageRegionDecoder private constructor(
   }
 
   companion object {
-    val Factory = ImageRegionDecoder.Factory { context, imageSource, bitmapConfig ->
+    val Factory = ImageRegionDecoder.Factory { context, imageSource, imageOptions ->
       AndroidImageRegionDecoder(
         imageSource = imageSource,
-        bitmapConfig = bitmapConfig,
+        imageOptions = imageOptions,
         decoder = imageSource.decoder(context),
       )
     }

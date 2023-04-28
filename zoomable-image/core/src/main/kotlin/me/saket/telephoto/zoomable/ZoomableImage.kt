@@ -134,7 +134,7 @@ fun ZoomableImage(
         val subSamplingState = rememberSubSamplingImageState(
           imageSource = resolvedImage.source,
           transformation = state.zoomableState.contentTransformation,
-          bitmapConfig = resolvedImage.bitmapConfig
+          imageOptions = resolvedImage.imageOptions
         )
         DisposableEffect(subSamplingState) {
           state.subSamplingState = subSamplingState

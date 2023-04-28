@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import app.cash.molecule.RecompositionClock.Immediate
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import okio.fakefilesystem.FakeFileSystem
@@ -180,7 +182,7 @@ class CoilImageResolverTest {
         ZoomableImageSource.RequiresSubSampling(
           placeholder = null,
           source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
-          bitmapConfig = Bitmap.Config.HARDWARE,
+          imageOptions = ImageBitmapOptions(config = ImageBitmapConfig.Argb8888),
           expectedSize = Size(3f, 3f),
         )
       )

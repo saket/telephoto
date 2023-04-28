@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
 import kotlinx.coroutines.flow.Flow
+import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import kotlin.time.Duration
 
@@ -52,7 +53,7 @@ interface ZoomableImageSource {
     val source: SubSamplingImageSource,
     override val placeholder: Painter?,
     override val crossfadeDuration: Duration = Duration.ZERO,
-    val expectedSize: Size = Size.Unspecified,
-    val bitmapConfig: Bitmap.Config = Bitmap.Config.ARGB_8888,
+    val imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
+    val expectedSize: Size,
   ) : ResolveResult
 }
