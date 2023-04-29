@@ -1,8 +1,8 @@
 # Sub-sampling
 
-For images that are large enough to not fit in memory, `ZoomableImage` automatically divides them into tiles so that they can be lazy loaded. 
+For images that are large enough to not fit in memory, `ZoomableImage` automatically divides them into tiles so that they can be lazy loaded efficiently.
 
-If `ZoomableImage` ^^can't^^ be used or if sub-sampling of images is always desired, you could potentially use `SubSamplingImage()` directly:
+If `ZoomableImage` ^^can't^^ be used or if sub-sampling of images is always desired, you could potentially use `SubSamplingImage()` directly.
 
 ```groovy
 implementation("me.saket.telephoto:sub-sampling-image:1.0.0-SNAPSHOT")
@@ -20,8 +20,8 @@ SubSamplingImage(
     .fillMaxSize()
     .zoomable(zoomableState),
   state = imageState,
-  contentDescription = null,
+  contentDescription = …,
 )
 ```
 
-`SubSamplingImage()` is a Compose implementation of the excellent [subsampling-scale-image-view](https://github.com/davemorrissey/subsampling-scale-image-view) by Dave Morrissey.
+`SubSamplingImage()` is an adaptation of the excellent [subsampling-scale-image-view](https://github.com/davemorrissey/subsampling-scale-image-view) by Dave Morrissey.

@@ -47,12 +47,12 @@ markdown_extensions:
 
 nav:
   - 'Overview': index.md
-  - 'Zoomable':
-    - 'Overview': zoomable/index.md
-    - 'Recipes': zoomable/recipes.md
   - 'Zoomable Image':
       - 'Overview': zoomableimage/index.md
       - 'Content alignment': zoomableimage/content-alignment.md
       - 'Custom image loaders': zoomableimage/custom-image-loaders.md
       - 'Recipes': zoomableimage/recipes.md
       - 'Sub-sampling': zoomableimage/sub-sampling.md
+  - 'Modifier.zoomable()':
+      - 'Overview': zoomable/index.md
+      - 'Recipes': zoomable/recipes.md

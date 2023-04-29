@@ -1,29 +1,36 @@
-### Reacting to zoom
+### Observing pan & zoom
 
 ```kotlin
-// Hide status and navigation bars when an image is zoomed in.
+val state: ZoomableState = rememberZoomableState()
+
+LaunchedEffect(state.contentTransformation) {
+  println("Pan = ${state.contentTransformation.offset}")
+  println("Zoom = ${state.contentTransformation.scale}")
+  println("Zoom percent = ${state.zoomFraction * 100}%")
+}
+
+// Example use case: Hide system bars when image is zoomed in.
 val systemUiController = rememberSystemUiController()
-systemUiController.isSystemBarsVisible = zoomableState.zoomFraction == 0f
+systemUiController.isSystemBarsVisible = state.zoomFraction == 0f
 ```
 
-### Resetting pan & zoom
-`Modifier.zoomable()` will automatically retain its pan & zoom across state restorations. This isn't always desired with lazy layouts such as a `Pager()` where each page is restored every time it becomes visible. 
+### Resetting zoom
+`Modifier.zoomable()` will automatically retain its pan & zoom across state restorations. You may want to prevent this in lazy layouts such as a `Pager()`, where each page is restored every time it becomes visible. 
 
-```kotlin hl_lines="16"
+```kotlin hl_lines="15"
 val pagerState = rememberPagerState()
-val zoomableState = rememberZoomableState()
-
 HorizontalPager(
   state = pagerState,
   pageCount = 3,
 ) { pageNum ->
-  Box(
-    Modifier.zoomable(zoomableState)
+  val zoomableState = rememberZoomableState()
+  ZoomableContent(
+    state = zoomableState
   )
 
   if (pagerState.settledPage != pageNum) {
-    // Page is now off-screen. Prevent restoration 
-    // of zoom when this page becomes visible again.
+    // Page is now off-screen. Prevent restoration of 
+    // current zoom when this page becomes visible again.
     LaunchedEffect(Unit) {
       zoomableState.resetZoomImmediately()
     }

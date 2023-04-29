@@ -48,7 +48,7 @@
     --md-inline-code-bg-color: #FEFEFE;
     --md-code-bg-color: #FEFEFE;
     --md-code-border-color: var(--md-header-bg-color);
-    --md-header-search-bg-color: #00000020;
+    --md-header-search-bg-color: var(--md-default-bg-color);
     --md-code-hl-color: #e5ff76a3;
   }
   [data-md-color-scheme="slate"] {
@@ -59,6 +59,6 @@
     --md-default-bg-color: #2E303E;
     --md-inline-code-bg-color: var(--md-code-bg-color);
     --md-code-border-color: transparent;
-    --md-header-search-bg-color: #00000042;
+    --md-header-search-bg-color: var(--md-default-bg-color);
   }
 }

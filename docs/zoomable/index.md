@@ -1,6 +1,6 @@
-# `Modifier.zoomable()`
+# Modifier.zoomable()
 
-A modifier for handling pan & zoom gestures, designed to be shared across all your media composables so that your users can use the same familiar gestures throughout your app. It supports,
+A `Modifier` for handling pan & zoom gestures, designed to be shared across all your media composables so that your users can use the same familiar gestures throughout your app. It supports,
 
 - Pinch to zoom and flings
 - Double tap to zoom
@@ -28,7 +28,7 @@ Box(
 While `Modifier.zoomable()` was primarily written with images & videos in mind, it can be used for anything such as text, canvas drawings, etc.
 
 ### Click listeners
-For detecting double taps, `Modifier.zoomable()` is sadly forced to consume all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
+For detecting double taps, `Modifier.zoomable()` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
 
 ```kotlin
 Modifier.zoomable(

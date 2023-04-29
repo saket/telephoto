@@ -17,7 +17,9 @@ fun ZoomablePicassoImage(
 @Composable
 private fun ZoomableImageSource.Companion.picasso(
   model: Any?,
-  picasso: Picasso = Picasso.Builder(LocalContext.current).build(),
+  picasso: Picasso = Picasso
+    .Builder(LocalContext.current)
+    .build(),
 ): ZoomableImageSource {
   return remember(model, picasso) {
     TODO("See ZoomableImageSource.coil() or glide() for an example.")
