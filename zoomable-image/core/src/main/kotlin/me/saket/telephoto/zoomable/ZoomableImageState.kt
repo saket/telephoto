@@ -20,5 +20,8 @@ fun rememberZoomableImageState(
 class ZoomableImageState internal constructor(
   val zoomableState: ZoomableState
 ) {
+  /** Whether the full quality image is loaded. This be false for placeholders/thumbnails. */
+  var isImageDisplayed by mutableStateOf(false)
+
   internal var subSamplingState: SubSamplingImageState? by mutableStateOf(null)
 }

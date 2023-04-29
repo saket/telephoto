@@ -81,13 +81,13 @@ fun ZoomableImage(
     modifier = modifier.onMeasure { canvasSize = it },
     propagateMinConstraints = true,
   ) {
-    val isFullQualityImageLoaded = when (resolvedImage) {
+    state.isImageDisplayed = when (resolvedImage) {
       is ZoomableImageSource.Generic -> resolvedImage.image != null
       is ZoomableImageSource.RequiresSubSampling -> state.subSamplingState?.isImageLoaded ?: false
     }
 
     AnimatedVisibility(
-      visible = resolvedImage.placeholder != null && !isFullQualityImageLoaded,
+      visible = resolvedImage.placeholder != null && !state.isImageDisplayed,
       enter = fadeIn(tween(0)),
       exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = resolvedImage.crossfadeDurationMs)),
     ) {
@@ -152,7 +152,7 @@ fun ZoomableImage(
           )
         }
         val animatedAlpha by animateFloatAsState(
-          targetValue = if (isFullQualityImageLoaded) 1f else 0f,
+          targetValue = if (state.isImageDisplayed) 1f else 0f,
           animationSpec = tween(resolvedImage.crossfadeDurationMs)
         )
         SubSamplingImage(
