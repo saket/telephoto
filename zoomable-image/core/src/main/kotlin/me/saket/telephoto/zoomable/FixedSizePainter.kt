@@ -15,7 +15,7 @@ internal fun Painter.scaledToMatch(size: Size): Painter {
   return remember(this, size) {
     FixedSizePainter(
       painter = this,
-      overriddenSize = if (size.isSpecified) {
+      overriddenSize = if (size.isSpecified && intrinsicSize.isSpecified) {
         intrinsicSize * (intrinsicSize.width / size.width)  // Maintain aspect ratio.
       } else {
         intrinsicSize
