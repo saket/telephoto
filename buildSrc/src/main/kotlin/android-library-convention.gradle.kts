@@ -24,5 +24,5 @@ android {
   }
   lint.abortOnError = true
   buildFeatures.compose = true
-  composeOptions.kotlinCompilerExtensionVersion = "1.4.4"
+  composeOptions.kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
 }

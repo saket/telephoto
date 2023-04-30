@@ -2,9 +2,6 @@ import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.android
 import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.androidTestImplementation
 import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.debugImplementation
 import java.time.Duration
-import org.gradle.accessors.dm.LibrariesForLibs
-import org.gradle.api.Project
-import org.gradle.kotlin.dsl.getByType
 
 plugins {
   id("com.android.library")
@@ -39,7 +36,3 @@ dependencies {
   androidTestImplementation(libs.testParamInjector)
   debugImplementation(libs.compose.ui.test.activityManifest)
 }
-
-// https://github.com/gradle/gradle/issues/15383#issuecomment-779893192
-internal val Project.libs: LibrariesForLibs
-  get() = this.extensions.getByType()

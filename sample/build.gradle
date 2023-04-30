@@ -23,7 +23,7 @@ android {
     lintConfig = file("lint.xml")
   }
   buildFeatures.compose = true
-  composeOptions.kotlinCompilerExtensionVersion = "1.4.4"
+  composeOptions.kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
 }
 
 dependencies {
