@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
@@ -50,13 +52,13 @@ import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
-import me.saket.telephoto.zoomable.ZoomableImageTest.SubSamplingStatus.SubSamplingDisabled
-import me.saket.telephoto.zoomable.ZoomableImageTest.SubSamplingStatus.SubSamplingEnabled
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -131,35 +133,56 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun retain_transformations_across_state_restorations() {
+  @Test fun retain_transformations_across_state_restorations(
+    @TestParameter placeholderParam: UsePlaceholderParam,
+    @TestParameter subSamplingStatus: SubSamplingStatus
+  ) {
     val stateRestorationTester = StateRestorationTester(rule)
+    var isImageDisplayed = false
 
     stateRestorationTester.setContent {
+      val imageSource = ZoomableImageSource.asset("fox_1500.jpg", subSample = subSamplingStatus.enabled).let {
+        if (placeholderParam.canBeUsed) {
+          it.withPlaceholder(
+            placeholder = assetPainter("fox_250.jpg"),
+            // Bug test: giving an expectedSize value that does not match the actual size was
+            // breaking state restoration because the state would get restored w.r.t this size.
+            expectedSize = Size(50f, 50f)
+          )
+        } else {
+          it
+        }
+      }
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
           .testTag("image"),
-        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        image = imageSource,
         contentDescription = null,
+        state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 5f)).also {
+          isImageDisplayed = it.isImageDisplayed
+        },
       )
     }
 
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     with(rule.onNodeWithTag("image")) {
       performTouchInput {
-        pinchToZoomBy(visibleSize.center / 2f)
+        doubleClick()
       }
       performTouchInput {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_state_restoration")
     }
 
     stateRestorationTester.emulateSavedInstanceStateRestore()
 
+    rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_after_state_restoration")
     }
   }
 
@@ -174,6 +197,8 @@ class ZoomableImageTest {
 
     rule.setContent {
       val state = rememberZoomableImageState()
+      isImageDisplayed = state.isImageDisplayed && state.zoomableState.contentTransformation.isSpecified
+
       ZoomableImage(
         modifier = Modifier
           .then(layoutSize.modifier)
@@ -184,19 +209,6 @@ class ZoomableImageTest {
         contentScale = contentScale.value,
         alignment = alignment.value,
       )
-
-      when (subSamplingStatus) {
-        SubSamplingEnabled -> {
-          state.subSamplingState?.let { subSamplingState ->
-            isImageDisplayed = subSamplingState.isImageLoadedInFullQuality
-          }
-        }
-        SubSamplingDisabled -> {
-          isImageDisplayed = state.zoomableState.contentTransformation.scale.let {
-            it.scaleX > 0f && it.scaleY > 0f
-          }
-        }
-      }
     }
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
@@ -613,6 +625,12 @@ class ZoomableImageTest {
   }
 
   @Suppress("unused")
+  enum class UsePlaceholderParam(val canBeUsed: Boolean) {
+    PlaceholderEnabled(canBeUsed = true),
+    PlaceholderDisabled(canBeUsed = false),
+  }
+
+  @Suppress("unused")
   enum class ScrollDirection {
     RightToLeft,
     LeftToRight
@@ -664,6 +682,16 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
 }
 
 @Composable
+private fun assetPainter(assetName: String): Painter {
+  val context = LocalContext.current
+  return remember(assetName) {
+    context.assets.open(assetName).use { stream ->
+      BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+    }
+  }
+}
+
+@Composable
 private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Boolean): ZoomableImageSource {
   return remember(assetName) {
     object : ZoomableImageSource {
@@ -675,14 +703,38 @@ private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Bo
             expectedSize = Size.Unspecified,
           )
         } else {
-          val context = LocalContext.current
-          val painter = remember {
-            context.assets.open(assetName).use { stream ->
-              BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
-            }
-          }
-          ZoomableImageSource.Generic(painter)
+          ZoomableImageSource.Generic(assetPainter(assetName))
         }
+    }
+  }
+}
+
+@Composable
+private fun ZoomableImageSource.withPlaceholder(placeholder: Painter, expectedSize: Size): ZoomableImageSource {
+  val delegate = this
+  return remember(delegate, placeholder) {
+    object : ZoomableImageSource {
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        val canUseDelegate by produceState(initialValue = false) {
+          delay(200)
+          value = true
+        }
+        if (canUseDelegate) {
+          return when (val delegated = delegate.resolve(canvasSize)) {
+            is ZoomableImageSource.Generic -> delegated.copy(placeholder = placeholder)
+            is ZoomableImageSource.RequiresSubSampling -> delegated.copy(
+              placeholder = placeholder,
+              expectedSize = expectedSize
+            )
+          }
+        } else {
+          return ZoomableImageSource.Generic(
+            image = null,
+            placeholder = placeholder
+          )
+        }
+      }
     }
   }
 }

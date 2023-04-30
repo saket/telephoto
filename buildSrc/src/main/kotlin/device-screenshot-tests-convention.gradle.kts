@@ -1,6 +1,3 @@
-import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.android
-import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.androidTestImplementation
-import gradle.kotlin.dsl.accessors._71f190358cebd46a469f2989484fd643.debugImplementation
 import java.time.Duration
 
 plugins {

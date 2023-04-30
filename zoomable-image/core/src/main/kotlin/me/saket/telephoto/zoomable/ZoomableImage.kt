@@ -1,10 +1,7 @@
 package me.saket.telephoto.zoomable
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -85,12 +82,12 @@ fun ZoomableImage(
       is ZoomableImageSource.Generic -> resolvedImage.image != null
       is ZoomableImageSource.RequiresSubSampling -> state.subSamplingState?.isImageLoaded ?: false
     }
+    val animatedAlpha by animateFloatAsState(
+      targetValue = if (state.isImageDisplayed) 1f else 0f,
+      animationSpec = tween(resolvedImage.crossfadeDurationMs)
+    )
 
-    AnimatedVisibility(
-      visible = resolvedImage.placeholder != null && !state.isImageDisplayed,
-      enter = fadeIn(tween(0)),
-      exit = fadeOut(tween(1 /* 0 does not work */, delayMillis = resolvedImage.crossfadeDurationMs)),
-    ) {
+    if (resolvedImage.placeholder != null && animatedAlpha < 1f) {
       Image(
         painter = animatedPainter(resolvedImage.placeholder!!).scaledToMatch(
           // Align with the full-quality image even if the placeholder is smaller in size.
@@ -125,7 +122,7 @@ fun ZoomableImage(
           contentDescription = contentDescription,
           alignment = Alignment.Center,
           contentScale = ContentScale.Inside,
-          alpha = alpha,
+          alpha = alpha * animatedAlpha,
           colorFilter = colorFilter,
         )
       }
@@ -147,14 +144,10 @@ fun ZoomableImage(
         LaunchedEffect(subSamplingState.imageSize) {
           state.zoomableState.setContentLocation(
             ZoomableContentLocation.unscaledAndTopStartAligned(
-              subSamplingState.imageSize?.toSize() ?: resolvedImage.expectedSize
+              subSamplingState.imageSize?.toSize() ?: resolvedImage.expectedSize  // todo: undo
             )
           )
         }
-        val animatedAlpha by animateFloatAsState(
-          targetValue = if (state.isImageDisplayed) 1f else 0f,
-          animationSpec = tween(resolvedImage.crossfadeDurationMs)
-        )
         SubSamplingImage(
           modifier = zoomable,
           state = subSamplingState,
