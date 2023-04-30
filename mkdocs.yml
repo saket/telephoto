@@ -27,15 +27,16 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - content.tabs.link # Synchronize code tabs
+    - content.tabs.link # Synchronize code tabs.
     - content.code.copy # For showing a copy button in code blocks.
 
 extra_css:
   - 'css/extra.css'
 
 markdown_extensions:
-  - toc:
-      permalink: true # Anchor linking with headings
+  - toc:  # Table of contents.
+      permalink: true # Anchor linking with headings.
+      title: 'On this page'
   - pymdownx.highlight:
       use_pygments: true
       anchor_linenums: true
@@ -43,7 +44,8 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.caret # Underlines
+  - pymdownx.caret # Underlines.
+  - admonition  # Warning call-outs.
 
 nav:
   - 'Overview': index.md

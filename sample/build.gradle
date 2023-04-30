@@ -35,6 +35,7 @@ dependencies {
   implementation(libs.androidx.appcompat)
   implementation(libs.androidx.ktx)
   implementation(libs.androidx.activity)
+  implementation("androidx.compose.foundation:foundation:1.5.0-alpha03")  // Fixes state restoration with pager.
   implementation(libs.compose.ui.material3)
   implementation(libs.compose.ui.materialIcons)
 

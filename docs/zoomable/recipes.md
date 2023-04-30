@@ -40,3 +40,6 @@ HorizontalPager(
   }
 }
 ```
+
+!!! warning
+    A bug in `Pager()` previously caused `settledPage` to reset to `0` upon state restoration. This issue has been resolved in version `1.5.0-alpha02`.
