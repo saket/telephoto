@@ -144,7 +144,7 @@ fun ZoomableImage(
         LaunchedEffect(subSamplingState.imageSize) {
           state.zoomableState.setContentLocation(
             ZoomableContentLocation.unscaledAndTopStartAligned(
-              subSamplingState.imageSize?.toSize() ?: resolvedImage.expectedSize  // todo: undo
+              subSamplingState.imageSize?.toSize()
             )
           )
         }

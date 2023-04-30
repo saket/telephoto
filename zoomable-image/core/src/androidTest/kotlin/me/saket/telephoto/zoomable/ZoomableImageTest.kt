@@ -143,12 +143,7 @@ class ZoomableImageTest {
     stateRestorationTester.setContent {
       val imageSource = ZoomableImageSource.asset("fox_1500.jpg", subSample = subSamplingStatus.enabled).let {
         if (placeholderParam.canBeUsed) {
-          it.withPlaceholder(
-            placeholder = assetPainter("fox_250.jpg"),
-            // Bug test: giving an expectedSize value that does not match the actual size was
-            // breaking state restoration because the state would get restored w.r.t this size.
-            expectedSize = Size(50f, 50f)
-          )
+          it.withPlaceholder(assetPainter("fox_250.jpg"))
         } else {
           it
         }
@@ -700,7 +695,6 @@ private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Bo
           ZoomableImageSource.RequiresSubSampling(
             source = SubSamplingImageSource.asset(assetName),
             placeholder = null,
-            expectedSize = Size.Unspecified,
           )
         } else {
           ZoomableImageSource.Generic(assetPainter(assetName))
@@ -710,7 +704,7 @@ private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Bo
 }
 
 @Composable
-private fun ZoomableImageSource.withPlaceholder(placeholder: Painter, expectedSize: Size): ZoomableImageSource {
+private fun ZoomableImageSource.withPlaceholder(placeholder: Painter): ZoomableImageSource {
   val delegate = this
   return remember(delegate, placeholder) {
     object : ZoomableImageSource {
@@ -723,10 +717,7 @@ private fun ZoomableImageSource.withPlaceholder(placeholder: Painter, expectedSi
         if (canUseDelegate) {
           return when (val delegated = delegate.resolve(canvasSize)) {
             is ZoomableImageSource.Generic -> delegated.copy(placeholder = placeholder)
-            is ZoomableImageSource.RequiresSubSampling -> delegated.copy(
-              placeholder = placeholder,
-              expectedSize = expectedSize
-            )
+            is ZoomableImageSource.RequiresSubSampling -> delegated.copy(placeholder = placeholder)
           }
         } else {
           return ZoomableImageSource.Generic(

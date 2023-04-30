@@ -108,7 +108,6 @@ internal class Resolver(
       ZoomableImageSource.RequiresSubSampling(
         source = imageSource,
         placeholder = resolved.placeholder,
-        expectedSize = result.drawable.intrinsicSize,
         crossfadeDuration = result.crossfadeDuration(),
         imageOptions = ImageBitmapOptions(
           config = request.bitmapConfig.toComposeConfig(),
@@ -170,9 +169,6 @@ internal class Resolver(
 private fun Drawable.asPainter(): Painter {
   return DrawablePainter(mutate())
 }
-
-private val Drawable.intrinsicSize
-  get() = Size(width = intrinsicWidth.toFloat(), height = intrinsicHeight.toFloat())
 
 @OptIn(ExperimentalContracts::class)
 private fun Context.isResourceId(data: Any): Boolean {

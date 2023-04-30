@@ -54,6 +54,5 @@ interface ZoomableImageSource {
     override val placeholder: Painter?,
     override val crossfadeDuration: Duration = Duration.ZERO,
     val imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
-    val expectedSize: Size,
   ) : ResolveResult
 }

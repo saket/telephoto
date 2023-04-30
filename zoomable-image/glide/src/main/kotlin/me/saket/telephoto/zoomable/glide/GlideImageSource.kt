@@ -111,7 +111,6 @@ private class GlideImageResolver(
                 ZoomableImageSource.RequiresSubSampling(
                   source = subSamplingSource,
                   placeholder = resolved.placeholder,
-                  expectedSize = instant.resource.intrinsicSize,
                   crossfadeDuration = instant.transition.crossfadeDuration(),
                   imageOptions = ImageBitmapOptions.Default // Glide does not expose the config so use a default value.
                 )
@@ -174,6 +173,3 @@ private class GlideImageResolver(
 private fun Drawable.asPainter(): Painter {
   return DrawablePainter(mutate())
 }
-
-private val Drawable.intrinsicSize
-  get() = Size(width = intrinsicWidth.toFloat(), height = intrinsicHeight.toFloat())

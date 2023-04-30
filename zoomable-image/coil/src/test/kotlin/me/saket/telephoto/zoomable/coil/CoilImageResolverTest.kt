@@ -183,7 +183,6 @@ class CoilImageResolverTest {
           placeholder = null,
           source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
           imageOptions = ImageBitmapOptions(config = ImageBitmapConfig.Argb8888),
-          expectedSize = Size(3f, 3f),
         )
       )
     }

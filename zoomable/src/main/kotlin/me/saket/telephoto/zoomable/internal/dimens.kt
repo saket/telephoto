@@ -22,6 +22,9 @@ internal fun Size.discardFractionalParts(): IntSize {
 internal val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)
 
+internal val ScaleFactor.Companion.Zero
+  get() = ScaleFactor(0f, 0f)
+
 internal operator fun ScaleFactor.unaryMinus(): ScaleFactor =
   this * -1f
 

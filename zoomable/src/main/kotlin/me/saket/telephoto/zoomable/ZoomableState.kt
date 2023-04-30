@@ -34,9 +34,9 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import me.saket.telephoto.zoomable.ContentZoom.Companion.ZoomDeltaEpsilon
-import me.saket.telephoto.zoomable.GestureTransformation.Companion.ZeroScaleFactor
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.TransformableState
+import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.maxScale
@@ -87,13 +87,25 @@ class ZoomableState internal constructor(
   // todo: doc
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
-      ZoomableContentTransformation(
-        contentSize = it?.contentSize ?: Size.Unspecified,
-        scale = it?.zoom?.finalZoom() ?: ZeroScaleFactor,  // Hide content until an initial zoom value is calculated.
-        offset = if (it != null) -it.offset * it.zoom else Offset.Zero,
-        rotationZ = 0f,
-        isSpecified = it != null,
-      )
+      if (it != null) {
+        val scale = it.zoom.finalZoom()
+        val canContentBeShown = scale != ScaleFactor.Zero
+        ZoomableContentTransformation(
+          contentSize = it.contentSize,
+          scale = scale,
+          offset = -it.offset * it.zoom,
+          rotationZ = 0f,
+          isSpecified = canContentBeShown,
+        )
+      } else {
+        ZoomableContentTransformation(
+          contentSize = Size.Unspecified,
+          scale = ScaleFactor.Zero, // Hide content until an initial zoom value is calculated.,
+          offset = Offset.Zero,
+          rotationZ = 0f,
+          isSpecified = false,
+        )
+      }
     }
   }
 
@@ -476,12 +488,7 @@ internal data class GestureTransformation(
   val zoom: ContentZoom,
   val lastCentroid: Offset,
   val contentSize: Size,
-) {
-
-  companion object {
-    val ZeroScaleFactor = ScaleFactor(0f, 0f)
-  }
-}
+)
 
 // todo: doc
 internal data class ContentZoom(
