@@ -6,7 +6,7 @@
 
 ### Grabbing downloaded images
 
-**Low resolution** drawables can be accessed by using request listeners. These images are down-sampled by your image loading library to fit in memory and are good enough for simple use-cases such as [color extraction](https://developer.android.com/training/material/palette-colors).
+**Low resolution** drawables can be accessed by using request listeners. These images are down-sampled by your image loading library to fit in memory and are suitable for simple use-cases such as [color extraction](https://developer.android.com/training/material/palette-colors).
 
 === "Coil"
     ```kotlin

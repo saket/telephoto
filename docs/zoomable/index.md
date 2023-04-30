@@ -1,13 +1,13 @@
 # Modifier.zoomable()
 
-A `Modifier` for handling pan & zoom gestures, designed to be shared across all your media composables so that your users can use the same familiar gestures throughout your app. It supports,
+A `Modifier` for handling pan & zoom gestures, designed to be shared across all your media composables so that your users can use the same familiar gestures throughout your app. It offers,
 
 - Pinch to zoom and flings
 - Double tap to zoom
 - Single finger zoom (double tap and hold)
+- Haptic feedback for over/under zoom
 - Compatibility with nested scrolling
 - Click listeners
-- Haptic feedback for over/under zoom
 
 ```groovy
 implementation("me.saket.telephoto:zoomable:1.0.0-SNAPSHOT")

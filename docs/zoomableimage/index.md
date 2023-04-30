@@ -1,6 +1,6 @@
 # Zoomable Image
 
-A _drop-in_ replacement for async `Image()` composables with support for pan & zoom gestures. For images that are large enough to not fit in memory, sub&#8209;sampling is automatically enabled so that they're displayed without any loss of detail when fully zoomed in.
+A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures and automatic sub-sampling of large images. This ensures that images maintain their intricate details even when fully zoomed in, without causing any `OutOfMemory` exceptions.
 
 === "Coil"
     ```groovy
@@ -68,7 +68,7 @@ For complex scenarios, the `model` parameter can take full image requests.
 
 ### Placeholders
 
-For images that are available in multiple resolutions, `telephoto` highly recommends using their lower resolutions as placeholders while their full quality equivalents are loaded in the background. 
+If your images are available in multiple resolutions, `telephoto` highly recommends using their lower resolutions as placeholders while their full quality equivalents are loaded in the background.
 
 When combined with a cross-fade transition, `ZoomableImage` will smoothly swap out placeholders when their full quality versions are ready to be displayed.
 
