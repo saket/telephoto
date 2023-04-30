@@ -1,7 +1,10 @@
 ### Observing pan & zoom
 
 ```kotlin
-val state: ZoomableState = rememberZoomableState()
+val state = rememberZoomableState()
+Box(
+  Modifier.zoomable(state)
+)
 
 LaunchedEffect(state.contentTransformation) {
   println("Pan = ${state.contentTransformation.offset}")

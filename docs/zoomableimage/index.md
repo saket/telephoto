@@ -28,29 +28,23 @@ A _drop-in_ replacement for async `Image()` composables with support for pan & z
       )
     ```
 
-### Image options
+### Image requests
 
 For complex scenarios, the `model` parameter can take full image requests. 
 
 === "Coil"
     ```kotlin
-    val imageLoader = LocalContext.current.imageLoader
-      .newBuilder()
-      .components { add(GifDecoder.Factory()) }
-      .build()
-
     ZoomableAsyncImage(
       model = ImageRequest.Builder(LocalContext.current)
         .data("https://example.com/image.jpg")
         .listener(
-          onStart = { … },
           onSuccess = { … },
+          onError = { … }
         )
         .crossfade(1_000)
         .memoryCachePolicy(CachePolicy.DISABLED)
-        .allowHardware(true)
         .build(),
-      imageLoader = imageLoader,
+      imageLoader = LocalContext.current.imageLoader, // Optional.
       contentDescription = …
     )
     ```
@@ -58,17 +52,16 @@ For complex scenarios, the `model` parameter can take full image requests.
 === "Glide"
     ```kotlin
     ZoomableGlideImage(
-      model = Glide
-        .with(LocalContext.current)
+      model = Glide.with(LocalContext.current)
         .load("https://example.com/image.jpg")
         .addListener(object : RequestListener<Drawable> {
-          override fun onLoadFailed(…): Boolean = TODO()
           override fun onResourceReady(…): Boolean = TODO()
-        }),
+          override fun onLoadFailed(…): Boolean = TODO()
+        })
         .transition(withCrossFade(1_000))
         .skipMemoryCache(true)
-        .timeout(30_000)
-        .addListener(…),
+        .disallowHardwareConfig()
+        .timeout(30_000),
       contentDescription = …
     )
     ```
@@ -94,11 +87,10 @@ When combined with a cross-fade transition, `ZoomableImage` will smoothly swap o
     More details about `placeholderMemoryCacheKey()` can be found on [Coil's website](https://coil-kt.github.io/coil/recipes/#using-a-memory-cache-key-as-a-placeholder).
 
 === "Glide"
-    ```kotlin hl_lines="6-7"
+    ```kotlin hl_lines="5-6"
     ZoomableGlideImage(
       modifier = Modifier.fillMaxSize(),
-      model = Glide
-        .with(LocalContext.current)
+      model = Glide.with(LocalContext.current)
         .load("https://example.com/image.jpg")
         .thumbnail(…)   // or placeholder()
         .transition(withCrossFade(1000)),
