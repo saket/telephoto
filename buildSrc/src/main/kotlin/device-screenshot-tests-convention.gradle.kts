@@ -20,7 +20,7 @@ emulatorwtf {
   )
   directoriesToPull.set(listOf("/sdcard/Download/"))
   numUniformShards.set(3)
-  numFlakyTestAttempts.set(1)
+  numFlakyTestAttempts.set(3)
   fileCacheTtl.set(Duration.ofDays(30))
 }
 
