@@ -458,7 +458,7 @@ class ZoomableState internal constructor(
 
   internal suspend fun fling(velocity: Velocity, density: Density) {
     val start = gestureTransformation!!
-    transformableState.transform {
+    transformableState.transform(MutatePriority.UserInput) {
       var previous = start.offset
       AnimationState(
         typeConverter = Offset.VectorConverter,

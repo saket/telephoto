@@ -4,6 +4,7 @@ package me.saket.telephoto.zoomable
 
 import android.os.Build
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -24,6 +25,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.doubleTapZoomable
+import me.saket.telephoto.zoomable.internal.stopTransformation
 import me.saket.telephoto.zoomable.internal.transformable
 
 // todo: doc.
@@ -55,16 +57,21 @@ fun Modifier.zoomable(
       .transformable(
         state = state.transformableState,
         onTransformStopped = { velocity ->
-          if (state.isZoomOutsideRange()) {
-            view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
-            state.smoothlySettleZoomOnGestureEnd()
-          } else {
-            state.fling(velocity = velocity, density = density)
+          scope.launch {
+            if (state.isZoomOutsideRange()) {
+              view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
+              state.smoothlySettleZoomOnGestureEnd()
+            } else {
+              state.fling(velocity = velocity, density = density)
+            }
           }
         }
       )
       .pointerInput(Unit) {
         detectTapGestures(
+          onPress = {
+            state.transformableState.stopTransformation(MutatePriority.UserInput)
+          },
           onTap = {
             // Make sure this wasn't actually a quick zoom gesture. When a
             // quick zoom gesture is started, detectTapGestures() detects that
@@ -86,10 +93,12 @@ fun Modifier.zoomable(
         state = state.transformableState,
         onQuickZoomStarted = { isQuickZooming = true },
         onQuickZoomStopped = {
-          isQuickZooming = false
-          if (state.isZoomOutsideRange()) {
-            view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
-            state.smoothlySettleZoomOnGestureEnd()
+          scope.launch {
+            isQuickZooming = false
+            if (state.isZoomOutsideRange()) {
+              view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
+              state.smoothlySettleZoomOnGestureEnd()
+            }
           }
         },
         onDoubleTap = { centroid ->

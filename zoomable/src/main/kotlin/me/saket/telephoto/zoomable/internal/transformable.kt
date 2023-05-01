@@ -74,7 +74,7 @@ import kotlin.math.abs
 fun Modifier.transformable(
   state: TransformableState,
   lockRotationOnZoomPan: Boolean = false,
-  onTransformStopped: suspend (velocity: Velocity) -> Unit = {},
+  onTransformStopped: (velocity: Velocity) -> Unit = {},
   enabled: Boolean = true,
 ) = composed(
   factory = {

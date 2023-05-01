@@ -247,7 +247,6 @@ class ZoomableImageTest {
           .fillMaxSize()
           .fillMaxSize(),
         image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
-        contentScale = ContentScale.Fit,
         alignment = contentAlignment,
         contentDescription = null,
       )
@@ -298,7 +297,6 @@ class ZoomableImageTest {
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImageSource.asset(assetNames[pageNum], subSample = false),
           state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1f)),
-          contentScale = ContentScale.Fit,
           contentDescription = null,
         )
       }
@@ -332,7 +330,6 @@ class ZoomableImageTest {
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImageSource.asset(assetNames[pageNum], subSample = false),
           state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 2f)),
-          contentScale = ContentScale.Fit,
           contentDescription = null,
         )
       }
@@ -372,7 +369,6 @@ class ZoomableImageTest {
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImageSource.asset(assetNames[pageNum], subSample = false),
           state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1.5f)),
-          contentScale = ContentScale.Fit,
           contentDescription = null,
         )
       }
@@ -412,7 +408,6 @@ class ZoomableImageTest {
         image = ZoomableImageSource.asset(assetName, subSample = false),
         contentDescription = null,
         state = rememberZoomableImageState(zoomableState),
-        contentScale = ContentScale.Fit,
       )
 
       LaunchedEffect(zoomableState.contentTransformation) {
@@ -450,7 +445,6 @@ class ZoomableImageTest {
           .fillMaxSize()
           .testTag("image"),
         state = rememberZoomableImageState(zoomableState),
-        contentScale = ContentScale.Fit,
         image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
         contentDescription = null,
       )
@@ -488,7 +482,6 @@ class ZoomableImageTest {
           .testTag("image"),
         image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
         state = rememberZoomableImageState(zoomableState),
-        contentScale = ContentScale.Fit,
         contentDescription = null,
       )
 

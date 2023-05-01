@@ -30,9 +30,9 @@ import kotlin.math.abs
 
 /** Detects double-tap and quick zoom (double tap and hold) gestures. */
 internal fun Modifier.doubleTapZoomable(
-  onQuickZoomStarted: suspend () -> Unit,
-  onQuickZoomStopped: suspend () -> Unit,
-  onDoubleTap: suspend (centroid: Offset) -> Unit,
+  onQuickZoomStarted: () -> Unit,
+  onQuickZoomStopped: () -> Unit,
+  onDoubleTap: (centroid: Offset) -> Unit,
   state: TransformableState,
 ): Modifier {
   return composed {
