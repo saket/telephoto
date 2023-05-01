@@ -70,6 +70,9 @@ jobs:
           java-version: 11
       - uses: gradle/gradle-build-action@v2
 
+      - name: Ensure snapshot version
+        run: ./gradlew throwIfVersionIsNotSnapshot
+
       - name: Publish snapshot
         run: ./gradlew clean publish --no-daemon --no-parallel --no-configuration-cache --stacktrace
         env:
