@@ -3,6 +3,7 @@ minSdk = "24"
 compileSdk = "33"
 kotlin = "1.8.10"
 agp = "7.4.2"
+compose-runtime = "1.4.2"
 compose-compiler = "1.4.4"
 compose-ui = "1.4.2"
 compose-ui-material3 = "1.1.0-rc01"
@@ -42,7 +43,7 @@ androidx-activity = { module = "androidx.activity:activity-compose", version.ref
 androidx-test-ktx = "androidx.test:core-ktx:1.5.0"
 androidx-test-rules = "androidx.test:rules:1.5.0"
 androidx-test-junit = "androidx.test.ext:junit-ktx:1.1.5"
-
+compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "compose-runtime" }
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose-ui" }
 compose-ui-util = { module = "androidx.compose.ui:ui-util", version.ref = "compose-ui" }
 compose-ui-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-ui-material3" }
@@ -67,5 +68,6 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 junit = { module = "junit:junit", version.ref = "junit" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 testParamInjector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "testParamInjector" }
+dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropshots" }
 
 appyx = { module = "com.bumble.appyx:core", version.ref = "appyx" }

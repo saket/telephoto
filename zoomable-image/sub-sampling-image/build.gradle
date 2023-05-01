@@ -23,4 +23,6 @@ dependencies {
   testImplementation(libs.testParamInjector)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.turbine)
+
+  androidTestImplementation(projects.testUtil)
 }

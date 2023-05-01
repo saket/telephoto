@@ -1,3 +1,4 @@
+include ':test-util'
 include ':sample'
 include ':zoomable'
 include ':zoomable-image:core'

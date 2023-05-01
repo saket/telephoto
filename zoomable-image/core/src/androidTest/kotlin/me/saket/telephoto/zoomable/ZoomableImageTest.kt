@@ -1,3 +1,5 @@
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package me.saket.telephoto.zoomable
 
 import android.graphics.BitmapFactory
@@ -55,6 +57,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
@@ -81,6 +84,9 @@ class ZoomableImageTest {
 
   @Before
   fun setup() {
+    // CI machines may have fewer CPU cores.
+    PooledImageRegionDecoder.overriddenMinPoolCount = 4
+
     rule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
       it.window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))

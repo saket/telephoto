@@ -39,7 +39,7 @@ internal class PooledImageRegionDecoder private constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   companion object {
     @VisibleForTesting
-    internal var overriddenPoolCount: Int? = null
+    internal var overriddenMinPoolCount: Int? = null
 
     fun Factory(
       delegate: ImageRegionDecoder.Factory,
@@ -68,19 +68,13 @@ internal class PooledImageRegionDecoder private constructor(
       if (activityManager.isLowRamDevice) {
         return 1
       }
-
       val memoryInfo = ActivityManager.MemoryInfo().apply(activityManager::getMemoryInfo)
       if (memoryInfo.lowMemory) {
         return 1
       }
-
-      overriddenPoolCount?.let {
-        return it
-      }
-
-      val isCi = System.getenv("CI") != null
-      val minCount = if (isCi) 4 else 2 // 2 is the same min number used by Dispatchers.Default.
-      return maxOf(Runtime.getRuntime().availableProcessors(), minCount)
+      return Runtime.getRuntime().availableProcessors()
+        .coerceAtLeast(2) // Same number used by Dispatchers.Default.
+        .coerceAtLeast(overriddenMinPoolCount ?: 1)
     }
   }
 }

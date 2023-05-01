@@ -1,0 +1,11 @@
+plugins {
+  id("android-library-convention")
+}
+
+android {
+  namespace "me.saket.telephoto.testutil"
+}
+
+dependencies {
+  implementation(libs.dropshots)
+}

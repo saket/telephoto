@@ -39,6 +39,7 @@ import com.dropbox.dropshots.Dropshots
 import com.dropbox.dropshots.ResultValidator
 import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
@@ -53,6 +54,7 @@ import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFacto
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
+import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -75,13 +77,22 @@ class SubSamplingImageTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()
+
+  private val screenshotValidator = CiScreenshotValidator(
+    context = { rule.activity },
+    tolerancePercentOnLocal = 0f,
+    tolerancePercentOnCi = 0.01f,
+  )
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { it },
-    resultValidator = ThresholdValidator(thresholdPercent = 0.1f)
+    resultValidator = screenshotValidator,
   )
 
   @Before
   fun setup() {
+    // CI machines may have fewer CPU cores.
+    PooledImageRegionDecoder.overriddenMinPoolCount = 4
+
     rule.activityRule.scenario.onActivity {
       it.actionBar?.hide()
       it.window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
@@ -250,8 +261,11 @@ class SubSamplingImageTest {
   }
 
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
-    // This test blocks 2 decoders indefinitely so at least 3 decoders are needed.
-    PooledImageRegionDecoder.overriddenPoolCount = 4
+    screenshotValidator.tolerancePercentOnCi = 0.12f
+
+    assertWithMessage("This test blocks 2 decoders indefinitely so at least 3 decoders are needed")
+      .that(PooledImageRegionDecoder.overriddenMinPoolCount)
+      .isAtLeast(3)
 
     // This fake factory will ignore decoding of selected tiles.
     val shouldIgnore: (BitmapRegionTile) -> Boolean = { region ->
@@ -314,6 +328,8 @@ class SubSamplingImageTest {
   }
 
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
+    screenshotValidator.tolerancePercentOnCi = 0.014f
+
     var isImageDisplayed = false
     var imageTiles: List<CanvasRegionTile>? = null
 
@@ -402,6 +418,8 @@ class SubSamplingImageTest {
   @Test fun bitmap_tiles_should_be_at_least_half_of_layout_size(
     @TestParameter size: LayoutSizeParam,
   ) {
+    screenshotValidator.tolerancePercentOnCi = 0.095f
+
     var isImageDisplayedInFullQuality = false
 
     rule.setContent {
