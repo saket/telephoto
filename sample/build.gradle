@@ -35,11 +35,17 @@ dependencies {
   implementation(libs.androidx.appcompat)
   implementation(libs.androidx.ktx)
   implementation(libs.androidx.activity)
-  implementation("androidx.compose.foundation:foundation:1.5.0-alpha03")  // Fixes state restoration with pager.
   implementation(libs.compose.ui.material3)
   implementation(libs.compose.ui.materialIcons)
 
   implementation(libs.coil.compose)
   implementation(libs.coil.gif)
   implementation(libs.appyx)
+
+  if (System.getenv("CI") == null) {
+    // Use a newer version of compose that fixes state restoration with pager.
+    // Using different versions in different modules interferes with lint on CI
+    // for some reason so this is only run locally.
+    implementation("androidx.compose.foundation:foundation:1.5.0-alpha03")
+  }
 }
