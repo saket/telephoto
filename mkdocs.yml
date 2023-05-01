@@ -9,6 +9,9 @@ remote_branch: gh-pages
 
 theme:
   name: 'material'
+  icon:
+    logo: material/camera-iris
+  favicon: assets/favicon_192.png
   font:
     text: 'Roboto'
     code: 'JetBrains Mono'
