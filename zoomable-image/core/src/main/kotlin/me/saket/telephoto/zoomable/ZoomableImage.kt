@@ -33,9 +33,9 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 
 /**
- * An image composable that handles pan & zoom gestures using [Modifier.zoomable].
- * For images that are large enough to not fit in memory, sub-sampling is automatically enabled
- * so that they're displayed without any loss of detail when fully zoomed in.
+ * A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures
+ * and automatic sub-sampling of large images. This ensures that images maintain their intricate details
+ * even when fully zoomed in, without causing any `OutOfMemory` exceptions.
  *
  * Because `Modifier.zoomable()` consumes all gestures including double-taps, [Modifier.clickable]
  * and [Modifier.combinedClickable] will not work on this composable. As an alternative, [onClick]
