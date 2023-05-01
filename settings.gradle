@@ -4,3 +4,5 @@ include ':zoomable-image:core'
 include ':zoomable-image:coil'
 include ':zoomable-image:glide'
 include ':zoomable-image:sub-sampling-image'
+
+enableFeaturePreview('TYPESAFE_PROJECT_ACCESSORS')

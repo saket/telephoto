@@ -1,10 +1,10 @@
 plugins {
   id("android-library-convention")
+  id("published-library-convention")
 }
 
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'app.cash.paparazzi'
-apply plugin: 'com.vanniktech.maven.publish'
 
 android {
   namespace "me.saket.telephoto.zoomable"

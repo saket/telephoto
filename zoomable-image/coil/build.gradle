@@ -11,8 +11,8 @@ android {
 }
 
 dependencies {
-  api project(':zoomable-image:core')
-  implementation project(':zoomable-image:sub-sampling-image')
+  api(projects.zoomableImage.core)
+  implementation(projects.zoomableImage.subSamplingImage)
 
   api(libs.coil.compose)
   implementation(libs.accompanist.drawablePainter)

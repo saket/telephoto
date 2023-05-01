@@ -27,10 +27,10 @@ android {
 }
 
 dependencies {
-  implementation project(':zoomable')
-  implementation project(':zoomable-image:core')
-  implementation project(':zoomable-image:coil')
-  implementation project(':zoomable-image:glide')
+  implementation(projects.zoomable)
+  implementation(projects.zoomableImage.core)
+  implementation(projects.zoomableImage.coil)
+  implementation(projects.zoomableImage.glide)
 
   implementation(libs.androidx.appcompat)
   implementation(libs.androidx.ktx)

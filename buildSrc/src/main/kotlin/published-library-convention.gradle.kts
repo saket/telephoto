@@ -6,7 +6,7 @@ plugins {
 }
 
 // Used on CI to publish snapshot versions.
-rootProject.tasks.register("throwIfVersionIsNotSnapshot") {
+tasks.register("throwIfVersionIsNotSnapshot") {
   val libraryVersion = properties["VERSION_NAME"] as String
   check(libraryVersion.endsWith("SNAPSHOT")) {
     "Project isn't using a snapshot version = $libraryVersion"

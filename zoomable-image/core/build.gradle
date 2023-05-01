@@ -1,18 +1,18 @@
 plugins {
   id("android-library-convention")
+  id("published-library-convention")
   id("device-screenshot-tests-convention")
 }
 
 apply plugin: 'app.cash.paparazzi'
-apply plugin: 'com.vanniktech.maven.publish'
 
 android {
   namespace "me.saket.telephoto.zoomable.image"
 }
 
 dependencies {
-  api project(':zoomable')
-  api project(':zoomable-image:sub-sampling-image')
+  api(projects.zoomable)
+  api(projects.zoomableImage.subSamplingImage)
 
   api(libs.compose.foundation)
 

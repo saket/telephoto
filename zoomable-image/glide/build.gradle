@@ -1,16 +1,15 @@
 plugins {
   id("android-library-convention")
+  id("published-library-convention")
 }
-
-apply plugin: 'com.vanniktech.maven.publish'
 
 android {
   namespace "me.saket.telephoto.zoomable.image.glide"
 }
 
 dependencies {
-  api project(':zoomable-image:core')
-  implementation project(':zoomable-image:sub-sampling-image')
+  api(projects.zoomableImage.core)
+  implementation(projects.zoomableImage.subSamplingImage)
 
   api(libs.glide.core)
   implementation(libs.accompanist.drawablePainter)
