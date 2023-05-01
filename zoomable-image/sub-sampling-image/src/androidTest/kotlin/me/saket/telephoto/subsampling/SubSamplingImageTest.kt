@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -49,6 +50,7 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
+import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.zoomable.ZoomSpec
@@ -248,6 +250,9 @@ class SubSamplingImageTest {
   }
 
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
+    // This test blocks 2 decoders indefinitely so at least 3 decoders are needed.
+    PooledImageRegionDecoder.overriddenPoolCount = 4
+
     // This fake factory will ignore decoding of selected tiles.
     val shouldIgnore: (BitmapRegionTile) -> Boolean = { region ->
       region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
@@ -266,41 +271,43 @@ class SubSamplingImageTest {
       }
     }
 
-    var isImageDisplayed = false
     var imageTiles: List<CanvasRegionTile>? = null
 
     rule.setContent {
-      CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
-        val zoomableState = rememberZoomableState(
-          zoomSpec = ZoomSpec(maxZoomFactor = 1f)
-        )
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-        ).also {
-          it.showTileBounds = true
+      BoxWithConstraints {
+        check(constraints.maxWidth == 1080 && constraints.maxHeight == 2400) {
+          "This test was written for a 1080x2400 display."
         }
-        LaunchedEffect(imageState.isImageLoaded) {
-          isImageDisplayed = imageState.isImageLoaded
+        CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
+          val zoomableState = rememberZoomableState(
+            zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+          ).also {
+            it.contentScale = ContentScale.Crop
+          }
+          val imageState = rememberSubSamplingImageState(
+            zoomableState = zoomableState,
+            imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+          ).also {
+            it.showTileBounds = true
+          }
+          LaunchedEffect(imageState.tiles) {
+            imageTiles = imageState.tiles
+          }
+          SubSamplingImage(
+            modifier = Modifier
+              .fillMaxSize()
+              .zoomable(zoomableState)
+              .testTag("image"),
+            state = imageState,
+            contentDescription = null,
+          )
         }
-        LaunchedEffect(imageState.tiles) {
-          imageTiles = imageState.tiles
-        }
-        SubSamplingImage(
-          modifier = Modifier
-            .fillMaxSize()
-            .zoomable(zoomableState)
-            .testTag("image"),
-          state = imageState,
-          contentDescription = null,
-        )
       }
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
-    rule.onNodeWithTag("image").performTouchInput { doubleClick(center) }
-    rule.waitUntil(5.seconds) { imageTiles!!.count { !it.isBaseTile && it.bitmap != null } == 2 }
-
+    rule.waitUntil(5.seconds) {
+      imageTiles!!.count { !it.isBaseTile && it.bitmap != null } == 2
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }

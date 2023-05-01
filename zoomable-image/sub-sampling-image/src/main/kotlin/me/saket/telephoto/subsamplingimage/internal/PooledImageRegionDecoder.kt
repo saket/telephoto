@@ -3,6 +3,7 @@ package me.saket.telephoto.subsamplingimage.internal
 import android.app.ActivityManager
 import android.content.Context
 import android.graphics.BitmapRegionDecoder
+import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.getSystemService
@@ -37,13 +38,13 @@ internal class PooledImageRegionDecoder private constructor(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   companion object {
+    @VisibleForTesting
+    internal var overriddenPoolCount: Int? = null
+
     fun Factory(
       delegate: ImageRegionDecoder.Factory,
     ) = ImageRegionDecoder.Factory { context, imageSource, imageOptions ->
-      val decoderCount = when {
-        context.isDeviceInLowMemory() -> 1
-        else -> maxOf(Runtime.getRuntime().availableProcessors(), 2)  // Same number used by Dispatchers.Default.
-      }
+      val decoderCount = calculatePoolCount(context)
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
       val decoders = withContext(dispatcher) {
@@ -62,15 +63,24 @@ internal class PooledImageRegionDecoder private constructor(
       )
     }
 
-    private fun Context.isDeviceInLowMemory(): Boolean {
-      val activityManager = getSystemService<ActivityManager>()!!
+    private fun calculatePoolCount(context: Context): Int {
+      val activityManager = context.getSystemService<ActivityManager>()!!
       if (activityManager.isLowRamDevice) {
-        return true
+        return 1
       }
 
-      val memoryInfo = ActivityManager.MemoryInfo()
-      activityManager.getMemoryInfo(memoryInfo)
-      return memoryInfo.lowMemory
+      val memoryInfo = ActivityManager.MemoryInfo().apply(activityManager::getMemoryInfo)
+      if (memoryInfo.lowMemory) {
+        return 1
+      }
+
+      overriddenPoolCount?.let {
+        return it
+      }
+
+      val isCi = System.getenv("CI") != null
+      val minCount = if (isCi) 4 else 2 // 2 is the same min number used by Dispatchers.Default.
+      return maxOf(Runtime.getRuntime().availableProcessors(), minCount)
     }
   }
 }
