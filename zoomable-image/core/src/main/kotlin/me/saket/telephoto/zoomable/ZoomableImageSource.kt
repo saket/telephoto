@@ -1,6 +1,5 @@
 package me.saket.telephoto.zoomable
 
-import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
@@ -13,46 +12,35 @@ import kotlin.time.Duration
  * An image that can be displayed using [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
  *
  * Keep in mind that this shouldn't be used directly. It is designed to provide an
- * abstraction over your favorite image loading library.
- *
- * TODO: mention glide and picasso.
- *
- * If you're using Coil for loading images, Telephoto provides a default implementation
- * through [ZoomableAsyncImage()][me.saket.telephoto.zoomable.coil.ZoomableAsyncImage]
- * (`me.saket.telephoto:zoomable-image-coil`).
- *
- * ```kotlin
- * ZoomableAsyncImage(
- *  model = "https://example.com/image.jpg",
- *  contentDescription = …
- *)
- * ```
+ * abstraction over your favorite image loading library. More documentation can be found
+ * on the [project website](https://saket.github.io/telephoto/zoomableimage/).
  */
 interface ZoomableImageSource {
   companion object; // For extensions.
 
-  // todo: doc.
   @Composable
   fun resolve(canvasSize: Flow<Size>): ResolveResult
 
-  sealed interface ResolveResult {
-    val placeholder: Painter?
-    val crossfadeDuration: Duration
-  }
+  data class ResolveResult(
+    val delegate: ImageDelegate?,
+    val crossfadeDuration: Duration = Duration.ZERO,
+    val placeholder: Painter? = null,
+  )
 
-  /** Images that aren't bitmaps (for e.g., GIFs) and should be rendered without sub-sampling. */
-  // todo: doc
-  data class Generic(
-    val image: Painter?,
-    override val placeholder: Painter? = null,
-    override val crossfadeDuration: Duration = Duration.ZERO,
-  ) : ResolveResult
+  sealed interface ImageDelegate
 
-  // todo: doc
-  data class RequiresSubSampling(
+  /**
+   * Images that will fit into memory and do not require sub-sampling. This will mostly
+   * be used for GIFs, SVGs or even bitmaps that can't be represented using [SubSamplingImageSource].
+   */
+  @JvmInline
+  value class PainterDelegate(
+    val painter: Painter?
+  ) : ImageDelegate
+
+  /** Bitmaps that may not fit into memory and should be sub-sampled. */
+  data class SubSamplingDelegate(
     val source: SubSamplingImageSource,
-    override val placeholder: Painter?,
-    override val crossfadeDuration: Duration = Duration.ZERO,
     val imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
-  ) : ResolveResult
+  ) : ImageDelegate
 }

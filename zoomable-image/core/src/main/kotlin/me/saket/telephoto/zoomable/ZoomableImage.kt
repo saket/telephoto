@@ -66,7 +66,7 @@ fun ZoomableImage(
   }
 
   var canvasSize by remember { mutableStateOf(Size.Unspecified) }
-  val resolvedImage = key(image) {
+  val resolved = key(image) {
     image.resolve(
       canvasSize = remember {
         snapshotFlow { canvasSize }.filter { it.isSpecified }
@@ -78,18 +78,19 @@ fun ZoomableImage(
     modifier = modifier.onMeasure { canvasSize = it },
     propagateMinConstraints = true,
   ) {
-    state.isImageDisplayed = when (resolvedImage) {
-      is ZoomableImageSource.Generic -> resolvedImage.image != null
-      is ZoomableImageSource.RequiresSubSampling -> state.subSamplingState?.isImageLoaded ?: false
+    state.isImageDisplayed = when (resolved.delegate) {
+      is ZoomableImageSource.PainterDelegate -> resolved.delegate.painter != null
+      is ZoomableImageSource.SubSamplingDelegate -> state.subSamplingState?.isImageLoaded ?: false
+      else -> false
     }
     val animatedAlpha by animateFloatAsState(
       targetValue = if (state.isImageDisplayed) 1f else 0f,
-      animationSpec = tween(resolvedImage.crossfadeDurationMs)
+      animationSpec = tween(resolved.crossfadeDurationMs)
     )
 
-    if (resolvedImage.placeholder != null && animatedAlpha < 1f) {
+    if (resolved.placeholder != null && animatedAlpha < 1f) {
       Image(
-        painter = animatedPainter(resolvedImage.placeholder!!).scaledToMatch(
+        painter = animatedPainter(resolved.placeholder).scaledToMatch(
           // Align with the full-quality image even if the placeholder is smaller in size.
           // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
           state.zoomableState.contentTransformation.contentSize,
@@ -108,9 +109,13 @@ fun ZoomableImage(
       onLongClick = onLongClick,
       clipToBounds = clipToBounds,
     )
-    when (resolvedImage) {
-      is ZoomableImageSource.Generic -> {
-        val painter = resolvedImage.image ?: EmptyPainter
+    when (val delegate = resolved.delegate) {
+      null -> {
+        Box(modifier)
+      }
+
+      is ZoomableImageSource.PainterDelegate -> {
+        val painter = delegate.painter ?: EmptyPainter
         LaunchedEffect(painter.intrinsicSize) {
           state.zoomableState.setContentLocation(
             ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
@@ -127,11 +132,11 @@ fun ZoomableImage(
         )
       }
 
-      is ZoomableImageSource.RequiresSubSampling -> {
+      is ZoomableImageSource.SubSamplingDelegate -> {
         val subSamplingState = rememberSubSamplingImageState(
-          imageSource = resolvedImage.source,
+          imageSource = delegate.source,
           transformation = state.zoomableState.contentTransformation,
-          imageOptions = resolvedImage.imageOptions
+          imageOptions = delegate.imageOptions
         )
         DisposableEffect(subSamplingState) {
           state.subSamplingState = subSamplingState

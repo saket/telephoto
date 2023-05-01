@@ -46,6 +46,7 @@ import kotlinx.coroutines.test.setMain
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
+import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.After
 import org.junit.Before
@@ -127,7 +128,7 @@ class CoilImageResolverTest {
       }
     }.test {
       // Default value.
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = null))
+      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
 
       (awaitItem().placeholder as DrawablePainter).let { placeholder ->
         (placeholder.drawable as BitmapDrawable).let { drawable ->
@@ -179,10 +180,12 @@ class CoilImageResolverTest {
     images.test {
       skipItems(1)
       assertThat(awaitItem()).isEqualTo(
-        ZoomableImageSource.RequiresSubSampling(
+        ResolveResult(
           placeholder = null,
-          source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
-          imageOptions = ImageBitmapOptions(config = ImageBitmapConfig.Argb8888),
+          delegate = ZoomableImageSource.SubSamplingDelegate(
+            source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
+            imageOptions = ImageBitmapOptions(config = ImageBitmapConfig.Gpu),
+          )
         )
       )
     }
@@ -215,11 +218,11 @@ class CoilImageResolverTest {
     }
 
     images.test {
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = null))
+      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null)) // Default item.
       skipItems(1)
 
       imageUrl = "image_two"
-      assertThat(awaitItem()).isEqualTo(ZoomableImageSource.Generic(image = null))
+      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
       skipItems(1)
     }
   }

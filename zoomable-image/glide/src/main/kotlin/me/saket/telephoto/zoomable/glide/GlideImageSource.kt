@@ -27,6 +27,7 @@ import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
+import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import okio.Path.Companion.toOkioPath
 import java.io.File
@@ -43,7 +44,7 @@ internal class GlideImageSource(
 
   @Composable
   @Suppress("UNCHECKED_CAST")
-  override fun resolve(canvasSize: Flow<Size>): ZoomableImageSource.ResolveResult {
+  override fun resolve(canvasSize: Flow<Size>): ResolveResult {
     val context = LocalContext.current
     val resolver = remember(this) {
       val requestManager = Glide.with(context)
@@ -70,8 +71,8 @@ private class GlideImageResolver(
   private val ioDispatcher: CoroutineContext,
 ) : RememberWorker() {
 
-  var resolved: ZoomableImageSource.ResolveResult by mutableStateOf(
-    ZoomableImageSource.Generic(image = null)
+  var resolved: ResolveResult by mutableStateOf(
+    ResolveResult(delegate = null)
   )
 
   override suspend fun work() {
@@ -92,9 +93,9 @@ private class GlideImageResolver(
           is Placeholder -> {
             if (instant.placeholder != null) {
               // Placeholder images should be small in size so sub-sampling isn't needed here.
-              resolved = ZoomableImageSource.Generic(
-                image = null,
-                placeholder = instant.placeholder.asPainter(),
+              resolved = ResolveResult(
+                delegate = null,
+                placeholder = instant.placeholder.asPainter()
               )
             }
           }
@@ -107,24 +108,23 @@ private class GlideImageResolver(
                   SubSamplingImageSource.file(it.toOkioPath())
                 }
               }
-              if (subSamplingSource != null) {
-                ZoomableImageSource.RequiresSubSampling(
-                  source = subSamplingSource,
-                  placeholder = resolved.placeholder,
-                  crossfadeDuration = instant.transition.crossfadeDuration(),
-                  imageOptions = ImageBitmapOptions.Default // Glide does not expose the config so use a default value.
-                )
-              } else {
-                ZoomableImageSource.Generic(
-                  placeholder = resolved.placeholder,
-                  image = instant.resource.asPainter(),
-                  crossfadeDuration = instant.transition.crossfadeDuration(),
-                )
-              }
+              resolved.copy(
+                crossfadeDuration = instant.transition.crossfadeDuration(),
+                delegate = if (subSamplingSource != null) {
+                  ZoomableImageSource.SubSamplingDelegate(
+                    source = subSamplingSource,
+                    imageOptions = ImageBitmapOptions.Default // Glide does not expose the config so use a default value.
+                  )
+                } else {
+                  ZoomableImageSource.PainterDelegate(
+                    painter = instant.resource.asPainter()
+                  )
+                }
+              )
             } else {
               // This must be a thumbnail. Treat this as a placeholder.
-              ZoomableImageSource.Generic(
-                image = null,
+              ResolveResult(
+                delegate = null,
                 placeholder = instant.resource.asPainter(),
               )
             }

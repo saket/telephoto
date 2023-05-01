@@ -13,6 +13,7 @@ import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.flow.Flow
+import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import org.junit.Rule
 import org.junit.Test
 
@@ -36,7 +37,9 @@ class ZoomableImagePreviewTest {
           image = remember {
             object : ZoomableImageSource {
               @Composable override fun resolve(canvasSize: Flow<Size>) =
-                ZoomableImageSource.Generic(ColorPainter(Color.Yellow))
+                ResolveResult(
+                  delegate = ZoomableImageSource.PainterDelegate(ColorPainter(Color.Yellow))
+                )
             }
           },
           contentDescription = null,

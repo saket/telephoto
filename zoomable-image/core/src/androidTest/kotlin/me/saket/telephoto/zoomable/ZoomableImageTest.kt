@@ -690,15 +690,16 @@ private fun assetPainter(assetName: String): Painter {
 private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Boolean): ZoomableImageSource {
   return remember(assetName) {
     object : ZoomableImageSource {
-      @Composable override fun resolve(canvasSize: Flow<Size>) =
-        if (subSample) {
-          ZoomableImageSource.RequiresSubSampling(
-            source = SubSamplingImageSource.asset(assetName),
-            placeholder = null,
-          )
-        } else {
-          ZoomableImageSource.Generic(assetPainter(assetName))
-        }
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        return ResolveResult(
+          delegate = if (subSample) {
+            ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset(assetName))
+          } else {
+            ZoomableImageSource.PainterDelegate(assetPainter(assetName))
+          }
+        )
+      }
     }
   }
 }
@@ -715,13 +716,10 @@ private fun ZoomableImageSource.withPlaceholder(placeholder: Painter): ZoomableI
           value = true
         }
         if (canUseDelegate) {
-          return when (val delegated = delegate.resolve(canvasSize)) {
-            is ZoomableImageSource.Generic -> delegated.copy(placeholder = placeholder)
-            is ZoomableImageSource.RequiresSubSampling -> delegated.copy(placeholder = placeholder)
-          }
+          return delegate.resolve(canvasSize).copy(placeholder = placeholder)
         } else {
-          return ZoomableImageSource.Generic(
-            image = null,
+          return ResolveResult(
+            delegate = null,
             placeholder = placeholder
           )
         }

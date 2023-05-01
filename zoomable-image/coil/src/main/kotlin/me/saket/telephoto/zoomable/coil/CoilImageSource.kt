@@ -72,7 +72,7 @@ internal class Resolver(
 ) : RememberWorker() {
 
   internal var resolved: ResolveResult by mutableStateOf(
-    ZoomableImageSource.Generic(image = null)
+    ResolveResult(delegate = null)
   )
 
   override suspend fun work() {
@@ -94,9 +94,8 @@ internal class Resolver(
         // Placeholder images should be small in size so sub-sampling isn't needed here.
         .target(
           onStart = {
-            resolved = ZoomableImageSource.Generic(
-              image = null,
-              placeholder = it?.asPainter(),
+            resolved = resolved.copy(
+              placeholder = it?.asPainter()
             )
           }
         )
@@ -104,22 +103,21 @@ internal class Resolver(
     )
 
     val imageSource = result.toSubSamplingImageSource(imageLoader)
-    resolved = if (result is SuccessResult && imageSource != null) {
-      ZoomableImageSource.RequiresSubSampling(
-        source = imageSource,
-        placeholder = resolved.placeholder,
-        crossfadeDuration = result.crossfadeDuration(),
-        imageOptions = ImageBitmapOptions(
-          config = request.bitmapConfig.toComposeConfig(),
-        ),
-      )
-    } else {
-      ZoomableImageSource.Generic(
-        placeholder = resolved.placeholder,
-        image = result.drawable?.asPainter(),
-        crossfadeDuration = result.crossfadeDuration(),
-      )
-    }
+    resolved = resolved.copy(
+      crossfadeDuration = result.crossfadeDuration(),
+      delegate = if (result is SuccessResult && imageSource != null) {
+        ZoomableImageSource.SubSamplingDelegate(
+          source = imageSource,
+          imageOptions = ImageBitmapOptions(
+            config = request.bitmapConfig.toComposeConfig()
+          )
+        )
+      } else {
+        ZoomableImageSource.PainterDelegate(
+          painter = result.drawable?.asPainter()
+        )
+      }
+    )
   }
 
   @OptIn(ExperimentalCoilApi::class)
