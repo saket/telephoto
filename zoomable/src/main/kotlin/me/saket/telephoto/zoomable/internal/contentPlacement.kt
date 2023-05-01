@@ -4,6 +4,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.unit.LayoutDirection
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -28,6 +29,7 @@ internal fun Rect.coerceInside(
   alignment: Alignment,
   layoutDirection: LayoutDirection,
 ): Offset {
+  check(destination.isSpecified)
   val alignedOffset by lazy(NONE) {
     // Rounding of floats to ints will cause some loss in precision because the final
     // offset is calculated by combining offset & zoom, but hopefully this is okay.

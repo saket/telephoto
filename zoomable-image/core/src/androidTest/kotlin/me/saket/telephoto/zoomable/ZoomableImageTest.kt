@@ -154,7 +154,9 @@ class ZoomableImageTest {
           .testTag("image"),
         image = imageSource,
         contentDescription = null,
-        state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 5f)).also {
+        state = rememberZoomableImageState(
+          rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 5f))
+        ).also {
           isImageDisplayed = it.isImageDisplayed
         },
       )
@@ -296,7 +298,9 @@ class ZoomableImageTest {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImageSource.asset(assetNames[pageNum], subSample = false),
-          state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1f)),
+          state = rememberZoomableImageState(
+            rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 1f))
+          ),
           contentDescription = null,
         )
       }
@@ -329,7 +333,7 @@ class ZoomableImageTest {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImageSource.asset(assetNames[pageNum], subSample = false),
-          state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 2f)),
+          state = rememberZoomableImageState(rememberZoomableState()),
           contentDescription = null,
         )
       }
@@ -368,7 +372,9 @@ class ZoomableImageTest {
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
           image = ZoomableImageSource.asset(assetNames[pageNum], subSample = false),
-          state = rememberZoomableImageState(rememberZoomableState(maxZoomFactor = 1.5f)),
+          state = rememberZoomableImageState(
+            rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 1.5f))
+          ),
           contentDescription = null,
         )
       }
@@ -400,7 +406,9 @@ class ZoomableImageTest {
     var assetName by mutableStateOf("fox_1500.jpg")
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = maxZoomFactor)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
+      )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -439,7 +447,9 @@ class ZoomableImageTest {
     val resetTriggers = Channel<Unit>()
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = maxZoomFactor)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
+      )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -475,7 +485,9 @@ class ZoomableImageTest {
     var zoomFraction: Float? = null
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = 3f)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 3f)
+      )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -514,7 +526,9 @@ class ZoomableImageTest {
     var onLongClickCalled = false
 
     rule.setContent {
-      val state = rememberZoomableState(maxZoomFactor = 1f)
+      val state = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -551,7 +565,9 @@ class ZoomableImageTest {
     var currentZoom = 0f
 
     rule.setContent {
-      val state = rememberZoomableState(maxZoomFactor = maxZoomFactor)
+      val state = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
+      )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()

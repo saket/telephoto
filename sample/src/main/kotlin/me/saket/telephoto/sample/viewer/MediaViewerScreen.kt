@@ -70,7 +70,7 @@ private fun MediaPage(
   modifier: Modifier = Modifier,
   isActivePage: Boolean,
 ) {
-  val zoomableState = rememberZoomableState(maxZoomFactor = 2f)
+  val zoomableState = rememberZoomableState()
   when (model) {
     is MediaItem.Image -> {
       // TODO: handle errors here.

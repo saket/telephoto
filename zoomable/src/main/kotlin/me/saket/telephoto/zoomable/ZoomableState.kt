@@ -49,16 +49,16 @@ import kotlin.math.abs
 /** todo: doc */
 @Composable
 fun rememberZoomableState(
-  maxZoomFactor: Float = 2f,
+  zoomSpec: ZoomSpec = ZoomSpec(),
   autoApplyTransformations: Boolean = true,
 ): ZoomableState {
   val state = rememberSaveable(saver = ZoomableState.Saver) {
     ZoomableState(
       autoApplyTransformations = autoApplyTransformations
     )
-  }.apply {
-    zoomRange = ZoomRange(maxZoomAsRatioOfSize = maxZoomFactor)
-    layoutDirection = LocalLayoutDirection.current
+  }.also {
+    it.zoomSpec = zoomSpec
+    it.layoutDirection = LocalLayoutDirection.current
   }
 
   if (state.isReadyToInteract) {
@@ -137,8 +137,8 @@ class ZoomableState internal constructor(
   @get:FloatRange(from = 0.0, to = 1.0)
   val zoomFraction: Float? by derivedStateOf {
     gestureTransformation?.let {
-      val min = zoomRange.minZoom(it.zoom.baseZoom)
-      val max = zoomRange.maxZoom(it.zoom.baseZoom)
+      val min = zoomSpec.range.minZoom(it.zoom.baseZoom)
+      val max = zoomSpec.range.maxZoom(it.zoom.baseZoom)
       val current = it.zoom.finalZoom().maxScale
       ((current - min) / (max - min)).coerceIn(0f, 1f)
     }
@@ -147,9 +147,7 @@ class ZoomableState internal constructor(
   // todo: is "gesture" transformation the right name?
   internal var gestureTransformation: GestureTransformation? by mutableStateOf(initialTransformation)
 
-  // todo: explain why this isn't a state?
-  //  counter-arg: making this a state will allow live edit to work.
-  internal var zoomRange = ZoomRange.Default
+  internal var zoomSpec by mutableStateOf(ZoomSpec())
 
   internal lateinit var layoutDirection: LayoutDirection
 
@@ -231,9 +229,10 @@ class ZoomableState internal constructor(
       val isZoomingIn = zoomDelta > 1f
 
       // Apply elasticity if content is being over/under-zoomed.
-      val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomRange)
-      val isAtMinZoom = oldZoom.isAtMinZoom(zoomRange)
+      val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomSpec.range)
+      val isAtMinZoom = oldZoom.isAtMinZoom(zoomSpec.range)
       val zoomDelta = when {
+        !zoomSpec.preventOverOrUnderZoom -> zoomDelta
         isZoomingIn && isAtMaxZoom -> 1f + zoomDelta / 250
         isZoomingOut && isAtMinZoom -> 1f - zoomDelta / 250
         else -> zoomDelta
@@ -242,10 +241,10 @@ class ZoomableState internal constructor(
         baseZoom = baseZoom,
         userZoom = oldZoom.userZoom * zoomDelta
       ).let {
-        if (isAtMinZoom || isAtMaxZoom) {
+        if (zoomSpec.preventOverOrUnderZoom && (isAtMinZoom || isAtMaxZoom)) {
           // Apply a hard-stop after a limit.
           it.coercedIn(
-            range = zoomRange,
+            range = zoomSpec.range,
             leewayPercentForMinZoom = 0.1f,
             leewayPercentForMaxZoom = 0.4f
           )
@@ -362,7 +361,7 @@ class ZoomableState internal constructor(
   internal suspend fun handleDoubleTapZoomTo(centroid: Offset) {
     val start = gestureTransformation ?: return
     smoothlyToggleZoom(
-      shouldZoomIn = !start.zoom.isAtMaxZoom(zoomRange),
+      shouldZoomIn = !start.zoom.isAtMaxZoom(zoomSpec.range),
       centroid = centroid
     )
   }
@@ -374,9 +373,9 @@ class ZoomableState internal constructor(
     val start = gestureTransformation ?: return
 
     val targetZoomFactor = if (shouldZoomIn) {
-      zoomRange.maxZoom(baseZoom = start.zoom.baseZoom)
+      zoomSpec.range.maxZoom(baseZoom = start.zoom.baseZoom)
     } else {
-      zoomRange.minZoom(baseZoom = start.zoom.baseZoom)
+      zoomSpec.range.minZoom(baseZoom = start.zoom.baseZoom)
     }
     val targetZoom = start.zoom.copy(
       userZoom = targetZoomFactor / (start.zoom.baseZoom.maxScale)
@@ -433,13 +432,13 @@ class ZoomableState internal constructor(
 
   internal fun isZoomOutsideRange(): Boolean {
     val currentZoom = gestureTransformation!!.zoom
-    val userZoomWithinBounds = currentZoom.coercedIn(zoomRange)
+    val userZoomWithinBounds = currentZoom.coercedIn(zoomSpec.range)
     return abs(currentZoom.userZoom - userZoomWithinBounds.userZoom) > ZoomDeltaEpsilon
   }
 
   internal suspend fun smoothlySettleZoomOnGestureEnd() {
     val start = gestureTransformation!!
-    val userZoomWithinBounds = start.zoom.coercedIn(zoomRange).userZoom
+    val userZoomWithinBounds = start.zoom.coercedIn(zoomSpec.range).userZoom
 
     transformableState.transform {
       var previous = start.zoom.userZoom

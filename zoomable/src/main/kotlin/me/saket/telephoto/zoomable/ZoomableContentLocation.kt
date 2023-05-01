@@ -21,6 +21,8 @@ import me.saket.telephoto.zoomable.internal.discardFractionalParts
  * [ZoomableContentLocation] to understand the content's _visual_ size & position to prevent them
  * from going out of bounds.
  *
+ * The default value is [ZoomableContentLocation.SameAsLayoutBounds].
+ *
  * [Modifier.zoomable] can't calculate this on its own by inspecting its layout bounds because
  * that may be smaller or larger than the content's visual size. For instance, an `Image` composable
  * that uses `Modifier.fillMaxSize()` could actually be drawing an image that only fills half its

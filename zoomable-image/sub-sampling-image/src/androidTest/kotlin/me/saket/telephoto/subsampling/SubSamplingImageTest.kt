@@ -51,6 +51,7 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
+import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.rememberZoomableState
 import me.saket.telephoto.zoomable.zoomable
@@ -96,7 +97,9 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
       val context = LocalContext.current
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
@@ -128,7 +131,9 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = imageSize.source,
@@ -160,7 +165,9 @@ class SubSamplingImageTest {
     var tiles: List<CanvasRegionTile> = emptyList()
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = 1f).also {
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      ).also {
         it.contentAlignment = alignment.value
       }
       val imageState = rememberSubSamplingImageState(
@@ -206,7 +213,9 @@ class SubSamplingImageTest {
     var imageSource by mutableStateOf(SubSamplingImageSource.asset("smol.jpg"))
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = imageSource,
@@ -262,7 +271,9 @@ class SubSamplingImageTest {
 
     rule.setContent {
       CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
-        val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+        val zoomableState = rememberZoomableState(
+          zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+        )
         val imageState = rememberSubSamplingImageState(
           zoomableState = zoomableState,
           imageSource = SubSamplingImageSource.asset("pahade.jpg"),
@@ -350,7 +361,9 @@ class SubSamplingImageTest {
     var isImageDisplayed = false
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = SubSamplingImageSource.asset("smol.jpg"),
@@ -385,7 +398,9 @@ class SubSamplingImageTest {
     var isImageDisplayedInFullQuality = false
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(maxZoomFactor = 1f)
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = SubSamplingImageSource.asset("pahade.jpg"),
