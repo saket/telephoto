@@ -10,7 +10,7 @@ A `Modifier` for handling pan & zoom gestures, designed to be shared across all 
 - Click listeners
 
 ```groovy
-implementation("me.saket.telephoto:zoomable:1.0.0-SNAPSHOT")
+implementation("me.saket.telephoto:zoomable:{{ versions.telephoto }}")
 ```
 
 ```kotlin hl_lines="4"

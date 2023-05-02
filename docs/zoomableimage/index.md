@@ -4,11 +4,11 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 
 === "Coil"
     ```groovy
-    implementation("me.saket.telephoto:zoomable-image-coil:1.0.0-SNAPSHOT")
+    implementation("me.saket.telephoto:zoomable-image-coil:{{ versions.telephoto }}")
     ```
 === "Glide"
     ```groovy
-    implementation("me.saket.telephoto:zoomable-image-glide:1.0.0-SNAPSHOT")
+    implementation("me.saket.telephoto:zoomable-image-glide:{{ versions.telephoto }}")
     ```
 <!-- Invisible separator for tabbed code blocks -->
 === "Coil"

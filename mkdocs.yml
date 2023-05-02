@@ -49,6 +49,14 @@ markdown_extensions:
   - pymdownx.caret # Underlines.
   - admonition  # Warning call-outs.
 
+plugins:
+  - search
+  - macros
+
+extra:
+  versions:
+    telephoto: '1.0.0-alpha02'
+
 nav:
   - 'Overview': index.md
   - 'Zoomable Image':

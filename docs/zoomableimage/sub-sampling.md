@@ -5,7 +5,7 @@ For displaying large images that can't fit into memory, `ZoomableImage` automati
 If `ZoomableImage` ^^can't^^ be used or if sub-sampling of images is always desired, you could potentially use `SubSamplingImage()` directly.
 
 ```groovy
-implementation("me.saket.telephoto:sub-sampling-image:1.0.0-SNAPSHOT")
+implementation("me.saket.telephoto:sub-sampling-image:{{ versions.telephoto }}")
 ```
 
 ```kotlin
