@@ -1,3 +1,11 @@
+<div class="md-video-container">
+  <a href="assets/demo_full.mp4">
+    <video muted autoplay loop controls style="width: 230px; height: 498px;">
+      <source type="video/mp4" src="assets/demo_small.mp4">
+    </video>
+  </a>
+</div>
+
 Designing a cohesive media experience for Android can be a lot of work. Telephoto aims to make that easier by offering some building blocks:
 
 ### [Zoomable Image](zoomableimage/index.md)

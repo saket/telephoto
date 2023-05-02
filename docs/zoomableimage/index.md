@@ -1,5 +1,13 @@
 # Zoomable Image
 
+<div class="md-video-container">
+  <a href="../assets/demo_full.mp4">
+    <video muted autoplay loop controls style="width: 230px; height: 498px;">
+      <source type="video/mp4" src="../assets/demo_small.mp4">
+    </video>
+  </a>
+</div>
+
 A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures and automatic sub-sampling of large images. This ensures that images maintain their intricate details even when fully zoomed in, without causing any `OutOfMemory` exceptions.
 
 === "Coil"
