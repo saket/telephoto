@@ -9,9 +9,8 @@ remote_branch: gh-pages
 
 theme:
   name: 'material'
-  icon:
-    logo: material/camera-iris
-  favicon: assets/favicon_192.png
+  logo: assets/logo_192.png
+  favicon: assets/logo_192.png
   font:
     text: 'Roboto'
     code: 'JetBrains Mono'
@@ -34,7 +33,7 @@ theme:
     - content.code.copy # For showing a copy button in code blocks.
 
 extra_css:
-  - 'css/extra.css'
+  - 'stylesheets/extra.css'
 
 markdown_extensions:
   - toc:  # Table of contents.
