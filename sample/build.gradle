@@ -33,7 +33,8 @@ dependencies {
   implementation(projects.zoomableImage.glide)
 
   implementation(libs.androidx.appcompat)
-  implementation(libs.androidx.ktx)
+  implementation(libs.androidx.ktx.core)
+  implementation(libs.androidx.ktx.palette)
   implementation(libs.androidx.activity)
   implementation(libs.compose.ui.material3)
   implementation(libs.compose.ui.materialIcons)

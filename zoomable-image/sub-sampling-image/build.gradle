@@ -16,7 +16,7 @@ dependencies {
   implementation(libs.compose.ui.util)
   api(libs.compose.foundation)
   api(libs.okio.core)
-  implementation(libs.androidx.ktx)
+  implementation(libs.androidx.ktx.core)
 
   testImplementation(libs.junit)
   testImplementation(libs.truth)

@@ -32,11 +32,10 @@ class SampleActivity : AppCompatActivity() {
 
     val album = MediaAlbum(
       items = listOf(
-        // todo: pass ZoomableImageSources instead?
         MediaItem.Image(
-          fullSizedUrl = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTAxMWYwZDk5N2NlYTM1MWZmZDJhMTNlZmQ2ODZmN2Q0NGYwYjRiMiZjdD1n/OJNNOaOJx8AgWFXZui/giphy.gif",
-          placeholderImageUrl = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTAxMWYwZDk5N2NlYTM1MWZmZDJhMTNlZmQ2ODZmN2Q0NGYwYjRiMiZjdD1n/OJNNOaOJx8AgWFXZui/giphy.gif",
-          caption = "Happy good morning",
+          fullSizedUrl = "https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65",
+          placeholderImageUrl = "https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65?w=100",
+          caption = "Breakfast",
         ),
         MediaItem.Image(
           fullSizedUrl = "https://live.staticflickr.com/65535/46217553745_fa38e0e7f0_o_d.jpg",
@@ -47,6 +46,11 @@ class SampleActivity : AppCompatActivity() {
           fullSizedUrl = "https://live.staticflickr.com/2809/11679312514_3f759b77cd_o_d.jpg",
           placeholderImageUrl = "https://live.staticflickr.com/2809/11679312514_7592396e9f_w_d.jpg",
           caption = "Flamingo",
+        ),
+        MediaItem.Image(
+          fullSizedUrl = "https://live.staticflickr.com/6024/5911366388_600e7e6734_o_d.jpg",
+          placeholderImageUrl = "https://i.imgur.com/bQtqkj6.jpg",
+          caption = "Sierra Sunset",
         ),
       )
     )
