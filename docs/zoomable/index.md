@@ -38,7 +38,7 @@ Modifier.zoomable(
 )
 ```
 
-### Preventing over-zoom
+### Edge detection
 
 For preventing your content from over-zooming or over-panning, `Modifier.zoomable()` will use your content's layout size by default. This is good enough for composables that fill _every_ pixel of their drawing space.
 

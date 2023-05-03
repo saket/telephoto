@@ -1,12 +1,6 @@
 # Zoomable Image
 
-<div class="md-video-container">
-  <a href="../assets/demo_full.mp4">
-    <video muted autoplay loop controls style="width: 230px; height: 498px;">
-      <source type="video/mp4" src="../assets/demo_small.mp4">
-    </video>
-  </a>
-</div>
+![type:video](../assets/demo_small.mp4)
 
 A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures and automatic sub-sampling of large images. This ensures that images maintain their intricate details even when fully zoomed in, without causing any `OutOfMemory` exceptions.
 
@@ -76,6 +70,8 @@ For complex scenarios, the `model` parameter can take full image requests.
 
 ### Placeholders
 
+![type:video](../assets/placeholders_small.mp4)
+
 If your images are available in multiple resolutions, `telephoto` highly recommends using their lower resolutions as placeholders while their full quality equivalents are loaded in the background.
 
 When combined with a cross-fade transition, `ZoomableImage` will smoothly swap out placeholders when their full quality versions are ready to be displayed.
@@ -87,7 +83,7 @@ When combined with a cross-fade transition, `ZoomableImage` will smoothly swap o
       model = ImageRequest.Builder(LocalContext.current)
         .data("https://example.com/image.jpg")
         .placeholderMemoryCacheKey(…)
-        .crossfade(1000)
+        .crossfade(1_000)
         .build(),
       contentDescription = …
     )
@@ -101,14 +97,64 @@ When combined with a cross-fade transition, `ZoomableImage` will smoothly swap o
       model = Glide.with(LocalContext.current)
         .load("https://example.com/image.jpg")
         .thumbnail(…)   // or placeholder()
-        .transition(withCrossFade(1000)),
+        .transition(withCrossFade(1_000)),
       contentDescription = …
     )
     ```
     More details about `thumbnail()` can be found on [Glide's website](https://bumptech.github.io/glide/doc/options.html#thumbnail-requests).
 
+### Content alignment
+
+When images are zoomed, they're scaled with respect to their `alignment` until they're large enough to fill all available space. After that, they're scaled uniformly. The default `alignment` is `Alignment.Center`.
+
+|              `Alignment.TopCenter`               |              `Alignment.BottomCenter`               |
+|:------------------------------------------------:|:---------------------------------------------------:|
+| ![type:video](../assets/alignment_top_small.mp4) | ![type:video](../assets/alignment_bottom_small.mp4) |
+
+=== "Coil"
+    ```kotlin hl_lines="4"
+    ZoomableAsyncImage(
+      modifier = Modifier.fillMaxSize(),
+      model = "https://example.com/image.jpg",
+      alignment = Alignment.TopCenter
+    )
+    ```
+=== "Glide"
+    ```kotlin hl_lines="4"
+    ZoomableGlideImage(
+      modifier = Modifier.fillMaxSize(),
+      model = "https://example.com/image.jpg",
+      alignment = Alignment.TopCenter
+    )
+    ```
+
+### Content scale
+
+Unlike `Image()`, cropped images can be panned in `ZoomableImage`.
+
+Images are scaled using `ContentScale.Fit` by default. This is good enough for media viewers, but can be changed to any other `ContentScale`. For example, a wallpaper app may want to use `ContentScale.Crop` to stretch images to fill all available space. 
+
+When images are cropped, you'll still be able to move them around.
+
+=== "Coil"
+    ```kotlin hl_lines="4"
+    ZoomableAsyncImage(
+      modifier = Modifier.fillMaxSize(),
+      model = "https://example.com/image.jpg",
+      contentScale = ContentScale.Crop
+    )
+    ```
+=== "Glide"
+    ```kotlin hl_lines="4"
+    ZoomableGlideImage(
+      modifier = Modifier.fillMaxSize(),
+      model = "https://example.com/image.jpg",
+      contentScale = ContentScale.Crop
+    )
+    ```
+
 ### Click listeners
-For detecting double taps, `Modifier.zoomable()` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
+For detecting double taps, `ZoomableImage` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
 
 === "Coil"
     ```kotlin

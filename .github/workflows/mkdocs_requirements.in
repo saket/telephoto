@@ -1,5 +1,6 @@
 mkdocs==1.4.2
 mkdocs-macros-plugin==0.7.0
+mkdocs-video==1.5.0
 
 # FYI the latest version breaks link colors.
 mkdocs-material==9.0.6

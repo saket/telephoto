@@ -51,16 +51,14 @@
   border-radius: 0.5rem;
 }
 
-.md-video-container {
+.md-typeset video {
   background: var(--md-video-bg-color);
-  border: 0.1em solid var(--md-code-border-color);
+  outline: 0.1em solid var(--md-code-border-color);
   border-radius: 0.3rem;
-  width: 100%;
-  display: grid;
-  justify-items: center;
 }
-.md-video-container a {
-  line-height: 0px;
+
+table {
+  font-size: 1em !important;
 }
 
 [data-md-color-scheme="default"] {
