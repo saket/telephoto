@@ -1,3 +1,10 @@
+<style>
+/* A table of contents isn't useful on this page. */
+.md-nav .md-nav--secondary {
+  display: none !important;
+}
+</style>
+
 ![type:video](assets/demo_small.mp4)
 
 Designing a cohesive media experience for Android can be a lot of work. Telephoto aims to make that easier by offering some building blocks:
