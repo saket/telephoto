@@ -61,6 +61,20 @@ table {
   font-size: 1em !important;
 }
 
+/*
+ * Reduce the main column's width because it looks too
+ * wide with the right sidebar (table of contents) hidden.
+ */
+.md-grid {
+  max-width: 50rem;
+}
+@media screen and (min-width: 76.25em) {
+  .md-content__inner {
+    margin-right: 2rem;
+  }
+}
+
+
 [data-md-color-scheme="default"] {
   --md-header-bg-color: #DAE6CB;
   --md-accent-fg-color: #386A20;

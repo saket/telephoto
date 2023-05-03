@@ -32,6 +32,7 @@ theme:
     - content.tabs.link # Synchronize code tabs.
     - content.code.copy # Show a copy button in code blocks.
     - navigation.instant # Instant loading of pages. Behave like a Single Page Application.
+    - toc.integrate
 extra_css:
   - 'stylesheets/extra.css'
 
