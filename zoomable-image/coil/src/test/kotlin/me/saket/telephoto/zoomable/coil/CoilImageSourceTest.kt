@@ -56,7 +56,7 @@ import kotlin.time.Duration.Companion.minutes
 import coil.size.Size as CoilSize
 
 @OptIn(ExperimentalCoilApi::class, ExperimentalCoroutinesApi::class)
-class CoilImageResolverTest {
+class CoilImageSourceTest {
   // Only used to create a fake context. I could use robolectric but it's
   // not super reliable and I'm already using paparazzi in other tests.
   @get:Rule val paparazzi = Paparazzi()
