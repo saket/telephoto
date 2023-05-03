@@ -130,11 +130,9 @@ When images are zoomed, they're scaled with respect to their `alignment` until t
 
 ### Content scale
 
-Unlike `Image()`, cropped images can be panned in `ZoomableImage`.
+Images are scaled using `ContentScale.Fit` by default, but can be customized. A visual guide of all possible values can be found [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale). 
 
-Images are scaled using `ContentScale.Fit` by default. This is good enough for media viewers, but can be changed to any other `ContentScale`. For example, a wallpaper app may want to use `ContentScale.Crop` to stretch images to fill all available space. 
-
-When images are cropped, you'll still be able to move them around.
+Unlike `Image()`, `ZoomableImage` can pan images even when they're cropped. This can be useful for applications like wallpaper apps that may want to use `ContentScale.Crop` to ensure that images always fill the screen.
 
 === "Coil"
     ```kotlin hl_lines="4"
