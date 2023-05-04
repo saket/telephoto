@@ -1,6 +1,6 @@
 # Sub-sampling
 
-For displaying large images that can't fit into memory, `ZoomableImage` automatically divides them into tiles so that they can be loaded lazily.
+For displaying large images that may not fit into memory, `ZoomableImage` automatically divides them into tiles so that they can be loaded lazily.
 
 If `ZoomableImage` ^^can't^^ be used or if sub-sampling of images is always desired, you could potentially use `SubSamplingImage()` directly.
 

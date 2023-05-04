@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.roundToInt
@@ -22,11 +23,14 @@ internal fun Size.discardFractionalParts(): IntSize {
 internal val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)
 
+internal operator fun ScaleFactor.unaryMinus(): ScaleFactor =
+  this * -1f
+
 internal val ScaleFactor.Companion.Zero
   get() = ScaleFactor(0f, 0f)
 
-internal operator fun ScaleFactor.unaryMinus(): ScaleFactor =
-  this * -1f
+internal val TransformOrigin.Companion.Zero
+  get() = TransformOrigin(0f, 0f)
 
 internal operator fun Offset.times(factor: ScaleFactor) =
   Offset(x = x * factor.scaleX, y = y * factor.scaleY)

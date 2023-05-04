@@ -91,19 +91,17 @@ class ZoomableState internal constructor(
         val scale = it.zoom.finalZoom()
         val canContentBeShown = scale != ScaleFactor.Zero
         ZoomableContentTransformation(
+          isSpecified = canContentBeShown,
           contentSize = it.contentSize,
           scale = scale,
           offset = -it.offset * it.zoom,
-          rotationZ = 0f,
-          isSpecified = canContentBeShown,
         )
       } else {
         ZoomableContentTransformation(
-          contentSize = Size.Unspecified,
-          scale = ScaleFactor.Zero, // Hide content until an initial zoom value is calculated.,
-          offset = Offset.Zero,
-          rotationZ = 0f,
           isSpecified = false,
+          contentSize = Size.Unspecified, // Hide content until an initial zoom value is calculated.,
+          scale = ScaleFactor.Zero,
+          offset = Offset.Zero,
         )
       }
     }
