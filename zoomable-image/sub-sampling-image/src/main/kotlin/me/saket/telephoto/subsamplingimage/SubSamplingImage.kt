@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -36,7 +35,6 @@ fun SubSamplingImage(
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
 ) {
-  val density = LocalDensity.current
   val onDraw: DrawScope.() -> Unit = {
     state.tiles.fastForEach { tile ->
       if (tile.bitmap != null && state.isImageLoaded) {
@@ -56,7 +54,7 @@ fun SubSamplingImage(
           color = Color.Black,
           topLeft = tile.bounds.topLeft.toOffset(),
           size = tile.bounds.size.toSize(),
-          style = Stroke(width = density.run { 2.dp.toPx() })
+          style = Stroke(width = 2.dp.toPx())
         )
       }
     }
