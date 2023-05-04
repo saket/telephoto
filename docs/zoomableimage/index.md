@@ -105,11 +105,11 @@ When combined with a cross-fade transition, `ZoomableImage` will smoothly swap o
 
 ### Content alignment
 
-When images are zoomed, they're scaled with respect to their `alignment` until they're large enough to fill all available space. After that, they're scaled uniformly. The default `alignment` is `Alignment.Center`.
-
-|              `Alignment.TopCenter`               |              `Alignment.BottomCenter`               |
-|:------------------------------------------------:|:---------------------------------------------------:|
 | ![type:video](../assets/alignment_top_small.mp4) | ![type:video](../assets/alignment_bottom_small.mp4) |
+|:------------------------------------------------:|:---------------------------------------------------:|
+|              `Alignment.TopCenter`               |              `Alignment.BottomCenter`               | 
+
+When images are zoomed, they're scaled with respect to their `alignment` until they're large enough to fill all available space. After that, they're scaled uniformly. The default `alignment` is `Alignment.Center`.
 
 === "Coil"
     ```kotlin hl_lines="4"
@@ -130,9 +130,14 @@ When images are zoomed, they're scaled with respect to their `alignment` until t
 
 ### Content scale
 
-Images are scaled using `ContentScale.Fit` by default, but can be customized. A visual guide of all possible values can be found [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale). 
+| ![type:video](../assets/scale_inside_small.mp4) | ![type:video](../assets/scale_crop_small.mp4) |
+|:-----------------------------------------------:|:---------------------------------------------:|
+|              `ContentScale.Inside`              |              `ContentScale.Crop`              |
+
+Images are scaled using `ContentScale.Fit` by default, but can be customized. A visual guide of all possible values can be found [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
 
 Unlike `Image()`, `ZoomableImage` can pan images even when they're cropped. This can be useful for applications like wallpaper apps that may want to use `ContentScale.Crop` to ensure that images always fill the screen.
+
 
 === "Coil"
     ```kotlin hl_lines="4"
@@ -150,6 +155,9 @@ Unlike `Image()`, `ZoomableImage` can pan images even when they're cropped. This
       contentScale = ContentScale.Crop
     )
     ```
+
+!!! Warning
+    Placeholders are visually incompatible with `ContentScale.Inside`.
 
 ### Click listeners
 For detecting double taps, `ZoomableImage` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.

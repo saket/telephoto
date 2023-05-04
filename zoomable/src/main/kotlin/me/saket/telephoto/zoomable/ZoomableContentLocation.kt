@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
 import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
+// todo: check doc.
 // todo: should this be called DrawRegion?
 //  no, canvas draw region can be smaller than images.
 /**
