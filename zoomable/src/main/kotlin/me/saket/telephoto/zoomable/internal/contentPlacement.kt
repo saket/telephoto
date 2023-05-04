@@ -1,49 +1,43 @@
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.unit.LayoutDirection
+import me.saket.telephoto.zoomable.zoomable
 import kotlin.LazyThreadSafetyMode.NONE
 
-internal fun Rect.topLeftCoercedInside(
+/**
+ * Calculates the top-left offset of this [Rect] such that it always overlaps with [destination].
+ *
+ * This is used by [Modifier.zoomable] to prevent panning of its content outside of its layout bounds.
+ */
+internal fun Rect.calculateTopLeftToOverlapWith(
   destination: Size,
   alignment: Alignment,
   layoutDirection: LayoutDirection,
 ): Offset {
-  return coerceInside(
-    destination = destination,
-    targetOffset = topLeft,
-    alignment = alignment,
-    layoutDirection = layoutDirection
-  )
-}
+  check(destination.isSpecified) {
+    "Whoops Modifier.zoomable() is not supposed to handle gestures yet. " +
+      "Please file an issue on https://github.com/saket/telephoto/issues?"
+  }
 
-// todo: doc.
-// TODO: consider inlining this into topLeftCoercedInside().
-internal fun Rect.coerceInside(
-  destination: Size,
-  targetOffset: Offset,
-  alignment: Alignment,
-  layoutDirection: LayoutDirection,
-): Offset {
-  check(destination.isSpecified)
   val alignedOffset by lazy(NONE) {
     // Rounding of floats to ints will cause some loss in precision because the final
     // offset is calculated by combining offset & zoom, but hopefully this is okay.
-    // The alternative would be to copy Alignment's code to work with floats.
+    // The alternative would be to fork Alignment's code to work with floats.
     alignment.align(
       size = size.roundToIntSize(),
       space = destination.roundToIntSize(),
       layoutDirection = layoutDirection,
     )
   }
-
-  return targetOffset.copy(
+  return topLeft.copy(
     x = if (width >= destination.width) {
-      targetOffset.x.coerceIn(
+      topLeft.x.coerceIn(
         minimumValue = (destination.width - width).coerceAtMost(0f),
         maximumValue = 0f
       )
@@ -51,7 +45,7 @@ internal fun Rect.coerceInside(
       alignedOffset.x.toFloat()
     },
     y = if (height >= destination.height) {
-      targetOffset.y.coerceIn(
+      topLeft.y.coerceIn(
         minimumValue = (destination.height - height).coerceAtMost(0f),
         maximumValue = 0f
       )

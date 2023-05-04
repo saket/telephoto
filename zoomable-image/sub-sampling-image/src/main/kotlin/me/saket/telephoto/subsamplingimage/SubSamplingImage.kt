@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
+// todo: doc.
 @Composable
 fun SubSamplingImage(
   state: SubSamplingImageState,

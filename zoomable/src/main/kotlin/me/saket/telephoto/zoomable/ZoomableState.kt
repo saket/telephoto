@@ -42,7 +42,7 @@ import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
-import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
+import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.unaryMinus
 import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
 import kotlin.math.abs
@@ -203,7 +203,7 @@ class ZoomableState internal constructor(
           val drawRegionOffset = unscaledContentBounds.topLeft * current.zoom
           newOffset.withZoomAndTranslate(zoom = -current.zoom.finalZoom(), translate = drawRegionOffset) {
             val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * current.zoom)
-            expectedDrawRegion.topLeftCoercedInside(contentLayoutSize, contentAlignment, layoutDirection)
+            expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
           }
         }
 
@@ -327,7 +327,7 @@ class ZoomableState internal constructor(
           // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
           newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
             val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom)
-            expectedDrawRegion.topLeftCoercedInside(contentLayoutSize, contentAlignment, layoutDirection)
+            expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
           }
         },
         zoom = newZoom,
@@ -412,7 +412,7 @@ class ZoomableState internal constructor(
       // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
       proposedOffset.withZoomAndTranslate(zoom = -targetZoom.finalZoom(), translate = drawRegionOffset) {
         val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * targetZoom)
-        expectedDrawRegion.topLeftCoercedInside(contentLayoutSize, contentAlignment, layoutDirection)
+        expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
       }
     }
 

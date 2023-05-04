@@ -117,7 +117,7 @@ class CoerceInsideTest {
 }
 
 private fun Rect.topLeftCoercedInside(destination: Size, alignment: Alignment): Offset {
-  return topLeftCoercedInside(
+  return calculateTopLeftToOverlapWith(
     destination = destination,
     alignment = alignment,
     layoutDirection = LayoutDirection.Ltr
