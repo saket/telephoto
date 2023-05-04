@@ -25,25 +25,8 @@ import okio.Path
 sealed interface SubSamplingImageSource {
   companion object {
     /**
-     * Images stored on the device file system.
-     *
-     * This can be used with image loading libraries that store cached images on disk.
-     * For example, if you're using Coil, you can read downloaded images from its disk cache:
-     *
-     * ```kotlin
-     * val imageLoader: coil.ImageLoader = …
-     * val diskCache: coil.DiskCache = imageLoader.diskCache!!
-     *
-     * val result = imageLoader.execute(
-     *   ImageRequest.Builder(context)
-     *     .data(…)
-     *     .memoryCachePolicy(DISABLED)
-     *     .build()
-     * )
-     * if (result is SuccessResult) {
-     *   ImageSource.file(diskCache[result.diskCacheKey!!]!!.data)
-     * }
-     * ```
+     * Images stored on the device file system. This can be used with
+     * image loading libraries that store cached images on disk.
      *
      * The returned value is stable and does not need to be remembered.
      */
@@ -79,7 +62,6 @@ sealed interface SubSamplingImageSource {
     }
   }
 
-  // todo: doc.
   suspend fun decoder(context: Context): BitmapRegionDecoder
 }
 

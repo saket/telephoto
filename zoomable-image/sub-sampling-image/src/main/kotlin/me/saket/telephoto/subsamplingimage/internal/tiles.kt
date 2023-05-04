@@ -6,13 +6,13 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntRect
 
-// todo: doc
+/** Represents a region in an image that whose bitmap needs to be loaded. */
 internal data class BitmapRegionTile(
   val sampleSize: BitmapSampleSize,
   val bounds: IntRect,
 )
 
-// todo: doc
+/** Represents a region on a Canvas where [bitmap] can be drawn. */
 @Immutable
 internal data class CanvasRegionTile(
   val bitmap: ImageBitmap?,
@@ -28,10 +28,14 @@ internal data class CanvasRegionTile(
   ) : this(
     bitmap = bitmap,
     bitmapRegion = bitmapRegion,
-    // Canvas only accepts integers so fractional values must be discarded.
-    // This is okay because if any fractional part was present and discarded,
-    // the next tile will also move back by a pixel. This would cause the last
-    // tiles on X and Y axes to be 1px short, but that's unnoticeable to eyes.
+    // Because the Canvas APIs only accept integer values, any fractional values
+    // that arise during tiling must be discarded. However this isn't a problem,
+    // since discarding a fractional value will cause the next tile to be shifted
+    // back by a pixel and so on, which will eventually eliminate any fractional
+    // error. However, this means that the last tiles along the X and Y axes may
+    // be one pixel shorter than the image. In practice, this is usually not
+    // noticeable to the naked eye, and the benefits of tiling large images outweigh
+    // this minor loss of precision.
     bounds = bounds.discardFractionalValues(),
     isBaseTile = isBaseTile,
   )
@@ -49,10 +53,10 @@ internal value class BitmapSampleSize(val size: Int) {
   }
 }
 
-// todo: doc
+/** Collection of [BitmapRegionTile] needed for drawing an image at a certain zoom level. */
 internal data class BitmapRegionTileGrid(
   val base: BitmapRegionTile,
-  val foreground: Map<BitmapSampleSize, List<BitmapRegionTile>> // TODO: can the key be a ZoomLevel to avoid calculating sample size on every gesture event?
+  val foreground: Map<BitmapSampleSize, List<BitmapRegionTile>>
 ) {
   companion object; // For extensions.
 }

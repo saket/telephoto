@@ -40,6 +40,9 @@ data class ZoomableContentTransformation(
    * The scale of the zoomable content along the x and y axes, generated in response
    * to zoom gestures. This value represents the scaling factor that should be applied
    * to the content to achieve the desired zoom level.
+   *
+   * Values on both the axes can be less than 0 if the image size is larger than
+   * its layout size.
    */
   val scale: ScaleFactor,
 

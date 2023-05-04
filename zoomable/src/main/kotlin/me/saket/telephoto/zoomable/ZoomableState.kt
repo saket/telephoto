@@ -44,9 +44,18 @@ import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.topLeftCoercedInside
 import me.saket.telephoto.zoomable.internal.unaryMinus
+import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
 import kotlin.math.abs
 
-/** todo: doc */
+/**
+ * Create a [ZoomableState] that can be used with [Modifier.zoomable].
+ *
+ * @param zoomSpec See [ZoomSpec.maxZoomFactor] and [ZoomSpec.preventOverOrUnderZoom].
+ *
+ * @param autoApplyTransformations Determines whether the resulting scale and translation of pan and zoom
+ * gestures should be automatically applied to by [Modifier.zoomable] to its content. This can be disabled
+ * if your content prefers applying the transformations in a bespoke manner.
+ */
 @Composable
 fun rememberZoomableState(
   zoomSpec: ZoomSpec = ZoomSpec(),
@@ -83,8 +92,9 @@ class ZoomableState internal constructor(
 
   /**
    * Transformations that should be applied to [Modifier.zoomable]'s content.
+   *
+   * See [ZoomableContentTransformation].
    */
-  // todo: doc
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     gestureTransformation.let {
       if (it != null) {
@@ -107,30 +117,38 @@ class ZoomableState internal constructor(
     }
   }
 
-  // todo: doc.
+  /**
+   * Determines whether the resulting scale and translation of pan and zoom gestures
+   * should be automatically applied to by [Modifier.zoomable] to its content. This can
+   * be disabled if your content prefers applying the transformations in a bespoke manner.
+   * */
   var autoApplyTransformations: Boolean by mutableStateOf(autoApplyTransformations)
 
   /**
    * Single source of truth for your content's aspect ratio. If you're using `Modifier.zoomable()`
-   * with `Image()` or other composables that also accept [ContentScale], they should be set to
-   * [ContentScale.None] to avoid any conflicts.
+   * with `Image()` or other composables that also accept [ContentScale], they should not be used
+   * to avoid any conflicts.
    *
    * A visual guide of the various scale values can be found
    * [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
    */
   var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
 
-  // todo: doc
-  //  explain how the alignment affects zooming.
+  /**
+   * Alignment of the content.
+   *
+   * When the content is zoomed, it is scaled with respect to this alignment until it
+   * is large enough to fill all available space. After that, they're scaled uniformly.
+   * */
   var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
 
   /**
    * The content's current zoom as a fraction of its min and max allowed zoom factors.
    *
-   * @return A value between 0 and 1, where 0 indicates that the image is fully zoomed out,
-   * 1 indicates that the image is fully zoomed in, and `null` indicates that an initial zoom
-   * value hasn't been calculated yet. A `null` value could be safely treated the same as 0, but
-   * [Modifier.zoomable] leaves that up to you.
+   * @return A value between 0 and 1, where 0 indicates that the content is fully zoomed out,
+   * 1 indicates that the content is fully zoomed in, and `null` indicates that an initial zoom
+   * value hasn't been calculated yet and the content is hidden. A `null` value could be safely
+   * treated the same as 0, but [Modifier.zoomable] leaves that decision up to you.
    */
   @get:FloatRange(from = 0.0, to = 1.0)
   val zoomFraction: Float? by derivedStateOf {
@@ -150,7 +168,7 @@ class ZoomableState internal constructor(
   internal lateinit var layoutDirection: LayoutDirection
 
   /**
-   * Raw size of the image/video/anything without any scaling applied.
+   * Raw size of the zoomable content without any scaling applied.
    * Used only for ensuring that the content does not pan/zoom outside its limits.
    */
   // TODO: verify doc.
@@ -161,7 +179,7 @@ class ZoomableState internal constructor(
    */
   internal var contentLayoutSize by mutableStateOf(Size.Zero)
 
-  /** todo: doc. */
+  /** Whether sufficient information is available about the content to start listening to pan & zoom gestures. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
     unscaledContentLocation.isSpecified
       && contentLayoutSize.minDimension != 0f  // Protects against division by zero errors.
@@ -347,8 +365,10 @@ class ZoomableState internal constructor(
     )
   }
 
-  // todo: doc
-  /** Update content position by using its current zoom and offset values. */
+  /**
+   * Update the content's position. This is called when values
+   * such as [contentScale] and [contentAlignment] are updated.
+   */
   internal suspend fun refreshContentTransformation() {
     check(isReadyToInteract)
     transformableState.transform(MutatePriority.PreventUserInput) {
@@ -479,7 +499,7 @@ class ZoomableState internal constructor(
   }
 }
 
-// todo: doc
+/** An intermediate model used for generating [ZoomableContentTransformation]. */
 internal data class GestureTransformation(
   val offset: Offset,
   val zoom: ContentZoom,
@@ -487,12 +507,16 @@ internal data class GestureTransformation(
   val contentSize: Size,
 )
 
-// todo: doc
 internal data class ContentZoom(
-  val baseZoom: ScaleFactor,  // Calculated using ZoomableState's ContentScale.
-  val userZoom: Float,        // Zoom applied using gestures.
+  /**
+   * The initial scale needed to fit [Modifier.zoomable]'s content with
+   * respect to [ZoomableState.contentScale].
+   * */
+  val baseZoom: ScaleFactor,
+
+  /** Zoom applied by user using gestures. */
+  val userZoom: Float,
 ) {
-  // todo: doc
   fun finalZoom(): ScaleFactor {
     return baseZoom * userZoom
   }
@@ -522,14 +546,14 @@ internal data class ContentZoom(
   }
 
   companion object {
+    /** Differences below this value are ignored when comparing two zoom values. */
     const val ZoomDeltaEpsilon = 0.01f
   }
 }
 
-// todo: doc.
 internal data class ZoomRange(
   private val minZoomAsRatioOfBaseZoom: Float = 1f,
-  private val maxZoomAsRatioOfSize: Float,
+  private val maxZoomAsRatioOfSize: Float,  // Copied from ZoomSpec.maxZoomFactor.
 ) {
 
   // todo: ZoomRange and ContentZoom are inter-dependent. minZoom() and maxZoom() should probably move to ContentZoom.
@@ -547,10 +571,4 @@ internal data class ZoomRange(
   companion object {
     val Default = ZoomRange(minZoomAsRatioOfBaseZoom = 1f, maxZoomAsRatioOfSize = 1f)
   }
-}
-
-// todo: improve doc.
-/** This is named along the lines of `Canvas#withTranslate()`. */
-private fun Offset.withZoomAndTranslate(zoom: ScaleFactor, translate: Offset, action: (Offset) -> Offset): Offset {
-  return (action((this * zoom) + translate) - translate) / zoom
 }

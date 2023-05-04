@@ -1,6 +1,5 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import androidx.compose.ui.graphics.ImageBitmap
@@ -11,6 +10,7 @@ import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.toAndroidConfig
 
+/** Bitmap decoder backd by Android's [BitmapRegionDecoder]. */
 internal class AndroidImageRegionDecoder private constructor(
   private val imageSource: SubSamplingImageSource,
   private val imageOptions: ImageBitmapOptions,
@@ -35,7 +35,7 @@ internal class AndroidImageRegionDecoder private constructor(
     // FYI BitmapRegionDecoder's documentation says explicit recycling is not needed,
     // but that is a lie. Instrumentation tests for SubSamplingImage() on API 31 run into
     // low memory because the native state of decoders aren't cleared after each test,
-    // causing Android to kill all processes (including the test).
+    // causing Android to panic and kill all processes (including the test).
     decoder.recycle()
   }
 

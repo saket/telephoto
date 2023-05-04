@@ -50,7 +50,26 @@ import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableState
 import java.io.IOException
 
-// todo: doc.
+/**
+ * Create a [SubSamplingImageState] that can be used with [SubSamplingImage] which uses
+ * [Modifier.zoomable][me.saket.telephoto.zoomable.zoomable] as its gesture detector.
+ *
+ * ```kotlin
+ * val zoomableState = rememberZoomableState()
+ * val imageState = rememberSubSamplingImageState(
+ *   zoomableState = zoomableState,
+ *   imageSource = ImageSource.asset("fox.jpg")
+ * )
+ *
+ * SubSamplingImage(
+ *   modifier = Modifier
+ *     .fillMaxSize()
+ *     .zoomable(zoomableState),
+ *   state = imageState,
+ *   contentDescription = …,
+ * )
+ * ```
+ */
 @Composable
 fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
@@ -77,7 +96,27 @@ fun rememberSubSamplingImageState(
   return state
 }
 
-// todo: doc.
+/**
+ * Create a [SubSamplingImageState] that can be used with [SubSamplingImage], but with your own
+ * gesture detector instead of [Modifier.zoomable][me.saket.telephoto.zoomable.zoomable].
+ *
+ * ```kotlin
+ * val imageState = rememberSubSamplingImageState(
+ *   imageSource = SubSamplingImageSource.asset("fox.jpg"),
+ *   transformation = ZoomableContentTransformation(
+ *     isSpecified = true,
+ *     scale = ScaleFactor(…),
+ *     offset = Offset.Zero,
+ *   )
+ * )
+ *
+ * SubSamplingImage(
+ *   modifier = Modifier.fillMaxSize(),
+ *   state = imageState,
+ *   contentDescription = …,
+ * )
+ * ```
+ */
 @Composable
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 fun rememberSubSamplingImageState(
@@ -201,19 +240,23 @@ private fun createRegionDecoder(
   return decoder
 }
 
-// todo: doc.
+/** State for [SubSamplingImage]. */
 @Stable
 class SubSamplingImageState internal constructor(val imageSource: SubSamplingImageSource) {
   var imageSize: IntSize? by mutableStateOf(null)
     internal set
 
-  // todo: doc
+  /**
+   * Whether all the visible tiles have been loaded and the image is displayed (not necessarily in its full quality).
+   *
+   * Also see [isImageLoadedInFullQuality].
+   */
   val isImageLoaded: Boolean by derivedStateOf {
     canvasSize != null && tiles.isNotEmpty()
       && (tiles.fastAny { it.isBaseTile && it.bitmap != null } || tiles.fastAll { it.bitmap != null })
   }
 
-  // todo: doc
+  /** Whether all the visible and *full resolution* tiles have been loaded and the image is displayed. */
   val isImageLoadedInFullQuality: Boolean by derivedStateOf {
     isImageLoaded && tiles.fastAll { it.bitmap != null }
   }

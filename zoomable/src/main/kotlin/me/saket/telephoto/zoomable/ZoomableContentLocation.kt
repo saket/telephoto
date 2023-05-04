@@ -36,7 +36,7 @@ interface ZoomableContentLocation {
      * and is downscaled only if its size exceeds its layout bounds while maintaining its
      * original aspect ratio.
      *
-     * That is, its alignment = [Alignment.Center] and scale = [ContentScale.Inside].
+     * That is, its alignment is [Alignment.Center] and scale is [ContentScale.Inside].
      */
     @Stable
     fun scaledInsideAndCenterAligned(size: Size?): ZoomableContentLocation {
@@ -50,6 +50,12 @@ interface ZoomableContentLocation {
       }
     }
 
+    /**
+     * Describes a zoomable content's location that is positioned at 0,0 of its layout
+     * and is never scaled.
+     *
+     * That is, its alignment is [Alignment.TopStart] and scale is [ContentScale.None].
+     */
     @Stable
     fun unscaledAndTopStartAligned(size: Size?): ZoomableContentLocation {
       return when {
@@ -63,14 +69,23 @@ interface ZoomableContentLocation {
     }
   }
 
-  // todo: doc
+  /**
+   * A placeholder value for indicating that the zoomable content's location
+   * isn't calculated yet. The content will stay hidden until this is replaced.
+   */
   object Unspecified : ZoomableContentLocation {
     override fun size(layoutSize: Size) = throw UnsupportedOperationException()
     override fun calculateBounds(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
     override fun toString(): String = this::class.simpleName!!
   }
 
-  // todo: doc
+  /**
+   * The default value of [ZoomableContentLocation], intended to be used for content that
+   * fills every pixel of its layout size.
+   *
+   * For richer content such as images whose visual size may not always match its layout
+   * size, you should provide a different value using [ZoomableState.setContentLocation].
+   */
   object SameAsLayoutBounds : ZoomableContentLocation {
     override fun size(layoutSize: Size): Size = layoutSize
     override fun calculateBounds(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
