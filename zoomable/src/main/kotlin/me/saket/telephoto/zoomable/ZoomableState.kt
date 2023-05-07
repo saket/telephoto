@@ -38,11 +38,11 @@ import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
+import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
-import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.unaryMinus
 import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
 import kotlin.math.abs
@@ -76,7 +76,7 @@ fun rememberZoomableState(
       state.contentAlignment,
       state.contentScale,
       state.layoutDirection,
-      state.gestureTransformation == null,
+      state.rawTransformation == null,
     ) {
       state.refreshContentTransformation()
     }
@@ -86,7 +86,7 @@ fun rememberZoomableState(
 
 @Stable
 class ZoomableState internal constructor(
-  initialTransformation: GestureTransformation? = null,
+  initialTransformation: RawTransformation? = null,
   autoApplyTransformations: Boolean = true,
 ) {
 
@@ -96,7 +96,7 @@ class ZoomableState internal constructor(
    * See [ZoomableContentTransformation].
    */
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
-    gestureTransformation.let {
+    rawTransformation.let {
       if (it != null) {
         val scale = it.zoom.finalZoom()
         val canContentBeShown = scale != ScaleFactor.Zero
@@ -152,7 +152,7 @@ class ZoomableState internal constructor(
    */
   @get:FloatRange(from = 0.0, to = 1.0)
   val zoomFraction: Float? by derivedStateOf {
-    gestureTransformation?.let {
+    rawTransformation?.let {
       val min = zoomSpec.range.minZoom(it.zoom.baseZoom)
       val max = zoomSpec.range.maxZoom(it.zoom.baseZoom)
       val current = it.zoom.finalZoom().maxScale
@@ -160,8 +160,7 @@ class ZoomableState internal constructor(
     }
   }
 
-  // todo: is "gesture" transformation the right name?
-  internal var gestureTransformation: GestureTransformation? by mutableStateOf(initialTransformation)
+  internal var rawTransformation: RawTransformation? by mutableStateOf(initialTransformation)
 
   internal var zoomSpec by mutableStateOf(ZoomSpec())
 
@@ -178,6 +177,13 @@ class ZoomableState internal constructor(
    */
   internal var contentLayoutSize by mutableStateOf(Size.Zero)
 
+  private val unscaledContentBounds by derivedStateOf {
+    unscaledContentLocation.location(
+      layoutSize = contentLayoutSize,
+      direction = layoutDirection
+    )
+  }
+
   /** Whether sufficient information is available about the content to start listening to pan & zoom gestures. */
   internal val isReadyToInteract: Boolean by derivedStateOf {
     unscaledContentLocation.isSpecified
@@ -187,24 +193,12 @@ class ZoomableState internal constructor(
   @Suppress("NAME_SHADOWING")
   internal val transformableState = TransformableState(
     canConsumePanChange = { panDelta ->
-      val current = gestureTransformation
+      val current = rawTransformation
 
       if (current != null) {
         val panDeltaWithZoom = panDelta / current.zoom
         val newOffset = (current.offset - panDeltaWithZoom)
-
-        // todo: this piece of code is duplicated with onGesture.
-        val newOffsetWithinBounds = run {
-          val unscaledContentBounds = unscaledContentLocation.location(
-            layoutSize = contentLayoutSize,
-            direction = layoutDirection
-          )
-          val drawRegionOffset = unscaledContentBounds.topLeft * current.zoom
-          newOffset.withZoomAndTranslate(zoom = -current.zoom.finalZoom(), translate = drawRegionOffset) {
-            val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * current.zoom)
-            expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
-          }
-        }
+        val newOffsetWithinBounds = newOffset.coerceWithinBounds(proposedZoom = current.zoom)
 
         val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
         val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
@@ -223,11 +217,6 @@ class ZoomableState internal constructor(
       }
     },
     onTransformation = { zoomDelta, panDelta, _, centroid ->
-      val unscaledContentBounds = unscaledContentLocation.location(
-        layoutSize = contentLayoutSize,
-        direction = layoutDirection
-      )
-
       // This is the minimum scale needed to position the content
       // within its layout bounds w.r.t. its content scale.
       val baseZoom = contentScale.computeScaleFactor(
@@ -237,7 +226,7 @@ class ZoomableState internal constructor(
 
       val oldZoom = ContentZoom(
         baseZoom = baseZoom,
-        userZoom = gestureTransformation?.zoom?.userZoom ?: 1f
+        userZoom = rawTransformation?.zoom?.userZoom ?: 1f
       )
 
       val isZoomingOut = zoomDelta < 1f
@@ -268,7 +257,7 @@ class ZoomableState internal constructor(
         }
       }
 
-      val oldOffset = gestureTransformation.let {
+      val oldOffset = rawTransformation.let {
         if (it != null) {
           it.offset
         } else {
@@ -282,53 +271,15 @@ class ZoomableState internal constructor(
         }
       }
 
-      // Copied from androidx samples:
-      // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
-      //
-      // For natural zooming and rotating, the centroid of the gesture
-      // should be the fixed point where zooming and rotating occurs.
-      //
-      // We compute where the centroid was (in the pre-transformed coordinate
-      // space), and then compute where it will be after this delta.
-      //
-      // We then compute what the new offset should be to keep the centroid
-      // visually stationary for rotating and zooming, and also apply the pan.
-      //
-      // This is comparable to performing a pre-translate + scale + post-translate on
-      // a Matrix.
-      //
-      // I found this maths difficult to understand, so here's another explanation in
-      // Ryan Harter's words:
-      //
-      // The basic idea is that to scale around an arbitrary point, you translate so that
-      // that point is in the center, then you rotate, then scale, then move everything back.
-      //
-      // Note to self: these values are divided by zoom because that's how the final offset
-      // for UI is calculated: -offset * zoom.
-      //
-      //              Move the centroid to the center
-      //                  of panned content(?)
-      //                           |                            Scale
-      //                           |                              |                Move back
-      //                           |                              |           (+ new translation)
-      //                           |                              |                    |
-      //              _____________|_________________     ________|_________   ________|_________
-      val newOffset = (oldOffset + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
-
-      gestureTransformation = GestureTransformation(
-        offset = run {
-          // To ensure that the content always stays within its layout bounds, the content's actual draw
-          // region will need to be calculated. This is important because the content's draw region may
-          // or may not be equal to its full size. For e.g., a 16:9 image displayed in a 1:2 layout
-          // will have empty spaces on both vertical sides.
-          val drawRegionOffset = unscaledContentBounds.topLeft * newZoom
-
-          // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-          newOffset.withZoomAndTranslate(zoom = -newZoom.finalZoom(), translate = drawRegionOffset) {
-            val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * newZoom)
-            expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
-          }
-        },
+      rawTransformation = RawTransformation(
+        offset = oldOffset
+          .retainCentroidPositionAfterZoom(
+            centroid = centroid,
+            panDelta = panDelta,
+            oldZoom = oldZoom,
+            newZoom = newZoom
+          )
+          .coerceWithinBounds(proposedZoom = newZoom),
         zoom = newZoom,
         lastCentroid = centroid,
         contentSize = unscaledContentLocation.size(contentLayoutSize),
@@ -336,15 +287,69 @@ class ZoomableState internal constructor(
     }
   )
 
+  /**
+   * Translate this offset such that the visual position of [centroid]
+   * remains the same after applying [panDelta] and [newZoom].
+   */
+  private fun Offset.retainCentroidPositionAfterZoom(
+    centroid: Offset,
+    panDelta: Offset = Offset.Zero,
+    oldZoom: ContentZoom,
+    newZoom: ContentZoom,
+  ): Offset {
+    // Copied from androidx samples:
+    // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
+    //
+    // For natural zooming and rotating, the centroid of the gesture
+    // should be the fixed point where zooming and rotating occurs.
+    //
+    // We compute where the centroid was (in the pre-transformed coordinate
+    // space), and then compute where it will be after this delta.
+    //
+    // We then compute what the new offset should be to keep the centroid
+    // visually stationary for rotating and zooming, and also apply the pan.
+    //
+    // This is comparable to performing a pre-translate + scale + post-translate on
+    // a Matrix.
+    //
+    // I found this maths difficult to understand, so here's another explanation in
+    // Ryan Harter's words:
+    //
+    // The basic idea is that to scale around an arbitrary point, you translate so that
+    // that point is in the center, then you rotate, then scale, then move everything back.
+    //
+    // Note to self: these values are divided by zoom because that's how the final offset
+    // for UI is calculated: -offset * zoom.
+    //
+    //     Move the centroid to the center
+    //         of panned content(?)
+    //                  |                            Scale
+    //                  |                              |                Move back
+    //                  |                              |           (+ new translation)
+    //                  |                              |                    |
+    //     _____________|_________________     ________|_________   ________|_________
+    return (this + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
+  }
+
+  private fun Offset.coerceWithinBounds(proposedZoom: ContentZoom): Offset {
+    val scaledTopLeft = unscaledContentBounds.topLeft * proposedZoom
+
+    // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
+    return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
+      val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * proposedZoom)
+      expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
+    }
+  }
+
   private operator fun Offset.div(zoom: ContentZoom): Offset = div(zoom.finalZoom())
   private operator fun Offset.times(zoom: ContentZoom): Offset = times(zoom.finalZoom())
   private operator fun Size.times(zoom: ContentZoom): Size = times(zoom.finalZoom())
 
-  /** todo: doc */
+  /** See [ZoomableContentLocation]. */
   suspend fun setContentLocation(location: ZoomableContentLocation) {
     unscaledContentLocation = location
 
-    // Refresh content transformation synchronously so that it is available immediately.
+    // Refresh content transformation synchronously so that the result is available immediately.
     // Otherwise, the old position will be used with this new size and cause a flicker.
     if (isReadyToInteract) {
       refreshContentTransformation()
@@ -353,7 +358,7 @@ class ZoomableState internal constructor(
 
   /** Reset content to its minimum zoom and zero offset **without** any animation. */
   fun resetZoomImmediately() {
-    gestureTransformation = null
+    rawTransformation = null
   }
 
   /** Smoothly reset content to its minimum zoom and zero offset **with** animation. */
@@ -376,7 +381,7 @@ class ZoomableState internal constructor(
   }
 
   internal suspend fun handleDoubleTapZoomTo(centroid: Offset) {
-    val start = gestureTransformation ?: return
+    val start = rawTransformation ?: return
     smoothlyToggleZoom(
       shouldZoomIn = !start.zoom.isAtMaxZoom(zoomSpec.range),
       centroid = centroid
@@ -387,7 +392,7 @@ class ZoomableState internal constructor(
     shouldZoomIn: Boolean,
     centroid: Offset
   ) {
-    val start = gestureTransformation ?: return
+    val start = rawTransformation ?: return
 
     val targetZoomFactor = if (shouldZoomIn) {
       zoomSpec.range.maxZoom(baseZoom = start.zoom.baseZoom)
@@ -398,22 +403,13 @@ class ZoomableState internal constructor(
       userZoom = targetZoomFactor / (start.zoom.baseZoom.maxScale)
     )
 
-    // todo: this piece of code is duplicated with onGesture.
-    val targetOffset = run {
-      val proposedOffset = (start.offset + centroid / start.zoom) - (centroid / targetZoom)
-      val unscaledContentBounds = unscaledContentLocation.location(
-        layoutSize = contentLayoutSize,
-        direction = layoutDirection
+    val targetOffset = start.offset
+      .retainCentroidPositionAfterZoom(
+        centroid = centroid,
+        oldZoom = start.zoom,
+        newZoom = targetZoom,
       )
-
-      val drawRegionOffset = unscaledContentBounds.topLeft * targetZoom
-
-      // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-      proposedOffset.withZoomAndTranslate(zoom = -targetZoom.finalZoom(), translate = drawRegionOffset) {
-        val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * targetZoom)
-        expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
-      }
-    }
+      .coerceWithinBounds(proposedZoom = targetZoom)
 
     transformableState.transform(MutatePriority.UserInput) {
       AnimationState(initialValue = 0f).animateTo(
@@ -438,7 +434,7 @@ class ZoomableState internal constructor(
           fraction = value
         )
 
-        gestureTransformation = gestureTransformation!!.copy(
+        rawTransformation = rawTransformation!!.copy(
           offset = (-animatedOffsetForUi) / animatedZoom,
           zoom = animatedZoom,
           lastCentroid = centroid,
@@ -448,13 +444,13 @@ class ZoomableState internal constructor(
   }
 
   internal fun isZoomOutsideRange(): Boolean {
-    val currentZoom = gestureTransformation!!.zoom
+    val currentZoom = rawTransformation!!.zoom
     val userZoomWithinBounds = currentZoom.coercedIn(zoomSpec.range)
     return abs(currentZoom.userZoom - userZoomWithinBounds.userZoom) > ZoomDeltaEpsilon
   }
 
   internal suspend fun smoothlySettleZoomOnGestureEnd() {
-    val start = gestureTransformation!!
+    val start = rawTransformation!!
     val userZoomWithinBounds = start.zoom.coercedIn(zoomSpec.range).userZoom
 
     transformableState.transform {
@@ -473,7 +469,7 @@ class ZoomableState internal constructor(
   }
 
   internal suspend fun fling(velocity: Velocity, density: Density) {
-    val start = gestureTransformation!!
+    val start = rawTransformation!!
     transformableState.transform(MutatePriority.UserInput) {
       var previous = start.offset
       AnimationState(
@@ -492,14 +488,14 @@ class ZoomableState internal constructor(
 
   companion object {
     internal val Saver = Saver<ZoomableState, ZoomableSavedState>(
-      save = { ZoomableSavedState(it.gestureTransformation) },
+      save = { ZoomableSavedState(it.rawTransformation) },
       restore = { ZoomableState(initialTransformation = it.gestureTransformation()) }
     )
   }
 }
 
-/** An intermediate model used for generating [ZoomableContentTransformation]. */
-internal data class GestureTransformation(
+/** An intermediate, non-normalized model used for generating [ZoomableContentTransformation]. */
+internal data class RawTransformation(
   val offset: Offset,
   val zoom: ContentZoom,
   val lastCentroid: Offset,
@@ -552,10 +548,9 @@ internal data class ContentZoom(
 
 internal data class ZoomRange(
   private val minZoomAsRatioOfBaseZoom: Float = 1f,
-  private val maxZoomAsRatioOfSize: Float,  // Copied from ZoomSpec.maxZoomFactor.
+  private val maxZoomAsRatioOfSize: Float,
 ) {
 
-  // todo: ZoomRange and ContentZoom are inter-dependent. minZoom() and maxZoom() should probably move to ContentZoom.
   internal fun minZoom(baseZoom: ScaleFactor): Float {
     return minZoomAsRatioOfBaseZoom * baseZoom.maxScale
   }
@@ -565,9 +560,5 @@ internal data class ZoomRange(
     // factor if the content is scaled-up by default. This can be tested
     // by setting contentScale = CenterCrop.
     return maxOf(maxZoomAsRatioOfSize, minZoom(baseZoom))
-  }
-
-  companion object {
-    val Default = ZoomRange(minZoomAsRatioOfBaseZoom = 1f, maxZoomAsRatioOfSize = 1f)
   }
 }

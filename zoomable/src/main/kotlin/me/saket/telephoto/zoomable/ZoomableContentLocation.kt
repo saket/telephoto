@@ -113,7 +113,7 @@ internal data class RelativeContentLocation(
       srcSize = size,
       dstSize = layoutSize,
     )
-    val scaledSize = size.times(scaleFactor)
+    val scaledSize = size * scaleFactor
     val alignedOffset = alignment.align(
       size = scaledSize.discardFractionalParts(),
       space = layoutSize.discardFractionalParts(),
