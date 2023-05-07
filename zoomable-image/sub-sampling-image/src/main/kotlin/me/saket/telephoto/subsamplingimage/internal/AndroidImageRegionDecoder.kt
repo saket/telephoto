@@ -10,7 +10,7 @@ import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.toAndroidConfig
 
-/** Bitmap decoder backd by Android's [BitmapRegionDecoder]. */
+/** Bitmap decoder backed by Android's [BitmapRegionDecoder]. */
 internal class AndroidImageRegionDecoder private constructor(
   private val imageSource: SubSamplingImageSource,
   private val imageOptions: ImageBitmapOptions,

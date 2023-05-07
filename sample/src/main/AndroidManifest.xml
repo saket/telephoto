@@ -12,7 +12,7 @@
     android:roundIcon="@mipmap/ic_launcher_round"
     android:supportsRtl="true"
     android:theme="@style/AppTheme"
-    tools:ignore="AllowBackup">
+    tools:ignore="AllowBackup,DataExtractionRules,UnusedAttribute">
 
     <activity
       android:name=".SampleActivity"

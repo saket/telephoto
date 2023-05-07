@@ -640,7 +640,6 @@ class ZoomableImageTest {
     PlaceholderDisabled(canBeUsed = false),
   }
 
-  @Suppress("unused")
   enum class ScrollDirection {
     RightToLeft,
     LeftToRight

@@ -1,5 +1,3 @@
-@file:Suppress("TestFunctionName")
-
 package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.graphics.ImageBitmap
@@ -18,7 +16,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.random.Random
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class BitmapLoaderTest {
@@ -60,7 +57,7 @@ class BitmapLoaderTest {
     cachedBitmaps.cancelAndExpectNoEvents()
   }
 
-  @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(1.seconds) {
+  @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(timeout = 1.seconds) {
     val loader = bitmapLoader()
     val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
@@ -149,8 +146,3 @@ private suspend fun <T> ReceiveTurbine<T>.cancelAndExpectNoEvents() {
   expectNoEvents()
   assertThat(cancelAndConsumeRemainingEvents()).isEmpty()
 }
-
-private fun runTest(
-  timeout: Duration,
-  testBody: suspend TestScope.() -> Unit
-) = runTest(dispatchTimeoutMs = timeout.inWholeMilliseconds, testBody = testBody)
