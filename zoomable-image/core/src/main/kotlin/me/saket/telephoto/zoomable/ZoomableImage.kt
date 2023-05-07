@@ -41,8 +41,6 @@ import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
  * and [Modifier.combinedClickable] will not work on this composable. As an alternative, [onClick]
  * and [onLongClick] parameters can be used instead.
  *
- * If sub-sampling is always desired, you could also use [SubSamplingImage] directly.
- *
  * @param clipToBounds Defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  */

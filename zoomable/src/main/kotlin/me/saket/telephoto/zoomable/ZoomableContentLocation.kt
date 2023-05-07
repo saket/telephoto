@@ -14,21 +14,17 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
 import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
-// todo: check doc.
-// todo: should this be called DrawRegion?
-//  no, canvas draw region can be smaller than images.
 /**
- * For [Modifier.zoomable] to be able to correctly scale and pan its content, it uses
- * [ZoomableContentLocation] to understand the content's _visual_ size & position to prevent them
- * from going out of bounds.
+ * [Modifier.zoomable] uses [ZoomableContentLocation] to understand the content's visual size and position
+ * in order to prevent it from going out of bounds during pan & zoom gestures.
  *
  * The default value is [ZoomableContentLocation.SameAsLayoutBounds].
  *
- * [Modifier.zoomable] can't calculate this on its own by inspecting its layout bounds because
- * that may be smaller or larger than the content's visual size. For instance, an `Image` composable
- * that uses `Modifier.fillMaxSize()` could actually be drawing an image that only fills half its
- * height. Another possibility is a sub-sampled composable such as a map whose full sized content
- * could be at an order of magnitude larger than its layout bounds.
+ * [Modifier.zoomable] can't calculate this on its own by relying on the layout bounds of the content.
+ * because they may be smaller or larger than the content's visual size. For example, an `Image` composable
+ * that uses `Modifier.fillMaxSize()` could actually be drawing an image that only fills half its height.
+ * Another example is a sub-sampled composable such as a map whose full sized content could be at an
+ * order of magnitude larger than its layout bounds.
  */
 interface ZoomableContentLocation {
   companion object {
@@ -76,7 +72,7 @@ interface ZoomableContentLocation {
    */
   object Unspecified : ZoomableContentLocation {
     override fun size(layoutSize: Size) = throw UnsupportedOperationException()
-    override fun calculateBounds(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
+    override fun location(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
     override fun toString(): String = this::class.simpleName!!
   }
 
@@ -89,13 +85,12 @@ interface ZoomableContentLocation {
    */
   object SameAsLayoutBounds : ZoomableContentLocation {
     override fun size(layoutSize: Size): Size = layoutSize
-    override fun calculateBounds(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
+    override fun location(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
   }
 
   fun size(layoutSize: Size): Size
 
-  // todo: think of a better name that makes it clear this isn't the layout bounds.
-  fun calculateBounds(layoutSize: Size, direction: LayoutDirection): Rect
+  fun location(layoutSize: Size, direction: LayoutDirection): Rect
 }
 
 internal val ZoomableContentLocation.isSpecified
@@ -113,7 +108,7 @@ internal data class RelativeContentLocation(
 ) : ZoomableContentLocation {
   override fun size(layoutSize: Size): Size = size
 
-  override fun calculateBounds(layoutSize: Size, direction: LayoutDirection): Rect {
+  override fun location(layoutSize: Size, direction: LayoutDirection): Rect {
     val scaleFactor = scale.computeScaleFactor(
       srcSize = size,
       dstSize = layoutSize,

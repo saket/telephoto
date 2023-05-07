@@ -109,8 +109,8 @@ class ZoomableState internal constructor(
       } else {
         ZoomableContentTransformation(
           isSpecified = false,
-          contentSize = Size.Unspecified, // Hide content until an initial zoom value is calculated.,
-          scale = ScaleFactor.Zero,
+          contentSize = Size.Unspecified,
+          scale = ScaleFactor.Zero, // Effectively hide content until an initial zoom value is calculated.,
           offset = Offset.Zero,
         )
       }
@@ -169,9 +169,8 @@ class ZoomableState internal constructor(
 
   /**
    * Raw size of the zoomable content without any scaling applied.
-   * Used only for ensuring that the content does not pan/zoom outside its limits.
+   * Used to ensure that the content does not pan/zoom outside its limits.
    */
-  // TODO: verify doc.
   private var unscaledContentLocation: ZoomableContentLocation by mutableStateOf(SameAsLayoutBounds)
 
   /**
@@ -196,7 +195,7 @@ class ZoomableState internal constructor(
 
         // todo: this piece of code is duplicated with onGesture.
         val newOffsetWithinBounds = run {
-          val unscaledContentBounds = unscaledContentLocation.calculateBounds(
+          val unscaledContentBounds = unscaledContentLocation.location(
             layoutSize = contentLayoutSize,
             direction = layoutDirection
           )
@@ -224,7 +223,7 @@ class ZoomableState internal constructor(
       }
     },
     onTransformation = { zoomDelta, panDelta, _, centroid ->
-      val unscaledContentBounds = unscaledContentLocation.calculateBounds(
+      val unscaledContentBounds = unscaledContentLocation.location(
         layoutSize = contentLayoutSize,
         direction = layoutDirection
       )
@@ -402,7 +401,7 @@ class ZoomableState internal constructor(
     // todo: this piece of code is duplicated with onGesture.
     val targetOffset = run {
       val proposedOffset = (start.offset + centroid / start.zoom) - (centroid / targetZoom)
-      val unscaledContentBounds = unscaledContentLocation.calculateBounds(
+      val unscaledContentBounds = unscaledContentLocation.location(
         layoutSize = contentLayoutSize,
         direction = layoutDirection
       )

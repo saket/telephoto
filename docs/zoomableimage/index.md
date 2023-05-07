@@ -138,7 +138,6 @@ Images are scaled using `ContentScale.Fit` by default, but can be customized. A 
 
 Unlike `Image()`, `ZoomableImage` can pan images even when they're cropped. This can be useful for applications like wallpaper apps that may want to use `ContentScale.Crop` to ensure that images always fill the screen.
 
-
 === "Coil"
     ```kotlin hl_lines="4"
     ZoomableAsyncImage(

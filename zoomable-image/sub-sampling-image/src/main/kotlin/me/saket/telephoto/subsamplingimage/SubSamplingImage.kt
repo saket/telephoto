@@ -26,7 +26,13 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
-// todo: doc.
+/**
+ * An Image composable that can render large bitmaps by diving them into tiles so that they
+ * can be loaded lazily. This ensures that images maintain their intricate details even when
+ * fully zoomed in, without causing any `OutOfMemory` exceptions.
+ *
+ * [SubSamplingImage] is automatically used by [ZoomableImage][me.saket.telephoto.zoomable.ZoomableImage].
+ */
 @Composable
 fun SubSamplingImage(
   state: SubSamplingImageState,
