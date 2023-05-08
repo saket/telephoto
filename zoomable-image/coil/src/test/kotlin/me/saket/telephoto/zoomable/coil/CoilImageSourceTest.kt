@@ -1,12 +1,10 @@
-@file:SuppressLint("ComposableNaming")
-
 package me.saket.telephoto.zoomable.coil
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.InternalComposeApi
 import androidx.compose.runtime.ProvidedValue
@@ -15,31 +13,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmapConfig
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import app.cash.molecule.RecompositionClock.Immediate
+import app.cash.molecule.RecompositionClock
 import app.cash.molecule.launchMolecule
 import app.cash.paparazzi.Paparazzi
 import app.cash.turbine.test
 import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
-import coil.decode.DataSource
 import coil.disk.DiskCache
 import coil.imageLoader
-import coil.memory.MemoryCache
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import coil.size.Dimension
 import coil.test.FakeImageLoaderEngine
+import com.dropbox.differ.SimpleImageComparator
 import com.google.accompanist.drawablepainter.DrawablePainter
 import com.google.common.truth.Truth.assertThat
+import com.google.testing.junit.testparameterinjector.TestParameter
+import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -47,24 +48,66 @@ import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okio.Buffer
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import kotlin.time.Duration.Companion.minutes
+import org.junit.rules.ExternalResource
+import org.junit.rules.Timeout
+import org.junit.runner.RunWith
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import coil.size.Size as CoilSize
+import com.dropbox.differ.Color as DifferColor
+import com.dropbox.differ.Image as DifferImage
 
-@OptIn(ExperimentalCoilApi::class, ExperimentalCoroutinesApi::class)
+@RunWith(TestParameterInjector::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalCoilApi::class)
 class CoilImageSourceTest {
   // Only used to create a fake context. I could use robolectric but it's
   // not super reliable and I'm already using paparazzi in other tests.
   @get:Rule val paparazzi = Paparazzi()
   private val context: Context get() = paparazzi.context
 
+  @get:Rule val timeout = Timeout.seconds(10)!!
+  @get:Rule val serverRule = MockWebServerRule()
+  private val diskCacheSystem = FakeFileSystem()
+
   @Before
   fun setUp() {
     Dispatchers.setMain(Dispatchers.Unconfined)
+
+    Coil.setImageLoader(
+      ImageLoader.Builder(context)
+        .networkObserverEnabled(false)
+        .diskCache(
+          DiskCache.Builder()
+            .directory(diskCacheSystem.workingDirectory)
+            .fileSystem(diskCacheSystem)
+            .build()
+        )
+        .build()
+    )
+
+    serverRule.server.dispatcher = object : Dispatcher() {
+      override fun dispatch(request: RecordedRequest): MockResponse {
+        return when (request.path) {
+          "/placeholder_image.png" -> rawResourceAsResponse("placeholder_image.png")
+          "/full_image.png" -> rawResourceAsResponse("full_image.png", delay = 300.milliseconds)
+          else -> error("unknown path = ${request.path}")
+        }
+      }
+    }
   }
 
   @After
@@ -72,176 +115,150 @@ class CoilImageSourceTest {
     Dispatchers.resetMain()
   }
 
-  @Test fun `verify image request specs`() = runTest(timeout = 10.minutes) {
-    val requests = Channel<ImageRequest>(capacity = Channel.CONFLATED)
+  @Test fun `images should always be written to disk`(
+    @TestParameter cachePolicy: CachePolicy
+  ) = runTest {
+    val diskCache = context.imageLoader.diskCache!!
+    val diskCacheKey = "full_image_disk_cache_key"
+
+    resolve {
+      ImageRequest.Builder(context)
+        .data(serverRule.server.url("/full_image.png"))
+        .diskCachePolicy(cachePolicy)
+        .diskCacheKey(diskCacheKey)
+        .build()
+    }.test {
+      skipItems(1)  // Default item.
+      assertThat(awaitItem().delegate).isNotNull()
+      assertThat(diskCache[diskCacheKey]).isNotNull()
+    }
+  }
+
+  @Test fun `use canvas size only if one is not provided already`() = runTest {
+    val requests = MutableStateFlow<ImageRequest?>(null)
 
     Coil.setImageLoader(buildImageLoader {
       components {
         add(buildFakeImageEngine {
           addInterceptor {
-            requests.send(it.request)
+            requests.tryEmit(it.request)
             null
           }
         })
       }
     })
 
-    val images = backgroundScope.launchMolecule(clock = Immediate) {
-      ProvideContext {
-        ZoomableImageSource.coil(
-          ImageRequest.Builder(context)
-            .data("foo")
-            .build(),
-        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
-      }
-    }
-    images.test {
-      skipItems(1)
-      cancelAndIgnoreRemainingEvents()
+    resolve(canvasSize = Size(100f, 100f)) {
+      ImageRequest.Builder(context)
+        .data(serverRule.server.url("/full_image.png"))
+        .size(5, 6)
+        .build()
+    }.test {
+      skipItems(1)  // Default item.
+      assertThat(awaitItem().delegate).isNotNull()
+
+      assertThat(requests.value!!.sizeResolver.size()).isEqualTo(
+        CoilSize(Dimension.Pixels(5), Dimension.Pixels(6))
+      )
     }
 
-    val request = requests.receive()
-    assertThat(request.diskCachePolicy.writeEnabled).isTrue()
-    assertThat(request.sizeResolver.size()).isEqualTo(CoilSize(Dimension.Pixels(1080), Dimension.Pixels(1920)))
-    assertThat(request.bitmapConfig).isEqualTo(Bitmap.Config.HARDWARE)
+    resolve(canvasSize = Size(100f, 200f)) {
+      ImageRequest.Builder(context)
+        .data(serverRule.server.url("/full_image.png"))
+        .build()
+    }.test {
+      skipItems(1)  // Default item.
+      assertThat(awaitItem().delegate).isNotNull()
+
+      assertThat(requests.value!!.sizeResolver.size()).isEqualTo(
+        CoilSize(Dimension.Pixels(100), Dimension.Pixels(200))
+      )
+    }
   }
 
-  @Test fun `start with the placeholder image`() = runTest {
-    Coil.setImageLoader(buildImageLoader {
-      components {
-        add(buildFakeImageEngine {
-          intercept("fake_image", BitmapDrawable(context.resources, fakeBitmap()))
-        })
-      }
-    })
+  @Test fun `start with the placeholder image then load the full image using subsampling`() = runTest {
+    // Seed the placeholder image so that it gets stored in memory cache.
+    val seedResult = context.imageLoader.execute(
+      ImageRequest.Builder(context)
+        .data(serverRule.server.url("/placeholder_image.png"))
+        .build()
+    )
+    check(seedResult is SuccessResult)
+    assertThat(seedResult.memoryCacheKey).isNotNull()
+    val seededBitmap = seedResult.drawable.extractBitmap()
 
-    val placeholderKey = MemoryCache.Key("placeholder_image")
-    context.imageLoader.memoryCache!![placeholderKey] = MemoryCache.Value(fakeBitmap())
+    val diskCache = context.imageLoader.diskCache!!
+    val diskCacheKey = "full_image_disk_cache_key"
 
-    backgroundScope.launchMolecule(clock = Immediate) {
-      ProvideContext {
-        ZoomableImageSource.coil(
-          buildImageRequest {
-            data("fake_image").placeholderMemoryCacheKey(placeholderKey)
-          }
-        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
-      }
+    resolve {
+      ImageRequest.Builder(context)
+        .data(serverRule.server.url("/full_image.png"))
+        .placeholderMemoryCacheKey(seedResult.memoryCacheKey)
+        .crossfade(9_000)
+        .allowHardware(false)
+        .diskCacheKey(diskCacheKey)
+        .build()
     }.test {
-      // Default value.
+      // Default item.
       assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
 
-      (awaitItem().placeholder as DrawablePainter).let { placeholder ->
-        (placeholder.drawable as BitmapDrawable).let { drawable ->
-          assertThat(drawable.bitmap.width).isEqualTo(fakeBitmap().width)
-          assertThat(drawable.bitmap.height).isEqualTo(fakeBitmap().height)
-        }
+      val placeholderUpdate = awaitItem().apply {
+        assertThat(delegate).isNull()
+        assertThatBitmapsAreEqual(
+          left = placeholder!!.extractBitmap(),
+          right = seededBitmap,
+        )
       }
-      cancelAndIgnoreRemainingEvents()
-    }
-  }
 
-  @Test fun `bitmaps should be sub-sampled`() = runTest {
-    val diskCacheFileSystem = FakeFileSystem()
-    val diskCache = DiskCache.Builder()
-      .fileSystem(diskCacheFileSystem)
-      .directory(diskCacheFileSystem.workingDirectory)
-      .build()
-
-    val imageDiskCacheKey = "bitmap_image_disk_cache_key"
-    diskCache.edit(imageDiskCacheKey)!!
-      .apply { diskCache.fileSystem.write(data) { writeUtf8("foo") } }
-      .commit()
-
-    Coil.setImageLoader(buildImageLoader {
-      diskCache(diskCache).components {
-        add(buildFakeImageEngine {
-          addInterceptor {
-            SuccessResult(
-              drawable = BitmapDrawable(context.resources, fakeBitmap()),
-              request = it.request,
-              dataSource = DataSource.MEMORY_CACHE,
-              diskCacheKey = imageDiskCacheKey,
-            )
-          }
-        })
-      }
-    })
-
-    val images = backgroundScope.launchMolecule(clock = Immediate) {
-      ProvideContext {
-        ZoomableImageSource.coil(
-          ImageRequest.Builder(context)
-            .data("ignored")
-            .build()
-        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
-      }
-    }
-
-    images.test {
-      skipItems(1)
       assertThat(awaitItem()).isEqualTo(
         ResolveResult(
-          placeholder = null,
           delegate = ZoomableImageSource.SubSamplingDelegate(
-            source = SubSamplingImageSource.file(context.imageLoader.diskCache!![imageDiskCacheKey]!!.data),
-            imageOptions = ImageBitmapOptions(config = ImageBitmapConfig.Gpu),
-          )
+            source = SubSamplingImageSource.file(diskCache[diskCacheKey]!!.data),
+            imageOptions = ImageBitmapOptions(config = ImageBitmapConfig.Argb8888),
+          ),
+          crossfadeDuration = 9.seconds,
+          placeholder = placeholderUpdate.placeholder
         )
       )
     }
   }
 
   @Test fun `reload image when image request changes`() = runTest {
-    Coil.setImageLoader(buildImageLoader {
-      components {
-        add(buildFakeImageEngine {
-          addInterceptor {
-            SuccessResult(
-              drawable = ColorDrawable(Color.Yellow.toArgb()),
-              request = it.request,
-              dataSource = DataSource.DISK,
-            )
-          }
-        })
-      }
-    })
+    var imageUrl by mutableStateOf("placeholder_image.png")
 
-    var imageUrl by mutableStateOf("image_one")
-    val images = backgroundScope.launchMolecule(clock = Immediate) {
-      ProvideContext {
-        ZoomableImageSource.coil(
-          ImageRequest.Builder(context)
-            .data(imageUrl)
-            .build()
-        ).resolve(canvasSize = flowOf(Size(1080f, 1920f)))
-      }
-    }
-
-    images.test {
+    resolve {
+      ImageRequest.Builder(context)
+        .data(serverRule.server.url("/$imageUrl"))
+        .build()
+    }.test {
       assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null)) // Default item.
       skipItems(1)
 
-      imageUrl = "image_two"
-      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
-      skipItems(1)
+      imageUrl = "full_image.png"
+      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null)) // Default item for new image.
     }
   }
 
+  // todo
   @Test fun `show error drawable if request fails`() {
-    // TODO.
   }
 
-  @Composable
-  private fun <T> ProvideContext(content: @Composable () -> T): T {
-    return CompositionLocalProviderReturnable(LocalContext provides context) {
-      content()
+  // todo
+  @Test fun `non-bitmaps should not be sub-sampled`() {
+  }
+
+  context(TestScope)
+  private fun resolve(
+    canvasSize: Size = Size(1080f, 1920f),
+    imageRequest: @Composable () -> ImageRequest
+  ): StateFlow<ResolveResult> {
+    return backgroundScope.launchMolecule(clock = RecompositionClock.Immediate) {
+      CompositionLocalProviderReturnable(LocalContext provides context) {
+        val source = ZoomableImageSource.coil(imageRequest())
+        source.resolve(flowOf(canvasSize))
+      }
     }
   }
-
-  private fun buildImageRequest(build: ImageRequest.Builder.() -> ImageRequest.Builder): ImageRequest =
-    ImageRequest.Builder(context)
-      .let(build)
-      .build()
 
   private fun buildImageLoader(build: ImageLoader.Builder.() -> ImageLoader.Builder): ImageLoader =
     ImageLoader.Builder(context)
@@ -254,14 +271,11 @@ class CoilImageSourceTest {
   ) = FakeImageLoaderEngine.Builder()
     .let(build)
     .build()
-
-  private fun fakeBitmap(): Bitmap {
-    return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-  }
 }
 
 @Composable
 @OptIn(InternalComposeApi::class)
+@SuppressLint("ComposableNaming")
 private fun <T> CompositionLocalProviderReturnable(
   vararg values: ProvidedValue<*>,
   content: @Composable () -> T
@@ -270,4 +284,47 @@ private fun <T> CompositionLocalProviderReturnable(
   val t = content()
   currentComposer.endProviders()
   return t
+}
+
+class MockWebServerRule : ExternalResource() {
+  val server = MockWebServer()
+  override fun before() = server.start()
+  override fun after() = server.close()
+}
+
+private fun rawResourceAsResponse(
+  fileName: String,
+  delay: Duration = 0.seconds,
+): MockResponse {
+  val source = FileSystem.RESOURCES.source(fileName.toPath())
+  return MockResponse()
+    .addHeader("Content-Type", "image/png")
+    .setBody(Buffer().apply { writeAll(source) })
+    .setBodyDelay(delay.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+}
+
+private fun Drawable.extractBitmap(): Bitmap {
+  return (this as BitmapDrawable).bitmap
+}
+
+private fun Painter.extractBitmap(): Bitmap {
+  return (this as DrawablePainter).drawable.extractBitmap()
+}
+
+private fun assertThatBitmapsAreEqual(
+  left: Bitmap,
+  right: Bitmap,
+) {
+  class DifferBitmapImage(val src: Bitmap) : DifferImage {
+    override val width: Int get() = src.width
+    override val height: Int get() = src.height
+    override fun getPixel(x: Int, y: Int) = DifferColor(src.getPixel(x, y))
+  }
+
+  val differ = SimpleImageComparator(maxDistance = 0f)
+  val diff = differ.compare(
+    left = DifferBitmapImage(left),
+    right = DifferBitmapImage(right),
+  )
+  assertThat(diff.pixelDifferences).isEqualTo(0)
 }

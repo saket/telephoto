@@ -109,7 +109,7 @@ internal class Resolver(
         ZoomableImageSource.SubSamplingDelegate(
           source = imageSource,
           imageOptions = ImageBitmapOptions(
-            config = request.bitmapConfig.toComposeConfig()
+            config = (result.drawable as BitmapDrawable).bitmap.config.toComposeConfig(),
           )
         )
       } else {

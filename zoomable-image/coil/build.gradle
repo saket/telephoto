@@ -19,8 +19,11 @@ dependencies {
 
   testImplementation(libs.junit)
   testImplementation(libs.truth)
+  testImplementation(libs.testParamInjector)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.turbine)
   testImplementation(libs.coil.test)
   testImplementation(libs.okio.fakeFileSystem)
+  testImplementation(libs.okhttp.mockWebServer)
+  testImplementation(libs.dropboxDiffer)
 }

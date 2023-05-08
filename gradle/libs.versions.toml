@@ -23,9 +23,11 @@ coroutines = "1.7.0-RC"
 appyx = "1.1.1"
 mavenPublish = "0.24.0"
 dropshots = "0.4.0"
+dropboxDiffer = "0.0.1"
 emulatorWtf = "0.9.5"       # https://docs.emulator.wtf/changelog/
 emulatorWtf-cli = "0.9.8"   # https://docs.emulator.wtf/changelog/
 okio = "3.3.0"
+okhttp-mockWebServer = "4.11.0"
 dokka = "1.8.10"
 
 [libraries]
@@ -65,11 +67,13 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 okio-core = { module = "com.squareup.okio:okio", version.ref = "okio" }
 okio-fakeFileSystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
+okhttp-mockWebServer = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp-mockWebServer" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 testParamInjector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "testParamInjector" }
 dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropshots" }
+dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }
 
 appyx = { module = "com.bumble.appyx:core", version.ref = "appyx" }
