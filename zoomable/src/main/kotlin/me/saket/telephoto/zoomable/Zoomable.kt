@@ -63,6 +63,7 @@ fun Modifier.zoomable(
     Modifier
       .transformable(
         state = state.transformableState,
+        canPan = state::canConsumePanChange,
         onTransformStopped = { velocity ->
           scope.launch {
             if (state.isZoomOutsideRange()) {

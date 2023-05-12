@@ -191,101 +191,94 @@ class ZoomableState internal constructor(
   }
 
   @Suppress("NAME_SHADOWING")
-  internal val transformableState = TransformableState(
-    canConsumePanChange = { panDelta ->
-      val current = rawTransformation
+  internal val transformableState = TransformableState { zoomDelta, panDelta, _, centroid ->
+    // This is the minimum scale needed to position the content
+    // within its layout bounds w.r.t. its content scale.
+    val baseZoom = contentScale.computeScaleFactor(
+      srcSize = unscaledContentBounds.size,
+      dstSize = contentLayoutSize,
+    )
 
-      if (current != null) {
-        val panDeltaWithZoom = panDelta / current.zoom
-        val newOffset = (current.offset - panDeltaWithZoom)
-        val newOffsetWithinBounds = newOffset.coerceWithinBounds(proposedZoom = current.zoom)
+    val oldZoom = ContentZoom(
+      baseZoom = baseZoom,
+      userZoom = rawTransformation?.zoom?.userZoom ?: 1f
+    )
 
-        val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
-        val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
+    val isZoomingOut = zoomDelta < 1f
+    val isZoomingIn = zoomDelta > 1f
 
-        // Give up this gesture if the content is almost near its edges.
-        // As a user, I've always hated it when I'm scrolling images in a
-        // horizontal pager, and an image that is only a pixel away from its
-        // edge is preventing the pager from scrolling. I might remove this in
-        // the future if it turns out to be useless.
-        val wasAnyPanChangeConsumed = (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) >= 1f
-        wasAnyPanChangeConsumed
-
-      } else {
-        // Content is probably not ready yet. Ignore this gesture.
-        false
-      }
-    },
-    onTransformation = { zoomDelta, panDelta, _, centroid ->
-      // This is the minimum scale needed to position the content
-      // within its layout bounds w.r.t. its content scale.
-      val baseZoom = contentScale.computeScaleFactor(
-        srcSize = unscaledContentBounds.size,
-        dstSize = contentLayoutSize,
-      )
-
-      val oldZoom = ContentZoom(
-        baseZoom = baseZoom,
-        userZoom = rawTransformation?.zoom?.userZoom ?: 1f
-      )
-
-      val isZoomingOut = zoomDelta < 1f
-      val isZoomingIn = zoomDelta > 1f
-
-      // Apply elasticity if content is being over/under-zoomed.
-      val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomSpec.range)
-      val isAtMinZoom = oldZoom.isAtMinZoom(zoomSpec.range)
-      val zoomDelta = when {
-        !zoomSpec.preventOverOrUnderZoom -> zoomDelta
-        isZoomingIn && isAtMaxZoom -> 1f + zoomDelta / 250
-        isZoomingOut && isAtMinZoom -> 1f - zoomDelta / 250
-        else -> zoomDelta
-      }
-      val newZoom = ContentZoom(
-        baseZoom = baseZoom,
-        userZoom = oldZoom.userZoom * zoomDelta
-      ).let {
-        if (zoomSpec.preventOverOrUnderZoom && (isAtMinZoom || isAtMaxZoom)) {
-          // Apply a hard-stop after a limit.
-          it.coercedIn(
-            range = zoomSpec.range,
-            leewayPercentForMinZoom = 0.1f,
-            leewayPercentForMaxZoom = 0.4f
-          )
-        } else {
-          it
-        }
-      }
-
-      val oldOffset = rawTransformation.let {
-        if (it != null) {
-          it.offset
-        } else {
-          val defaultAlignmentOffset = contentAlignment.align(
-            size = (unscaledContentBounds.size * baseZoom).roundToIntSize(),
-            space = contentLayoutSize.roundToIntSize(),
-            layoutDirection = layoutDirection
-          )
-          // Take the content's top-left into account because it may not start at 0,0.
-          unscaledContentBounds.topLeft + (-defaultAlignmentOffset.toOffset() / oldZoom)
-        }
-      }
-
-      rawTransformation = RawTransformation(
-        offset = oldOffset
-          .retainCentroidPositionAfterZoom(
-            centroid = centroid,
-            panDelta = panDelta,
-            oldZoom = oldZoom,
-            newZoom = newZoom
-          )
-          .coerceWithinBounds(proposedZoom = newZoom),
-        zoom = newZoom,
-        lastCentroid = centroid,
-        contentSize = unscaledContentLocation.size(contentLayoutSize),
-      )
+    // Apply elasticity if content is being over/under-zoomed.
+    val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomSpec.range)
+    val isAtMinZoom = oldZoom.isAtMinZoom(zoomSpec.range)
+    val zoomDelta = when {
+      !zoomSpec.preventOverOrUnderZoom -> zoomDelta
+      isZoomingIn && isAtMaxZoom -> 1f + zoomDelta / 250
+      isZoomingOut && isAtMinZoom -> 1f - zoomDelta / 250
+      else -> zoomDelta
     }
-  )
+    val newZoom = ContentZoom(
+      baseZoom = baseZoom,
+      userZoom = oldZoom.userZoom * zoomDelta
+    ).let {
+      if (zoomSpec.preventOverOrUnderZoom && (isAtMinZoom || isAtMaxZoom)) {
+        // Apply a hard-stop after a limit.
+        it.coercedIn(
+          range = zoomSpec.range,
+          leewayPercentForMinZoom = 0.1f,
+          leewayPercentForMaxZoom = 0.4f
+        )
+      } else {
+        it
+      }
+    }
+
+    val oldOffset = rawTransformation.let {
+      if (it != null) {
+        it.offset
+      } else {
+        val defaultAlignmentOffset = contentAlignment.align(
+          size = (unscaledContentBounds.size * baseZoom).roundToIntSize(),
+          space = contentLayoutSize.roundToIntSize(),
+          layoutDirection = layoutDirection
+        )
+        // Take the content's top-left into account because it may not start at 0,0.
+        unscaledContentBounds.topLeft + (-defaultAlignmentOffset.toOffset() / oldZoom)
+      }
+    }
+
+    rawTransformation = RawTransformation(
+      offset = oldOffset
+        .retainCentroidPositionAfterZoom(
+          centroid = centroid,
+          panDelta = panDelta,
+          oldZoom = oldZoom,
+          newZoom = newZoom
+        )
+        .coerceWithinBounds(proposedZoom = newZoom),
+      zoom = newZoom,
+      lastCentroid = centroid,
+      contentSize = unscaledContentLocation.size(contentLayoutSize),
+    )
+  }
+
+  internal fun canConsumePanChange(panDelta: Offset): Boolean {
+    val current = rawTransformation
+      ?: return false // Content is probably not ready yet. Ignore this gesture.
+
+    val panDeltaWithZoom = panDelta / current.zoom
+    val newOffset = (current.offset - panDeltaWithZoom)
+    val newOffsetWithinBounds = newOffset.coerceWithinBounds(proposedZoom = current.zoom)
+
+    val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
+    val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
+
+    // Give up this gesture if the content is almost near its edges.
+    // As a user, I've always hated it when I'm scrolling images in a
+    // horizontal pager, and an image that is only a pixel away from its
+    // edge is preventing the pager from scrolling. I might remove this in
+    // the future if it turns out to be useless.
+    return (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) >= 1f
+  }
 
   /**
    * Translate this offset such that the visual position of [centroid]

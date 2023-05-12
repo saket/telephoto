@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
@@ -47,13 +48,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
+import me.saket.telephoto.zoomable.internal.TransformEvent.TransformDelta
+import me.saket.telephoto.zoomable.internal.TransformEvent.TransformStarted
+import me.saket.telephoto.zoomable.internal.TransformEvent.TransformStopped
 import kotlin.math.PI
 import kotlin.math.abs
 
 // TODO: This fork of transformable() can be deleted when these are resolved:
-//  - https://issuetracker.google.com/u/1/issues/266976858
-//  - https://issuetracker.google.com/u/1/issues/266829800
-//  - https://issuetracker.google.com/u/1/issues/266829790
+//  - https://issuetracker.google.com/issues/266976858
+//  - https://issuetracker.google.com/issues/266829800
+//  - https://issuetracker.google.com/issues/266829790
 /**
  * Enable transformation gestures of the modified UI element.
  *
@@ -61,11 +65,15 @@ import kotlin.math.abs
  * `onTransformation` callback or by implementing [TransformableState] interface manually and
  * reflect their own state in UI when using this component.
  *
- * @sample androidx.compose.foundation.samples.TransformableSample
+ * This overload of transformable modifier provides [canPan] parameter, which allows the caller to
+ * control when the pan can start. making pan gesture to not to start when the scale is 1f makes
+ * transformable modifiers to work well within the scrollable container. See example:
+ * @sample androidx.compose.foundation.samples.TransformableSampleInsideScroll
  *
  * @param state [TransformableState] of the transformable. Defines how transformation events will be
  * interpreted by the user land logic, contains useful information about on-going events and
  * provides animation capabilities.
+ * @param canPan whether the pan gesture can be performed or not
  * @param lockRotationOnZoomPan If `true`, rotation is allowed only if touch slop is detected for
  * rotation before pan or zoom motions. If not, pan and zoom gestures will be detected, but rotation
  * gestures will not be. If `false`, once touch slop is reached, all three gestures are detected.
@@ -73,29 +81,31 @@ import kotlin.math.abs
  */
 fun Modifier.transformable(
   state: TransformableState,
+  canPan: (Offset) -> Boolean,
   lockRotationOnZoomPan: Boolean = false,
   onTransformStopped: (velocity: Velocity) -> Unit = {},
   enabled: Boolean = true,
 ) = composed(
   factory = {
     val updatePanZoomLock = rememberUpdatedState(lockRotationOnZoomPan)
+    val updatedCanPan = rememberUpdatedState(canPan)
     val updatedOnGestureEnd = rememberUpdatedState(onTransformStopped)
     val channel = remember { Channel<TransformEvent>(capacity = Channel.UNLIMITED) }
     if (enabled) {
       LaunchedEffect(state) {
         while (isActive) {
           var event = channel.receive()
-          if (event !is TransformEvent.TransformStarted) continue
+          if (event !is TransformStarted) continue
           try {
             state.transform(MutatePriority.UserInput) {
-              while (event !is TransformEvent.TransformStopped) {
-                (event as? TransformEvent.TransformDelta)?.let {
+              while (event !is TransformStopped) {
+                (event as? TransformDelta)?.let {
                   transformBy(it.zoomChange, it.panChange, it.rotationChange, it.centroid)
                 }
                 event = channel.receive()
               }
             }
-            (event as? TransformEvent.TransformStopped)?.let { event ->
+            (event as? TransformStopped)?.let { event ->
               updatedOnGestureEnd.value(event.velocity)
             }
           } catch (_: CancellationException) {
@@ -114,7 +124,7 @@ fun Modifier.transformable(
               detectZoom(
                 panZoomLock = updatePanZoomLock,
                 channel = channel,
-                canConsumePanChange = state::canConsumePanChange,
+                canPan = updatedCanPan,
                 velocityTracker = velocityTracker,
               )
             } catch (exception: CancellationException) {
@@ -122,7 +132,7 @@ fun Modifier.transformable(
               if (!isActive) throw exception
             } finally {
               val velocity = if (wasGestureCancelled) Velocity.Zero else velocityTracker.calculateVelocity()
-              channel.trySend(TransformEvent.TransformStopped(velocity))
+              channel.trySend(TransformStopped(velocity))
             }
           }
         }
@@ -133,6 +143,7 @@ fun Modifier.transformable(
   inspectorInfo = debugInspectorInfo {
     name = "transformable"
     properties["state"] = state
+    properties["canPan"] = canPan
     properties["enabled"] = enabled
     properties["lockRotationOnZoomPan"] = lockRotationOnZoomPan
   }
@@ -152,7 +163,7 @@ private sealed class TransformEvent {
 private suspend fun AwaitPointerEventScope.detectZoom(
   panZoomLock: State<Boolean>,
   channel: Channel<TransformEvent>,
-  canConsumePanChange: (Offset) -> Boolean,
+  canPan: State<(Offset) -> Boolean>,
   velocityTracker: VelocityTracker,
 ) {
   var rotation = 0f
@@ -161,11 +172,10 @@ private suspend fun AwaitPointerEventScope.detectZoom(
   var pastTouchSlop = false
   val touchSlop = viewConfiguration.touchSlop
   var lockedToPanZoom = false
-  var ignoringGesture = false
   awaitFirstDown(requireUnconsumed = false)
   do {
     val event = awaitPointerEvent()
-    val canceled = ignoringGesture || event.changes.fastAny { it.isConsumed }
+    val canceled = event.changes.fastAny { it.isConsumed }
     if (!canceled) {
       event.changes.fastForEach {
         velocityTracker.addPointerInputChange(it)
@@ -187,16 +197,11 @@ private suspend fun AwaitPointerEventScope.detectZoom(
 
         if (zoomMotion > touchSlop ||
           rotationMotion > touchSlop ||
-          panMotion > touchSlop
+          (panMotion > touchSlop && canPan.value(pan))
         ) {
-          // A positive zoom motion indicates the presence of multi-touch for consuming this gesture right away.
-          if (zoomMotion > 0f || canConsumePanChange(pan)) {
-            pastTouchSlop = true
-            lockedToPanZoom = panZoomLock.value && rotationMotion < touchSlop
-            channel.trySend(TransformEvent.TransformStarted)
-          } else {
-            ignoringGesture = true
-          }
+          pastTouchSlop = true
+          lockedToPanZoom = panZoomLock.value && rotationMotion < touchSlop
+          channel.trySend(TransformStarted)
         }
       }
 
@@ -205,9 +210,9 @@ private suspend fun AwaitPointerEventScope.detectZoom(
         val effectiveRotation = if (lockedToPanZoom) 0f else rotationChange
         if (effectiveRotation != 0f ||
           zoomChange != 1f ||
-          panChange != Offset.Zero
+          (panChange != Offset.Zero && canPan.value.invoke(pan))
         ) {
-          channel.trySend(TransformEvent.TransformDelta(zoomChange, panChange, effectiveRotation, centroid))
+          channel.trySend(TransformDelta(zoomChange, panChange, effectiveRotation, centroid))
         }
         event.changes.fastForEach {
           if (it.positionChanged()) {
@@ -215,6 +220,11 @@ private suspend fun AwaitPointerEventScope.detectZoom(
           }
         }
       }
+    } else {
+      channel.trySend(TransformStopped(Velocity.Zero))
     }
-  } while (!canceled && event.changes.fastAny { it.pressed })
+    val finalEvent = awaitPointerEvent(pass = PointerEventPass.Final)
+    // someone consumed while we were waiting for touch slop
+    val finallyCanceled = finalEvent.changes.fastAny { it.isConsumed } && !pastTouchSlop
+  } while (!canceled && !finallyCanceled && event.changes.fastAny { it.pressed })
 }
