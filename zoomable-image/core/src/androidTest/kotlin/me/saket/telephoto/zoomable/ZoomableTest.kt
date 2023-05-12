@@ -1,7 +1,5 @@
 package me.saket.telephoto.zoomable
 
-import android.graphics.drawable.ColorDrawable
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -13,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
+import me.saket.telephoto.util.prepareForScreenshotTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -27,13 +26,7 @@ class ZoomableTest {
   @Before
   fun setup() {
     rule.activityRule.scenario.onActivity {
-      it.actionBar?.hide()
-      it.window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
-
-      // Remove any space occupied by system bars to reduce differences
-      // in from screenshots generated on different devices.
-      it.window.setDecorFitsSystemWindows(false)
-      it.window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+      it.prepareForScreenshotTest()
     }
   }
 

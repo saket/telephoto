@@ -3,9 +3,7 @@
 package me.saket.telephoto.zoomable
 
 import android.graphics.BitmapFactory
-import android.graphics.drawable.ColorDrawable
 import android.view.ViewConfiguration
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
@@ -58,6 +56,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
+import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
@@ -88,13 +87,7 @@ class ZoomableImageTest {
     PooledImageRegionDecoder.overriddenMinPoolCount = 4
 
     rule.activityRule.scenario.onActivity {
-      it.actionBar?.hide()
-      it.window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
-
-      // Remove any space occupied by system bars to reduce differences
-      // in from screenshots generated on different devices.
-      it.window.setDecorFitsSystemWindows(false)
-      it.window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+      it.prepareForScreenshotTest()
     }
   }
 

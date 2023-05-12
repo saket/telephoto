@@ -1,9 +1,7 @@
 package me.saket.telephoto.subsampling
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -55,6 +53,7 @@ import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.util.CiScreenshotValidator
+import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -94,13 +93,7 @@ class SubSamplingImageTest {
     PooledImageRegionDecoder.overriddenMinPoolCount = 4
 
     rule.activityRule.scenario.onActivity {
-      it.actionBar?.hide()
-      it.window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
-
-      // Remove any space occupied by system bars to reduce differences
-      // in from screenshots generated on different devices.
-      it.window.setDecorFitsSystemWindows(false)
-      it.window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+      it.prepareForScreenshotTest()
     }
   }
 
