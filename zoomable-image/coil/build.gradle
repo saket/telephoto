@@ -1,7 +1,7 @@
 plugins {
   id("android-library-convention")
   id("published-library-convention")
-  id("app.cash.molecule") version "0.8.0"
+  id("app.cash.molecule") version libs.versions.molecule
 }
 
 apply plugin: 'app.cash.paparazzi'
@@ -17,6 +17,7 @@ dependencies {
   api(libs.coil.compose)
   implementation(libs.accompanist.drawablePainter)
 
+  testImplementation(projects.testUtil)
   testImplementation(libs.junit)
   testImplementation(libs.truth)
   testImplementation(libs.testParamInjector)
@@ -25,5 +26,5 @@ dependencies {
   testImplementation(libs.coil.test)
   testImplementation(libs.okio.fakeFileSystem)
   testImplementation(libs.okhttp.mockWebServer)
-  testImplementation(libs.dropboxDiffer)
+  testImplementation(libs.coil.gif)
 }

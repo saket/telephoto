@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
-import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -46,8 +45,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
 import com.dropbox.dropshots.Dropshots
-import com.dropbox.dropshots.ResultValidator
-import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
@@ -56,7 +53,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
+import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
@@ -67,7 +66,6 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -78,7 +76,11 @@ class ZoomableImageTest {
   @get:Rule val testName = TestName()
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { it },
-    resultValidator = ThresholdValidator(thresholdPercent = 0.01f)
+    resultValidator = CiScreenshotValidator(
+      context = { rule.activity },
+      tolerancePercentOnLocal = 0f,
+      tolerancePercentOnCi = 0.01f,
+    )
   )
 
   @Before
@@ -733,11 +735,4 @@ private fun ZoomableImageSource.withPlaceholder(placeholder: Painter): ZoomableI
       }
     }
   }
-}
-
-internal fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
-  ThresholdValidator(threshold = thresholdPercent / 100)
-
-private fun AndroidComposeTestRule<*, *>.waitUntil(timeout: Duration, condition: () -> Boolean) {
-  this.waitUntil(timeoutMillis = timeout.inWholeMilliseconds, condition)
 }

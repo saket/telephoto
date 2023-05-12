@@ -483,13 +483,6 @@ class SubSamplingImageTest {
   }
 }
 
-private fun ThresholdValidator(thresholdPercent: Float): ResultValidator =
-  ThresholdValidator(threshold = thresholdPercent / 100)
-
-private fun AndroidComposeTestRule<*, *>.waitUntil(timeout: Duration, condition: () -> Boolean) {
-  this.waitUntil(timeoutMillis = timeout.inWholeMilliseconds, condition)
-}
-
 private fun Context.createFileFromAsset(assetName: String): Path {
   return (cacheDir.toOkioPath() / assetName).also { path ->
     FileSystem.SYSTEM.run {

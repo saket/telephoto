@@ -1,6 +1,8 @@
 plugins {
   id("android-library-convention")
   id("published-library-convention")
+  id("device-screenshot-tests-convention")
+  id("app.cash.molecule") version libs.versions.molecule
 }
 
 android {
@@ -13,4 +15,8 @@ dependencies {
 
   api(libs.glide.core)
   implementation(libs.accompanist.drawablePainter)
+
+  androidTestImplementation(projects.testUtil)
+  androidTestImplementation(libs.turbine)
+  androidTestImplementation(libs.okhttp.mockWebServer)
 }

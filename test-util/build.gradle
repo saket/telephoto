@@ -8,4 +8,7 @@ android {
 
 dependencies {
   implementation(libs.dropshots)
+  implementation(libs.dropboxDiffer)
+  implementation(libs.compose.ui.test.junit)
+  implementation(libs.truth)
 }

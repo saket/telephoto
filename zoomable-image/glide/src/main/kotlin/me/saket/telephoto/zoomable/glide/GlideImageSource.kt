@@ -14,7 +14,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.transition.DrawableCrossFadeTransition
 import com.bumptech.glide.request.transition.Transition
@@ -22,7 +21,6 @@ import com.google.accompanist.drawablepainter.DrawablePainter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -33,7 +31,6 @@ import me.saket.telephoto.zoomable.internal.RememberWorker
 import okio.Path.Companion.toOkioPath
 import java.io.File
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resume
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -50,10 +47,9 @@ internal class GlideImageSource(
     val resolver = remember(this) {
       val requestManager = Glide.with(context)
       GlideImageResolver(
-        request = model as? RequestBuilder<Drawable> ?: requestManager.load(model),
+        request = (model as? RequestBuilder<Drawable> ?: requestManager.load(model)).lock(),
         requestManager = requestManager,
         size = { canvasSize.first().toGlideSize() },
-        ioDispatcher = Dispatchers.IO,
       )
     }
     return resolver.resolved
@@ -69,7 +65,6 @@ private class GlideImageResolver(
   private val request: RequestBuilder<Drawable>,
   private val requestManager: RequestManager,
   private val size: suspend () -> GlideSize,
-  private val ioDispatcher: CoroutineContext,
 ) : RememberWorker() {
 
   var resolved: ResolveResult by mutableStateOf(
@@ -78,6 +73,7 @@ private class GlideImageResolver(
 
   override suspend fun work() {
     request
+      .clone()
       // There's no easy way to be certain whether an image will require sub-sampling in
       // advance so assume it'll be needed and force Glide to write this image to disk.
       .diskCacheStrategy(
@@ -137,24 +133,13 @@ private class GlideImageResolver(
   }
 
   private suspend fun RequestBuilder<Drawable>.downloadAsFile(): File? {
-    return withContext(ioDispatcher) {
-      suspendCancellableCoroutine { continuation ->
-        val target: Target<File> = downloadOnly(object : CustomTarget<File>() {
-          override fun onLoadCleared(placeholder: Drawable?) {
-            continuation.cancel()
-          }
-
-          override fun onResourceReady(resource: File, transition: Transition<in File>?) {
-            continuation.resume(resource)
-          }
-
-          override fun onLoadFailed(errorDrawable: Drawable?) {
-            continuation.resume(null)
-          }
-        })
-        continuation.invokeOnCancellation {
-          requestManager.clear(target)
-        }
+    return withContext(Dispatchers.IO) {
+      try {
+        @Suppress("DEPRECATION")
+        downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get()
+      } catch (e: Throwable) {
+        e.printStackTrace()
+        null
       }
     }
   }
