@@ -16,7 +16,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 
 /**
  * A zoomable image that can be loaded by Glide and displayed using
- * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
+ * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage].
  *
  * Example usages:
  *
@@ -34,7 +34,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
  * )
  * ```
  *
- * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource]
+ * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage]
  * for full documentation.
  */
 @Composable
@@ -87,9 +87,6 @@ fun ZoomableGlideImage(
  *   contentDescription = …
  * )
  * ```
- *
- * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource]
- * for full documentation.
  */
 @Composable
 fun ZoomableImageSource.Companion.glide(model: Any?): ZoomableImageSource {
