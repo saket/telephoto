@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.graphics.ImageBitmap
 import okio.Path
 
 /**
@@ -23,42 +24,59 @@ import okio.Path
  * Raw input streams aren't supported because reading from files is significantly faster.
  */
 sealed interface SubSamplingImageSource {
+  /**
+   * A preview that can be displayed immediately while the bitmap tiles
+   * are loaded, which can be slightly slow depending on the file size.
+   */
+  val preview: ImageBitmap?
+
   companion object {
     /**
-     * Images stored on the device file system. This can be used with
+     * An image stored on the device file system. This can be used with
      * image loading libraries that store cached images on disk.
      *
-     * The returned value is stable and does not need to be remembered.
-     */
-    @Stable
-    fun file(path: Path): SubSamplingImageSource = FileImageSource(path)
-
-    /**
-     * Images stored in `src/main/assets`.
+     * @param preview See [SubSamplingImageSource.preview].
      *
      * The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun asset(name: String): SubSamplingImageSource = AssetImageSource(AssetPath(name))
+    fun file(path: Path, preview: ImageBitmap? = null): SubSamplingImageSource =
+      FileImageSource(path, preview)
 
     /**
-     * Images stored in `src/main/res/drawable*` directories.
+     * An image stored in `src/main/assets`.
+     *
+     * @param preview See [SubSamplingImageSource.preview].
+     *
+     * The returned value is stable and does not need to be remembered.
+     */
+    @Stable
+    fun asset(name: String, preview: ImageBitmap? = null): SubSamplingImageSource =
+      AssetImageSource(AssetPath(name), preview)
+
+    /**
+     * An image stored in `src/main/res/drawable*` directories.
+     *
+     * @param preview See [SubSamplingImageSource.preview].
      *
      * The returned value is stable and does not need to be remembered.
      * */
     @Stable
-    fun resource(@DrawableRes id: Int): SubSamplingImageSource = ResourceImageSource(id)
+    fun resource(@DrawableRes id: Int, preview: ImageBitmap? = null): SubSamplingImageSource =
+      ResourceImageSource(id, preview)
 
     /**
-     * Images exposed by content providers. A common use-case for this
+     * An image exposed by a content provider. A common use-case for this
      * would be to display images shared by other apps.
+     *
+     * @param preview See [SubSamplingImageSource.preview].
      *
      * The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun contentUri(uri: Uri): SubSamplingImageSource {
+    fun contentUri(uri: Uri, preview: ImageBitmap? = null): SubSamplingImageSource {
       val assetPath = uri.asAssetPathOrNull()
-      return if (assetPath != null) AssetImageSource(assetPath) else UriImageSource(uri)
+      return if (assetPath != null) AssetImageSource(assetPath, preview) else UriImageSource(uri, preview)
     }
   }
 
@@ -66,7 +84,10 @@ sealed interface SubSamplingImageSource {
 }
 
 @Immutable
-internal data class FileImageSource(val path: Path) : SubSamplingImageSource {
+internal data class FileImageSource(
+  val path: Path,
+  override val preview: ImageBitmap?
+) : SubSamplingImageSource {
   init {
     check(path.isAbsolute)
   }
@@ -79,7 +100,10 @@ internal data class FileImageSource(val path: Path) : SubSamplingImageSource {
 }
 
 @Immutable
-internal data class AssetImageSource(private val asset: AssetPath) : SubSamplingImageSource {
+internal data class AssetImageSource(
+  private val asset: AssetPath,
+  override val preview: ImageBitmap?
+) : SubSamplingImageSource {
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return context.assets.open(asset.path, AssetManager.ACCESS_RANDOM).use { stream ->
       if (BuildConfig.DEBUG && stream !is AssetManager.AssetInputStream) {
@@ -91,7 +115,10 @@ internal data class AssetImageSource(private val asset: AssetPath) : SubSampling
 }
 
 @Immutable
-internal data class ResourceImageSource(@DrawableRes val id: Int) : SubSamplingImageSource {
+internal data class ResourceImageSource(
+  @DrawableRes val id: Int,
+  override val preview: ImageBitmap?,
+) : SubSamplingImageSource {
   @SuppressLint("ResourceType")
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return context.resources.openRawResource(id).use { stream ->
@@ -101,7 +128,10 @@ internal data class ResourceImageSource(@DrawableRes val id: Int) : SubSamplingI
 }
 
 @Immutable
-internal data class UriImageSource(val uri: Uri) : SubSamplingImageSource {
+internal data class UriImageSource(
+  val uri: Uri,
+  override val preview: ImageBitmap?
+) : SubSamplingImageSource {
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return context.contentResolver.openInputStream(uri)
       ?.use { stream -> BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!! }

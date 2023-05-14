@@ -63,6 +63,7 @@ import kotlin.time.Duration.Companion.seconds
 import com.bumptech.glide.load.engine.cache.DiskCache as GlideDiskCache
 
 /** Note to self: this should ideally be a junit test, but Glide was unable to decode HTTP responses in a fake environment. */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(TestParameterInjector::class)
 class GlideImageSourceTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
@@ -129,6 +130,7 @@ class GlideImageSourceTest {
       skipItems(1) // Default item.
       with(awaitItem()) {
         val delegate = delegate as SubSamplingDelegate
+        assertThat(delegate.source.preview).isNotNull()
         assertThat(delegate.imageOptions).isEqualTo(ImageBitmapOptions(config = ImageBitmapConfig.Argb8888))
         assertThat(crossfadeDuration).isEqualTo(9.seconds)
       }

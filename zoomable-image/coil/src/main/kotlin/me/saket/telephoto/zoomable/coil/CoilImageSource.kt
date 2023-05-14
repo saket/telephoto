@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
@@ -121,6 +122,7 @@ internal class Resolver(
   private fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): SubSamplingImageSource? {
     val result = this
     val requestData = result.request.data
+    val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
 
     if (result is SuccessResult && result.drawable is BitmapDrawable) {
       // Prefer reading of images directly from files whenever possible because
@@ -129,12 +131,12 @@ internal class Resolver(
         result.diskCacheKey != null -> {
           val diskCache = imageLoader.diskCache!!
           val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
-          SubSamplingImageSource.file(cached.data)
+          SubSamplingImageSource.file(cached.data, preview)
         }
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> when {
-          requestData is Uri -> SubSamplingImageSource.contentUri(requestData)
-          requestData is String -> SubSamplingImageSource.contentUri(Uri.parse(requestData))
-          result.request.context.isResourceId(requestData) -> SubSamplingImageSource.resource(requestData)
+          requestData is Uri -> SubSamplingImageSource.contentUri(requestData, preview)
+          requestData is String -> SubSamplingImageSource.contentUri(Uri.parse(requestData), preview)
+          result.request.context.isResourceId(requestData) -> SubSamplingImageSource.resource(requestData, preview)
           else -> null
         }
         else -> null

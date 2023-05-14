@@ -194,6 +194,7 @@ class CoilImageSourceTest {
       skipItems(1) // Default item.
       with(awaitItem()) {
         val delegate = delegate as ZoomableImageSource.SubSamplingDelegate
+        assertThat(delegate.source.preview).isNotNull()
         assertThat(delegate.imageOptions).isEqualTo(ImageBitmapOptions(config = ImageBitmapConfig.Rgb565))
         assertThat(crossfadeDuration).isEqualTo(9.seconds)
       }

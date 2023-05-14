@@ -134,15 +134,13 @@ fun ZoomableImage(
       is ZoomableImageSource.SubSamplingDelegate -> {
         val subSamplingState = rememberSubSamplingImageState(
           imageSource = delegate.source,
-          transformation = state.zoomableState.contentTransformation,
+          zoomableState = state.zoomableState,
           imageOptions = delegate.imageOptions
         )
         DisposableEffect(subSamplingState) {
           state.subSamplingState = subSamplingState
-          state.zoomableState.autoApplyTransformations = false
           onDispose {
             state.subSamplingState = null
-            state.zoomableState.autoApplyTransformations = true
           }
         }
         LaunchedEffect(subSamplingState.imageSize) {

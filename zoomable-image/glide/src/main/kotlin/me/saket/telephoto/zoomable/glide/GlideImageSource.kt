@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
@@ -25,8 +26,8 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
+import okio.Path
 import okio.Path.Companion.toOkioPath
-import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -92,11 +93,12 @@ private class GlideImageResolver(
           }
           is Resource -> {
             resolved = if (instant.status == Status.SUCCEEDED) {
-              val subSamplingSource = (instant.resource as? BitmapDrawable)?.let {
+              val subSamplingSource = (instant.resource as? BitmapDrawable)?.let { drawable ->
                 // Prefer reading of images directly from files whenever possible because
                 // that is significantly faster than reading from their input streams.
-                request.downloadAsFile()?.let {
-                  SubSamplingImageSource.file(it.toOkioPath())
+                // The image should be cached so downloading it again should be super fast.
+                request.downloadAsFile()?.let { file ->
+                  SubSamplingImageSource.file(file, preview = drawable.bitmap.asImageBitmap())
                 }
               }
               resolved.copy(
@@ -124,11 +126,11 @@ private class GlideImageResolver(
       }
   }
 
-  private suspend fun RequestBuilder<Drawable>.downloadAsFile(): File? {
+  private suspend fun RequestBuilder<Drawable>.downloadAsFile(): Path? {
     return withContext(Dispatchers.IO) {
       try {
         @Suppress("DEPRECATION")
-        clone().downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get()
+        clone().downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get().toOkioPath()
       } catch (e: Throwable) {
         e.printStackTrace()
         null

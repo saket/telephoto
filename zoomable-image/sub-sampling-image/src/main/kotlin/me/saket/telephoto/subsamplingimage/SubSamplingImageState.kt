@@ -3,7 +3,6 @@
 
 package me.saket.telephoto.subsamplingimage
 
-import androidx.annotation.RestrictTo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.sourceInformation
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.IntSize
@@ -85,7 +85,12 @@ fun rememberSubSamplingImageState(
   )
 
   // SubSamplingImage will apply the transformations on its own.
-  zoomableState.autoApplyTransformations = false
+  DisposableEffect(state) {
+    zoomableState.autoApplyTransformations = false
+    onDispose {
+      zoomableState.autoApplyTransformations = true
+    }
+  }
 
   LaunchedEffect(state.imageSize) {
     zoomableState.setContentLocation(
@@ -96,30 +101,8 @@ fun rememberSubSamplingImageState(
   return state
 }
 
-/**
- * Create a [SubSamplingImageState] that can be used with [SubSamplingImage], but with your own
- * gesture detector instead of [Modifier.zoomable][me.saket.telephoto.zoomable.zoomable].
- *
- * ```kotlin
- * val imageState = rememberSubSamplingImageState(
- *   imageSource = SubSamplingImageSource.asset("fox.jpg"),
- *   transformation = ZoomableContentTransformation(
- *     isSpecified = true,
- *     scale = ScaleFactor(…),
- *     offset = Offset.Zero,
- *   )
- * )
- *
- * SubSamplingImage(
- *   modifier = Modifier.fillMaxSize(),
- *   state = imageState,
- *   contentDescription = …,
- * )
- * ```
- */
 @Composable
-@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-fun rememberSubSamplingImageState(
+internal fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   transformation: ZoomableContentTransformation,
   imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
@@ -187,7 +170,7 @@ fun rememberSubSamplingImageState(
             tileGrid.base.let { tile ->
               CanvasRegionTile(
                 bounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset),
-                bitmap = bitmaps[tile],
+                bitmap = bitmaps[tile] ?: imageSource.preview,
                 bitmapRegion = tile,
                 isBaseTile = true,
               )
