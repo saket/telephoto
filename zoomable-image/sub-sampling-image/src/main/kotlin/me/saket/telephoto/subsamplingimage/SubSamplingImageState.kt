@@ -16,7 +16,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.sourceInformation
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.IntSize
@@ -35,8 +34,6 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
-import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull

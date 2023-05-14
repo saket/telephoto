@@ -28,7 +28,6 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.doubleClick
-import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
@@ -36,8 +35,6 @@ import androidx.compose.ui.test.pinch
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
-import com.dropbox.dropshots.ResultValidator
-import com.dropbox.dropshots.ThresholdValidator
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.google.testing.junit.testparameterinjector.TestParameter
@@ -49,8 +46,8 @@ import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
-import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
+import me.saket.telephoto.subsamplingimage.ImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
@@ -71,7 +68,6 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)

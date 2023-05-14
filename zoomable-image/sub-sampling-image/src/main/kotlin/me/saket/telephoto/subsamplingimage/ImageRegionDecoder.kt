@@ -1,12 +1,11 @@
-package me.saket.telephoto.subsamplingimage.internal
+package me.saket.telephoto.subsamplingimage
 
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntSize
-import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
-import me.saket.telephoto.subsamplingimage.SubSamplingImage
-import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 
 /**
  * [ImageBitmap] decoder, responsible for loading regions of an image for [SubSamplingImage]'s tiles.

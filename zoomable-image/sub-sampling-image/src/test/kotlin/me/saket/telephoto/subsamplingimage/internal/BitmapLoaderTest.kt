@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import me.saket.telephoto.subsamplingimage.ImageRegionDecoder
 import org.junit.Test
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
