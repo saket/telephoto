@@ -18,7 +18,7 @@ import me.saket.telephoto.zoomable.internal.Zero
  * a bespoke manner.
  */
 @Immutable
-data class ZoomableContentTransformation(
+data class ZoomableContentTransformation internal constructor(
   /**
    * Whether this object contains non-placeholder values. This will be false when
    * [Modifier.zoomable] is initializing and sufficient information to position
