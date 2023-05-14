@@ -131,7 +131,8 @@ private fun AlbumGrid(
           modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-          text = item.caption
+          text = item.caption,
+          color = Color.White
         )
       }
     }
