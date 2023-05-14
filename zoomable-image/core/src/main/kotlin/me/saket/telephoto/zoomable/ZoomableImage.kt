@@ -86,9 +86,10 @@ fun ZoomableImage(
       animationSpec = tween(resolved.crossfadeDurationMs)
     )
 
-    if (resolved.placeholder != null && animatedAlpha < 1f) {
+    state.isPlaceholderDisplayed = resolved.placeholder != null && animatedAlpha < 1f
+    if (state.isPlaceholderDisplayed) {
       Image(
-        painter = animatedPainter(resolved.placeholder).scaledToMatch(
+        painter = animatedPainter(resolved.placeholder!!).scaledToMatch(
           // Align with the full-quality image even if the placeholder is smaller in size.
           // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
           state.zoomableState.contentTransformation.contentSize,
