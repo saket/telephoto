@@ -5,10 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.painter.Painter
@@ -21,6 +22,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.dropbox.dropshots.Dropshots
 import com.google.accompanist.drawablepainter.DrawablePainter
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
@@ -33,12 +35,14 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
-import me.saket.telephoto.util.BitmapSubject.Companion.assertThat
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
 import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageSource.SubSamplingDelegate
+import me.saket.telephoto.zoomable.ZoomableImageState
+import me.saket.telephoto.zoomable.rememberZoomableImageState
 import okhttp3.HttpUrl
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -72,6 +76,7 @@ class GlideImageSourceTest {
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val serverRule = MockWebServerRule()
   @get:Rule val testName = TestName()
+  @get:Rule val dropshots = Dropshots(filenameFunc = { it })
 
   @Before
   fun setup() {
@@ -81,7 +86,7 @@ class GlideImageSourceTest {
 
     serverRule.server.dispatcher = object : Dispatcher() {
       override fun dispatch(request: RecordedRequest) = when (request.path) {
-        "/full_image.png" -> rawResourceAsResponse("full_image.png", delay = 500.milliseconds)
+        "/full_image.png" -> rawResourceAsResponse("full_image.png", delay = 300.milliseconds)
         "/placeholder_image.png" -> rawResourceAsResponse("placeholder_image.png")
         "/animated_image.gif" -> rawResourceAsResponse("animated_image.gif")
         else -> error("unknown path = ${request.path}")
@@ -102,10 +107,9 @@ class GlideImageSourceTest {
     @TestParameter strategyParam: DiskCacheStrategyParam
   ) = runTest {
     val diskCacheDir = context.cacheDir.toOkioPath() / GlideDiskCache.Factory.DEFAULT_DISK_CACHE_DIR
-    val imageUrl = serverRule.server.url("full_image.png").toString()
 
     resolve(
-      model = { imageUrl },
+      model = serverRule.server.url("full_image.png").toString(),
       requestBuilder = { it.diskCacheStrategy(strategyParam.strategy) }
     ).test {
       skipItems(1)  // Default item.
@@ -118,7 +122,7 @@ class GlideImageSourceTest {
 
   @Test fun correctly_read_crossfade_duration_and_bitmap_options() = runTest {
     resolve(
-      model = { serverRule.server.url("full_image.png").toString() },
+      model = serverRule.server.url("full_image.png").toString(),
       requestBuilder = {
         it.transition(withCrossFade(9_000))
           .disallowHardwareConfig()
@@ -138,23 +142,27 @@ class GlideImageSourceTest {
   @Test fun start_with_the_placeholder_image_then_load_the_full_image_using_subsampling() = runTest {
     val seededPlaceholder = seedMemoryCacheWith(serverRule.server.url("placeholder_image.png"))
 
-    resolve(
-      model = { serverRule.server.url("full_image.png").toString() },
-      requestBuilder = {
+    var isImageDisplayed = false
+    rule.setContent {
+      ZoomableGlideImage(
+        state = rememberZoomableImageState().also {
+          isImageDisplayed = it.isImageDisplayed
+        },
+        modifier = Modifier.fillMaxSize(),
+        model = serverRule.server.url("full_image.png").toString(),
+        contentDescription = null
+      ) {
         it.placeholder(seededPlaceholder)
       }
-    ).test {
-      // Default item.
-      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
+    }
 
-      val thumbnailItem = awaitItem().apply {
-        assertThat(delegate).isNull() // Full image shouldn't load yet because the HTTP response is delayed.
-        assertThat(placeholder!!.extractBitmap()).hasSamePixelsAs(seededPlaceholder.extractBitmap())
-      }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_placeholder")
+    }
 
-      with(awaitItem()) {
-        assertThat(placeholder).isEqualTo(thumbnailItem.placeholder)
-      }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_full_quality")
     }
   }
 
@@ -162,36 +170,60 @@ class GlideImageSourceTest {
     val fullImageUrl = serverRule.server.url("full_image.png")
     val thumbnailImageUrl = serverRule.server.url("placeholder_image.png")
 
-    resolve(
-      model = { fullImageUrl.toString() },
-      requestBuilder = {
+    // So that the thumbnail is shown immediately.
+    seedMemoryCacheWith(thumbnailImageUrl)
+
+    var state: ZoomableImageState? = null
+    rule.setContent {
+      ZoomableGlideImage(
+        state = rememberZoomableImageState().also { state = it },
+        modifier = Modifier.fillMaxSize(),
+        model = fullImageUrl.toString(),
+        contentDescription = null
+      ) {
         it.thumbnail(
           Glide.with(context).load(thumbnailImageUrl.toString())
         )
       }
-    ).test {
-      // Default item.
-      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
+    }
 
-      val thumbnailItem = awaitItem().apply {
-        assertThat(delegate).isNull() // Full image shouldn't load yet because the HTTP response is delayed.
-      }
-      with(awaitItem()) {
-        assertThat(delegate).isInstanceOf(SubSamplingDelegate::class.java)
-        assertThat(placeholder).isEqualTo(thumbnailItem.placeholder)
-      }
+    rule.waitUntil(5.seconds) { state!!.isPlaceholderDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_thumbnail")
+    }
+
+    rule.waitUntil(5.seconds) { state!!.isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_full_quality")
     }
   }
 
   @Test fun reload_image_when_image_request_changes() = runTest {
-    var imageUrl by mutableStateOf("placeholder_image.png")
+    var imageUrl by mutableStateOf(serverRule.server.url("placeholder_image.png"))
 
-    resolve(model = { serverRule.server.url(imageUrl).toString() }).test {
-      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null)) // Default item.
-      skipItems(1)
+    var isImageDisplayed = false
+    rule.setContent {
+      ZoomableGlideImage(
+        state = rememberZoomableImageState().also {
+          isImageDisplayed = it.isImageDisplayed
+        },
+        modifier = Modifier.fillMaxSize(),
+        model = imageUrl.toString(),
+        contentDescription = null
+      )
+    }
 
-      imageUrl = "full_image.png"
-      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null)) // Default item for new image.
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_first_image")
+    }
+
+    imageUrl = serverRule.server.url("full_image.png")
+
+    rule.waitUntil(5.seconds) { !isImageDisplayed }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_second_image")
     }
   }
 
@@ -201,7 +233,7 @@ class GlideImageSourceTest {
 
   @Test fun non_bitmaps_should_not_be_sub_sampled() = runTest {
     resolve(
-      model = { serverRule.server.url("animated_image.gif").toString() }
+      model = serverRule.server.url("animated_image.gif").toString()
     ).test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate).isNotInstanceOf(SubSamplingDelegate::class.java)
@@ -230,13 +262,13 @@ class GlideImageSourceTest {
 
   context(TestScope)
   private fun resolve(
-    model: () -> Any?,
+    model: Any?,
     requestBuilder: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
     canvasSize: Size = Size(1080f, 1920f)
   ): Flow<ResolveResult> {
     return backgroundScope.launchMolecule(clock = RecompositionClock.Immediate) {
       CompositionLocalProviderReturnable(LocalContext provides rule.activity) {
-        val source = ZoomableImageSource.glide(model(), requestBuilder)
+        val source = ZoomableImageSource.glide(model, requestBuilder)
         source.resolve(flowOf(canvasSize))
       }
     }
