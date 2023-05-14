@@ -1,10 +1,9 @@
 plugins {
   id("android-library-convention")
   id("published-library-convention")
+  id("device-screenshot-tests-convention")
   id("app.cash.molecule") version libs.versions.molecule
 }
-
-apply plugin: 'app.cash.paparazzi'
 
 android {
   namespace "me.saket.telephoto.zoomable.image.coil"
@@ -17,14 +16,10 @@ dependencies {
   api(libs.coil.compose)
   implementation(libs.accompanist.drawablePainter)
 
-  testImplementation(projects.testUtil)
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
-  testImplementation(libs.testParamInjector)
-  testImplementation(libs.kotlinx.coroutines.test)
-  testImplementation(libs.turbine)
-  testImplementation(libs.coil.test)
-  testImplementation(libs.okio.fakeFileSystem)
-  testImplementation(libs.okhttp.mockWebServer)
-  testImplementation(libs.coil.gif)
+  androidTestImplementation(projects.testUtil)
+  androidTestImplementation(libs.turbine)
+  androidTestImplementation(libs.okhttp.mockWebServer)
+  androidTestImplementation(libs.coil.gif)
+  androidTestImplementation(libs.coil.test)
+  androidTestImplementation(libs.okio.fakeFileSystem)
 }
