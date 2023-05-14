@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
-import me.saket.telephoto.subsamplingimage.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.toAndroidConfig
 

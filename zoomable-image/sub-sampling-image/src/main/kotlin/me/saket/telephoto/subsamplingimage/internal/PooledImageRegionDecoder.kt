@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
-import me.saket.telephoto.subsamplingimage.ImageRegionDecoder
 
 /**
  * Maintains a pool of decoders to load multiple bitmap regions in parallel. Without this,

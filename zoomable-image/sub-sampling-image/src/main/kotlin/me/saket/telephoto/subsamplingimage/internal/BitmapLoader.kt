@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import me.saket.telephoto.subsamplingimage.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader.LoadingState.InFlight
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader.LoadingState.Loaded
 

@@ -34,6 +34,8 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull

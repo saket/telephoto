@@ -46,8 +46,8 @@ import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
-import me.saket.telephoto.subsamplingimage.ImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.LocalImageRegionDecoderFactory
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
