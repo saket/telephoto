@@ -43,11 +43,14 @@ import me.saket.telephoto.zoomable.internal.transformable
  * [Modifier.combinedClickable] will not work on the composable this `Modifier.zoomable()` is applied to.
  * As an alternative, [onClick] and [onLongClick] parameters can be used instead.
  *
- * @param clipToBounds Defaults to true to act as a reminder that this layout should probably fill all
+ * @param enabled whether or not gestures are enabled.
+ *
+ * @param clipToBounds defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  * */
 fun Modifier.zoomable(
   state: ZoomableState,
+  enabled: Boolean = true,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
@@ -64,6 +67,7 @@ fun Modifier.zoomable(
       .transformable(
         state = state.transformableState,
         canPan = state::canConsumePanChange,
+        enabled = enabled,
         onTransformStopped = { velocity ->
           scope.launch {
             if (state.isZoomOutsideRange()) {
@@ -75,7 +79,7 @@ fun Modifier.zoomable(
           }
         }
       )
-      .pointerInput(Unit) {
+      .pointerInput(enabled) {
         detectTapGestures(
           onPress = {
             state.transformableState.stopTransformation(MutatePriority.UserInput)
@@ -98,6 +102,7 @@ fun Modifier.zoomable(
         )
       }
       .doubleTapZoomable(
+        enabled = enabled,
         state = state.transformableState,
         onQuickZoomStarted = { isQuickZooming = true },
         onQuickZoomStopped = {

@@ -586,13 +586,56 @@ class ZoomableImageTest {
     }
 
     rule.onNodeWithTag("zoomable").performTouchInput {
-      click(center)
-      advanceEventTime(42)
-      swipeDown(startY = centerY, endY = bottom, durationMillis = 1_000)
+      quickZoom()
     }
     rule.runOnIdle {
       // Zoom should never cross the max zoom even if the gesture above over-zooms.
       assertThat(currentZoom).isEqualTo(maxZoomFactor)
+    }
+  }
+
+  @Test fun gestures_are_ignored_when_gestures_are_disabled() {
+    var currentZoom = 0f
+
+    rule.setContent {
+      val state = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 5f)
+      )
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        state = rememberZoomableImageState(state),
+        contentDescription = null,
+        gesturesEnabled = false,
+      )
+
+      LaunchedEffect(state.contentTransformation) {
+        currentZoom = state.contentTransformation.scale.scaleY
+      }
+    }
+
+    rule.onNodeWithTag("image").run {
+      performTouchInput {
+        pinchToZoomBy(visibleSize.center / 2f)
+      }
+      performTouchInput {
+        doubleClick()
+      }
+      performTouchInput {
+        quickZoom()
+      }
+      performTouchInput {
+        swipe(LeftToRight)
+      }
+      performTouchInput {
+        swipeWithVelocity(RightToLeft)
+      }
+    }
+
+    rule.runOnIdle {
+      assertThat(currentZoom).isEqualTo(1f)
     }
   }
 
@@ -683,6 +726,14 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
     end0 = center - by.toOffset(),
     end1 = center + by.toOffset(),
   )
+}
+
+private fun TouchInjectionScope.quickZoom() {
+  val doubleTapMinTimeMillis = 40L // From LocalViewConfiguration.current.doubleTapMinTimeMillis.
+
+  click(center)
+  advanceEventTime(doubleTapMinTimeMillis + 2)
+  swipeDown(startY = centerY, endY = bottom, durationMillis = 1_000)
 }
 
 @Composable

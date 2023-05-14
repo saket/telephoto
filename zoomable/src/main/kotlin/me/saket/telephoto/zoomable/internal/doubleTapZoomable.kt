@@ -34,6 +34,7 @@ internal fun Modifier.doubleTapZoomable(
   onQuickZoomStopped: () -> Unit,
   onDoubleTap: (centroid: Offset) -> Unit,
   state: TransformableState,
+  enabled: Boolean,
 ): Modifier {
   return composed {
     val onZoomStarted by rememberUpdatedState(onQuickZoomStarted)
@@ -70,8 +71,10 @@ internal fun Modifier.doubleTapZoomable(
       }
     }
 
-    return@composed pointerInput(Unit) {
-      detectQuickZoomGestures(consumer = channel::trySend)
+    return@composed pointerInput(enabled) {
+      if (enabled) {
+        detectQuickZoomGestures(consumer = channel::trySend)
+      }
     }
   }
 }

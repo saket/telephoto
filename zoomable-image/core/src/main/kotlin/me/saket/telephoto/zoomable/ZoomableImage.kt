@@ -41,7 +41,9 @@ import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
  * and [Modifier.combinedClickable] will not work on this composable. As an alternative, [onClick]
  * and [onLongClick] parameters can be used instead.
  *
- * @param clipToBounds Defaults to true to act as a reminder that this layout should probably fill all
+ * @param gesturesEnabled whether or not gestures are enabled.
+ *
+ * @param clipToBounds defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  */
 @Composable
@@ -54,6 +56,7 @@ fun ZoomableImage(
   colorFilter: ColorFilter? = null,
   alignment: Alignment = Alignment.Center,
   contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
@@ -104,6 +107,7 @@ fun ZoomableImage(
 
     val zoomable = Modifier.zoomable(
       state = state.zoomableState,
+      enabled = gesturesEnabled,
       onClick = onClick,
       onLongClick = onLongClick,
       clipToBounds = clipToBounds,
