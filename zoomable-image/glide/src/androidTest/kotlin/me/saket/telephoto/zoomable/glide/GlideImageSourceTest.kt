@@ -101,6 +101,7 @@ class GlideImageSourceTest {
   @Test fun images_should_always_be_written_to_disk(
     @TestParameter strategyParam: DiskCacheStrategyParam
   ) = runTest {
+    val fileSystem = FileSystem.SYSTEM
     val diskCacheDir = context.cacheDir.toOkioPath() / GlideDiskCache.Factory.DEFAULT_DISK_CACHE_DIR
 
     resolve(
@@ -108,10 +109,12 @@ class GlideImageSourceTest {
       requestBuilder = { it.diskCacheStrategy(strategyParam.strategy) }
     ).test {
       skipItems(1)  // Default item.
-      assertThat(FileSystem.SYSTEM.list(diskCacheDir)).isEmpty()
+      if (fileSystem.exists(diskCacheDir)) {
+        assertThat(fileSystem.list(diskCacheDir)).isEmpty()
+      }
 
       assertThat(awaitItem().delegate).isInstanceOf(SubSamplingDelegate::class.java)
-      assertThat(FileSystem.SYSTEM.list(diskCacheDir)).isNotEmpty()
+      assertThat(fileSystem.list(diskCacheDir)).isNotEmpty()
     }
   }
 
