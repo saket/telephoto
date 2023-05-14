@@ -482,8 +482,11 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun zoom_fraction_is_correctly_calculated() {
-    var zoomFraction: Float? = null
+  @Test fun zoom_fraction_is_correctly_calculated(
+    @TestParameter scale: ContentScaleParam
+  ) {
+    var state: ZoomableImageState? = null
+    fun zoomFraction() = state!!.zoomableState.zoomFraction
 
     rule.setContent {
       val zoomableState = rememberZoomableState(
@@ -494,31 +497,43 @@ class ZoomableImageTest {
           .fillMaxSize()
           .testTag("image"),
         image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
-        state = rememberZoomableImageState(zoomableState),
+        state = rememberZoomableImageState(zoomableState).also { state = it },
+        contentScale = scale.value,
         contentDescription = null,
       )
+    }
 
-      LaunchedEffect(zoomableState.zoomFraction) {
-        zoomFraction = zoomableState.zoomFraction
+    rule.waitUntil(5.seconds) { state!!.isImageDisplayed }
+
+    val isImageStretchedToFill = when (scale) {
+      ContentScaleParam.Crop -> true
+      ContentScaleParam.Fit -> false
+      ContentScaleParam.Inside -> false
+      ContentScaleParam.Fill -> true
+    }
+
+    if (isImageStretchedToFill) {
+      rule.runOnIdle {
+        assertThat(zoomFraction()).isEqualTo(1f)
       }
-    }
+    } else {
+      rule.runOnIdle {
+        assertThat(zoomFraction()).isEqualTo(0f)
+      }
 
-    rule.runOnIdle {
-      assertThat(zoomFraction).isEqualTo(0f)
-    }
+      rule.onNodeWithTag("image").performTouchInput {
+        pinchToZoomBy(IntOffset(0, 5))
+      }
+      rule.runOnIdle {
+        assertThat(zoomFraction()).isWithin(0.1f).of(0.6f)
+      }
 
-    rule.onNodeWithTag("image").performTouchInput {
-      pinchToZoomBy(IntOffset(0, 5))
-    }
-    rule.runOnIdle {
-      assertThat(zoomFraction).isWithin(0.1f).of(0.6f)
-    }
-
-    rule.onNodeWithTag("image").performTouchInput {
-      doubleClick()
-    }
-    rule.runOnIdle {
-      assertThat(zoomFraction).isEqualTo(1f)
+      rule.onNodeWithTag("image").performTouchInput {
+        doubleClick()
+      }
+      rule.runOnIdle {
+        assertThat(zoomFraction()).isEqualTo(1f)
+      }
     }
   }
 
@@ -595,25 +610,21 @@ class ZoomableImageTest {
   }
 
   @Test fun gestures_are_ignored_when_gestures_are_disabled() {
-    var currentZoom = 0f
+    var state: ZoomableImageState? = null
+    fun zoomFraction() = state!!.zoomableState.zoomFraction
 
     rule.setContent {
-      val state = rememberZoomableState(
-        zoomSpec = ZoomSpec(maxZoomFactor = 5f)
-      )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
           .testTag("image"),
         image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
-        state = rememberZoomableImageState(state),
+        state = rememberZoomableImageState(
+          rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 5f))
+        ).also { state = it },
         contentDescription = null,
         gesturesEnabled = false,
       )
-
-      LaunchedEffect(state.contentTransformation) {
-        currentZoom = state.contentTransformation.scale.scaleY
-      }
     }
 
     rule.onNodeWithTag("image").run {
@@ -635,7 +646,7 @@ class ZoomableImageTest {
     }
 
     rule.runOnIdle {
-      assertThat(currentZoom).isEqualTo(1f)
+      assertThat(zoomFraction()).isEqualTo(0f)
     }
   }
 

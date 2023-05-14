@@ -155,8 +155,11 @@ class ZoomableState internal constructor(
     rawTransformation?.let {
       val min = zoomSpec.range.minZoom(it.zoom.baseZoom)
       val max = zoomSpec.range.maxZoom(it.zoom.baseZoom)
-      val current = it.zoom.finalZoom().maxScale
-      ((current - min) / (max - min)).coerceIn(0f, 1f)
+      val current = it.zoom.finalZoom().maxScale.coerceIn(min, max)
+      when {
+        current == min && min == max -> 1f  // Content can't zoom.
+        else -> ((current - min) / (max - min)).coerceIn(0f, 1f)
+      }
     }
   }
 
