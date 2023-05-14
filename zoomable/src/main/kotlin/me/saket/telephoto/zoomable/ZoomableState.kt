@@ -349,17 +349,16 @@ class ZoomableState internal constructor(
     }
   }
 
-  /** Reset content to its minimum zoom and zero offset **without** any animation. */
-  fun resetZoomImmediately() {
-    rawTransformation = null
-  }
-
-  /** Smoothly reset content to its minimum zoom and zero offset **with** animation. */
-  suspend fun resetZoom() {
-    smoothlyToggleZoom(
-      shouldZoomIn = false,
-      centroid = Offset.Zero,
-    )
+  /** Reset content to its minimum zoom and zero offset. */
+  suspend fun resetZoom(withAnimation: Boolean = true) {
+    if (withAnimation) {
+      smoothlyToggleZoom(
+        shouldZoomIn = false,
+        centroid = Offset.Zero,
+      )
+    } else {
+      rawTransformation = null
+    }
   }
 
   /**

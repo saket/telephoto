@@ -90,7 +90,7 @@ private fun MediaPage(
 
   if (!isActivePage) {
     LaunchedEffect(Unit) {
-      zoomableState.resetZoomImmediately()
+      zoomableState.resetZoom(withAnimation = false)
     }
   }
 }

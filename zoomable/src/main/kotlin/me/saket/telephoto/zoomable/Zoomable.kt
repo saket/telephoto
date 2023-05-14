@@ -132,6 +132,7 @@ fun Modifier.zoomable(
     )
 }
 
+// Can be removed once https://issuetracker.google.com/u/1/issues/195043382 is fixed.
 private object HapticFeedbackConstantsCompat {
   val GESTURE_END: Int
     get() {

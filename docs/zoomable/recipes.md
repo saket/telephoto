@@ -35,7 +35,7 @@ HorizontalPager(
     // Page is now off-screen. Prevent restoration of 
     // current zoom when this page becomes visible again.
     LaunchedEffect(Unit) {
-      zoomableState.resetZoomImmediately()
+      zoomableState.resetZoom(withAnimation = false)
     }
   }
 }
