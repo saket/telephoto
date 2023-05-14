@@ -2,20 +2,23 @@ package me.saket.telephoto.subsamplingimage
 
 import android.graphics.Bitmap
 import android.os.Build.VERSION.SDK_INT
-import androidx.annotation.RestrictTo
 import androidx.compose.ui.graphics.ImageBitmapConfig
 
 data class ImageBitmapOptions(
   val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888
 ) {
-
   companion object {
     val Default = ImageBitmapOptions()
   }
 }
 
-@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-fun Bitmap.Config.toComposeConfig(): ImageBitmapConfig {
+fun ImageBitmapOptions(from: Bitmap): ImageBitmapOptions {
+  return ImageBitmapOptions(
+    config = from.config.toComposeConfig()
+  )
+}
+
+private fun Bitmap.Config.toComposeConfig(): ImageBitmapConfig {
   return when {
     SDK_INT >= 26 && this == Bitmap.Config.HARDWARE -> ImageBitmapConfig.Gpu
     SDK_INT >= 26 && this == Bitmap.Config.RGBA_F16 -> ImageBitmapConfig.F16
@@ -26,8 +29,7 @@ fun Bitmap.Config.toComposeConfig(): ImageBitmapConfig {
   }
 }
 
-@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-fun ImageBitmapConfig.toAndroidConfig(): Bitmap.Config {
+internal fun ImageBitmapConfig.toAndroidConfig(): Bitmap.Config {
   return when {
     SDK_INT >= 26 && this == ImageBitmapConfig.Gpu -> Bitmap.Config.HARDWARE
     SDK_INT >= 26 && this == ImageBitmapConfig.F16 -> Bitmap.Config.RGBA_F16

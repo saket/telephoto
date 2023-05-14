@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
-import me.saket.telephoto.subsamplingimage.toComposeConfig
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
@@ -105,9 +104,7 @@ private class GlideImageResolver(
                 delegate = if (subSamplingSource != null) {
                   ZoomableImageSource.SubSamplingDelegate(
                     source = subSamplingSource,
-                    imageOptions = ImageBitmapOptions(
-                      config = instant.resource.bitmap.config.toComposeConfig(),
-                    )
+                    imageOptions = ImageBitmapOptions(from = instant.resource.bitmap)
                   )
                 } else {
                   ZoomableImageSource.PainterDelegate(

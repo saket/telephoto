@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
-import me.saket.telephoto.subsamplingimage.toComposeConfig
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
@@ -108,9 +107,7 @@ internal class Resolver(
       delegate = if (result is SuccessResult && imageSource != null) {
         ZoomableImageSource.SubSamplingDelegate(
           source = imageSource,
-          imageOptions = ImageBitmapOptions(
-            config = (result.drawable as BitmapDrawable).bitmap.config.toComposeConfig(),
-          )
+          imageOptions = ImageBitmapOptions(from = (result.drawable as BitmapDrawable).bitmap)
         )
       } else {
         ZoomableImageSource.PainterDelegate(
