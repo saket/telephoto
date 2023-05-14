@@ -163,8 +163,7 @@ class ZoomableState internal constructor(
   internal var rawTransformation: RawTransformation? by mutableStateOf(initialTransformation)
 
   internal var zoomSpec by mutableStateOf(ZoomSpec())
-
-  internal lateinit var layoutDirection: LayoutDirection
+  internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
 
   /**
    * Raw size of the zoomable content without any scaling applied.
