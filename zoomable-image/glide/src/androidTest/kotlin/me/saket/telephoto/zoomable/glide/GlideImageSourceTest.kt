@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
@@ -103,15 +102,12 @@ class GlideImageSourceTest {
     @TestParameter strategyParam: DiskCacheStrategyParam
   ) = runTest {
     val diskCacheDir = context.cacheDir.toOkioPath() / GlideDiskCache.Factory.DEFAULT_DISK_CACHE_DIR
-    val imageUrl = serverRule.server.awaitUrl("full_image.png").toString()
+    val imageUrl = serverRule.server.url("full_image.png").toString()
 
-    resolve {
-      remember {
-        Glide.with(context)
-          .load(imageUrl)
-          .diskCacheStrategy(strategyParam.strategy)
-      }
-    }.test {
+    resolve(
+      model = { imageUrl },
+      requestBuilder = { it.diskCacheStrategy(strategyParam.strategy) }
+    ).test {
       skipItems(1)  // Default item.
       assertThat(FileSystem.SYSTEM.list(diskCacheDir)).isEmpty()
 
@@ -120,19 +116,34 @@ class GlideImageSourceTest {
     }
   }
 
-  @Test fun start_with_the_placeholder_image_then_load_the_full_image_using_subsampling() = runTest {
-    val seededPlaceholder = seedMemoryCacheWith(serverRule.server.awaitUrl("placeholder_image.png"))
-
-    val fullImageUrl = serverRule.server.awaitUrl("full_image.png")
-    resolve {
-      remember {
-        Glide.with(context)
-          .load(fullImageUrl.toString())
-          .placeholder(seededPlaceholder)
-          .transition(withCrossFade(9_000))
+  @Test fun correctly_read_crossfade_duration_and_bitmap_options() = runTest {
+    resolve(
+      model = { serverRule.server.url("full_image.png").toString() },
+      requestBuilder = {
+        it.transition(withCrossFade(9_000))
           .disallowHardwareConfig()
       }
-    }.test {
+    ).test {
+      // Default item.
+      assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
+
+      with(awaitItem()) {
+        val delegate = delegate as SubSamplingDelegate
+        assertThat(delegate.imageOptions).isEqualTo(ImageBitmapOptions(config = ImageBitmapConfig.Argb8888))
+        assertThat(crossfadeDuration).isEqualTo(9.seconds)
+      }
+    }
+  }
+
+  @Test fun start_with_the_placeholder_image_then_load_the_full_image_using_subsampling() = runTest {
+    val seededPlaceholder = seedMemoryCacheWith(serverRule.server.url("placeholder_image.png"))
+
+    resolve(
+      model = { serverRule.server.url("full_image.png").toString() },
+      requestBuilder = {
+        it.placeholder(seededPlaceholder)
+      }
+    ).test {
       // Default item.
       assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
 
@@ -142,28 +153,23 @@ class GlideImageSourceTest {
       }
 
       with(awaitItem()) {
-        val delegate = delegate as SubSamplingDelegate
-        assertThat(delegate.imageOptions).isEqualTo(ImageBitmapOptions(config = ImageBitmapConfig.Argb8888))
-
-        assertThat(crossfadeDuration).isEqualTo(9.seconds)
         assertThat(placeholder).isEqualTo(thumbnailItem.placeholder)
       }
     }
   }
 
   @Test fun start_with_the_thumbnail_image_then_load_the_full_image_using_subsampling() = runTest {
-    val thumbnailImageUrl = serverRule.server.awaitUrl("placeholder_image.png")
-    val fullImageUrl = serverRule.server.awaitUrl("full_image.png")
+    val fullImageUrl = serverRule.server.url("full_image.png")
+    val thumbnailImageUrl = serverRule.server.url("placeholder_image.png")
 
-    resolve {
-      remember {
-        Glide.with(context)
-          .load(fullImageUrl.toString())
-          .thumbnail(
-            Glide.with(context).load(thumbnailImageUrl.toString())
-          )
+    resolve(
+      model = { fullImageUrl.toString() },
+      requestBuilder = {
+        it.thumbnail(
+          Glide.with(context).load(thumbnailImageUrl.toString())
+        )
       }
-    }.test {
+    ).test {
       // Default item.
       assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null))
 
@@ -180,12 +186,7 @@ class GlideImageSourceTest {
   @Test fun reload_image_when_image_request_changes() = runTest {
     var imageUrl by mutableStateOf("placeholder_image.png")
 
-    resolve {
-      remember(imageUrl) {
-        Glide.with(context)
-          .load(serverRule.server.url(imageUrl).toString())
-      }
-    }.test {
+    resolve(model = { serverRule.server.url(imageUrl).toString() }).test {
       assertThat(awaitItem()).isEqualTo(ResolveResult(delegate = null)) // Default item.
       skipItems(1)
 
@@ -198,21 +199,13 @@ class GlideImageSourceTest {
   @Test fun show_error_drawable_if_request_fails() = runTest {
   }
 
-  // todo
   @Test fun non_bitmaps_should_not_be_sub_sampled() = runTest {
-    resolve {
-      remember {
-        Glide.with(context)
-          .load(serverRule.server.url("animated_image.gif").toString())
-      }
-    }.test {
+    resolve(
+      model = { serverRule.server.url("animated_image.gif").toString() }
+    ).test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate).isNotInstanceOf(SubSamplingDelegate::class.java)
     }
-  }
-
-  private suspend fun MockWebServer.awaitUrl(path: String): HttpUrl {
-    return url(path)
   }
 
   private suspend fun seedMemoryCacheWith(imageUrl: HttpUrl): Drawable {
@@ -237,12 +230,13 @@ class GlideImageSourceTest {
 
   context(TestScope)
   private fun resolve(
-    canvasSize: Size = Size(1080f, 1920f),
-    requestBuilder: @Composable () -> RequestBuilder<Drawable>
+    model: () -> Any?,
+    requestBuilder: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+    canvasSize: Size = Size(1080f, 1920f)
   ): Flow<ResolveResult> {
     return backgroundScope.launchMolecule(clock = RecompositionClock.Immediate) {
       CompositionLocalProviderReturnable(LocalContext provides rule.activity) {
-        val source = ZoomableImageSource.glide(requestBuilder())
+        val source = ZoomableImageSource.glide(model(), requestBuilder)
         source.resolve(flowOf(canvasSize))
       }
     }

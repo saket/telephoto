@@ -37,8 +37,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
  * )
  * ```
  *
- * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage]
- * for full documentation.
+ * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage] for full documentation of parameters.
  */
 @Composable
 fun ZoomableAsyncImage(

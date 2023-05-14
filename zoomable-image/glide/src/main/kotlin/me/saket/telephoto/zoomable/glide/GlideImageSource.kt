@@ -9,8 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalContext
-import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
@@ -30,24 +28,21 @@ import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import okio.Path.Companion.toOkioPath
 import java.io.File
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import me.saket.telephoto.zoomable.glide.Size as GlideSize
 
 internal class GlideImageSource(
-  private val model: Any?
+  private val requestManager: RequestManager,
+  private val request: RequestBuilder<Drawable>,
 ) : ZoomableImageSource {
 
   @Composable
-  @Suppress("UNCHECKED_CAST")
   override fun resolve(canvasSize: Flow<Size>): ResolveResult {
-    val context = LocalContext.current
     val resolver = remember(this) {
-      val requestManager = Glide.with(context)
       GlideImageResolver(
-        request = (model as? RequestBuilder<Drawable> ?: requestManager.load(model)).lock(),
+        request = request,
         requestManager = requestManager,
         size = { canvasSize.first().toGlideSize() },
       )
@@ -136,7 +131,7 @@ private class GlideImageResolver(
     return withContext(Dispatchers.IO) {
       try {
         @Suppress("DEPRECATION")
-        downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get()
+        clone().downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get()
       } catch (e: Throwable) {
         e.printStackTrace()
         null

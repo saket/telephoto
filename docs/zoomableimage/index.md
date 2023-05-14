@@ -32,7 +32,7 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 
 ### Image requests
 
-For complex scenarios, the `model` parameter can take full image requests. 
+For complex scenarios, `ZoomableImage` can also take full image requests: 
 
 === "Coil"
     ```kotlin
@@ -54,9 +54,10 @@ For complex scenarios, the `model` parameter can take full image requests.
 === "Glide"
     ```kotlin
     ZoomableGlideImage(
-      model = Glide.with(LocalContext.current)
-        .load("https://example.com/image.jpg")
-        .addListener(object : RequestListener<Drawable> {
+      model = "https://example.com/image.jpg",
+      contentDescription = …
+    ) {
+      it.addListener(object : RequestListener<Drawable> {
           override fun onResourceReady(…): Boolean = TODO()
           override fun onLoadFailed(…): Boolean = TODO()
         })
@@ -64,8 +65,7 @@ For complex scenarios, the `model` parameter can take full image requests.
         .skipMemoryCache(true)
         .disallowHardwareConfig()
         .timeout(30_000),
-      contentDescription = …
-    )
+    }
     ```
 
 ### Placeholders
@@ -91,15 +91,15 @@ When combined with a cross-fade transition, `ZoomableImage` will smoothly swap o
     More details about `placeholderMemoryCacheKey()` can be found on [Coil's website](https://coil-kt.github.io/coil/recipes/#using-a-memory-cache-key-as-a-placeholder).
 
 === "Glide"
-    ```kotlin hl_lines="5-6"
+    ```kotlin hl_lines="6-7"
     ZoomableGlideImage(
       modifier = Modifier.fillMaxSize(),
-      model = Glide.with(LocalContext.current)
-        .load("https://example.com/image.jpg")
-        .thumbnail(…)   // or placeholder()
-        .transition(withCrossFade(1_000)),
+      model = "https://example.com/image.jpg",
       contentDescription = …
-    )
+    ) {
+      it.thumbnail(…)   // or placeholder()
+        .transition(withCrossFade(1_000)),
+    }
     ```
     More details about `thumbnail()` can be found on [Glide's website](https://bumptech.github.io/glide/doc/options.html#thumbnail-requests).
 
