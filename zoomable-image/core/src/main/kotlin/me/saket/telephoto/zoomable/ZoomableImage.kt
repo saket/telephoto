@@ -107,7 +107,7 @@ fun ZoomableImage(
 
     val zoomable = Modifier.zoomable(
       state = state.zoomableState,
-      enabled = gesturesEnabled,
+      enabled = gesturesEnabled && !state.isPlaceholderDisplayed,
       onClick = onClick,
       onLongClick = onLongClick,
       clipToBounds = clipToBounds,
