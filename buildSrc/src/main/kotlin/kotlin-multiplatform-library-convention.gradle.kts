@@ -8,6 +8,7 @@ plugins {
 
 kotlin {
   android {
+    publishLibraryVariants("release")
     compilations.configureEach {
       kotlinOptions {
         jvmTarget = "11"
