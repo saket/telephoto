@@ -48,7 +48,7 @@ For richer content such as an `Image()` whose _visual_ size may not always match
 val state = rememberZoomableState()
 val painter = resourcePainter(R.drawable.example)
 
-LaunchedEffect(painter) {
+LaunchedEffect(painter.intrinsicSize) {
   state.setContentLocation(
     ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
   )
