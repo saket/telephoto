@@ -1,5 +1,7 @@
 # telephoto
 
+https://github.com/saket/telephoto/assets/2387680/cb50142e-14b9-49bf-9069-8921fa80d08b
+
 Designing a cohesive media experience for Android can be a lot of work. Telephoto aims to make that easier by offering some building blocks. See [project website](https://saket.github.io/telephoto) for full documentation.
 
 ## License
