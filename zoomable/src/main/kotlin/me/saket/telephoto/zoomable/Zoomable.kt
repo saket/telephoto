@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.doubleTapZoomable
 import me.saket.telephoto.zoomable.internal.stopTransformation
 import me.saket.telephoto.zoomable.internal.transformable
@@ -82,7 +83,7 @@ fun Modifier.zoomable(
       .pointerInput(enabled) {
         detectTapGestures(
           onPress = {
-            state.transformableState.stopTransformation(MutatePriority.UserInput)
+            state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
           },
           onTap = {
             // Make sure this wasn't actually a quick zoom gesture. When a

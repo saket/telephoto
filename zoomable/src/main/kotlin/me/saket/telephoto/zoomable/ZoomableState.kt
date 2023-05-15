@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import me.saket.telephoto.zoomable.ContentZoom.Companion.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
+import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
@@ -447,7 +448,7 @@ class ZoomableState internal constructor(
     val start = rawTransformation!!
     val userZoomWithinBounds = start.zoom.coercedIn(zoomSpec.range).userZoom
 
-    transformableState.transform {
+    transformableState.transform(MutatePriority.Default) {
       var previous = start.zoom.userZoom
       AnimationState(initialValue = previous).animateTo(
         targetValue = userZoomWithinBounds,
@@ -464,7 +465,7 @@ class ZoomableState internal constructor(
 
   internal suspend fun fling(velocity: Velocity, density: Density) {
     val start = rawTransformation!!
-    transformableState.transform(MutatePriority.UserInput) {
+    transformableState.transform(MutatePriorities.FlingAnimation) {
       var previous = start.offset
       AnimationState(
         typeConverter = Offset.VectorConverter,
