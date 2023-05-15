@@ -43,6 +43,12 @@ kotlin {
         implementation(compose.runtime)
       }
     }
+
+    named("commonTest") {
+      dependencies {
+        implementation(libs.assertk)
+      }
+    }
   }
 }
 

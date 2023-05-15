@@ -32,6 +32,7 @@ emulatorWtf-cli = "0.9.8"   # https://docs.emulator.wtf/changelog/
 okio = "3.3.0"
 okhttp-mockWebServer = "4.11.0"
 dokka = "1.8.10"
+assertk = "0.26"
 
 [libraries]
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
@@ -84,3 +85,5 @@ dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropsho
 dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }
 
 appyx = { module = "com.bumble.appyx:core", version.ref = "appyx" }
+
+assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
