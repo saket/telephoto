@@ -275,12 +275,7 @@ class ZoomableState internal constructor(
     val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
     val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
 
-    // Give up this gesture if the content is almost near its edges.
-    // As a user, I've always hated it when I'm scrolling images in a
-    // horizontal pager, and an image that is only a pixel away from its
-    // edge is preventing the pager from scrolling. I might remove this in
-    // the future if it turns out to be useless.
-    return (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) >= 1f
+    return (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) >= 0f
   }
 
   /**
