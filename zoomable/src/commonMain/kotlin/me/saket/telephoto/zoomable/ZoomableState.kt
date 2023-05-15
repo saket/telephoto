@@ -41,7 +41,6 @@ import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.div
-import me.saket.telephoto.zoomable.internal.gestureTransformation
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
