@@ -22,14 +22,6 @@ kotlin {
         implementation(kotlin("test"))
       }
     }
-
-    named("androidUnitTest") {
-      dependencies {
-        implementation(libs.junit)
-        implementation(libs.truth)
-        implementation(libs.testParamInjector)
-      }
-    }
   }
 }
 
