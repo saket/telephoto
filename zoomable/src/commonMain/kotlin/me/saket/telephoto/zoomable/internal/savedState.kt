@@ -27,7 +27,6 @@ internal data class ZoomableSavedState(
       contentSize = Size.Zero,  // Will get recalculated after restoration.
     )
   }
-
 }
 
 internal fun ZoomableSavedState(transformation: RawTransformation?) =
