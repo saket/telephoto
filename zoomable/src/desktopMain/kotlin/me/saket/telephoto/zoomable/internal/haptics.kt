@@ -10,6 +10,5 @@ internal actual fun rememberHapticFeedbackPerformer(): HapticFeedbackPerformer {
 
 private object NoOpHapticFeedbackPerformer : HapticFeedbackPerformer {
   override fun performHapticFeedback() {
-    TODO("Not yet implemented")
   }
 }
