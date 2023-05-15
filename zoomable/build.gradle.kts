@@ -12,8 +12,8 @@ kotlin {
     named("commonMain") {
       dependencies {
         implementation(compose("org.jetbrains.compose.ui:ui-util"))
-        implementation(compose.foundation)
-        api(libs.compose.foundation)
+        api(compose.foundation)
+        api(libs.androidx.annotation)
       }
     }
 

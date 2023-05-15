@@ -8,6 +8,7 @@ compose-runtime = "1.4.3"
 compose-ui = "1.4.3"
 compose-ui-material3 = "1.1.0-rc01"
 accompanist = "0.30.0"
+androidx-annotation = "1.7.0-alpha02"
 androidx-compose-compiler = "1.4.4"
 androidx-appcompat = "1.6.1"
 androidx-activity = "1.7.1"
@@ -44,6 +45,7 @@ plugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", v
 plugin-dropshots = { module = "com.dropbox.dropshots:dropshots-gradle-plugin", version.ref = "dropshots" }
 plugin-emulatorWtf = { module = "wtf.emulator:gradle-plugin", version.ref = "emulatorWtf" }
 
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
 androidx-ktx-core = { module = "androidx.core:core-ktx", version.ref = "androidx-ktx" }
 androidx-ktx-palette = { module = "androidx.palette:palette-ktx", version.ref = "androidx-ktx-palette" }
