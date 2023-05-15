@@ -3,6 +3,7 @@
 .md-nav .md-nav--secondary {
   display: none !important;
 }
+/* Hide the redundant 'Overview' header on this page. */
 h1 {
   display: none;
 }
