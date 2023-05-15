@@ -1,6 +1,7 @@
 package me.saket.telephoto.zoomable
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,6 +18,7 @@ fun rememberZoomableImageState(
   }
 }
 
+@Stable
 class ZoomableImageState internal constructor(
   val zoomableState: ZoomableState
 ) {
