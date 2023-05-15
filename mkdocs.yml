@@ -64,7 +64,7 @@ plugins:
 
 extra:
   versions:
-    telephoto: '0.1.0'
+    telephoto: '0.2.0'
 
 nav:
   - 'Overview': index.md

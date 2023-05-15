@@ -88,7 +88,7 @@ private suspend fun PointerInputScope.detectQuickZoomGestures(consumer: (QuickZo
 
     if (firstUp != null) {
       val secondDown = awaitSecondDown(firstUp = firstUp)
-      if (secondDown != null && secondDown.isWithinTouchTargetSize(firstDown)) {
+      if (secondDown != null && secondDown.isWithinTouchTargetSize(firstUp)) {
         // These pointer events must be consumed right or else Modifier.detectTapGestures()
         // will fire its click listener before Modifier.doubleTapZoomable() is able to.
         firstDown.consume()

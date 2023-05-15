@@ -2,8 +2,10 @@ package me.saket.telephoto.subsamplingimage
 
 import android.graphics.Bitmap
 import android.os.Build.VERSION.SDK_INT
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.ImageBitmapConfig
 
+@Immutable
 data class ImageBitmapOptions(
   val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888
 ) {

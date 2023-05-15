@@ -40,6 +40,11 @@ Modifier.zoomable(
 
 ### Edge detection
 
+| ![type:video](../assets/edge_detection_before.mp4) | ![type:video](../assets/edge_detection_after.mp4) |
+|:--------------------------------------------------:|:-------------------------------------------------:|
+|               Without edge detection               |                With edge detection                |
+
+
 For preventing your content from over-zooming or over-panning, `Modifier.zoomable()` will use your content's layout size by default. This is good enough for composables that fill _every_ pixel of their drawing space.
 
 For richer content such as an `Image()` whose _visual_ size may not always match its layout size, `Modifier.zoomable()` will need your assistance.
@@ -48,7 +53,7 @@ For richer content such as an `Image()` whose _visual_ size may not always match
 val state = rememberZoomableState()
 val painter = resourcePainter(R.drawable.example)
 
-LaunchedEffect(painter) {
+LaunchedEffect(painter.intrinsicSize) {
   state.setContentLocation(
     ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
   )
@@ -57,6 +62,7 @@ LaunchedEffect(painter) {
 Image(
   modifier = Modifier
     .fillMaxSize()
+    .background(Color.Orange)
     .zoomable(state),
   painter = painter,
   contentDescription = …,
