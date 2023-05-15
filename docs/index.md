@@ -3,9 +3,9 @@
 .md-nav .md-nav--secondary {
   display: none !important;
 }
-/* Hide the redundant 'Overview' header on this page. */
+/* Hide the redundant 'Overview' header on this page. FWIW "display: none" causes a conflict with the theme's header. */
 h1 {
-  display: none;
+  font-size: 0px !important;
 }
 </style>
 
