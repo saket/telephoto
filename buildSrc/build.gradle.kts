@@ -13,6 +13,7 @@ dependencies  {
 
   implementation(libs.plugin.agp)
   implementation(libs.plugin.kotlin)
+  implementation(libs.plugin.jetbrains.compose)
   implementation(libs.plugin.dokka)
   implementation(libs.plugin.mavenPublish)
   implementation(libs.plugin.dropshots)
