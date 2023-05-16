@@ -1,9 +1,9 @@
 # Release checklist
 
 - Check that sample compiles.
-- Run tests.
+- Run tests. Ensure that tests passed on CI.
 - Change version name from SNAPSHOT to an actual name.
-- Update README and project website with:
+- Update project website with:
     - new version’s maven address
     - new APIs
 - Commit `Prepare to release vX.X.X`. DO NOT PUSH YET.
