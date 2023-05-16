@@ -14,9 +14,18 @@ android {
     versionCode 1
     versionName "1.0"
   }
+  signingConfigs {
+    release {
+      keyAlias = "sample"
+      keyPassword = "frappe-snivel-possible-downward"
+      storeFile = file("release_keystore.jks")
+      storePassword = "abstract-emperor-john-twill"
+    }
+  }
   buildTypes {
     release {
       minifyEnabled true
+      signingConfig signingConfigs.release
     }
   }
   lint {
