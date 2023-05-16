@@ -27,7 +27,7 @@ private fun ZoomableImageSource.Companion.picasso(
 }
 ```
 
-`ZoomableImageSource.picasso()` will be responsible for loading an image and deciding whether it can be shown as-is or should be shown in a sub-sampling image viewer to avoid OOMs. Here are two examples:
+`ZoomableImageSource.picasso()` will be responsible for loading images and determining whether they can be displayed as-is or should be presented in a sub-sampled image viewer to prevent OOM errors. Here are two examples:
 
 - [CoilImageSource](https://github.com/saket/telephoto/blob/trunk/zoomable-image/coil/src/main/kotlin/me/saket/telephoto/zoomable/coil/CoilImageSource.kt)
 - [GlideImageSource](https://github.com/saket/telephoto/blob/25072f96ed47871cf827dd9d255edb552b24044e/zoomable-image/glide/src/main/kotlin/me/saket/telephoto/zoomable/glide/GlideImageSource.kt)
