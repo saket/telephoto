@@ -2,7 +2,16 @@
 
 ![type:video](../assets/demo_small.mp4)
 
-A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures and automatic sub-sampling of large images. This ensures that images maintain their intricate details even when fully zoomed in, without causing any `OutOfMemory` exceptions.
+A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures and automatic sub-sampling of large images. This ensures that images maintain their intricate details even when fully zoomed in, without causing any `OutOfMemory` exceptions. 
+
+**Features**
+
+- Pinch to zoom and flings
+- Double tap to zoom
+- Single finger zoom (double tap and hold)
+- Haptic feedback for over/under zoom
+- Compatibility with nested scrolling
+- Click listeners
 
 === "Coil"
     ```groovy
