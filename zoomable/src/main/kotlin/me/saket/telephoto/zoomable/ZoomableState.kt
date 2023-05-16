@@ -275,7 +275,7 @@ class ZoomableState internal constructor(
     val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
     val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
 
-    return (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) >= 0f
+    return (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) > ZoomDeltaEpsilon
   }
 
   /**
