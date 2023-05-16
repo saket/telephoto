@@ -9,6 +9,7 @@ remote_branch: gh-pages
 
 theme:
   name: 'material'
+  custom_dir: 'docs/overrides'
   logo: assets/logo_192.png
   favicon: assets/logo_192.png
   font:
