@@ -1,9 +1,9 @@
 ![logo](docs/assets/readme_logo_light.png#gh-light-mode-only)
 ![logo](docs/assets/readme_logo_dark.png#gh-dark-mode-only)
 
-Designing a cohesive media experience for Android can be a lot of work. Telephoto aims to make that easier by offering some building blocks.
-
 https://github.com/saket/telephoto/assets/2387680/77d559f4-04cd-459b-be90-fb272e7a1ee0
+
+Designing a cohesive media experience for Android can be a lot of work. Telephoto aims to make that easier by offering some building blocks.
 
 ### [Zoomable Image](https://saket.github.io/telephoto/zoomableimage/)
 _Drop-in_ replacement for `Image()` composables featuring support for pan & zoom gestures and automatic sub&#8209;sampling of large images that'd otherwise not fit into memory.
