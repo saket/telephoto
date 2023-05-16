@@ -11,7 +11,7 @@ h1 {
 
 ![type:video](assets/demo_small.mp4)
 
-Designing a cohesive media experience for Android can be a lot of work. Telephoto aims to make that easier by offering some building blocks.
+Designing a cohesive media experience for Android can be a lot of work. Telephoto aims to make that easier by offering some building blocks for Compose UI.
 
 ### [Zoomable Image](zoomableimage/index.md)
 _Drop-in_ replacement for `Image()` composables featuring support for pan & zoom gestures and automatic sub&#8209;sampling of large images that'd otherwise not fit into memory.
