@@ -12,8 +12,8 @@
 - Wait for artifacts to be available.
   `dependency-watch await me.saket.telephoto:zoomable:…`
 - Ensure that the release is available on maven by using it `:sample`
-- Run the sample app and ensure everything works. 
 - Check that library sources are available.
+- Run the sample app and ensure everything works. 
 - Run manual test cases that are difficult to automate:
   - Fling animations can be interrupted by pressing anywhere.
   - Double-tap-to-zoom animations can be interrupted **only** by starting another swipe gesture. 
