@@ -52,7 +52,7 @@ markdown_extensions:
 
 plugins:
   - search
-  - macros
+  - macros # For extra.versions.telephoto below.
   - mkdocs-video:
       is_video: true
       video_muted: true
@@ -65,7 +65,7 @@ plugins:
 
 extra:
   versions:
-    telephoto: '0.3.0'
+    telephoto: '0.3.0' # Env var for the latest version on maven.
 
 nav:
   - 'Overview': index.md
