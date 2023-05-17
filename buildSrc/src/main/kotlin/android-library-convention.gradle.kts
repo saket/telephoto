@@ -8,7 +8,7 @@ plugins {
 android {
   compileSdk = 33
   defaultConfig {
-    minSdk = 24
+    minSdk = 23
     resourcePrefix = "_telephoto"
   }
   compileOptions {
