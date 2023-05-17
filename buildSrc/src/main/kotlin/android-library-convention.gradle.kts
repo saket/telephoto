@@ -6,9 +6,9 @@ plugins {
 }
 
 android {
-  compileSdk = 33
+  compileSdk = libs.versions.compileSdk.get().toInt()
   defaultConfig {
-    minSdk = 24
+    minSdk = libs.versions.minSdk.get().toInt()
     resourcePrefix = "_telephoto"
   }
   compileOptions {
