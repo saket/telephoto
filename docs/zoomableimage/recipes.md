@@ -23,15 +23,15 @@
 === "Glide"
     ```kotlin
     ZoomableGlideImage(
-      model = Glide.with(LocalContext.current)
-        .load("https://example.com/image.jpg")
-        .addListener(object : RequestListener<Drawable> {
-          override fun onResourceReady(resource: Drawable, …): Boolean {
-            // TODO: do something with resource.
-          }
-        }),
+      model = "https://example.com/image.jpg",
       contentDescription = …
-    )
+    ) {
+      it.addListener(object : RequestListener<Drawable> {
+        override fun onResourceReady(resource: Drawable, …): Boolean {
+          // TODO: do something with resource.
+        }
+      })
+    }
     ```
 
 **Full resolutions** must be obtained as files because `ZoomableImage` streams them directly from disk. The easiest way to do this is to load them again from cache.
