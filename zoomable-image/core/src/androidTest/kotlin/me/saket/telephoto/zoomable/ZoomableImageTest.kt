@@ -540,8 +540,9 @@ class ZoomableImageTest {
   }
 
   @Test fun click_listeners_work() {
-    var onClickCalled = false
-    var onLongClickCalled = false
+    var clicksCount = 0
+    var longClicksCount = 0
+    val composableTag = "zoomable_image"
 
     rule.setContent {
       val state = rememberZoomableState(
@@ -550,32 +551,54 @@ class ZoomableImageTest {
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
-          .testTag("zoomable_image"),
+          .testTag(composableTag),
         image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
         contentDescription = null,
         state = rememberZoomableImageState(state),
         contentScale = ContentScale.Inside,
-        onClick = { onClickCalled = true },
-        onLongClick = { onLongClickCalled = true }
+        onClick = { ++clicksCount },
+        onLongClick = { ++longClicksCount }
       )
     }
 
-    rule.onNodeWithTag("zoomable_image").performClick()
+    rule.onNodeWithTag(composableTag).performClick()
     rule.runOnIdle {
       // Clicks are delayed until they're confirmed to not be double clicks
       // so make sure that onClick does not get called prematurely.
-      assertThat(onClickCalled).isFalse()
+      assertThat(clicksCount).isEqualTo(0)
     }
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
-      assertThat(onClickCalled).isTrue()
-      assertThat(onLongClickCalled).isFalse()
+      assertThat(clicksCount).isEqualTo(1)
+      assertThat(longClicksCount).isEqualTo(0)
     }
 
-    rule.onNodeWithTag("zoomable_image").performTouchInput { longClick() }
+    rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
     rule.runOnIdle {
-      assertThat(onLongClickCalled).isTrue()
+      assertThat(clicksCount).isEqualTo(1)
+      assertThat(longClicksCount).isEqualTo(1)
     }
+
+    // Perform double click to zoom in and make sure click listeners still work
+    rule.onNodeWithTag(composableTag).performTouchInput { doubleClick() }
+
+    rule.onNodeWithTag(composableTag).performTouchInput { click() }
+    rule.waitUntil(5.seconds) { clicksCount == 2 }
+
+    rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
+    rule.waitUntil(5.seconds) { longClicksCount == 2 }
+
+    // Perform double click to zoom out and make sure click listeners still work
+    rule.onNodeWithTag(composableTag).performTouchInput { doubleClick() }
+
+    rule.onNodeWithTag(composableTag).performTouchInput { click() }
+    rule.waitUntil(5.seconds) { clicksCount == 3 }
+
+    rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
+    rule.waitUntil(5.seconds) { longClicksCount == 3 }
+
+    assertThat(clicksCount).isEqualTo(3)
+    assertThat(longClicksCount).isEqualTo(3)
   }
 
   @Test fun quick_zooming_works() {
