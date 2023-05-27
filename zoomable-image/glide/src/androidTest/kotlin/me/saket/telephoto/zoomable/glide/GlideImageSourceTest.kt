@@ -130,12 +130,16 @@ class GlideImageSourceTest {
   @Test fun start_with_the_placeholder_image_then_load_the_full_image_using_subsampling() = runTest {
     val seededPlaceholder = seedMemoryCacheWith(serverRule.server.url("placeholder_image.png"))
 
+    val fullImageUrl = withContext(Dispatchers.IO) {
+      serverRule.server.url("full_image.png")
+    }
+
     var state: ZoomableImageState? = null
     rule.setContent {
       ZoomableGlideImage(
         state = rememberZoomableImageState().also { state = it },
         modifier = Modifier.fillMaxSize(),
-        model = serverRule.server.url("full_image.png").toString(),
+        model = fullImageUrl.toString(),
         contentDescription = null
       ) {
         it.placeholder(seededPlaceholder)
@@ -161,8 +165,8 @@ class GlideImageSourceTest {
     var state: ZoomableImageState? = null
     rule.setContent {
       ZoomableGlideImage(
-        state = rememberZoomableImageState().also { state = it },
         modifier = Modifier.fillMaxSize(),
+        state = rememberZoomableImageState().also { state = it },
         model = fullImageUrl.toString(),
         contentDescription = null
       ) {
