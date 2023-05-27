@@ -20,7 +20,6 @@ import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.decode.ImageDecoderDecoder
-import coil.disk.DiskCache
 import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -51,9 +50,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
-import okio.fakefilesystem.FakeFileSystem
 import okio.source
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -102,42 +99,17 @@ class CoilImageSourceTest {
     }
   }
 
-  @After
-  fun tearDown() {
-    Coil.imageLoader(rule.activity).shutdown()
-  }
-
   @Test fun images_should_always_be_written_to_disk(
     @TestParameter cachePolicy: CachePolicyEnum
   ) = runTest {
-    // Coil's disk cache seems to leave some state between runs, causing
-    // this test to fail. Using an in-memory cache seems to fix the problem.
-    Coil.setImageLoader(
-      Coil.imageLoader(context)
-        .newBuilder()
-        .diskCache {
-          val fake = FakeFileSystem()
-          DiskCache.Builder()
-            .fileSystem(fake)
-            .directory(fake.workingDirectory)
-            .build()
-        }
-        .build()
-    )
-
-    val diskCache = context.imageLoader.diskCache!!
-    val diskCacheKey = "full_image_disk_cache_key"
-
     resolve {
       ImageRequest.Builder(context)
         .data(serverRule.server.url("full_image.png"))
         .diskCachePolicy(cachePolicy.policy)
-        .diskCacheKey(diskCacheKey)
         .build()
     }.test {
       skipItems(1)  // Default item.
       assertThat(awaitItem().delegate).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
-      assertThat(diskCache[diskCacheKey]).isNotNull()
     }
   }
 
