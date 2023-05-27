@@ -30,12 +30,14 @@ import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
 import me.saket.telephoto.util.prepareForScreenshotTest
@@ -187,13 +189,17 @@ class CoilImageSourceTest {
     check(seedResult is SuccessResult)
     assertThat(seedResult.memoryCacheKey).isNotNull()
 
+    val fullImageUrl = withContext(Dispatchers.IO) {
+      serverRule.server.url("full_image.png")
+    }
+
     var state: ZoomableImageState? = null
     rule.setContent {
       ZoomableAsyncImage(
-        state = rememberZoomableImageState().also { state = it },
         modifier = Modifier.fillMaxSize(),
+        state = rememberZoomableImageState().also { state = it },
         model = ImageRequest.Builder(context)
-          .data(serverRule.server.url("full_image.png").toString())
+          .data(fullImageUrl)
           .placeholderMemoryCacheKey(seedResult.memoryCacheKey)
           .allowHardware(false) // Unsupported by Screenshot.capture()
           .build(),
