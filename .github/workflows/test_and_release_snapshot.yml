@@ -42,6 +42,9 @@ jobs:
             paparazzi/paparazzi-gradle-plugin/src/test/projects/**/build/reports/paparazzi/images/
 
       - name: Run instrumented screenshot tests
+        env:
+          # https://docs.emulator.wtf/github/tokenless
+          EW_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew testDebugWithEmulatorWtf
 
       - name: (Fail-only) Bundle instrumented test reports
