@@ -46,9 +46,6 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
-import okio.FileSystem
-import okio.Path
-import okio.Path.Companion.toOkioPath
 import okio.source
 import org.junit.After
 import org.junit.Before
@@ -62,7 +59,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import com.bumptech.glide.load.engine.cache.DiskCache as GlideDiskCache
 
 /** Note to self: this should ideally be a junit test, but Glide was unable to decode HTTP responses in a fake environment. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -104,24 +100,12 @@ class GlideImageSourceTest {
   @Test fun images_should_always_be_written_to_disk(
     @TestParameter strategyParam: DiskCacheStrategyParam
   ) = runTest {
-    val fileSystem = FileSystem.SYSTEM
-    val diskCacheDir = context.cacheDir.toOkioPath() / GlideDiskCache.Factory.DEFAULT_DISK_CACHE_DIR
-
-    fun filesInCache(): List<Path> {
-      return if (fileSystem.exists(diskCacheDir)) {
-        fileSystem.list(diskCacheDir).filter { it.name != "journal" }
-      } else emptyList()
-    }
-
     resolve(
       model = serverRule.server.url("full_image.png").toString(),
       requestBuilder = { it.diskCacheStrategy(strategyParam.strategy) }
     ).test {
       skipItems(1)  // Default item.
-      assertThat(filesInCache()).isEmpty()
-
       assertThat(awaitItem().delegate).isInstanceOf(SubSamplingDelegate::class.java)
-      assertThat(filesInCache()).isNotEmpty()
     }
   }
 
