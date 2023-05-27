@@ -54,6 +54,8 @@ import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.util.CiScreenshotValidator
+import me.saket.telephoto.util.assertSnapshot
+import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
@@ -102,7 +104,7 @@ class ZoomableImageTest {
       )
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
@@ -130,7 +132,7 @@ class ZoomableImageTest {
     rule.runOnIdle {
       assertThat(finalScale.scaleX).isEqualTo(2f)
       assertThat(finalScale.scaleY).isEqualTo(2f)
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
@@ -173,14 +175,14 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_state_restoration")
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_before_state_restoration")
     }
 
     stateRestorationTester.emulateSavedInstanceStateRestore()
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, testName.methodName + "_after_state_restoration")
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_after_state_restoration")
     }
   }
 
@@ -211,7 +213,7 @@ class ZoomableImageTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, testName.methodName)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName)
     }
 
     with(rule.onNodeWithTag("image")) {
@@ -227,7 +229,7 @@ class ZoomableImageTest {
     }
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed")
     }
 
     with(rule.onNodeWithTag("image")) {
@@ -237,7 +239,7 @@ class ZoomableImageTest {
     }
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed_panned")
     }
   }
 
@@ -254,11 +256,11 @@ class ZoomableImageTest {
         contentDescription = null,
       )
     }
-    dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_updating_alignment")
+    dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_before_updating_alignment")
 
     contentAlignment = Alignment.TopCenter
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, testName.methodName + "_after_updating_alignment")
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_after_updating_alignment")
     }
   }
 
@@ -273,11 +275,11 @@ class ZoomableImageTest {
         contentDescription = null,
       )
     }
-    dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_updating_scale")
+    dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_before_updating_scale")
 
     contentScale = ContentScale.Inside
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, testName.methodName + "_after_updating_scale")
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_after_updating_scale")
     }
   }
 
@@ -312,7 +314,7 @@ class ZoomableImageTest {
     }
     rule.mainClock.advanceTimeByFrame()
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
@@ -351,7 +353,7 @@ class ZoomableImageTest {
 
     rule.mainClock.advanceTimeByFrame()
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
@@ -397,7 +399,7 @@ class ZoomableImageTest {
 
     rule.mainClock.advanceTimeByFrame()
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
@@ -438,7 +440,7 @@ class ZoomableImageTest {
 
     rule.runOnIdle {
       assertThat(imageScale).isEqualTo(ScaleFactor(2f, 2f))
-      dropshots.assertSnapshot(rule.activity)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
