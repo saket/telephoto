@@ -15,8 +15,7 @@ emulatorwtf {
   version.set(libs.versions.emulatorWtf.cli.get())
   devices.set(
     listOf(
-      mapOf("model" to "Pixel7", "version" to libs.versions.compileSdk.get().toInt()),
-      mapOf("model" to "Pixel7", "version" to libs.versions.minSdk.get().toInt())
+      mapOf("model" to "Pixel7Atd", "version" to 31)
     )
   )
   directoriesToPull.set(listOf("/sdcard/Download/"))
