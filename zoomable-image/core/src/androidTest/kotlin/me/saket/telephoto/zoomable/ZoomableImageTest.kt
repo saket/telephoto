@@ -637,6 +637,40 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun double_click_should_toggle_zoom() {
+    var zoomFraction: Float? = null
+
+    rule.setContent {
+      val state = rememberZoomableState(
+        zoomSpec = ZoomSpec()
+      )
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("zoomable"),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        contentDescription = null,
+        state = rememberZoomableImageState(state),
+        onClick = { error("click listener should not get called") },
+        onLongClick = { error("long click listener should not get called") },
+      )
+
+      LaunchedEffect(state.zoomFraction) {
+        zoomFraction = state.zoomFraction
+      }
+    }
+
+    rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      assertThat(zoomFraction).isEqualTo(1f)
+    }
+
+    rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      assertThat(zoomFraction).isEqualTo(0f)
+    }
+  }
+
   @Test fun gestures_are_ignored_when_gestures_are_disabled() {
     var state: ZoomableImageState? = null
     fun zoomFraction() = state!!.zoomableState.zoomFraction
