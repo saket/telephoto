@@ -579,10 +579,12 @@ class ZoomableImageTest {
       assertThat(longClicksCount).isEqualTo(1)
     }
 
+    // Regression testing for https://github.com/saket/telephoto/issues/18.
     // Perform double click to zoom in and make sure click listeners still work
     rule.onNodeWithTag(composableTag).performTouchInput { doubleClick() }
+    rule.waitForIdle()
 
-    rule.onNodeWithTag(composableTag).performTouchInput { click() }
+    rule.onNodeWithTag(composableTag).performClick()
     rule.waitUntil(5.seconds) { clicksCount == 2 }
 
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
@@ -590,8 +592,9 @@ class ZoomableImageTest {
 
     // Perform double click to zoom out and make sure click listeners still work
     rule.onNodeWithTag(composableTag).performTouchInput { doubleClick() }
+    rule.waitForIdle()
 
-    rule.onNodeWithTag(composableTag).performTouchInput { click() }
+    rule.onNodeWithTag(composableTag).performClick()
     rule.waitUntil(5.seconds) { clicksCount == 3 }
 
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }

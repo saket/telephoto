@@ -44,11 +44,11 @@ internal fun Modifier.doubleTapZoomable(
     LaunchedEffect(Unit) {
       while (isActive) {
         var event: QuickZoomEvent = channel.receive()
-        onZoomStarted()
 
         try {
           state.transform(MutatePriority.UserInput) {
             while (event is Zooming) {
+              onZoomStarted()
               (event as? Zooming)?.let { event ->
                 transformBy(
                   centroid = event.centroid,
@@ -89,15 +89,15 @@ private suspend fun PointerInputScope.detectQuickZoomGestures(consumer: (QuickZo
     if (firstUp != null) {
       val secondDown = awaitSecondDown(firstUp = firstUp)
       if (secondDown != null && secondDown.isWithinTouchTargetSize(firstUp)) {
-        // These pointer events must be consumed right or else Modifier.detectTapGestures()
-        // will fire its click listener before Modifier.doubleTapZoomable() is able to.
+        // These pointer events must be consumed right away or else Modifier.detectTapGestures()
+        // will fire its click listener before Modifier.doubleTapZoomable() is able to detect zooms.
         firstDown.consume()
         firstUp.consume()
-        secondDown.consume()
 
         var dragged = false
 
         verticalDrag(secondDown.id) { drag ->
+          secondDown.consume()
           dragged = true
           val dragDelta = drag.positionChange()
           val zoomDelta = 1f + (dragDelta.y * 0.004f) // Formula copied from https://github.com/usuiat/Zoomable.

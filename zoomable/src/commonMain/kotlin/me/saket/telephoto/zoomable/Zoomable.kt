@@ -115,11 +115,7 @@ fun Modifier.zoomable(
         },
         onDoubleTap = { centroid ->
           scope.launch {
-            try {
-              state.handleDoubleTapZoomTo(centroid = centroid)
-            } finally {
-              isQuickZooming = false
-            }
+            state.handleDoubleTapZoomTo(centroid = centroid)
           }
         }
       )
