@@ -585,23 +585,30 @@ class ZoomableImageTest {
     rule.waitForIdle()
 
     rule.onNodeWithTag(composableTag).performClick()
-    rule.waitUntil(5.seconds) { clicksCount == 2 }
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(clicksCount).isEqualTo(2)
+    }
 
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
-    rule.waitUntil(5.seconds) { longClicksCount == 2 }
+    rule.runOnIdle {
+      assertThat(longClicksCount).isEqualTo(2)
+    }
 
     // Perform double click to zoom out and make sure click listeners still work
     rule.onNodeWithTag(composableTag).performTouchInput { doubleClick() }
     rule.waitForIdle()
 
     rule.onNodeWithTag(composableTag).performClick()
-    rule.waitUntil(5.seconds) { clicksCount == 3 }
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(clicksCount).isEqualTo(3)
+    }
 
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
-    rule.waitUntil(5.seconds) { longClicksCount == 3 }
-
-    assertThat(clicksCount).isEqualTo(3)
-    assertThat(longClicksCount).isEqualTo(3)
+    rule.runOnIdle {
+      assertThat(longClicksCount).isEqualTo(3)
+    }
   }
 
   @Test fun quick_zooming_works() {
@@ -675,6 +682,9 @@ class ZoomableImageTest {
     var state: ZoomableImageState? = null
     fun zoomFraction() = state!!.zoomableState.zoomFraction
 
+    var onClickCalled = false
+    var onLongClickCalled = false
+
     rule.setContent {
       ZoomableImage(
         modifier = Modifier
@@ -686,6 +696,8 @@ class ZoomableImageTest {
         ).also { state = it },
         contentDescription = null,
         gesturesEnabled = false,
+        onClick = { onClickCalled = true },
+        onLongClick = { onLongClickCalled = true },
       )
     }
 
@@ -709,6 +721,17 @@ class ZoomableImageTest {
 
     rule.runOnIdle {
       assertThat(zoomFraction()).isEqualTo(0f)
+    }
+
+    rule.onNodeWithTag("image").performTouchInput { longClick() }
+    rule.runOnIdle {
+      assertThat(onLongClickCalled).isTrue()
+    }
+
+    rule.onNodeWithTag("image").performTouchInput { click() }
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(onClickCalled).isTrue()
     }
   }
 

@@ -5,24 +5,19 @@ package me.saket.telephoto.zoomable
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.MutatePriorities
-import me.saket.telephoto.zoomable.internal.doubleTapZoomable
+import me.saket.telephoto.zoomable.internal.tappableAndQuickZoomable
 import me.saket.telephoto.zoomable.internal.rememberHapticFeedbackPerformer
 import me.saket.telephoto.zoomable.internal.stopTransformation
 import me.saket.telephoto.zoomable.internal.transformable
@@ -60,7 +55,6 @@ fun Modifier.zoomable(
     val hapticFeedbackPerformer = rememberHapticFeedbackPerformer()
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    var isQuickZooming by remember { mutableStateOf(false) }
 
     Modifier
       .transformable(
@@ -78,46 +72,29 @@ fun Modifier.zoomable(
           }
         }
       )
-      .pointerInput(enabled) {
-        detectTapGestures(
-          onPress = {
-            state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
-          },
-          onTap = {
-            // Make sure this wasn't actually a quick zoom gesture. When a
-            // quick zoom gesture is started, detectTapGestures() detects that
-            // the drag event was consumed and decides to treat it as a single tap.
-            if (!isQuickZooming) {
-              onClick?.invoke(it)
-            }
-          },
-          onLongPress = onLongClick,
-          onDoubleTap = {
-            // Double tap gestures can't be handled here because it conflicts with
-            // detection of double tap and hold gestures. Still, an empty lambda is
-            // necessary to force detectTapGestures() to delay its detection of taps
-            // to let Modifier.doubleTapZoomable() detect double taps.
-          }
-        )
-      }
-      .doubleTapZoomable(
-        enabled = enabled,
-        state = state.transformableState,
-        onQuickZoomStarted = { isQuickZooming = true },
-        onQuickZoomStopped = {
+      .tappableAndQuickZoomable(
+        gesturesEnabled = enabled,
+        transformable = state.transformableState,
+        onPress = {
           scope.launch {
-            isQuickZooming = false
-            if (state.isZoomOutsideRange()) {
+            state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
+          }
+        },
+        onTap = onClick,
+        onLongPress = onLongClick,
+        onDoubleTap = { centroid ->
+          scope.launch {
+            state.handleDoubleTapZoomTo(centroid = centroid)
+          }
+        },
+        onQuickZoomStopped = {
+          if (state.isZoomOutsideRange()) {
+            scope.launch {
               hapticFeedbackPerformer.performHapticFeedback()
               state.smoothlySettleZoomOnGestureEnd()
             }
           }
         },
-        onDoubleTap = { centroid ->
-          scope.launch {
-            state.handleDoubleTapZoomTo(centroid = centroid)
-          }
-        }
       )
   } else {
     Modifier

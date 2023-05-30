@@ -5,6 +5,7 @@ package me.saket.telephoto.zoomable.internal
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.runtime.LaunchedEffect
@@ -16,54 +17,63 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.ViewConfiguration
+import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.isActive
-import me.saket.telephoto.zoomable.internal.QuickZoomEvent.GestureStopped
+import me.saket.telephoto.zoomable.internal.QuickZoomEvent.QuickZoomStopped
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.Zooming
 import kotlin.math.abs
 
-/** Detects double-tap and quick zoom (double tap and hold) gestures. */
-internal fun Modifier.doubleTapZoomable(
-  onQuickZoomStarted: () -> Unit,
-  onQuickZoomStopped: () -> Unit,
+/**
+ * Detects tap and quick zoom gestures.
+ *
+ * In a previous version, this used to only detect quick zoom gestures because taps were handled
+ * separately using [detectTapGestures]. That was removed because preventing [detectTapGestures]
+ * from consuming all events was proving to be messy and slightly difficult to follow.
+ */
+internal fun Modifier.tappableAndQuickZoomable(
+  onPress: (Offset) -> Unit,
+  onTap: ((Offset) -> Unit)?,
+  onLongPress: ((Offset) -> Unit)?,
   onDoubleTap: (centroid: Offset) -> Unit,
-  state: TransformableState,
-  enabled: Boolean,
+  onQuickZoomStopped: () -> Unit,
+  transformable: TransformableState,
+  gesturesEnabled: Boolean,
 ): Modifier {
   return composed {
-    val onZoomStarted by rememberUpdatedState(onQuickZoomStarted)
-    val onZoomStopped by rememberUpdatedState(onQuickZoomStopped)
+    val onPress by rememberUpdatedState(onPress)
+    val onTap by rememberUpdatedState(onTap)
+    val onLongPress by rememberUpdatedState(onLongPress)
+    val onDoubleTap by rememberUpdatedState(onDoubleTap)
+    val onQuickZoomStopped by rememberUpdatedState(onQuickZoomStopped)
 
-    val channel = remember { Channel<QuickZoomEvent>(capacity = Channel.UNLIMITED) }
+    val quickZoomEvents = remember { Channel<QuickZoomEvent>(capacity = Channel.UNLIMITED) }
     LaunchedEffect(Unit) {
       while (isActive) {
-        var event: QuickZoomEvent = channel.receive()
+        var event: QuickZoomEvent = quickZoomEvents.receive()
 
         try {
-          state.transform(MutatePriority.UserInput) {
+          transformable.transform(MutatePriority.UserInput) {
             while (event is Zooming) {
-              onZoomStarted()
               (event as? Zooming)?.let { event ->
                 transformBy(
                   centroid = event.centroid,
                   zoomChange = event.zoomDelta,
                 )
               }
-              event = channel.receive()
+              event = quickZoomEvents.receive()
             }
           }
-          (event as? GestureStopped)?.let { event ->
-            if (event.dragged) {
-              onZoomStopped()
-            } else {
-              onDoubleTap(event.centroid)
-            }
+          (event as? QuickZoomStopped)?.let {
+            onQuickZoomStopped()
           }
         } catch (e: CancellationException) {
           // Ignore the cancellation and start over again.
@@ -71,42 +81,76 @@ internal fun Modifier.doubleTapZoomable(
       }
     }
 
-    return@composed pointerInput(enabled) {
-      if (enabled) {
-        detectQuickZoomGestures(consumer = channel::trySend)
-      }
+    return@composed pointerInput(Unit) {
+      detectTapAndQuickZoomGestures(
+        onPress = onPress,
+        onTap = onTap,
+        onLongPress = onLongPress,
+        onDoubleTap = {
+          if (gesturesEnabled) {
+            onDoubleTap(it)
+          }
+        },
+        onQuickZoom = {
+          if (gesturesEnabled) {
+            quickZoomEvents.trySend(it)
+          }
+        },
+      )
     }
   }
 }
 
-private suspend fun PointerInputScope.detectQuickZoomGestures(consumer: (QuickZoomEvent) -> Unit) {
+private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
+  onPress: (Offset) -> Unit,
+  onTap: ((Offset) -> Unit)?,
+  onLongPress: ((Offset) -> Unit)?,
+  onDoubleTap: (centroid: Offset) -> Unit,
+  onQuickZoom: (QuickZoomEvent) -> Unit,
+) {
   awaitEachGesture {
-    val firstDown = awaitFirstDown(requireUnconsumed = true, pass = PointerEventPass.Main)
-    val firstUp = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-      waitForUpOrCancellation(pass = PointerEventPass.Main)
+    val firstDown = awaitFirstDown()
+    firstDown.consume()
+    onPress(firstDown.position)
+
+    val longPressTimeout = onLongPress?.let { viewConfiguration.longPressTimeoutMillis } ?: (Long.MAX_VALUE / 2)
+
+    var firstUp: PointerInputChange? = null
+    try {
+      // Wait for first tap up or long press.
+      firstUp = withTimeout(longPressTimeout) {
+        waitForUpOrCancellation()
+      }
+      firstUp?.consume()
+
+    } catch (_: PointerEventTimeoutCancellationException) {
+      onLongPress?.invoke(firstDown.position)
+      consumeUntilUp()
     }
 
     if (firstUp != null) {
       val secondDown = awaitSecondDown(firstUp = firstUp)
-      if (secondDown != null && secondDown.isWithinTouchTargetSize(firstUp)) {
-        // These pointer events must be consumed right away or else Modifier.detectTapGestures()
-        // will fire its click listener before Modifier.doubleTapZoomable() is able to detect zooms.
-        firstDown.consume()
-        firstUp.consume()
+      secondDown?.consume()
 
+      if (secondDown == null) {
+        // No valid second tap started.
+        onTap?.invoke(firstUp.position)
+
+      } else if (secondDown.isWithinTouchTargetSize(firstUp)) {
         var dragged = false
-
         verticalDrag(secondDown.id) { drag ->
-          secondDown.consume()
           dragged = true
           val dragDelta = drag.positionChange()
           val zoomDelta = 1f + (dragDelta.y * 0.004f) // Formula copied from https://github.com/usuiat/Zoomable.
-          consumer(Zooming(secondDown.position, zoomDelta))
-
+          onQuickZoom(Zooming(secondDown.position, zoomDelta))
           drag.consume()
         }
 
-        consumer(GestureStopped(dragged = dragged, centroid = secondDown.position))
+        if (dragged) {
+          onQuickZoom(QuickZoomStopped)
+        } else {
+          onDoubleTap(secondDown.position)
+        }
       }
     }
   }
@@ -126,10 +170,7 @@ private sealed interface QuickZoomEvent {
     val zoomDelta: Float,
   ) : QuickZoomEvent
 
-  data class GestureStopped(
-    val dragged: Boolean,
-    val centroid: Offset,
-  ) : QuickZoomEvent
+  object QuickZoomStopped : QuickZoomEvent
 }
 
 /**
@@ -150,4 +191,17 @@ private suspend fun AwaitPointerEventScope.awaitSecondDown(
     change = awaitFirstDown(requireUnconsumed = true, pass = PointerEventPass.Main)
   } while (change.uptimeMillis < minUptime)
   change
+}
+
+/**
+ * Copied from TapGestureDetector.kt.
+ *
+ * Consumes all pointer events until nothing is pressed and then returns. This method assumes
+ * that something is currently pressed.
+ */
+private suspend fun AwaitPointerEventScope.consumeUntilUp() {
+  do {
+    val event = awaitPointerEvent()
+    event.changes.fastForEach { it.consume() }
+  } while (event.changes.fastAny { it.pressed })
 }
