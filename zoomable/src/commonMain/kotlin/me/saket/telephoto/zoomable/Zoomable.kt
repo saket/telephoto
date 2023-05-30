@@ -2,8 +2,6 @@
 
 package me.saket.telephoto.zoomable
 
-import android.os.Build
-import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -21,11 +19,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.doubleTapZoomable
+import me.saket.telephoto.zoomable.internal.rememberHapticFeedbackPerformer
 import me.saket.telephoto.zoomable.internal.stopTransformation
 import me.saket.telephoto.zoomable.internal.transformable
 
@@ -59,7 +57,7 @@ fun Modifier.zoomable(
   val onClick by rememberUpdatedState(onClick)
 
   val zoomableModifier = if (state.isReadyToInteract) {
-    val view = LocalView.current
+    val hapticFeedbackPerformer = rememberHapticFeedbackPerformer()
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     var isQuickZooming by remember { mutableStateOf(false) }
@@ -72,7 +70,7 @@ fun Modifier.zoomable(
         onTransformStopped = { velocity ->
           scope.launch {
             if (state.isZoomOutsideRange()) {
-              view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
+              hapticFeedbackPerformer.performHapticFeedback()
               state.smoothlySettleZoomOnGestureEnd()
             } else {
               state.fling(velocity = velocity, density = density)
@@ -110,7 +108,7 @@ fun Modifier.zoomable(
           scope.launch {
             isQuickZooming = false
             if (state.isZoomOutsideRange()) {
-              view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
+              hapticFeedbackPerformer.performHapticFeedback()
               state.smoothlySettleZoomOnGestureEnd()
             }
           }
@@ -136,18 +134,4 @@ fun Modifier.zoomable(
         Modifier
       }
     )
-}
-
-// Can be removed once https://issuetracker.google.com/u/1/issues/195043382 is fixed.
-private object HapticFeedbackConstantsCompat {
-  val GESTURE_END: Int
-    get() {
-      return if (Build.VERSION.SDK_INT >= 30) {
-        HapticFeedbackConstants.GESTURE_END
-      } else {
-        // PhoneWindowManager#getVibrationEffect() maps
-        // GESTURE_END and CONTEXT_CLICK to the same effect.
-        HapticFeedbackConstants.CONTEXT_CLICK
-      }
-    }
 }

@@ -2,12 +2,14 @@
 minSdk = "23"
 compileSdk = "33"
 kotlin = "1.8.10"
+jetbrains-compose = "1.4.0"
 agp = "7.4.2"
 compose-runtime = "1.4.3"
-compose-compiler = "1.4.4"
 compose-ui = "1.4.3"
 compose-ui-material3 = "1.1.0-rc01"
 accompanist = "0.30.0"
+androidx-annotation = "1.7.0-alpha02"
+androidx-compose-compiler = "1.4.4"
 androidx-appcompat = "1.6.1"
 androidx-activity = "1.7.1"
 androidx-ktx = "1.10.0"
@@ -31,16 +33,19 @@ emulatorWtf-cli = "0.9.8"   # https://docs.emulator.wtf/changelog/
 okio = "3.3.0"
 okhttp-mockWebServer = "4.11.0"
 dokka = "1.8.10"
+assertk = "0.26"
 
 [libraries]
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
 plugin-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+plugin-jetbrains-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "jetbrains-compose" }
 plugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 plugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "mavenPublish" }
 plugin-dropshots = { module = "com.dropbox.dropshots:dropshots-gradle-plugin", version.ref = "dropshots" }
 plugin-emulatorWtf = { module = "wtf.emulator:gradle-plugin", version.ref = "emulatorWtf" }
 
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
 androidx-ktx-core = { module = "androidx.core:core-ktx", version.ref = "androidx-ktx" }
 androidx-ktx-palette = { module = "androidx.palette:palette-ktx", version.ref = "androidx-ktx-palette" }
@@ -50,6 +55,8 @@ androidx-test-ktx = { module = "androidx.test:core-ktx", version.ref = "androidx
 androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidx-test" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test" }
 androidx-test-junit = "androidx.test.ext:junit-ktx:1.1.5"
+androidx-compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "androidx-compose-compiler" }
+# TODO remove compose libs in favor of declaring via jetbrains compose plugin
 compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "compose-runtime" }
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose-ui" }
 compose-ui-util = { module = "androidx.compose.ui:ui-util", version.ref = "compose-ui" }
@@ -80,3 +87,5 @@ dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropsho
 dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }
 
 appyx = { module = "com.bumble.appyx:core", version.ref = "appyx" }
+
+assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }

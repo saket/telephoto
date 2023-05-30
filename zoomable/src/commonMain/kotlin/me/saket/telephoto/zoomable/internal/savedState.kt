@@ -1,19 +1,17 @@
 package me.saket.telephoto.zoomable.internal
 
-import android.os.Parcelable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ScaleFactor
-import kotlinx.parcelize.Parcelize
 import me.saket.telephoto.zoomable.ContentZoom
 import me.saket.telephoto.zoomable.RawTransformation
 
-@Parcelize
+@AndroidParcelize
 internal data class ZoomableSavedState(
   private val offsetX: Float?,
   private val offsetY: Float?,
-  private val userZoom: Float?,
-) : Parcelable {
+  private val userZoom: Float?
+) : AndroidParcelable {
 
   fun gestureTransformation(): RawTransformation? {
     return RawTransformation(

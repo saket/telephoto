@@ -1,10 +1,12 @@
 package me.saket.telephoto.viewport.internal
 
 import androidx.compose.ui.geometry.Size
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.isSpecified
-import org.junit.Test
+import kotlin.test.Test
 
 class ZoomableContentLocationTest {
   /**
