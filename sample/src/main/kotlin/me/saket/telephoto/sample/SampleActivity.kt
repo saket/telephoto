@@ -8,6 +8,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import coil.Coil
@@ -15,6 +17,7 @@ import coil.ImageLoader
 import coil.decode.ImageDecoderDecoder
 import com.bumble.appyx.core.integration.NodeHost
 import com.bumble.appyx.core.integrationpoint.ActivityIntegrationPoint
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import me.saket.telephoto.sample.gallery.MediaAlbum
 import me.saket.telephoto.sample.gallery.MediaItem
 
@@ -57,6 +60,15 @@ class SampleActivity : AppCompatActivity() {
       )
     )
     setContent {
+      val systemUiController = rememberSystemUiController()
+      val useDarkIcons = !isSystemInDarkTheme()
+      LaunchedEffect(systemUiController, useDarkIcons) {
+        systemUiController.setSystemBarsColor(
+          color = Color.Transparent,
+          darkIcons = useDarkIcons
+        )
+      }
+
       TelephotoTheme {
         NodeHost(ActivityIntegrationPoint(this, savedInstanceState)) {
           RootNode(
