@@ -27,17 +27,6 @@ Box(
 
 While `Modifier.zoomable()` was primarily written with images & videos in mind, it can be used for anything such as text, canvas drawings, etc.
 
-### Click listeners
-For detecting double taps, `Modifier.zoomable()` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
-
-```kotlin
-Modifier.zoomable(
-  state = rememberZoomableState(),
-  onClick = { … },
-  onLongClick = { … },
-)
-```
-
 ### Edge detection
 
 | ![type:video](../assets/edge_detection_before.mp4) | ![type:video](../assets/edge_detection_after.mp4) |
@@ -68,6 +57,17 @@ Image(
   contentDescription = …,
   contentScale = ContentScale.Inside,
   alignment = Alignment.Center,
+)
+```
+
+### Click listeners
+For detecting double taps, `Modifier.zoomable()` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
+
+```kotlin
+Modifier.zoomable(
+  state = rememberZoomableState(),
+  onClick = { … },
+  onLongClick = { … },
 )
 ```
 
