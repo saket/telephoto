@@ -19,7 +19,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 11
-      - uses: gradle/gradle-build-action@2.4.2
+      - uses: gradle/gradle-build-action@v2.4.2
 
       - uses: oNaiPs/secrets-to-env-action@v1
         with:
@@ -71,7 +71,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 11
-      - uses: gradle/gradle-build-action@2.4.2
+      - uses: gradle/gradle-build-action@v2.4.2
 
       - name: Ensure snapshot version
         run: ./gradlew throwIfVersionIsNotSnapshot
