@@ -81,7 +81,7 @@ internal fun Modifier.tappableAndQuickZoomable(
       }
     }
 
-    return@composed pointerInput(Unit) {
+    return@composed pointerInput(gesturesEnabled) {
       detectTapAndQuickZoomGestures(
         onPress = onPress,
         onTap = onTap,
