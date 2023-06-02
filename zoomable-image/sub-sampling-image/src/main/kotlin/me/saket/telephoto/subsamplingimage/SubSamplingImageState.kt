@@ -116,9 +116,16 @@ internal fun rememberSubSamplingImageState(
   }
 
   // Reset everything when a new image is set.
-  LaunchedEffect(state, decoder) {
+  DisposableEffect(state, decoder) {
     state.imageSize = decoder?.imageSize
-    state.tiles = emptyList()
+    onDispose {
+      state.tiles = emptyList()
+    }
+  }
+  DisposableEffect(imageSource) {
+    onDispose {
+      imageSource.close()
+    }
   }
 
   decoder?.let { decoder ->

@@ -61,9 +61,9 @@
       if (result is SuccessResult) {
         val cacheKey = result.diskCacheKey ?: error("image wasn't saved to disk")
         val diskCache = context.imageLoader.diskCache!!
-        
-        // TODO: copy to Downloads directory.
-        val imageFile: Path = diskCache[cacheKey]!!.data
+        diskCache.openSnapshot(cacheKey)!!.use { 
+          // TODO: copy to Downloads directory.           
+        }
       }
     }
     ```
