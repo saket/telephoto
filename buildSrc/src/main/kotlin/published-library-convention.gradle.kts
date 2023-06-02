@@ -5,7 +5,7 @@ plugins {
   id("org.jetbrains.dokka")
 }
 
-// Used on CI to publish snapshot versions.
+// Used on CI to prevent publishing of non-snapshot versions.
 tasks.register("throwIfVersionIsNotSnapshot") {
   val libraryVersion = properties["VERSION_NAME"] as String
   check(libraryVersion.endsWith("SNAPSHOT")) {

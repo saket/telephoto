@@ -8,6 +8,9 @@ apply plugin: 'app.cash.paparazzi'
 
 android {
   namespace "me.saket.telephoto.subsamplingimage"
+  buildFeatures {
+    buildConfig = true
+  }
 }
 
 dependencies {

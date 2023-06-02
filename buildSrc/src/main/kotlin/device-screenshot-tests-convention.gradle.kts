@@ -12,7 +12,6 @@ android {
 }
 
 emulatorwtf {
-  version.set(libs.versions.emulatorWtf.cli.get())
   devices.set(
     listOf(
       mapOf("model" to "Pixel7Atd", "version" to 31)
