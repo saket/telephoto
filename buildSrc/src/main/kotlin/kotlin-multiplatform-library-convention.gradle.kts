@@ -50,8 +50,7 @@ kotlin {
 }
 
 compose {
-  val compilerDependencyDeclaration = libs.androidx.compose.compiler.get()
-    .run { "$module:$version" }
+  val compilerDependencyDeclaration = libs.androidx.compose.compiler.get().run { "$module:$version" }
   kotlinCompilerPlugin.set(compilerDependencyDeclaration)
 }
 
@@ -60,10 +59,6 @@ android {
   defaultConfig {
     minSdk = libs.versions.minSdk.get().toInt()
     resourcePrefix = "_telephoto"
-  }
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
   }
   lint.abortOnError = true
 }

@@ -1,3 +1,7 @@
+import com.android.build.gradle.BasePlugin as AndroidBasePlugin
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+
 buildscript {
   repositories {
     google()
@@ -20,4 +24,24 @@ allprojects {
 
 tasks.register('clean', Delete) {
   delete rootProject.buildDir
+}
+
+allprojects {
+  plugins.withType(AndroidBasePlugin).configureEach {
+    project.android {
+      compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+      }
+    }
+  }
+  tasks.withType(KotlinJvmCompile).configureEach {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_11)
+      freeCompilerArgs.addAll([
+        "-Xcontext-receivers",
+        "-Xjvm-default=all", // TODO: IDE complains this isn't set (transformableState.kt).
+      ])
+    }
+  }
 }
