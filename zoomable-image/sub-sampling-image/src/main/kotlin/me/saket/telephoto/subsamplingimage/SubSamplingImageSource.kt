@@ -11,6 +11,7 @@ import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
+import okio.Closeable
 import okio.Path
 
 /**
@@ -23,7 +24,7 @@ import okio.Path
  *
  * Raw input streams aren't supported because reading from files is significantly faster.
  */
-sealed interface SubSamplingImageSource {
+sealed interface SubSamplingImageSource : Closeable {
   /**
    * A preview that can be displayed immediately while the bitmap tiles
    * are loaded, which can be slightly slow depending on the file size.
@@ -36,34 +37,44 @@ sealed interface SubSamplingImageSource {
      * image loading libraries that store cached images on disk.
      *
      * @param preview See [SubSamplingImageSource.preview].
+     * @param onClose Called when the image is no longer visible. This is useful for files
+     *                stored in, say, an LRU cache that is capable of locking open files to
+     *                prevent them from getting discarded.
      *
-     * The returned value is stable and does not need to be remembered.
+     * @return The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun file(path: Path, preview: ImageBitmap? = null): SubSamplingImageSource =
-      FileImageSource(path, preview)
+    fun file(
+      path: Path,
+      preview: ImageBitmap? = null,
+      onClose: Closeable? = null
+    ): SubSamplingImageSource = FileImageSource(path, preview, onClose)
 
     /**
      * An image stored in `src/main/assets`.
      *
      * @param preview See [SubSamplingImageSource.preview].
      *
-     * The returned value is stable and does not need to be remembered.
+     * @return The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun asset(name: String, preview: ImageBitmap? = null): SubSamplingImageSource =
-      AssetImageSource(AssetPath(name), preview)
+    fun asset(
+      name: String,
+      preview: ImageBitmap? = null
+    ): SubSamplingImageSource = AssetImageSource(AssetPath(name), preview)
 
     /**
      * An image stored in `src/main/res/drawable*` directories.
      *
      * @param preview See [SubSamplingImageSource.preview].
      *
-     * The returned value is stable and does not need to be remembered.
+     * @return The returned value is stable and does not need to be remembered.
      * */
     @Stable
-    fun resource(@DrawableRes id: Int, preview: ImageBitmap? = null): SubSamplingImageSource =
-      ResourceImageSource(id, preview)
+    fun resource(
+      @DrawableRes id: Int,
+      preview: ImageBitmap? = null
+    ): SubSamplingImageSource = ResourceImageSource(id, preview)
 
     /**
      * An image exposed by a content provider. A common use-case for this
@@ -71,22 +82,29 @@ sealed interface SubSamplingImageSource {
      *
      * @param preview See [SubSamplingImageSource.preview].
      *
-     * The returned value is stable and does not need to be remembered.
+     * @return The returned value is stable and does not need to be remembered.
      */
     @Stable
-    fun contentUri(uri: Uri, preview: ImageBitmap? = null): SubSamplingImageSource {
+    fun contentUri(
+      uri: Uri,
+      preview: ImageBitmap? = null
+    ): SubSamplingImageSource {
       val assetPath = uri.asAssetPathOrNull()
       return if (assetPath != null) AssetImageSource(assetPath, preview) else UriImageSource(uri, preview)
     }
   }
 
   suspend fun decoder(context: Context): BitmapRegionDecoder
+
+  /** Called when the image is no longer visible. */
+  override fun close() = Unit
 }
 
 @Immutable
 internal data class FileImageSource(
   val path: Path,
-  override val preview: ImageBitmap?
+  override val preview: ImageBitmap?,
+  val onClose: Closeable?
 ) : SubSamplingImageSource {
   init {
     check(path.isAbsolute)
@@ -96,6 +114,10 @@ internal data class FileImageSource(
     return ParcelFileDescriptor.open(path.toFile(), ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
       BitmapRegionDecoder.newInstance(fd.fileDescriptor, /* ignored */ false)
     }
+  }
+
+  override fun close() {
+    onClose?.close()
   }
 }
 

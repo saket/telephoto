@@ -130,8 +130,8 @@ internal class Resolver(
       val imageSource = when {
         result.diskCacheKey != null -> {
           val diskCache = imageLoader.diskCache!!
-          val cached = diskCache[result.diskCacheKey!!] ?: error("Coil returned a null image from disk cache")
-          SubSamplingImageSource.file(cached.data, preview)
+          val snapshot = diskCache.openSnapshot(result.diskCacheKey!!) ?: error("Coil returned a null image from disk cache")
+          SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)
         }
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> when {
           requestData is Uri -> SubSamplingImageSource.contentUri(requestData, preview)
