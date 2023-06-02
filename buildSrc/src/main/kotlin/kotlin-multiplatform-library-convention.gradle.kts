@@ -24,13 +24,10 @@ kotlin {
     }
   }
 
-  // TODO what other targets?
-
   targets.configureEach {
     compilations.configureEach {
       compilerOptions.configure {
         freeCompilerArgs.addAll(
-          "-Xcontext-receivers",
           "-Xjvm-default=all", // TODO IDE complains this isn't set (transformableState.kt). is it working?
         )
       }

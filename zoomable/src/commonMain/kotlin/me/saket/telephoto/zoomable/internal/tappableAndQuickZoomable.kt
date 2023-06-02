@@ -136,7 +136,7 @@ private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
         // No valid second tap started.
         onTap?.invoke(firstUp.position)
 
-      } else if (secondDown.isWithinTouchTargetSize(firstUp)) {
+      } else if (areWithinTouchTargetSize(firstUp, secondDown)) {
         var dragged = false
         verticalDrag(secondDown.id) { drag ->
           dragged = true
@@ -156,10 +156,12 @@ private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
   }
 }
 
-context(PointerInputScope)
-private fun PointerInputChange.isWithinTouchTargetSize(other: PointerInputChange): Boolean {
+private fun PointerInputScope.areWithinTouchTargetSize(
+  first: PointerInputChange,
+  second: PointerInputChange
+): Boolean {
   val allowedDistance = viewConfiguration.minimumTouchTargetSize.toSize()
-  return (position - other.position).let { difference ->
+  return (second.position - first.position).let { difference ->
     abs(difference.x) < allowedDistance.width && abs(difference.y) < allowedDistance.height
   }
 }
