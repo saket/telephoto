@@ -18,8 +18,6 @@
   - Fling animations can be interrupted by pressing anywhere.
   - Double-tap-to-zoom animations can be interrupted **only** by starting another swipe gesture. 
 - Push commit.
-- Deploy changes to project website:
-  `mkdocs gh-deploy`
 - Generate a sample APK.
 - Draft a changelog.
 - Make a release on Github.
