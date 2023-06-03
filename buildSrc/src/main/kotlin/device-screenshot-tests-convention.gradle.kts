@@ -22,6 +22,7 @@ emulatorwtf {
   numFlakyTestAttempts.set(2) // 3 runs in total.
   fileCacheTtl.set(Duration.ofDays(30))
   recordVideo.set(true)
+  timeout.set(Duration.ofMinutes(1))
 }
 
 dependencies {
