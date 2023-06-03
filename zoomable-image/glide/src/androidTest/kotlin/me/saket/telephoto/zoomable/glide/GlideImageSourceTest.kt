@@ -32,6 +32,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
+import me.saket.telephoto.util.KillOnAnr
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil
@@ -64,6 +65,7 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(TestParameterInjector::class)
 class GlideImageSourceTest {
+  @get:Rule val killOnAnr = KillOnAnr()
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val serverRule = MockWebServerRule()

@@ -17,14 +17,20 @@ import androidx.test.runner.screenshot.Screenshot
 import com.dropbox.dropshots.Dropshots
 
 fun Activity.prepareForScreenshotTest() {
-  actionBar?.hide()
-  window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
+  try {
+    actionBar?.hide()
+    window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
 
-  // Stretch activity to fill the entire display and draw under system bars.
-  WindowCompat.setDecorFitsSystemWindows(window, false)
-  window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+    // Stretch activity to fill the entire display and draw under system bars.
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+    window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
 
-  CorrectDisplayHeightLayout.wrapDecorViewContent(this)
+    CorrectDisplayHeightLayout.wrapDecorViewContent(this)
+
+  } catch (e: Throwable) {
+    println("Failed to prepare activity for screenshot test:")
+    e.printStackTrace()
+  }
 }
 
 /** Workaround for [u/283219177](https://issuetracker.google.com/issues/283219177). */

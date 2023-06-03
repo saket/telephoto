@@ -33,6 +33,7 @@ okio = "3.3.0"
 okhttp-mockWebServer = "4.11.0"
 dokka = "1.8.10"
 assertk = "0.26"
+anrWatchDog = "1.4.0"
 
 [libraries]
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
@@ -85,7 +86,7 @@ truth = { module = "com.google.truth:truth", version.ref = "truth" }
 testParamInjector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "testParamInjector" }
 dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropshots" }
 dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }
+anrWatchDog = { module = "com.github.anrwatchdog:anrwatchdog", version.ref = "anrWatchDog" }
+assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
 
 appyx = { module = "com.bumble.appyx:core", version.ref = "appyx" }
-
-assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
