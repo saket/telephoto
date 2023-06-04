@@ -23,6 +23,7 @@ emulatorwtf {
   fileCacheTtl.set(Duration.ofDays(30))
   recordVideo.set(true)
   timeout.set(Duration.ofMinutes(1))
+  printOutput.set(true) // Print report URL even for successful test runs.
 }
 
 dependencies {
@@ -33,4 +34,20 @@ dependencies {
   androidTestImplementation(libs.truth)
   androidTestImplementation(libs.testParamInjector)
   debugImplementation(libs.compose.ui.test.activityManifest)
+}
+
+// androidx.compose.runtime frequently runs into ANRs when compositions
+// need to be disposed at the end of instrumented tests.
+if (libs.versions.compose.runtime.get().startsWith("1.4")) {
+  configurations.configureEach {
+    if (name.contains("test", ignoreCase = true)) {
+      resolutionStrategy.eachDependency {
+        if (requested.module == libs.compose.runtime.get().module) {
+          useVersion("1.5.0-beta01")
+        }
+      }
+    }
+  }
+} else {
+  throw RuntimeException("no longer needed.")
 }

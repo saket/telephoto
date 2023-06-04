@@ -44,7 +44,7 @@ allprojects {
       jvmTarget.set(JvmTarget.JVM_11)
       freeCompilerArgs.addAll([
         "-Xcontext-receivers",
-        "-Xjvm-default=all", // TODO: IDE complains this isn't set (transformableState.kt).
+        "-Xjvm-default=all", // TODO: IDE complains this isn't set. See transformableState.kt.
       ])
     }
   }

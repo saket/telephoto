@@ -54,10 +54,9 @@ import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.util.CiScreenshotValidator
-import me.saket.telephoto.util.KillOnAnr
 import me.saket.telephoto.util.assertSnapshot
-import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
@@ -74,7 +73,6 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalFoundationApi::class)
 @RunWith(TestParameterInjector::class)
 class ZoomableImageTest {
-  @get:Rule val killOnAnr = KillOnAnr()
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()

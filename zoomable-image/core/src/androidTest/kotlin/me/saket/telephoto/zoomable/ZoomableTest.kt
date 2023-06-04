@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
-import me.saket.telephoto.util.KillOnAnr
 import me.saket.telephoto.util.assertSnapshot
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.screenshotForMinSdk23
@@ -21,7 +20,6 @@ import org.junit.Test
 
 // TODO: move these tests to :zoomable
 class ZoomableTest {
-  @get:Rule val killOnAnr = KillOnAnr()
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { "zoomable_$it" },
