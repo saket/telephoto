@@ -165,7 +165,7 @@ internal data class UriImageSource(
 @JvmInline
 internal value class AssetPath(val path: String)
 
-private fun Uri.asAssetPathOrNull(): AssetPath? {
+internal fun Uri.asAssetPathOrNull(): AssetPath? {
   val isAssetUri = scheme == ContentResolver.SCHEME_FILE && pathSegments.firstOrNull() == "android_asset"
   return if (isAssetUri) AssetPath(pathSegments.drop(1).joinToString("/")) else null
 }

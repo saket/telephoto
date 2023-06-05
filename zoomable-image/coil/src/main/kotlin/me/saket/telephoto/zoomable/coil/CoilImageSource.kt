@@ -1,5 +1,8 @@
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package me.saket.telephoto.zoomable.coil
 
+import android.content.ContentResolver
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -10,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
@@ -28,11 +32,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.asAssetPathOrNull
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
+import okio.Path.Companion.toPath
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -121,7 +125,6 @@ internal class Resolver(
   @OptIn(ExperimentalCoilApi::class)
   private fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): SubSamplingImageSource? {
     val result = this
-    val requestData = result.request.data
     val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
 
     if (result is SuccessResult && result.drawable is BitmapDrawable) {
@@ -130,14 +133,16 @@ internal class Resolver(
       val imageSource = when {
         result.diskCacheKey != null -> {
           val diskCache = imageLoader.diskCache!!
-          val snapshot = diskCache.openSnapshot(result.diskCacheKey!!) ?: error("Coil returned a null image from disk cache")
+          val snapshot = checkNotNull(diskCache.openSnapshot(result.diskCacheKey!!)) {
+            "Coil returned a null image from disk cache"
+          }
           SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)
         }
-        result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> when {
-          requestData is Uri -> SubSamplingImageSource.contentUri(requestData, preview)
-          requestData is String -> SubSamplingImageSource.contentUri(Uri.parse(requestData), preview)
-          result.request.context.isResourceId(requestData) -> SubSamplingImageSource.resource(requestData, preview)
-          else -> null
+        result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
+          val context = result.request.context
+          val requestData = result.request.data
+          requestData.asUriOrNull()?.toImageSource(preview)
+            ?: requestData.asResourceIdOrNull(context)?.let { SubSamplingImageSource.resource(it, preview) }
         }
         else -> null
       }
@@ -167,17 +172,41 @@ private fun Drawable.asPainter(): Painter {
   return DrawablePainter(mutate())
 }
 
-@OptIn(ExperimentalContracts::class)
-private fun Context.isResourceId(data: Any): Boolean {
-  contract {
-    returns(true) implies (data is Int)
-  }
-
-  if (data is Int) {
+private fun Any.asResourceIdOrNull(context: Context): Int? {
+  if (this is Int) {
     runCatching {
-      resources.getResourceEntryName(data)
-      return true
+      context.resources.getResourceEntryName(this)
+      return this
     }
   }
-  return false
+  return null
+}
+
+private fun Any.asUriOrNull(): Uri? {
+  when (this) {
+    is String -> return Uri.parse(this)
+    is Uri -> return this
+    else -> return null
+  }
+}
+
+internal fun Uri.toImageSource(preview: ImageBitmap?): SubSamplingImageSource {
+  this.asAssetPathOrNull()?.let { assetPath ->
+    return SubSamplingImageSource.asset(assetPath.path, preview)
+  }
+
+  val path = path
+  if (scheme == ContentResolver.SCHEME_FILE && path != null) {
+    return SubSamplingImageSource.file(path.toPath(), preview)
+  }
+
+  if (scheme == null && path != null && path.startsWith('/') && pathSegments.isNotEmpty()) {
+    // File URIs without a scheme are invalid but have had historic support
+    // from many image loaders, including Coil. Telephoto is forced to support
+    // them because it promises to be a drop-in replacement for AsyncImage().
+    // https://github.com/saket/telephoto/issues/19
+    return SubSamplingImageSource.file(this.toString().toPath(), preview)
+  }
+
+  return SubSamplingImageSource.contentUri(this, preview)
 }
