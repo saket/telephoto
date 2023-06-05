@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable.coil
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -31,7 +32,6 @@ import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -40,18 +40,23 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
+import me.saket.telephoto.util.assertSnapshot
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageState
+import me.saket.telephoto.zoomable.image.coil.test.R
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toOkioPath
 import okio.source
 import org.junit.Before
 import org.junit.Rule
@@ -248,6 +253,28 @@ class CoilImageSourceTest {
     }
   }
 
+  @Test fun correctly_resolve_local_images(
+    @TestParameter requestData: LocalFileRequestDataParam
+  ) = runTest {
+    var isImageDisplayed = false
+    rule.setContent {
+      ZoomableAsyncImage(
+        state = rememberZoomableImageState().also { isImageDisplayed = it.isImageDisplayed },
+        modifier = Modifier.fillMaxSize(),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(requestData.data(LocalContext.current))
+          .allowHardware(false) // Unsupported by Screenshot.capture()
+          .build(),
+        contentDescription = null
+      )
+    }
+
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+    }
+  }
+
   // todo
   @Test fun show_error_drawable_if_request_fails() {
   }
@@ -282,6 +309,19 @@ class CoilImageSourceTest {
     WriteOnlyCache(CachePolicy.WRITE_ONLY),
   }
 
+  @Suppress("unused")
+  enum class LocalFileRequestDataParam(val data: Context.() -> Any) {
+    AssetContentUri({ Uri.parse("file:///android_asset/full_image.png") }),
+    AssetContentUriString({ "file:///android_asset/full_image.png" }),
+    FileContentUriWithScheme({
+      "file:///${createFileFromAsset("full_image.png")}"
+    }),
+    FileContentUriWithoutScheme({
+      "${createFileFromAsset("full_image.png")}"
+    }),
+    ResourceId({ R.drawable.full_image })
+  }
+
   private fun buildImageLoader(build: ImageLoader.Builder.() -> ImageLoader.Builder): ImageLoader =
     ImageLoader.Builder(context)
       .let(build)
@@ -310,4 +350,13 @@ class MockWebServerRule : ExternalResource() {
   val server = MockWebServer()
   override fun before() = server.start()
   override fun after() = server.close()
+}
+
+private fun Context.createFileFromAsset(assetName: String): Path {
+  return (cacheDir.toOkioPath() / assetName).also { path ->
+    FileSystem.SYSTEM.run {
+      delete(path)
+      write(path) { writeAll(assets.open(assetName).source()) }
+    }
+  }
 }
