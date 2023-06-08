@@ -6,6 +6,7 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 
 **Features**
 
+- [Sub-sampling](sub-sampling.md) of bitmaps
 - Pinch to zoom and flings
 - Double tap to zoom
 - Single finger zoom (double tap and hold)
