@@ -31,13 +31,15 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 fun MediaViewerScreen(key: MediaViewerScreenKey) {
   Scaffold { contentPadding ->
-    val pagerState = rememberPagerState(initialPage = key.initialIndex)
+    val pagerState = rememberPagerState(
+      initialPage = key.initialIndex,
+      pageCount = { key.album.items.size }
+    )
     HorizontalPager(
       modifier = Modifier
         .padding(contentPadding)
         .fillMaxSize(),
       state = pagerState,
-      pageCount = key.album.items.size,
       beyondBoundsPageCount = 1,
       pageSpacing = 16.dp,
     ) { pageNum ->
