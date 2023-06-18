@@ -25,7 +25,7 @@ class BitmapTileGridGeneratorTest {
     }
   }
 
-  @Test fun `image smaller than layout bounds`() {
+  @Test fun `image size smaller than layout bounds`() {
     val tileGrid = BitmapRegionTileGrid.generate(
       canvasSize = IntSize(
         width = 1080,
@@ -41,7 +41,23 @@ class BitmapTileGridGeneratorTest {
     assertThat(tileGrid.foreground).isEmpty()
   }
 
-  @Test fun `image larger than layout bounds`() {
+  @Test fun `image size as a multiplier of layout bounds`() {
+    val canvasSize = IntSize(
+      width = 1080,
+      height = 1920
+    )
+    val tileGrid = BitmapRegionTileGrid.generate(
+      canvasSize = canvasSize,
+      unscaledImageSize = canvasSize * 2
+    )
+
+    // On telephoto 0.4.0 and lower versions, the sample size for
+    // a 4k image displayed in a 1080p layout was calculated as 1.
+    assertThat(tileGrid.base.sampleSize).isEqualTo(BitmapSampleSize(2))
+    assertThat(tileGrid.foreground).isNotEmpty()
+  }
+
+  @Test fun `image size larger than layout bounds`() {
     val imageSize = IntSize(
       width = 9734,
       height = 3265

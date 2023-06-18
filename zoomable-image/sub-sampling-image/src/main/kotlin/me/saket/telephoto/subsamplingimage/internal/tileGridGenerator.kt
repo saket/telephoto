@@ -85,7 +85,7 @@ internal fun BitmapSampleSize.Companion.calculateFor(zoom: Float): BitmapSampleS
   }
 
   var sampleSize = 1
-  while (sampleSize * 2 < (1 / zoom)) {
+  while (sampleSize * 2 <= (1 / zoom)) {
     // BitmapRegionDecoder requires values based on powers of 2.
     sampleSize *= 2
   }
