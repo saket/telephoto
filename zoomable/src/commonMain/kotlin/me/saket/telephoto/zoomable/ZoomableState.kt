@@ -364,9 +364,10 @@ class ZoomableState internal constructor(
    * such as [contentScale] and [contentAlignment] are updated.
    */
   internal suspend fun refreshContentTransformation() {
-    check(isReadyToInteract)
-    transformableState.transform(MutatePriority.PreventUserInput) {
-      transformBy(/* default values */)
+    if (isReadyToInteract) {
+      transformableState.transform(MutatePriority.PreventUserInput) {
+        transformBy(/* default values */)
+      }
     }
   }
 
