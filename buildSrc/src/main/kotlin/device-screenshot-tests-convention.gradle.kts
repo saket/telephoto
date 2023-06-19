@@ -21,7 +21,6 @@ emulatorwtf {
   numUniformShards.set(3)
   numFlakyTestAttempts.set(2) // 3 runs in total.
   fileCacheTtl.set(Duration.ofDays(30))
-  recordVideo.set(true)
   timeout.set(Duration.ofMinutes(15)) // Note to self: this is per shard and not per test.
   printOutput.set(true) // Print report URL even for successful test runs.
 }
