@@ -147,13 +147,6 @@ fun ZoomableImage(
             state.subSamplingState = null
           }
         }
-        LaunchedEffect(subSamplingState.imageSize) {
-          state.zoomableState.setContentLocation(
-            ZoomableContentLocation.unscaledAndTopStartAligned(
-              subSamplingState.imageSize?.toSize()
-            )
-          )
-        }
         SubSamplingImage(
           modifier = zoomable,
           state = subSamplingState,
