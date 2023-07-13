@@ -20,6 +20,7 @@ dependencies {
   androidTestImplementation(libs.turbine)
   androidTestImplementation(libs.okhttp.mockWebServer)
   androidTestImplementation(libs.coil.gif)
+  androidTestImplementation(libs.coil.svg)
   androidTestImplementation(libs.coil.test)
   androidTestImplementation(libs.okio.fakeFileSystem)
 }

@@ -2,8 +2,8 @@
 
 package me.saket.telephoto.zoomable.coil
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
-import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -36,7 +36,9 @@ import me.saket.telephoto.subsamplingimage.asAssetPathOrNull
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.internal.RememberWorker
+import okio.FileSystem
 import okio.Path.Companion.toPath
+import okio.source
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -74,6 +76,7 @@ internal class Resolver(
   private val imageLoader: ImageLoader,
   private val sizeResolver: SizeResolver,
 ) : RememberWorker() {
+  private val context = request.context
 
   internal var resolved: ResolveResult by mutableStateOf(
     ResolveResult(delegate = null)
@@ -106,7 +109,7 @@ internal class Resolver(
         .build()
     )
 
-    val imageSource = result.toSubSamplingImageSource(imageLoader)
+    val imageSource = result.toSubSamplingImageSource()
     resolved = resolved.copy(
       crossfadeDuration = result.crossfadeDuration(),
       delegate = if (result is SuccessResult && imageSource != null) {
@@ -123,37 +126,47 @@ internal class Resolver(
   }
 
   @OptIn(ExperimentalCoilApi::class)
-  private fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): SubSamplingImageSource? {
+  private suspend fun ImageResult.toSubSamplingImageSource(): SubSamplingImageSource? {
     val result = this
-    val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
-
-    if (result is SuccessResult && result.drawable is BitmapDrawable) {
-      // Prefer reading of images directly from files whenever possible because
-      // that is significantly faster than reading from their input streams.
-      val imageSource = when {
+    val sourceFactory = if (result is SuccessResult && result.drawable is BitmapDrawable) {
+      when {
+        // Prefer reading of images directly from files whenever possible because
+        // it is significantly faster than reading from their input streams.
         result.diskCacheKey != null -> {
           val diskCache = imageLoader.diskCache!!
-          val snapshot = checkNotNull(diskCache.openSnapshot(result.diskCacheKey!!)) {
-            "Coil returned a null image from disk cache"
-          }
-          SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)
+          val snapshot = diskCache.openSnapshot(result.diskCacheKey!!)
+            ?: error("Coil returned a null image from disk cache")
+          ImageSourceFactory(
+            svgChecker = SvgChecker { diskCache.fileSystem.source(snapshot.data) },
+            create = { preview -> SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close) }
+          )
         }
-        result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
-          val context = result.request.context
-          val requestData = result.request.data
-          requestData.asUriOrNull()?.toImageSource(preview)
-            ?: requestData.asResourceIdOrNull(context)?.let { SubSamplingImageSource.resource(it, preview) }
-        }
-        else -> null
-      }
 
-      if (imageSource != null) {
-        return imageSource
+        result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
+          val requestData = result.request.data
+          requestData.asUriOrNull()?.toSourceFactory()
+            ?: requestData.asResourceIdOrNull()?.toSourceFactory()
+            ?: return null
+        }
+
+        else -> return null
       }
+    } else {
+      return null
     }
 
-    return null
+    if (imageLoader.hasSvgDecoder() && sourceFactory.svgChecker?.isSvg() == true) {
+      return null
+    } else {
+      val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
+      return sourceFactory.create(preview)
+    }
   }
+
+  class ImageSourceFactory(
+    val svgChecker: SvgChecker?,
+    val create: (preview: ImageBitmap?) -> SubSamplingImageSource
+  )
 
   private fun ImageResult.crossfadeDuration(): Duration {
     val transitionFactory = request.transitionFactory
@@ -166,47 +179,66 @@ internal class Resolver(
       Duration.ZERO
     }
   }
-}
 
-private fun Drawable.asPainter(): Painter {
-  return DrawablePainter(mutate())
-}
-
-private fun Any.asResourceIdOrNull(context: Context): Int? {
-  if (this is Int) {
-    runCatching {
-      context.resources.getResourceEntryName(this)
-      return this
+  private fun Any.asUriOrNull(): Uri? {
+    when (this) {
+      is String -> return Uri.parse(this)
+      is Uri -> return this
+      else -> return null
     }
   }
-  return null
-}
 
-private fun Any.asUriOrNull(): Uri? {
-  when (this) {
-    is String -> return Uri.parse(this)
-    is Uri -> return this
-    else -> return null
+  @SuppressLint("Recycle")
+  private fun Uri.toSourceFactory(): ImageSourceFactory {
+    // Assets must be evaluated before files because they share the same scheme.
+    this.asAssetPathOrNull()?.let { assetPath ->
+      return ImageSourceFactory(
+        svgChecker = SvgChecker { context.assets.open(assetPath.path).source() },
+        create = { preview -> SubSamplingImageSource.asset(assetPath.path, preview) }
+      )
+    }
+
+    val filePath = when {
+      // File URIs without a scheme are invalid but have had historic support
+      // from many image loaders, including Coil. Telephoto is forced to support
+      // them because it promises to be a drop-in replacement for AsyncImage().
+      // https://github.com/saket/telephoto/issues/19
+      scheme == null && path?.startsWith('/') == true && pathSegments.isNotEmpty() -> toString().toPath()
+      scheme == ContentResolver.SCHEME_FILE -> path?.toPath()
+      else -> null
+    }
+    if (filePath != null) {
+      return ImageSourceFactory(
+        svgChecker = SvgChecker { FileSystem.SYSTEM.source(filePath) },
+        create = { preview -> SubSamplingImageSource.file(filePath, preview) }
+      )
+    }
+
+    return ImageSourceFactory(
+      svgChecker = SvgChecker { context.contentResolver.openInputStream(this)?.source() },
+      create = { preview -> SubSamplingImageSource.contentUri(this, preview) }
+    )
   }
-}
 
-internal fun Uri.toImageSource(preview: ImageBitmap?): SubSamplingImageSource {
-  this.asAssetPathOrNull()?.let { assetPath ->
-    return SubSamplingImageSource.asset(assetPath.path, preview)
+  @JvmInline
+  value class ResourceId(private val id: Int) {
+    fun toSourceFactory() = ImageSourceFactory(
+      svgChecker = null,  // SVGs can't be stored as resources.
+      create = { preview -> SubSamplingImageSource.resource(id, preview) }
+    )
   }
 
-  val path = path
-  if (scheme == ContentResolver.SCHEME_FILE && path != null) {
-    return SubSamplingImageSource.file(path.toPath(), preview)
+  private fun Any.asResourceIdOrNull(): ResourceId? {
+    if (this is Int) {
+      runCatching {
+        context.resources.getResourceEntryName(this)
+        return ResourceId(this)
+      }
+    }
+    return null
   }
 
-  if (scheme == null && path != null && path.startsWith('/') && pathSegments.isNotEmpty()) {
-    // File URIs without a scheme are invalid but have had historic support
-    // from many image loaders, including Coil. Telephoto is forced to support
-    // them because it promises to be a drop-in replacement for AsyncImage().
-    // https://github.com/saket/telephoto/issues/19
-    return SubSamplingImageSource.file(this.toString().toPath(), preview)
+  private fun Drawable.asPainter(): Painter {
+    return DrawablePainter(mutate())
   }
-
-  return SubSamplingImageSource.contentUri(this, preview)
 }

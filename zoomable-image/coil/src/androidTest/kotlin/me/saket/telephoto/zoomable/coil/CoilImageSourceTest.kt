@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +16,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.unit.dp
 import app.cash.molecule.RecompositionClock
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
@@ -21,6 +24,7 @@ import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.decode.ImageDecoderDecoder
+import coil.decode.SvgDecoder
 import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -47,6 +51,8 @@ import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageState
+import me.saket.telephoto.zoomable.coil.CoilImageSourceTest.SvgDecodingState.SvgDecodingDisabled
+import me.saket.telephoto.zoomable.coil.CoilImageSourceTest.SvgDecodingState.SvgDecodingEnabled
 import me.saket.telephoto.zoomable.image.coil.test.R
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import okhttp3.mockwebserver.Dispatcher
@@ -84,12 +90,6 @@ class CoilImageSourceTest {
 
   @Before
   fun setUp() {
-    Coil.setImageLoader(
-      ImageLoader.Builder(context)
-        .components { add(ImageDecoderDecoder.Factory()) }
-        .build()
-    )
-
     rule.activityRule.scenario.onActivity {
       it.prepareForScreenshotTest()
     }
@@ -100,6 +100,7 @@ class CoilImageSourceTest {
           "/placeholder_image.png" -> assetAsResponse("placeholder_image.png")
           "/full_image.png" -> assetAsResponse("full_image.png", delay = 300.milliseconds)
           "/animated_image.gif" -> assetAsResponse("animated_image.gif", delay = 300.milliseconds)
+          "/emoji.svg" -> assetAsResponse("emoji.svg")
           else -> error("unknown path = ${request.path}")
         }
       }
@@ -275,11 +276,59 @@ class CoilImageSourceTest {
     }
   }
 
+  @Test fun correctly_resolve_svgs(
+    @TestParameter requestData: SvgRequestDataParam,
+    @TestParameter decodingState: SvgDecodingState,
+  ) {
+    val model = when (requestData) {
+      SvgRequestDataParam.RemoteUrl -> serverRule.server.url("emoji.svg")
+      else -> requestData.data(context)
+    }
+    Coil.setImageLoader(
+      ImageLoader.Builder(context)
+        .components {
+          when (decodingState) {
+            SvgDecodingEnabled -> add(SvgDecoder.Factory())
+            SvgDecodingDisabled -> Unit
+          }
+        }
+        .build()
+    )
+
+    var isImageDisplayed = false
+    rule.setContent {
+      ZoomableAsyncImage(
+        state = rememberZoomableImageState().also { isImageDisplayed = it.isImageDisplayed },
+        modifier = Modifier
+          .fillMaxSize()
+          .wrapContentSize()
+          .size(300.dp),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(model)
+          .allowHardware(false) // Unsupported by Screenshot.capture()
+          .error(R.drawable.error_image)
+          .build(),
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+    }
+  }
+
   // todo
   @Test fun show_error_drawable_if_request_fails() {
   }
 
   @Test fun non_bitmaps_should_not_be_sub_sampled() = runTest {
+    Coil.setImageLoader(
+      ImageLoader.Builder(context)
+        .components { add(ImageDecoderDecoder.Factory()) }  // For GIFs.
+        .build()
+    )
+
     resolve {
       serverRule.server.url("animated_image.gif")
     }.test {
@@ -313,13 +362,22 @@ class CoilImageSourceTest {
   enum class LocalFileRequestDataParam(val data: Context.() -> Any) {
     AssetContentUri({ Uri.parse("file:///android_asset/full_image.png") }),
     AssetContentUriString({ "file:///android_asset/full_image.png" }),
-    FileContentUriWithScheme({
-      "file:///${createFileFromAsset("full_image.png")}"
-    }),
-    FileContentUriWithoutScheme({
-      "${createFileFromAsset("full_image.png")}"
-    }),
+    FileContentUriWithScheme({ "file:///${createFileFromAsset("full_image.png")}" }),
+    FileContentUriWithoutScheme({ "${createFileFromAsset("full_image.png")}" }),
     ResourceId({ R.drawable.full_image })
+  }
+
+  @Suppress("unused")
+  enum class SvgRequestDataParam(val data: Context.() -> Any) {
+    RemoteUrl({ error("unsupported") }),
+    AssetContentUriSvg({ Uri.parse("file:///android_asset/emoji.svg") }),
+    FileContentUriSvg({ Uri.parse("file:///${createFileFromAsset("emoji.svg")}") }),
+  }
+
+  @Suppress("unused")
+  enum class SvgDecodingState {
+    SvgDecodingEnabled,
+    SvgDecodingDisabled,
   }
 
   private fun buildImageLoader(build: ImageLoader.Builder.() -> ImageLoader.Builder): ImageLoader =
@@ -340,7 +398,7 @@ class CoilImageSourceTest {
   ): MockResponse {
     val source = rule.activity.assets.open(fileName).source()
     return MockResponse()
-      .addHeader("Content-Type", "image/png")
+      .addHeader("Content-Type", "image/*")
       .setBody(Buffer().apply { writeAll(source) })
       .setBodyDelay(delay.inWholeMilliseconds, TimeUnit.MILLISECONDS)
   }
