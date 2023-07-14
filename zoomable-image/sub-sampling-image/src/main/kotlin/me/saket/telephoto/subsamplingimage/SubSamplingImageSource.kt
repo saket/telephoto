@@ -123,7 +123,7 @@ internal data class FileImageSource(
 
 @Immutable
 internal data class AssetImageSource(
-  private val asset: AssetPath,
+  val asset: AssetPath,
   override val preview: ImageBitmap?
 ) : SubSamplingImageSource {
   override suspend fun decoder(context: Context): BitmapRegionDecoder {

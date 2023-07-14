@@ -318,6 +318,30 @@ class CoilImageSourceTest {
     }
   }
 
+  @Test fun vector_drawables_should_not_be_sub_sampled() {
+    var isImageDisplayed = false
+    rule.setContent {
+      ZoomableAsyncImage(
+        state = rememberZoomableImageState().also { isImageDisplayed = it.isImageDisplayed },
+        modifier = Modifier
+          .fillMaxSize()
+          .wrapContentSize()
+          .size(300.dp),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(R.drawable.emoji)
+          .allowHardware(false) // Unsupported by Screenshot.capture()
+          .error(R.drawable.error_image)
+          .build(),
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+    }
+  }
+
   // todo
   @Test fun show_error_drawable_if_request_fails() {
   }

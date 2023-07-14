@@ -2,7 +2,6 @@
 
 package me.saket.telephoto.zoomable.coil
 
-import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -35,10 +34,9 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.asAssetPathOrNull
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
+import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceFactory
 import me.saket.telephoto.zoomable.internal.RememberWorker
-import okio.FileSystem
 import okio.Path.Companion.toPath
-import okio.source
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -72,11 +70,10 @@ internal class CoilImageSource(
 }
 
 internal class Resolver(
-  private val request: ImageRequest,
-  private val imageLoader: ImageLoader,
+  internal val request: ImageRequest,
+  internal val imageLoader: ImageLoader,
   private val sizeResolver: SizeResolver,
 ) : RememberWorker() {
-  private val context = request.context
 
   internal var resolved: ResolveResult by mutableStateOf(
     ResolveResult(delegate = null)
@@ -134,12 +131,8 @@ internal class Resolver(
         // it is significantly faster than reading from their input streams.
         result.diskCacheKey != null -> {
           val diskCache = imageLoader.diskCache!!
-          val snapshot = diskCache.openSnapshot(result.diskCacheKey!!)
-            ?: error("Coil returned a null image from disk cache")
-          ImageSourceFactory(
-            svgChecker = SvgChecker { diskCache.fileSystem.source(snapshot.data) },
-            create = { preview -> SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close) }
-          )
+          val snapshot = diskCache.openSnapshot(result.diskCacheKey!!) ?: error("Coil returned a null cache snapshot")
+          ImageSourceFactory { SubSamplingImageSource.file(snapshot.data, preview = it, onClose = snapshot::close) }
         }
 
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
@@ -155,18 +148,14 @@ internal class Resolver(
       return null
     }
 
-    if (imageLoader.hasSvgDecoder() && sourceFactory.svgChecker?.isSvg() == true) {
-      return null
-    } else {
-      val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
-      return sourceFactory.create(preview)
-    }
+    val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
+    val source = sourceFactory.create(preview)
+    return if (source?.canBeSubSampled() == true) source else null
   }
 
-  class ImageSourceFactory(
-    val svgChecker: SvgChecker?,
-    val create: (preview: ImageBitmap?) -> SubSamplingImageSource
-  )
+  fun interface ImageSourceFactory {
+    suspend fun create(preview: ImageBitmap?): SubSamplingImageSource?
+  }
 
   private fun ImageResult.crossfadeDuration(): Duration {
     val transitionFactory = request.transitionFactory
@@ -188,14 +177,10 @@ internal class Resolver(
     }
   }
 
-  @SuppressLint("Recycle")
   private fun Uri.toSourceFactory(): ImageSourceFactory {
     // Assets must be evaluated before files because they share the same scheme.
     this.asAssetPathOrNull()?.let { assetPath ->
-      return ImageSourceFactory(
-        svgChecker = SvgChecker { context.assets.open(assetPath.path).source() },
-        create = { preview -> SubSamplingImageSource.asset(assetPath.path, preview) }
-      )
+      return ImageSourceFactory { SubSamplingImageSource.asset(assetPath.path, preview = it) }
     }
 
     val filePath = when {
@@ -208,35 +193,27 @@ internal class Resolver(
       else -> null
     }
     if (filePath != null) {
-      return ImageSourceFactory(
-        svgChecker = SvgChecker { FileSystem.SYSTEM.source(filePath) },
-        create = { preview -> SubSamplingImageSource.file(filePath, preview) }
-      )
+      return ImageSourceFactory { SubSamplingImageSource.file(filePath, preview = it) }
     }
 
-    return ImageSourceFactory(
-      svgChecker = SvgChecker { context.contentResolver.openInputStream(this)?.source() },
-      create = { preview -> SubSamplingImageSource.contentUri(this, preview) }
-    )
+    return ImageSourceFactory { SubSamplingImageSource.contentUri(this, preview = it) }
   }
 
   @JvmInline
-  value class ResourceId(private val id: Int) {
-    fun toSourceFactory() = ImageSourceFactory(
-      svgChecker = null,  // SVGs can't be stored as resources.
-      create = { preview -> SubSamplingImageSource.resource(id, preview) }
-    )
-  }
+  value class ResourceId(val id: Int)
 
   private fun Any.asResourceIdOrNull(): ResourceId? {
     if (this is Int) {
       runCatching {
-        context.resources.getResourceEntryName(this)
+        request.context.resources.getResourceEntryName(this)
         return ResourceId(this)
       }
     }
     return null
   }
+
+  private fun ResourceId.toSourceFactory() =
+    ImageSourceFactory { SubSamplingImageSource.resource(id, preview = it) }
 
   private fun Drawable.asPainter(): Painter {
     return DrawablePainter(mutate())
