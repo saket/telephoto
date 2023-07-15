@@ -32,6 +32,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
+import me.saket.telephoto.util.assertSnapshot
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil
@@ -39,6 +40,7 @@ import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageSource.SubSamplingDelegate
 import me.saket.telephoto.zoomable.ZoomableImageState
+import me.saket.telephoto.zoomable.image.glide.test.R
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import okhttp3.HttpUrl
 import okhttp3.mockwebserver.Dispatcher
@@ -224,6 +226,27 @@ class GlideImageSourceTest {
     ).test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate).isNotInstanceOf(SubSamplingDelegate::class.java)
+    }
+  }
+
+  @Test fun correctly_resolve_vector_drawables() {
+    var isImageDisplayed = false
+    rule.setContent {
+      ZoomableGlideImage(
+        state = rememberZoomableImageState().also {
+          isImageDisplayed = it.isImageDisplayed || it.isPlaceholderDisplayed
+        },
+        modifier = Modifier.fillMaxSize(),
+        model = R.drawable.emoji,
+        contentDescription = null
+      ) {
+        it.error(R.drawable.error_image)
+      }
+    }
+
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
