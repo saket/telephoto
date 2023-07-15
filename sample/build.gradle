@@ -9,7 +9,7 @@ android {
 
   defaultConfig {
     applicationId namespace
-    minSdkVersion 31
+    minSdkVersion 30
     compileSdk 33
     versionCode 1
     versionName "1.0"
