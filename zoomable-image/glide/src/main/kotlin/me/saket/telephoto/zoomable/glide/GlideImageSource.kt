@@ -36,6 +36,7 @@ import me.saket.telephoto.zoomable.glide.Size as GlideSize
 internal class GlideImageSource(
   private val requestManager: RequestManager,
   private val request: RequestBuilder<Drawable>,
+  private val isVectorDrawable: Boolean,
 ) : ZoomableImageSource {
 
   @Composable
@@ -45,6 +46,7 @@ internal class GlideImageSource(
         request = request,
         requestManager = requestManager,
         size = { canvasSize.first().toGlideSize() },
+        isVectorDrawable = isVectorDrawable,
       )
     }
     return resolver.resolved
@@ -60,6 +62,7 @@ private class GlideImageResolver(
   private val request: RequestBuilder<Drawable>,
   private val requestManager: RequestManager,
   private val size: suspend () -> GlideSize,
+  private val isVectorDrawable: Boolean,
 ) : RememberWorker() {
 
   var resolved: ResolveResult by mutableStateOf(
@@ -73,7 +76,10 @@ private class GlideImageResolver(
       // advance so assume it'll be needed and force Glide to write this image to disk.
       .diskCacheStrategy(
         object : ForwardingDiskCacheStrategy(request.diskCacheStrategy) {
-          override fun isDataCacheable(dataSource: DataSource) = DATA.isDataCacheable(dataSource)
+          override fun isDataCacheable(dataSource: DataSource): Boolean = when {
+            isVectorDrawable -> super.isDataCacheable(dataSource) // https://github.com/bumptech/glide/issues/5213
+            else -> DATA.isDataCacheable(dataSource)
+          }
         }
       )
       .flow(

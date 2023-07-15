@@ -1,6 +1,8 @@
 package me.saket.telephoto.zoomable.glide
 
+import android.content.Context
 import android.graphics.drawable.Drawable
+import android.util.TypedValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -106,7 +108,7 @@ fun ZoomableImageSource.Companion.glide(
   requestBuilder: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
 ): ZoomableImageSource {
   check(model !is RequestBuilder<*>) {
-    "'model' parameter can't be a RequestBuilder. Please use 'requestBuilderTransform' instead."
+    "'model' parameter can't be a RequestBuilder. Please use the 'requestBuilderTransform' parameter instead."
   }
 
   // Note to self: Glide's RequestBuilder uses unstable APIs and can't be used as a remember key.
@@ -115,7 +117,18 @@ fun ZoomableImageSource.Companion.glide(
     val requestManager = Glide.with(context)
     GlideImageSource(
       requestManager = requestManager,
-      request = requestBuilder(requestManager.load(model)).lock()
+      request = requestBuilder(requestManager.load(model)).lock(),
+      isVectorDrawable = model?.isVectorDrawable(context) == true
     )
   }
+}
+
+private fun Any.isVectorDrawable(context: Context): Boolean {
+  if (this is Int) {
+    val resourcePath = TypedValue().also {
+      context.resources.getValue(this, it, /* resolveRefs = */ true)
+    }
+    return resourcePath.string.endsWith(".xml")
+  }
+  return false
 }

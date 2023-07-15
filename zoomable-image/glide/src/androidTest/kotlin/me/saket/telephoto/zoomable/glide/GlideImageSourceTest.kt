@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,6 +14,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.unit.dp
 import app.cash.molecule.RecompositionClock
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
@@ -233,10 +236,13 @@ class GlideImageSourceTest {
     var isImageDisplayed = false
     rule.setContent {
       ZoomableGlideImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .wrapContentSize()
+          .size(300.dp),
         state = rememberZoomableImageState().also {
           isImageDisplayed = it.isImageDisplayed || it.isPlaceholderDisplayed
         },
-        modifier = Modifier.fillMaxSize(),
         model = R.drawable.emoji,
         contentDescription = null
       ) {
