@@ -30,6 +30,7 @@ android {
   }
   lint {
     lintConfig = file("lint.xml")
+    abortOnError = System.getenv("CI") == null
   }
   buildFeatures.compose = true
   composeOptions.kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
@@ -53,10 +54,6 @@ dependencies {
   implementation(libs.coil.gif)
   implementation(libs.appyx)
 
-  if (System.getenv("CI") == null) {
-    // Use a newer version of compose that fixes state restoration with pager.
-    // Using different versions in different modules interferes with lint on CI
-    // for some reason so this is only run locally.
-    implementation("androidx.compose.foundation:foundation:1.5.0-beta02")
-  }
+  // compose.foundation 1.5.x fixes a state restoration bug with pagers.
+  implementation("androidx.compose.foundation:foundation:1.5.0-beta02")
 }
