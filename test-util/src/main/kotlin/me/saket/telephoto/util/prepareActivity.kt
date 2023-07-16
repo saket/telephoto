@@ -11,6 +11,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.core.view.children
 import androidx.test.runner.screenshot.Screenshot
@@ -20,6 +22,7 @@ fun Activity.prepareForScreenshotTest() {
   try {
     actionBar?.hide()
     window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))
+    window.statusBarColor = Color.Transparent.toArgb()
 
     // Stretch activity to fill the entire display and draw under system bars.
     WindowCompat.setDecorFitsSystemWindows(window, false)
