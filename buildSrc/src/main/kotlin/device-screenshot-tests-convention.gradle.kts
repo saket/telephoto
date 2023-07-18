@@ -14,7 +14,7 @@ android {
 emulatorwtf {
   devices.set(
     listOf(
-      mapOf("model" to "Pixel7Atd", "version" to 30)
+      mapOf("model" to "Pixel7Atd", "version" to 31)
     )
   )
   directoriesToPull.set(listOf("/sdcard/Download/"))
