@@ -473,7 +473,8 @@ class SubSamplingImageTest {
     Asset({ SubSamplingImageSource.asset("pahade.jpg") }),
     Resource({ SubSamplingImageSource.resource(R.drawable.cat_1920) }),
     ContentUri({ SubSamplingImageSource.contentUri(Uri.parse("""android.resource://${packageName}/${R.drawable.cat_1920}""")) }),
-    File({ SubSamplingImageSource.file(createFileFromAsset("pahade.jpg")) })
+    File({ SubSamplingImageSource.file(createFileFromAsset("pahade.jpg")) }),
+    RawStream({ SubSamplingImageSource.rawSource({ assets.open("path.jpg").source() }) }),
   }
 
   @Suppress("unused")

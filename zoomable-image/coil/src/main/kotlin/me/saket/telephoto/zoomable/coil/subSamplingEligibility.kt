@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.AssetImageSource
 import me.saket.telephoto.subsamplingimage.FileImageSource
+import me.saket.telephoto.subsamplingimage.RawImageSource
 import me.saket.telephoto.subsamplingimage.ResourceImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.UriImageSource
@@ -24,6 +25,7 @@ internal suspend fun SubSamplingImageSource.canBeSubSampled(): Boolean {
     is AssetImageSource -> isSvgDecoderPresent() && isSvg()
     is UriImageSource -> isSvgDecoderPresent() && isSvg()
     is FileImageSource -> isSvgDecoderPresent() && isSvg(FileSystem.SYSTEM.source(path))
+    is RawImageSource -> isSvgDecoderPresent() && isSvg(source.invoke())
   }
   return !preventSubSampling
 }

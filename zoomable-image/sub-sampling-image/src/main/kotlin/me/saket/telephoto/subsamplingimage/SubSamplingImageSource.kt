@@ -13,6 +13,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
 import okio.Closeable
 import okio.Path
+import okio.Source
+import okio.buffer
 
 /**
  * Image to display with [SubSamplingImage]. Can be one of:
@@ -21,8 +23,7 @@ import okio.Path
  * * [SubSamplingImageSource.asset]
  * * [SubSamplingImageSource.resource]
  * * [SubSamplingImageSource.contentUri]
- *
- * Raw input streams aren't supported because reading from files is significantly faster.
+ * * [SubSamplingImageSource.rawSource]
  */
 sealed interface SubSamplingImageSource : Closeable {
   /**
@@ -92,6 +93,21 @@ sealed interface SubSamplingImageSource : Closeable {
       val assetPath = uri.asAssetPathOrNull()
       return if (assetPath != null) AssetImageSource(assetPath, preview) else UriImageSource(uri, preview)
     }
+
+    /**
+     * An arbitrary stream that should only be used for images that can't be read directly
+     * from the disk. For all other purposes, prefer using [SubSamplingImageSource.file]
+     * instead as it is significantly faster.
+     *
+     * @param preview See [SubSamplingImageSource.preview].
+     * @param onClose Called when the image is no longer visible.
+     */
+    @Stable
+    fun rawSource(
+      source: () -> Source,
+      preview: ImageBitmap? = null,
+      onClose: Closeable? = null,
+    ): SubSamplingImageSource = RawImageSource(source, preview, onClose)
   }
 
   suspend fun decoder(context: Context): BitmapRegionDecoder
@@ -158,6 +174,24 @@ internal data class UriImageSource(
     return context.contentResolver.openInputStream(uri)
       ?.use { stream -> BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!! }
       ?: error("Failed to read bitmap from uri: $uri")
+  }
+}
+
+@Immutable
+internal data class RawImageSource(
+  val source: () -> Source,
+  override val preview: ImageBitmap? = null,
+  private val onClose: Closeable?
+) : SubSamplingImageSource {
+
+  override suspend fun decoder(context: Context): BitmapRegionDecoder {
+    return source().buffer().inputStream().use { stream ->
+      BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
+    }
+  }
+
+  override fun close() {
+    onClose?.close()
   }
 }
 
