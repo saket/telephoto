@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -40,6 +41,7 @@ import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
@@ -732,6 +734,49 @@ class ZoomableImageTest {
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
       assertThat(onClickCalled).isTrue()
+    }
+  }
+
+  // Regression test for https://github.com/saket/telephoto/issues/33
+  @Test fun panning_in_reverse_works_after_image_is_panned_to_the_edge() {
+    var isImageDisplayed = false
+
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
+        contentDescription = null,
+        state = rememberZoomableImageState(
+          rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+        ).also {
+          isImageDisplayed = it.isImageDisplayed
+        },
+      )
+    }
+
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.onNodeWithTag("image").performTouchInput {
+      doubleClick(position = Offset.Zero)
+    }
+
+    // Scenario: when the image has reached its edge where it can't be panned any further,
+    // changing the direction of the swipe gesture should pan the image in the opposite direction.
+    rule.onNodeWithTag("image").performTouchInput {
+      val noUpScope = object : TouchInjectionScope by this {
+        override fun up(pointerId: Int) = Unit
+      }
+      noUpScope.swipeDown(startY = top, endY = centerY)
+
+      val noDownScope = object : TouchInjectionScope by this {
+        override fun down(pointerId: Int, position: Offset) = Unit
+      }
+      noDownScope.swipeUp(startY = centerY, endY = top)
+    }
+
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
   }
 
