@@ -197,7 +197,7 @@ private suspend fun AwaitPointerEventScope.detectZoom(
 
         if (zoomMotion > touchSlop ||
           rotationMotion > touchSlop ||
-          (panMotion > touchSlop && canPan.value(pan))
+          (panMotion > touchSlop && canPan.value(panChange))
         ) {
           pastTouchSlop = true
           lockedToPanZoom = panZoomLock.value && rotationMotion < touchSlop
@@ -210,7 +210,7 @@ private suspend fun AwaitPointerEventScope.detectZoom(
         val effectiveRotation = if (lockedToPanZoom) 0f else rotationChange
         if (effectiveRotation != 0f ||
           zoomChange != 1f ||
-          (panChange != Offset.Zero && canPan.value.invoke(pan))
+          (panChange != Offset.Zero && canPan.value.invoke(panChange))
         ) {
           channel.trySend(TransformDelta(zoomChange, panChange, effectiveRotation, centroid))
         }
