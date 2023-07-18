@@ -43,6 +43,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
+import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
 import me.saket.telephoto.util.assertSnapshot
 import me.saket.telephoto.util.prepareForScreenshotTest
@@ -84,7 +85,14 @@ class CoilImageSourceTest {
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val serverRule = MockWebServerRule()
   @get:Rule val testName = TestName()
-  @get:Rule val dropshots = Dropshots(filenameFunc = { it })
+  @get:Rule val dropshots = Dropshots(
+    filenameFunc = { it },
+    resultValidator = CiScreenshotValidator(
+      context = { rule.activity },
+      tolerancePercentOnLocal = 0f,
+      tolerancePercentOnCi = 0.1f,
+    )
+  )
 
   private val context: Context get() = rule.activity
 
