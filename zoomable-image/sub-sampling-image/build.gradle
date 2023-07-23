@@ -16,10 +16,11 @@ android {
 dependencies {
   api(projects.zoomable)
 
-  implementation(libs.compose.ui.util)
-  api(libs.compose.foundation)
   api(libs.okio.core)
+  api(libs.compose.foundation)
+  implementation(libs.compose.ui.util)
   implementation(libs.androidx.ktx.core)
+  implementation(libs.androidx.exif)
 
   testImplementation(libs.junit)
   testImplementation(libs.truth)
