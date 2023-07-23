@@ -11,7 +11,7 @@ internal data class ExifMetadata(
 ) {
 
   companion object {
-    fun from(source: BufferedSource): ExifMetadata {
+    fun read(source: BufferedSource): ExifMetadata {
       val exif = ExifInterface(
         ExifInterfaceCompatibleInputStream(source.peek().inputStream())
       )
