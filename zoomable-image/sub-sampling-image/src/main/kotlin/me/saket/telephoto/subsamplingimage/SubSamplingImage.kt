@@ -3,13 +3,18 @@ package me.saket.telephoto.subsamplingimage
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.Role
@@ -24,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
+import me.saket.telephoto.subsamplingimage.internal.createRotationMatrix
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
 /**
@@ -41,18 +47,20 @@ fun SubSamplingImage(
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
 ) {
+  val paint = remember { Paint() }.also {
+    it.alpha = alpha
+    it.colorFilter = colorFilter
+  }
   val onDraw: DrawScope.() -> Unit = {
     state.tiles.fastForEach { tile ->
       if (tile.bitmap != null && state.isImageLoaded) {
-        drawImage(
-          image = tile.bitmap,
-          srcOffset = IntOffset.Zero,
-          srcSize = IntSize(tile.bitmap.width, tile.bitmap.height),
-          dstOffset = tile.bounds.topLeft,
-          dstSize = tile.bounds.size,
-          alpha = alpha,
-          colorFilter = colorFilter
-        )
+        drawIntoCanvas {
+          it.nativeCanvas.drawBitmap(
+            tile.bitmap.asAndroidBitmap(),
+            tile.createRotationMatrix(degrees = 90),  // todo: get degrees from somewhere.
+            paint.asFrameworkPaint(),
+          )
+        }
       }
 
       if (state.showTileBounds) {
