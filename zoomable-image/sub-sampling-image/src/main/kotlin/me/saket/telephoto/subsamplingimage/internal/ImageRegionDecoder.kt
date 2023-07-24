@@ -23,7 +23,8 @@ internal interface ImageRegionDecoder {
     suspend fun create(
       context: Context,
       imageSource: SubSamplingImageSource,
-      imageOptions: ImageBitmapOptions
+      imageOptions: ImageBitmapOptions,
+      exif: ExifMetadata,
     ): ImageRegionDecoder
   }
 }

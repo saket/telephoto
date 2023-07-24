@@ -48,12 +48,12 @@ private fun ResourceImageSource.isVectorDrawable(): Boolean =
 
 context(Resolver)
 private suspend fun AssetImageSource.isSvg(): Boolean =
-  isSvg(request.context.assets.open(asset.path).source())
+  isSvg(peek(request.context).source())
 
 context(Resolver)
 @SuppressLint("Recycle")
 private suspend fun UriImageSource.isSvg(): Boolean =
-  isSvg(request.context.contentResolver.openInputStream(uri)?.source())
+  isSvg(peek(request.context).source())
 
 private suspend fun isSvg(source: Source?): Boolean {
   return withContext(Dispatchers.IO) {

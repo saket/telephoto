@@ -34,6 +34,7 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
+import me.saket.telephoto.subsamplingimage.internal.ExifMetadata
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
@@ -176,7 +177,7 @@ internal fun rememberSubSamplingImageState(
             tileGrid.base.let { tile ->
               CanvasRegionTile(
                 bounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset),
-                bitmap = bitmaps[tile] ?: imageSource.preview,
+                bitmap = bitmaps[tile] ?: imageSource.preview,  // todo: undo!
                 bitmapRegion = tile,
                 isBaseTile = true,
               )
@@ -214,7 +215,8 @@ private fun createRegionDecoder(
     val factory = PooledImageRegionDecoder.Factory(LocalImageRegionDecoderFactory.current)
     LaunchedEffect(imageSource) {
       try {
-        decoder.value = factory.create(context, imageSource, imageOptions)
+        val exif = ExifMetadata.read(context, imageSource)
+        decoder.value = factory.create(context, imageSource, imageOptions, exif)
       } catch (e: IOException) {
         errorReporter.onImageLoadingFailed(e, imageSource)
       }

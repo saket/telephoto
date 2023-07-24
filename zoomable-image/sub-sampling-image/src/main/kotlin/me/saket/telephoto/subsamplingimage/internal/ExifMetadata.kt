@@ -2,6 +2,8 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.content.Context
 import androidx.exifinterface.media.ExifInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.AssetImageSource
 import me.saket.telephoto.subsamplingimage.FileImageSource
 import me.saket.telephoto.subsamplingimage.RawImageSource
@@ -13,27 +15,34 @@ import okio.buffer
 import java.io.InputStream
 
 /** Properties read from an image's EXIF header. */
-internal data class ExifMetadata(
-  val isFlipped: Boolean,
+@JvmInline
+internal value class ExifMetadata(
   val rotationDegrees: Int,
 ) {
 
+  init {
+    check(rotationDegrees.rem(90) == 0) {
+      "Unsupported image orientation at $rotationDegrees°"
+    }
+  }
+
   companion object {
-    fun read(context: Context, source: SubSamplingImageSource): ExifMetadata {
-      val inputStream = when (source) {
-        is FileImageSource -> FileSystem.SYSTEM.source(source.path).buffer().inputStream()
-        is RawImageSource -> source.peek().inputStream()
-        is AssetImageSource -> source.peek(context)
-        is ResourceImageSource -> source.peek(context)
-        is UriImageSource -> source.peek(context)
+    suspend fun read(context: Context, source: SubSamplingImageSource): ExifMetadata {
+      return withContext(Dispatchers.Default) {
+        val inputStream = when (source) {
+          is FileImageSource -> FileSystem.SYSTEM.source(source.path).buffer().inputStream()
+          is RawImageSource -> source.peek().inputStream()
+          is AssetImageSource -> source.peek(context)
+          is ResourceImageSource -> source.peek(context)
+          is UriImageSource -> source.peek(context)
+        }
+        val exif = ExifInterface(
+          ExifInterfaceCompatibleInputStream(inputStream)
+        )
+        ExifMetadata(
+          rotationDegrees = exif.rotationDegrees,
+        )
       }
-      val exif = ExifInterface(
-        ExifInterfaceCompatibleInputStream(inputStream)
-      )
-      return ExifMetadata(
-        isFlipped = exif.isFlipped,
-        rotationDegrees = exif.rotationDegrees,
-      )
     }
   }
 }

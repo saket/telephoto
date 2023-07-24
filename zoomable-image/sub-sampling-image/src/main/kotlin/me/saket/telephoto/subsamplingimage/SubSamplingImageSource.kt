@@ -141,7 +141,7 @@ internal data class FileImageSource(
 
 @Immutable
 internal data class AssetImageSource(
-  val asset: AssetPath,
+  private val asset: AssetPath,
   override val preview: ImageBitmap?
 ) : SubSamplingImageSource {
 
@@ -179,7 +179,7 @@ internal data class ResourceImageSource(
 
 @Immutable
 internal data class UriImageSource(
-  val uri: Uri,
+  private val uri: Uri,
   override val preview: ImageBitmap?
 ) : SubSamplingImageSource {
 
