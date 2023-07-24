@@ -4,9 +4,8 @@ import android.content.Context
 import android.os.Build.VERSION.SDK_INT
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata
-import okio.buffer
-import okio.source
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 
@@ -16,7 +15,8 @@ class ExifMetadataTest {
 
   @Test fun not_rotated_jpg() {
     val metadata = ExifMetadata.read(
-      context.assets.open("not_rotated_image.jpg").source().buffer()
+      context = context,
+      source = SubSamplingImageSource.asset("not_rotated_image.jpg")
     )
     assertThat(metadata).isEqualTo(
       ExifMetadata(
@@ -28,7 +28,8 @@ class ExifMetadataTest {
 
   @Test fun rotated_jpg() {
     val metadata = ExifMetadata.read(
-      context.assets.open("rotated_image.jpg").source().buffer()
+      context = context,
+      source = SubSamplingImageSource.asset("rotated_image.jpg")
     )
     assertThat(metadata).isEqualTo(
       ExifMetadata(
@@ -43,7 +44,8 @@ class ExifMetadataTest {
     assumeTrue(SDK_INT >= 30)
 
     val metadata = ExifMetadata.read(
-      context.assets.open("not_rotated_image.heic").source().buffer()
+      context = context,
+      source = SubSamplingImageSource.asset("not_rotated_image.heic")
     )
     assertThat(metadata).isEqualTo(
       ExifMetadata(

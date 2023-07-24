@@ -11,10 +11,12 @@ import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
+import okio.BufferedSource
 import okio.Closeable
 import okio.Path
 import okio.Source
 import okio.buffer
+import java.io.InputStream
 
 /**
  * Image to display with [SubSamplingImage]. Can be one of:
@@ -104,7 +106,7 @@ sealed interface SubSamplingImageSource : Closeable {
      */
     @Stable
     fun rawSource(
-      source: () -> Source,
+      source: () -> Source, // todo: should this be a BufferedSource?
       preview: ImageBitmap? = null,
       onClose: Closeable? = null,
     ): SubSamplingImageSource = RawImageSource(source, preview, onClose)
@@ -142,9 +144,14 @@ internal data class AssetImageSource(
   val asset: AssetPath,
   override val preview: ImageBitmap?
 ) : SubSamplingImageSource {
+
+  fun peek(context: Context): InputStream {
+    return context.assets.open(asset.path, AssetManager.ACCESS_RANDOM)
+  }
+
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
-    return context.assets.open(asset.path, AssetManager.ACCESS_RANDOM).use { stream ->
-      if (BuildConfig.DEBUG && stream !is AssetManager.AssetInputStream) {
+    return peek(context).use { stream ->
+      check (stream is AssetManager.AssetInputStream) {
         error("BitmapRegionDecoder won't be able to optimize reading of this asset")
       }
       BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
@@ -157,9 +164,14 @@ internal data class ResourceImageSource(
   @DrawableRes val id: Int,
   override val preview: ImageBitmap?,
 ) : SubSamplingImageSource {
+
   @SuppressLint("ResourceType")
+  fun peek(context: Context): InputStream {
+    return context.resources.openRawResource(id)
+  }
+
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
-    return context.resources.openRawResource(id).use { stream ->
+    return peek(context).use { stream ->
       BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
     }
   }
@@ -170,10 +182,15 @@ internal data class UriImageSource(
   val uri: Uri,
   override val preview: ImageBitmap?
 ) : SubSamplingImageSource {
+
+  fun peek(context: Context): InputStream {
+    return context.contentResolver.openInputStream(uri) ?: error("Failed to read uri: $uri")
+  }
+
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
-    return context.contentResolver.openInputStream(uri)
-      ?.use { stream -> BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!! }
-      ?: error("Failed to read bitmap from uri: $uri")
+    return peek(context).use {
+      stream -> BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
+    }
   }
 }
 
@@ -183,6 +200,10 @@ internal data class RawImageSource(
   override val preview: ImageBitmap? = null,
   private val onClose: Closeable?
 ) : SubSamplingImageSource {
+
+  fun peek(): BufferedSource {
+    return source().buffer().peek()
+  }
 
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return source().buffer().inputStream().use { stream ->

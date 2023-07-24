@@ -1,7 +1,15 @@
 package me.saket.telephoto.subsamplingimage.internal
 
+import android.content.Context
 import androidx.exifinterface.media.ExifInterface
-import okio.BufferedSource
+import me.saket.telephoto.subsamplingimage.AssetImageSource
+import me.saket.telephoto.subsamplingimage.FileImageSource
+import me.saket.telephoto.subsamplingimage.RawImageSource
+import me.saket.telephoto.subsamplingimage.ResourceImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.UriImageSource
+import okio.FileSystem
+import okio.buffer
 import java.io.InputStream
 
 /** Properties read from an image's EXIF header. */
@@ -11,9 +19,16 @@ internal data class ExifMetadata(
 ) {
 
   companion object {
-    fun read(source: BufferedSource): ExifMetadata {
+    fun read(context: Context, source: SubSamplingImageSource): ExifMetadata {
+      val inputStream = when (source) {
+        is FileImageSource -> FileSystem.SYSTEM.source(source.path).buffer().inputStream()
+        is RawImageSource -> source.peek().inputStream()
+        is AssetImageSource -> source.peek(context)
+        is ResourceImageSource -> source.peek(context)
+        is UriImageSource -> source.peek(context)
+      }
       val exif = ExifInterface(
-        ExifInterfaceCompatibleInputStream(source.peek().inputStream())
+        ExifInterfaceCompatibleInputStream(inputStream)
       )
       return ExifMetadata(
         isFlipped = exif.isFlipped,
