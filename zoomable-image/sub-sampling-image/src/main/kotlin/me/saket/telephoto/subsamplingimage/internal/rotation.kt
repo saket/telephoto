@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
+import kotlin.LazyThreadSafetyMode.NONE
 
 /**
  * Calculate the position of this rectangle inside [unRotatedParent]
@@ -58,7 +59,7 @@ private fun IntSize.flip(): IntSize = IntSize(width = height, height = width)
 
 private val sourceCoordinates = FloatArray(8)
 private val destinationCoordinates = FloatArray(8)
-private val matrix = Matrix()
+private val matrix by lazy(NONE) { Matrix() }
 
 /**
  * Creates a [Matrix] that can be used for drawing this tile's rotated bitmap such that
