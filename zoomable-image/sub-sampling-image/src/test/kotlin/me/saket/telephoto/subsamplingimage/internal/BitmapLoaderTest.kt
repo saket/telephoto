@@ -112,6 +112,7 @@ class BitmapLoaderTest {
 
 private class FakeImageRegionDecoder : ImageRegionDecoder {
   override val imageSize: IntSize get() = error("unused")
+  override val imageOrientation: ExifMetadata.ImageOrientation get() = error("unused")
   val requestedRegions = MutableSharedFlow<BitmapRegionTile>()
   val decodedBitmaps = Channel<ImageBitmap>()
 

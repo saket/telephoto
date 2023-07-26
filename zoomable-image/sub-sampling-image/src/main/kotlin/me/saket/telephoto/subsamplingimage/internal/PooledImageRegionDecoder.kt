@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
  * */
 internal class PooledImageRegionDecoder private constructor(
   override val imageSize: IntSize,
+  override val imageOrientation: ExifMetadata.ImageOrientation,
   private val decoders: ResourcePool<ImageRegionDecoder>,
   private val dispatcher: CoroutineDispatcher,
 ) : ImageRegionDecoder {
@@ -59,6 +60,7 @@ internal class PooledImageRegionDecoder private constructor(
       }
       PooledImageRegionDecoder(
         imageSize = decoders.first().imageSize,
+        imageOrientation = exif.orientation,
         decoders = ResourcePool(decoders),
         dispatcher = dispatcher,
       )

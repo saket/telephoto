@@ -15,15 +15,14 @@ import okio.buffer
 import java.io.InputStream
 
 /** Properties read from an image's EXIF header. */
-@JvmInline
-internal value class ExifMetadata(
-  val rotationDegrees: Int,
+internal data class ExifMetadata(
+  val orientation: ImageOrientation,
 ) {
-
-  init {
-    check(rotationDegrees.rem(90) == 0) {
-      "Unsupported image orientation at $rotationDegrees°"
-    }
+  enum class ImageOrientation(val degrees: Int) {
+    None(0),
+    Orientation90(90),
+    Orientation180(180),
+    Orientation270(270),
   }
 
   companion object {
@@ -40,7 +39,13 @@ internal value class ExifMetadata(
           ExifInterfaceCompatibleInputStream(inputStream)
         )
         ExifMetadata(
-          rotationDegrees = exif.rotationDegrees,
+          orientation = when (exif.rotationDegrees) {
+            0 -> ImageOrientation.None
+            90 -> ImageOrientation.Orientation90
+            180 -> ImageOrientation.Orientation180
+            270 -> ImageOrientation.Orientation270
+            else -> error("Invalid image orientation at ${exif.rotationDegrees}°")
+          }
         )
       }
     }

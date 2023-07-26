@@ -19,12 +19,14 @@ internal data class CanvasRegionTile(
   val bitmapRegion: BitmapRegionTile,
   val bounds: IntRect,
   val isBaseTile: Boolean,
+  val orientation: ExifMetadata.ImageOrientation,
 ) {
   constructor(
     bitmap: ImageBitmap?,
     bitmapRegion: BitmapRegionTile,
     bounds: Rect,
     isBaseTile: Boolean,
+    orientation: ExifMetadata.ImageOrientation,
   ) : this(
     bitmap = bitmap,
     bitmapRegion = bitmapRegion,
@@ -38,6 +40,7 @@ internal data class CanvasRegionTile(
     // this minor loss of precision.
     bounds = bounds.discardFractionalValues(),
     isBaseTile = isBaseTile,
+    orientation = orientation,
   )
 }
 

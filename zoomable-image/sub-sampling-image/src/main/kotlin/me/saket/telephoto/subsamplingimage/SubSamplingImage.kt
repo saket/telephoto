@@ -57,7 +57,7 @@ fun SubSamplingImage(
         drawIntoCanvas {
           it.nativeCanvas.drawBitmap(
             tile.bitmap.asAndroidBitmap(),
-            tile.createRotationMatrix(degrees = 90),  // todo: get degrees from somewhere.
+            tile.createRotationMatrix(),
             paint.asFrameworkPaint(),
           )
         }

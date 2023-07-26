@@ -35,6 +35,7 @@ import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata
+import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
@@ -161,6 +162,7 @@ internal fun rememberSubSamplingImageState(
                 bitmap = bitmaps[tile],
                 bitmapRegion = tile,
                 isBaseTile = false,
+                orientation = decoder.imageOrientation,
               )
             } else {
               null
@@ -175,9 +177,11 @@ internal fun rememberSubSamplingImageState(
           // be drawn. Otherwise BitmapLoader will remove its bitmap from cache.
           val baseTile = if (canDrawBaseTile) {
             tileGrid.base.let { tile ->
+              val bitmap = bitmaps[tile]
               CanvasRegionTile(
                 bounds = tile.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset),
-                bitmap = bitmaps[tile] ?: imageSource.preview,  // todo: undo!
+                bitmap = bitmap ?: imageSource.preview,
+                orientation = if (bitmap == null) ImageOrientation.None else decoder.imageOrientation,
                 bitmapRegion = tile,
                 isBaseTile = true,
               )

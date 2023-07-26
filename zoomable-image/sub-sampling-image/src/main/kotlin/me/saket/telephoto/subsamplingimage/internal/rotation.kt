@@ -6,6 +6,7 @@ import android.graphics.Matrix
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 
 /**
  * Calculate the position of this rectangle inside [unRotatedParent]
@@ -66,7 +67,7 @@ private val matrix = Matrix()
  * Voodoo code copied from https://github.com/davemorrissey/subsampling-scale-image-view.
  * I don't fully understand how the matrix is created, but it works.
  */
-internal inline fun CanvasRegionTile.createRotationMatrix(degrees: Int): Matrix {
+internal inline fun CanvasRegionTile.createRotationMatrix(): Matrix {
   val bitmap = checkNotNull(bitmap)
   matrix.reset()
   sourceCoordinates.set(
@@ -79,8 +80,8 @@ internal inline fun CanvasRegionTile.createRotationMatrix(degrees: Int): Matrix 
     0f,
     bitmap.height.toFloat(),
   )
-  when (degrees) {
-    0 -> {
+  when (orientation) {
+    ImageOrientation.None -> {
       destinationCoordinates.set(
         bounds.left.toFloat(),
         bounds.top.toFloat(),
@@ -92,7 +93,7 @@ internal inline fun CanvasRegionTile.createRotationMatrix(degrees: Int): Matrix 
         bounds.bottom.toFloat(),
       )
     }
-    90 -> {
+    ImageOrientation.Orientation90 -> {
       destinationCoordinates.set(
         bounds.right.toFloat(),
         bounds.top.toFloat(),
@@ -104,7 +105,7 @@ internal inline fun CanvasRegionTile.createRotationMatrix(degrees: Int): Matrix 
         bounds.top.toFloat(),
       )
     }
-    180 -> {
+    ImageOrientation.Orientation180 -> {
       destinationCoordinates.set(
         bounds.right.toFloat(),
         bounds.bottom.toFloat(),
@@ -116,7 +117,7 @@ internal inline fun CanvasRegionTile.createRotationMatrix(degrees: Int): Matrix 
         bounds.top.toFloat(),
       )
     }
-    270 -> {
+    ImageOrientation.Orientation270 -> {
       destinationCoordinates.set(
         bounds.left.toFloat(),
         bounds.bottom.toFloat(),
@@ -128,7 +129,6 @@ internal inline fun CanvasRegionTile.createRotationMatrix(degrees: Int): Matrix 
         bounds.bottom.toFloat(),
       )
     }
-    else -> error("unsupported image orientation at $degrees°")
   }
   matrix.setPolyToPoly(
     /* src = */ sourceCoordinates,
