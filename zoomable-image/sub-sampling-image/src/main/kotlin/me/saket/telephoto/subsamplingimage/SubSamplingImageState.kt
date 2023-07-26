@@ -253,7 +253,7 @@ class SubSamplingImageState internal constructor(val imageSource: SubSamplingIma
 
   /** Whether all the visible and *full resolution* tiles have been loaded and the image is displayed. */
   val isImageLoadedInFullQuality: Boolean by derivedStateOf {
-    isImageLoaded && tiles.fastAll { it.bitmap != null }
+    isImageLoaded && tiles.fastAll { it.bitmap != null && it.bitmap != imageSource.preview }
   }
 
   internal var tiles by mutableStateOf(emptyList<CanvasRegionTile>())
