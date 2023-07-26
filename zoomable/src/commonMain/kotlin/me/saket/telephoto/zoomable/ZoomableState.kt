@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -328,6 +329,9 @@ class ZoomableState internal constructor(
     // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
     return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
       val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * proposedZoom)
+      check (expectedDrawRegion.size.isSpecified) {
+        "Unspecified size, but how? Unscaled content = $unscaledContentBounds, proposed zoom = $proposedZoom"
+      }
       expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
     }
   }
