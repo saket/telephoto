@@ -3,6 +3,7 @@
 package me.saket.telephoto.subsampling
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
@@ -23,6 +24,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
@@ -40,8 +42,11 @@ import com.google.common.truth.Truth.assertWithMessage
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -452,6 +457,56 @@ class SubSamplingImageTest {
     rule.waitUntil(5.seconds) { isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+    }
+  }
+
+  @Test fun preview_bitmap_should_not_be_rotated() {
+    val previewBitmapMutex = Mutex(locked = true)
+    lateinit var state: SubSamplingImageState
+
+    val gatedDecoderFactory = ImageRegionDecoder.Factory { context, imageSource, imageOptions, exif ->
+      val real = AndroidImageRegionDecoder.Factory.create(context, imageSource, imageOptions, exif)
+      object : ImageRegionDecoder by real {
+        override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+          return previewBitmapMutex.withLock {
+            real.decodeRegion(region)
+          }
+        }
+      }
+    }
+
+    val previewBitmap = BitmapFactory.decodeStream(
+      rule.activity.assets.open("smol.jpg")
+    ).asImageBitmap()
+
+    rule.setContent {
+      CompositionLocalProvider(LocalImageRegionDecoderFactory provides gatedDecoderFactory) {
+        val zoomableState = rememberZoomableState()
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .zoomable(zoomableState)
+            .testTag("image"),
+          state = rememberSubSamplingImageState(
+            zoomableState = zoomableState,
+            imageSource = SubSamplingImageSource.asset("bellagio_rotated_by_90.jpg", preview = previewBitmap),
+          ).also {
+            state = it
+          },
+          contentDescription = null,
+        )
+      }
+    }
+
+    rule.waitUntil(5.seconds) { state.isImageLoaded }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), name = testName.methodName + "_preview")
+    }
+
+    previewBitmapMutex.unlock()
+    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), name = testName.methodName + "_full_quality")
     }
   }
 
