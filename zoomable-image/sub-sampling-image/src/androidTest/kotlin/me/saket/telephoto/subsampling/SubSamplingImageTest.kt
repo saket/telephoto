@@ -34,11 +34,14 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.google.common.truth.TruthJUnit
+import com.google.common.truth.TruthJUnit.assume
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
@@ -69,6 +72,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import okio.source
+import org.junit.AssumptionViolatedException
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -460,6 +464,65 @@ class SubSamplingImageTest {
     }
   }
 
+  @Test fun various_image_orientations_in_exif_metadata(
+    @TestParameter imageAsset: ExifRotatedImageAssetParam,
+    @TestParameter alignment: AlignmentParam,
+    @TestParameter contentScale: ContentScaleParam,
+  ) {
+    val skipAlignment = when (alignment) {
+      AlignmentParam.TopCenter,
+      AlignmentParam.Center -> false
+      AlignmentParam.BottomCenter -> true
+    }
+    if (skipAlignment) {
+      throw AssumptionViolatedException("Skipping $alignment")
+    }
+
+    lateinit var state: SubSamplingImageState
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 2.5f)).also {
+        it.contentScale = contentScale.value
+        it.contentAlignment = alignment.value
+      }
+
+      SubSamplingImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState)
+          .testTag("image"),
+        state = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = SubSamplingImageSource.asset(imageAsset.assetName),
+        ).also { state = it },
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName)
+    }
+
+    rule.onNodeWithTag("image").performTouchInput {
+      doubleClick(position = centerLeft)
+    }
+    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed")
+    }
+
+    with(rule.onNodeWithTag("image")) {
+      performTouchInput {
+        swipeLeft(startX = centerRight.x, endX = centerLeft.x)
+      }
+    }
+    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed_panned")
+    }
+  }
+
   @Test fun preview_bitmap_should_not_be_rotated() {
     val previewBitmapMutex = Mutex(locked = true)
     lateinit var state: SubSamplingImageState
@@ -524,12 +587,26 @@ class SubSamplingImageTest {
   }
 
   @Suppress("unused")
+  enum class ContentScaleParam(val value: ContentScale) {
+    Fit(ContentScale.Fit),
+    Inside(ContentScale.Inside),
+    Fill(ContentScale.FillBounds),
+  }
+
+  @Suppress("unused")
   enum class ImageSourceParam(val source: Context.() -> SubSamplingImageSource) {
     Asset({ SubSamplingImageSource.asset("pahade.jpg") }),
     Resource({ SubSamplingImageSource.resource(R.drawable.cat_1920) }),
     ContentUri({ SubSamplingImageSource.contentUri(Uri.parse("""android.resource://${packageName}/${R.drawable.cat_1920}""")) }),
     File({ SubSamplingImageSource.file(createFileFromAsset("pahade.jpg")) }),
     RawStream({ SubSamplingImageSource.rawSource({ assets.open("path.jpg").source() }) }),
+  }
+
+  @Suppress("unused")
+  enum class ExifRotatedImageAssetParam(val assetName: String) {
+    RotatedBy90("bellagio_rotated_by_90.jpg"),
+    RotatedBy180("bellagio_rotated_by_180.jpg"),
+    RotatedBy270("bellagio_rotated_by_270.jpg"),
   }
 
   @Suppress("unused")

@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
 import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
@@ -236,58 +235,6 @@ class ZoomableImageTest {
     with(rule.onNodeWithTag("image")) {
       performTouchInput {
         swipeLeft(startX = center.x, endX = centerLeft.x)
-      }
-    }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
-    rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed_panned")
-    }
-  }
-
-  @Test fun various_image_orientations_in_exif_metadata(
-    @TestParameter imageAsset: ExifRotatedImageAssetParam,
-    @TestParameter alignment: AlignmentParam,
-    @TestParameter contentScale: ContentScaleParam,
-  ) {
-    assume().that(contentScale).isNotEqualTo(ContentScaleParam.Crop)
-    assume().that(alignment).isNotEqualTo(AlignmentParam.BottomCenter)
-
-    var isImageDisplayed = false
-
-    rule.setContent {
-      val state = rememberZoomableImageState(
-        zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 2.5f))
-      )
-      isImageDisplayed = state.isImageDisplayed && state.zoomableState.contentTransformation.isSpecified
-
-      ZoomableImage(
-        modifier = Modifier
-          .fillMaxSize()
-          .testTag("image"),
-        image = ZoomableImageSource.asset(imageAsset.assetName, subSample = true),
-        contentDescription = null,
-        state = state,
-        contentScale = contentScale.value,
-        alignment = alignment.value,
-      )
-    }
-
-    rule.waitUntil(5.seconds) { isImageDisplayed }
-    rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName)
-    }
-
-    rule.onNodeWithTag("image").performTouchInput {
-      doubleClick(position = centerLeft)
-    }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
-    rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed")
-    }
-
-    with(rule.onNodeWithTag("image")) {
-      performTouchInput {
-        swipeLeft(startX = centerRight.x, endX = centerLeft.x)
       }
     }
     rule.waitUntil(5.seconds) { isImageDisplayed }
@@ -856,13 +803,6 @@ class ZoomableImageTest {
   enum class ImageAssetParam(val assetName: String) {
     SmallerThanLayoutSize("fox_250.jpg"),
     LargerThanLayoutSize("cat_1920.jpg")
-  }
-
-  @Suppress("unused")
-  enum class ExifRotatedImageAssetParam(val assetName: String) {
-    RotatedBy90("bellagio_rotated_by_90.jpg"),
-    RotatedBy180("bellagio_rotated_by_180.jpg"),
-    RotatedBy270("bellagio_rotated_by_270.jpg"),
   }
 
   @Suppress("unused")
