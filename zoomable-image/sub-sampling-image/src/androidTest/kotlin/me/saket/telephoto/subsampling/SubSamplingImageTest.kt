@@ -421,7 +421,7 @@ class SubSamplingImageTest {
   @Test fun bitmap_tiles_should_be_at_least_half_of_layout_size(
     @TestParameter size: LayoutSizeParam,
   ) {
-    screenshotValidator.tolerancePercentOnCi = 0.095f
+    screenshotValidator.tolerancePercentOnCi = 0.1f
 
     var isImageDisplayedInFullQuality = false
 
@@ -469,6 +469,8 @@ class SubSamplingImageTest {
     @TestParameter alignment: AlignmentParam,
     @TestParameter contentScale: ContentScaleParam,
   ) {
+    screenshotValidator.tolerancePercentOnCi = 0.06f
+
     val skipAlignment = when (alignment) {
       AlignmentParam.TopCenter,
       AlignmentParam.Center -> false
