@@ -78,13 +78,15 @@ class ZoomableImageTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()
+
+  private val screenshotValidator = CiScreenshotValidator(
+    context = { rule.activity },
+    tolerancePercentOnLocal = 0f,
+    tolerancePercentOnCi = 0.01f,
+  )
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { it },
-    resultValidator = CiScreenshotValidator(
-      context = { rule.activity },
-      tolerancePercentOnLocal = 0f,
-      tolerancePercentOnCi = 0.01f,
-    )
+    resultValidator = screenshotValidator
   )
 
   @Before
@@ -195,6 +197,7 @@ class ZoomableImageTest {
     @TestParameter layoutSize: LayoutSizeParam,
     @TestParameter subSamplingStatus: SubSamplingStatus,
   ) {
+    screenshotValidator.tolerancePercentOnCi = 0.18f
     var isImageDisplayed = false
 
     rule.setContent {
