@@ -346,9 +346,7 @@ class ZoomableState internal constructor(
 
     // Refresh content transformation synchronously so that the result is available immediately.
     // Otherwise, the old position will be used with this new size and cause a flicker.
-    if (isReadyToInteract) {
-      refreshContentTransformation()
-    }
+    refreshContentTransformation()
   }
 
   /** Reset content to its minimum zoom and zero offset. */
