@@ -15,6 +15,7 @@ dependencies {
 
   api(libs.glide.core)
   implementation(libs.accompanist.drawablePainter)
+  implementation(libs.kotlinx.coroutines.core)
 
   androidTestImplementation(projects.testUtil)
   androidTestImplementation(libs.turbine)
