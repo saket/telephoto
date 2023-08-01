@@ -6,7 +6,8 @@ import androidx.compose.ui.graphics.colorspace.ColorSpace
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import app.cash.turbine.ReceiveTurbine
-import app.cash.turbine.testIn
+import app.cash.turbine.test
+import app.cash.turbine.turbineScope
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,76 +30,81 @@ class BitmapLoaderTest {
   }
 
   @Test fun `when tiles are received, load bitmaps only for new tiles`() = runTest(timeout = 1.seconds) {
-    val loader = bitmapLoader()
-    val requestedRegions = decoder.requestedRegions.testIn(this)
-    val cachedBitmaps = loader.cachedBitmaps().testIn(this)
-    assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
+    turbineScope {
+      val loader = bitmapLoader()
+      val requestedRegions = decoder.requestedRegions.testIn(this)
+      val cachedBitmaps = loader.cachedBitmaps().testIn(this)
+      assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
-    val tile1 = fakeBitmapRegionTile()
-    val tile2 = fakeBitmapRegionTile()
+      val tile1 = fakeBitmapRegionTile()
+      val tile2 = fakeBitmapRegionTile()
 
-    loader.loadOrUnloadForTiles(listOf(tile1, tile2))
-    decoder.decodedBitmaps.send(FakeImageBitmap())
-    decoder.decodedBitmaps.send(FakeImageBitmap())
+      loader.loadOrUnloadForTiles(listOf(tile1, tile2))
+      decoder.decodedBitmaps.send(FakeImageBitmap())
+      decoder.decodedBitmaps.send(FakeImageBitmap())
 
-    assertThat(requestedRegions.awaitItem()).isEqualTo(tile1)
-    assertThat(requestedRegions.awaitItem()).isEqualTo(tile2)
-    cachedBitmaps.skipItems(1)
-    assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
+      assertThat(requestedRegions.awaitItem()).isEqualTo(tile1)
+      assertThat(requestedRegions.awaitItem()).isEqualTo(tile2)
+      cachedBitmaps.skipItems(1)
+      assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
 
-    val tile3 = fakeBitmapRegionTile()
-    loader.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
-    decoder.decodedBitmaps.send(FakeImageBitmap())
+      val tile3 = fakeBitmapRegionTile()
+      loader.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
+      decoder.decodedBitmaps.send(FakeImageBitmap())
 
-    assertThat(requestedRegions.awaitItem()).isEqualTo(tile3)
-    assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2, tile3)
+      assertThat(requestedRegions.awaitItem()).isEqualTo(tile3)
+      assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2, tile3)
 
-    requestedRegions.cancelAndExpectNoEvents()
-    cachedBitmaps.cancelAndExpectNoEvents()
+      requestedRegions.cancelAndExpectNoEvents()
+      cachedBitmaps.cancelAndExpectNoEvents()
+    }
   }
 
   @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(timeout = 1.seconds) {
     val loader = bitmapLoader()
-    val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
-    val tile1 = fakeBitmapRegionTile()
-    val tile2 = fakeBitmapRegionTile()
-    loader.loadOrUnloadForTiles(listOf(tile1, tile2))
-    decoder.decodedBitmaps.send(FakeImageBitmap())
-    decoder.decodedBitmaps.send(FakeImageBitmap())
+    loader.cachedBitmaps().drop(1).test {
+      val tile1 = fakeBitmapRegionTile()
+      val tile2 = fakeBitmapRegionTile()
+      loader.loadOrUnloadForTiles(listOf(tile1, tile2))
+      decoder.decodedBitmaps.send(FakeImageBitmap())
+      decoder.decodedBitmaps.send(FakeImageBitmap())
 
-    cachedBitmaps.skipItems(1)
-    assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
+      skipItems(1)
+      assertThat(awaitItem().keys).containsExactly(tile1, tile2)
 
-    val tile3 = fakeBitmapRegionTile()
-    loader.loadOrUnloadForTiles(listOf(tile3))
-    decoder.decodedBitmaps.send(FakeImageBitmap())
+      val tile3 = fakeBitmapRegionTile()
+      loader.loadOrUnloadForTiles(listOf(tile3))
+      decoder.decodedBitmaps.send(FakeImageBitmap())
 
-    cachedBitmaps.skipItems(1)
-    assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile3)
+      skipItems(1)
+      assertThat(awaitItem().keys).containsExactly(tile3)
 
-    cachedBitmaps.cancelAndExpectNoEvents()
+      cancelAndExpectNoEvents()
+    }
   }
 
   @Test fun `when a tile is removed before its bitmap could be loaded, cancel its in-flight load`() =
     runTest(timeout = 1.seconds) {
-      val loader = bitmapLoader()
-      val requestedRegions = decoder.requestedRegions.testIn(this)
-      val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
+      turbineScope {
+        val loader = bitmapLoader()
+        val requestedRegions = decoder.requestedRegions.testIn(this)
+        val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
 
-      val visibleTile = fakeBitmapRegionTile()
-      loader.loadOrUnloadForTiles(listOf(visibleTile))
-      assertThat(requestedRegions.awaitItem()).isEqualTo(visibleTile)
-      cachedBitmaps.expectNoEvents()
+        val visibleTile = fakeBitmapRegionTile()
+        loader.loadOrUnloadForTiles(listOf(visibleTile))
+        assertThat(requestedRegions.awaitItem()).isEqualTo(visibleTile)
+        cachedBitmaps.expectNoEvents()
 
-      loader.loadOrUnloadForTiles(emptyList())
-      requestedRegions.cancelAndExpectNoEvents()
-      cachedBitmaps.cancelAndExpectNoEvents()
+        loader.loadOrUnloadForTiles(emptyList())
+        requestedRegions.cancelAndExpectNoEvents()
+        cachedBitmaps.cancelAndExpectNoEvents()
 
-      // Verify that BitmapLoader has cancelled all loading jobs.
-      // I don't think it's possible to uniquely identify BitmapLoader's loading jobs.
-      // Checking that there aren't any active jobs should be sufficient for now.
-      assertThat(coroutineContext.job.children.none { it.isActive }).isTrue()
+        // Verify that BitmapLoader has cancelled all loading jobs.
+        // I don't think it's possible to uniquely identify BitmapLoader's loading jobs.
+        // Checking that there aren't any active jobs should be sufficient for now.
+        assertThat(coroutineContext.job.children.none { it.isActive }).isTrue()
+      }
     }
 
   private fun fakeBitmapRegionTile(): BitmapRegionTile {
