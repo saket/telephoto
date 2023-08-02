@@ -37,8 +37,6 @@ android {
 }
 
 dependencies {
-  implementation(projects.zoomable)
-  implementation(projects.zoomableImage.core)
   implementation(projects.zoomableImage.coil)
   implementation(projects.zoomableImage.glide)
 
