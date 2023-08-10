@@ -72,62 +72,62 @@ internal inline fun CanvasRegionTile.createRotationMatrix(): Matrix {
   val bitmap = checkNotNull(bitmap)
   matrix.reset()
   sourceCoordinates.set(
-    0f,
-    0f,
-    bitmap.width.toFloat(),
-    0f,
-    bitmap.width.toFloat(),
-    bitmap.height.toFloat(),
-    0f,
-    bitmap.height.toFloat(),
+    0,
+    0,
+    bitmap.width,
+    0,
+    bitmap.width,
+    bitmap.height,
+    0,
+    bitmap.height,
   )
   when (orientation) {
     ImageOrientation.None -> {
       destinationCoordinates.set(
-        bounds.left.toFloat(),
-        bounds.top.toFloat(),
-        bounds.right.toFloat(),
-        bounds.top.toFloat(),
-        bounds.right.toFloat(),
-        bounds.bottom.toFloat(),
-        bounds.left.toFloat(),
-        bounds.bottom.toFloat(),
+        bounds.left,
+        bounds.top,
+        bounds.right,
+        bounds.top,
+        bounds.right,
+        bounds.bottom,
+        bounds.left,
+        bounds.bottom,
       )
     }
     ImageOrientation.Orientation90 -> {
       destinationCoordinates.set(
-        bounds.right.toFloat(),
-        bounds.top.toFloat(),
-        bounds.right.toFloat(),
-        bounds.bottom.toFloat(),
-        bounds.left.toFloat(),
-        bounds.bottom.toFloat(),
-        bounds.left.toFloat(),
-        bounds.top.toFloat(),
+        bounds.right,
+        bounds.top,
+        bounds.right,
+        bounds.bottom,
+        bounds.left,
+        bounds.bottom,
+        bounds.left,
+        bounds.top,
       )
     }
     ImageOrientation.Orientation180 -> {
       destinationCoordinates.set(
-        bounds.right.toFloat(),
-        bounds.bottom.toFloat(),
-        bounds.left.toFloat(),
-        bounds.bottom.toFloat(),
-        bounds.left.toFloat(),
-        bounds.top.toFloat(),
-        bounds.right.toFloat(),
-        bounds.top.toFloat(),
+        bounds.right,
+        bounds.bottom,
+        bounds.left,
+        bounds.bottom,
+        bounds.left,
+        bounds.top,
+        bounds.right,
+        bounds.top,
       )
     }
     ImageOrientation.Orientation270 -> {
       destinationCoordinates.set(
-        bounds.left.toFloat(),
-        bounds.bottom.toFloat(),
-        bounds.left.toFloat(),
-        bounds.top.toFloat(),
-        bounds.right.toFloat(),
-        bounds.top.toFloat(),
-        bounds.right.toFloat(),
-        bounds.bottom.toFloat(),
+        bounds.left,
+        bounds.bottom,
+        bounds.left,
+        bounds.top,
+        bounds.right,
+        bounds.top,
+        bounds.right,
+        bounds.bottom,
       )
     }
   }
@@ -142,21 +142,21 @@ internal inline fun CanvasRegionTile.createRotationMatrix(): Matrix {
 }
 
 private inline fun FloatArray.set(
-  f0: Float,
-  f1: Float,
-  f2: Float,
-  f3: Float,
-  f4: Float,
-  f5: Float,
-  f6: Float,
-  f7: Float
+  f0: Int,
+  f1: Int,
+  f2: Int,
+  f3: Int,
+  f4: Int,
+  f5: Int,
+  f6: Int,
+  f7: Int,
 ) {
-  this[0] = f0
-  this[1] = f1
-  this[2] = f2
-  this[3] = f3
-  this[4] = f4
-  this[5] = f5
-  this[6] = f6
-  this[7] = f7
+  this[0] = f0.toFloat()
+  this[1] = f1.toFloat()
+  this[2] = f2.toFloat()
+  this[3] = f3.toFloat()
+  this[4] = f4.toFloat()
+  this[5] = f5.toFloat()
+  this[6] = f6.toFloat()
+  this[7] = f7.toFloat()
 }
