@@ -298,8 +298,7 @@ class ZoomableImageTest {
     rule.setContent {
       HorizontalPager(
         modifier = Modifier.testTag("pager"),
-        state = rememberPagerState(initialPage = 1),
-        pageCount = assetNames.size
+        state = rememberPagerState(initialPage = 1, pageCount = { assetNames.size }),
       ) { pageNum ->
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
@@ -333,8 +332,7 @@ class ZoomableImageTest {
     rule.setContent {
       HorizontalPager(
         modifier = Modifier.testTag("pager"),
-        state = rememberPagerState(initialPage = 1),
-        pageCount = assetNames.size
+        state = rememberPagerState(initialPage = 1, pageCount = { assetNames.size }),
       ) { pageNum ->
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
@@ -372,8 +370,7 @@ class ZoomableImageTest {
     rule.setContent {
       HorizontalPager(
         modifier = Modifier.testTag("pager"),
-        state = rememberPagerState(initialPage = 1),
-        pageCount = assetNames.size
+        state = rememberPagerState(initialPage = 1, pageCount = { assetNames.size }),
       ) { pageNum ->
         ZoomableImage(
           modifier = Modifier.fillMaxSize(),
