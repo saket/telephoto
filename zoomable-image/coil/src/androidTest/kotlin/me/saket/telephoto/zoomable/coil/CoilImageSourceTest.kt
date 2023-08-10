@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
-import app.cash.molecule.RecompositionClock
+import app.cash.molecule.RecompositionMode
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
 import coil.Coil
@@ -374,7 +374,7 @@ class CoilImageSourceTest {
     canvasSize: Size = Size(1080f, 1920f),
     imageRequest: @Composable () -> Any
   ): StateFlow<ResolveResult> {
-    return backgroundScope.launchMolecule(clock = RecompositionClock.Immediate) {
+    return backgroundScope.launchMolecule(mode = RecompositionMode.Immediate) {
       CompositionLocalProviderReturnable(LocalContext provides context) {
         val source = ZoomableImageSource.coil(imageRequest())
         source.resolve(flowOf(canvasSize))

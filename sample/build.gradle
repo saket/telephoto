@@ -10,7 +10,7 @@ android {
   defaultConfig {
     applicationId namespace
     minSdkVersion 31
-    compileSdk 33
+    compileSdk libs.versions.compileSdk.get().toInteger()
     versionCode 1
     versionName "1.0"
   }
@@ -51,7 +51,4 @@ dependencies {
   implementation(libs.coil.compose)
   implementation(libs.coil.gif)
   implementation(libs.appyx)
-
-  // compose.foundation 1.5.x fixes a state restoration bug with pagers.
-  implementation("androidx.compose.foundation:foundation:1.5.0-beta02")
 }

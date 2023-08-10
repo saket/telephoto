@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
-import app.cash.molecule.RecompositionClock
+import app.cash.molecule.RecompositionMode
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
 import com.bumptech.glide.Glide
@@ -290,7 +290,7 @@ class GlideImageSourceTest {
     requestBuilder: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
     canvasSize: Size = Size(1080f, 1920f)
   ): Flow<ResolveResult> {
-    return backgroundScope.launchMolecule(clock = RecompositionClock.Immediate) {
+    return backgroundScope.launchMolecule(mode = RecompositionMode.Immediate) {
       CompositionLocalProviderReturnable(LocalContext provides rule.activity) {
         val source = ZoomableImageSource.glide(model, requestBuilder)
         source.resolve(flowOf(canvasSize))
