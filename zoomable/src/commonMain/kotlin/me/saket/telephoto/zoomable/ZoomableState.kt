@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isFinite
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
@@ -42,6 +43,7 @@ import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.div
+import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
@@ -202,11 +204,17 @@ class ZoomableState internal constructor(
       srcSize = unscaledContentBounds.size,
       dstSize = contentLayoutSize,
     )
+    check(baseZoom.isPositiveAndFinite()) {
+      "Old zoom is invalid/infinite. ${collectDebugInfoForIssue41()}"
+    }
 
     val oldZoom = ContentZoom(
       baseZoom = baseZoom,
       userZoom = rawTransformation?.zoom?.userZoom ?: 1f
     )
+    check(oldZoom.finalZoom().isPositiveAndFinite()) {
+      "Old zoom is invalid/infinite. ${collectDebugInfoForIssue41()}"
+    }
 
     val isZoomingOut = zoomDelta < 1f
     val isZoomingIn = zoomDelta > 1f
@@ -289,6 +297,10 @@ class ZoomableState internal constructor(
     oldZoom: ContentZoom,
     newZoom: ContentZoom,
   ): Offset {
+    check(this.isFinite) {
+      "Can't center around an infinite offset ${collectDebugInfoForIssue41()}"
+    }
+
     // Copied from androidx samples:
     // https://github.com/androidx/androidx/blob/643b1cfdd7dfbc5ccce1ad951b6999df049678b3/compose/foundation/foundation/samples/src/main/java/androidx/compose/foundation/samples/TransformGestureSamples.kt#L87
     //
@@ -315,25 +327,40 @@ class ZoomableState internal constructor(
     //
     //     Move the centroid to the center
     //         of panned content(?)
-    //                  |                            Scale
-    //                  |                              |                Move back
-    //                  |                              |           (+ new translation)
-    //                  |                              |                    |
-    //     _____________|_________________     ________|_________   ________|_________
+    //                  |                       Scale
+    //                  |                         |                Move back
+    //                  |                         |           (+ new translation)
+    //                  |                         |                    |
+    //     _____________|_____________    ________|_________   ________|_________
     return (this + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
   }
 
   private fun Offset.coerceWithinBounds(proposedZoom: ContentZoom): Offset {
+    check(this.isFinite) {
+      "Can't coerce an infinite offset ${collectDebugInfoForIssue41("proposedZoom" to proposedZoom)}"
+    }
+
     val scaledTopLeft = unscaledContentBounds.topLeft * proposedZoom
 
     // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-    return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
+    val coerced = withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
       val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * proposedZoom)
-      check (expectedDrawRegion.size.isSpecified) {
-        "Unspecified size, but how? Unscaled content = $unscaledContentBounds, proposed zoom = $proposedZoom"
+      check(expectedDrawRegion.size.isSpecified) {
+        val debugInfo = collectDebugInfoForIssue41(
+          "zoomed offset" to it,
+          "expectedDrawRegion" to expectedDrawRegion,
+          "proposedZoom" to proposedZoom,
+        )
+        "Draw region has an unspecified size $debugInfo"
       }
       expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
     }
+
+    check(coerced.isFinite) {
+      val debugInfo = collectDebugInfoForIssue41("offset" to this, "proposedZoom" to proposedZoom)
+      "Coerced offset is infinite $debugInfo"
+    }
+    return coerced
   }
 
   private operator fun Offset.div(zoom: ContentZoom): Offset = div(zoom.finalZoom())
@@ -476,6 +503,26 @@ class ZoomableState internal constructor(
         )
         previous = value
       }
+    }
+  }
+
+  // https://github.com/saket/telephoto/issues/41
+  private fun collectDebugInfoForIssue41(vararg extras: Pair<String, Any>): String {
+    return buildString {
+      appendLine()
+      extras.forEach { (key, value) ->
+        appendLine("$key = $value")
+      }
+      appendLine("rawTransformation = $rawTransformation")
+      appendLine("contentTransformation = $contentTransformation")
+      appendLine("contentScale = $contentScale")
+      appendLine("contentAlignment = $contentAlignment")
+      appendLine("isReadyToInteract = $isReadyToInteract")
+      appendLine("unscaledContentLocation = $unscaledContentLocation")
+      appendLine("unscaledContentBounds = $unscaledContentBounds")
+      appendLine("contentLayoutSize = $contentLayoutSize")
+      appendLine("zoomSpec = $zoomSpec")
+      appendLine("Please share this error message to https://github.com/saket/telephoto/issues/41?")
     }
   }
 

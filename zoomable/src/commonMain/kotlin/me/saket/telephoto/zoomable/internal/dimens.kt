@@ -31,6 +31,10 @@ internal operator fun ScaleFactor.unaryMinus(): ScaleFactor =
 internal val ScaleFactor.Companion.Zero
   get() = ScaleFactor(0f, 0f)
 
+internal fun ScaleFactor.isPositiveAndFinite(): Boolean {
+  return scaleX >= 0f && scaleY >= 0f && scaleX.isFinite() && scaleY.isFinite()
+}
+
 internal val TransformOrigin.Companion.Zero
   get() = TransformOrigin(0f, 0f)
 

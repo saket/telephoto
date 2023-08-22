@@ -24,9 +24,6 @@ internal fun Rect.calculateTopLeftToOverlapWith(
     "Whoops Modifier.zoomable() is not supposed to handle gestures yet. " +
       "Please file an issue on https://github.com/saket/telephoto/issues?"
   }
-  check(size.isSpecified) {
-    "Internal error :/"
-  }
 
   val alignedOffset by lazy(NONE) {
     // Rounding of floats to ints will cause some loss in precision because the final
