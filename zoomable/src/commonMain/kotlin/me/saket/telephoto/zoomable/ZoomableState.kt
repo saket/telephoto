@@ -42,6 +42,7 @@ import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
+import me.saket.telephoto.zoomable.internal.deviceInfo
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
 import me.saket.telephoto.zoomable.internal.maxScale
@@ -72,6 +73,7 @@ fun rememberZoomableState(
   }.also {
     it.zoomSpec = zoomSpec
     it.layoutDirection = LocalLayoutDirection.current
+    it.deviceInfo = deviceInfo()
   }
 
   if (state.isReadyToInteract) {
@@ -171,6 +173,7 @@ class ZoomableState internal constructor(
 
   internal var zoomSpec by mutableStateOf(ZoomSpec())
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
+  internal var deviceInfo: String = "uninitialized"
 
   /**
    * Raw size of the zoomable content without any scaling applied.
@@ -522,6 +525,7 @@ class ZoomableState internal constructor(
       appendLine("unscaledContentBounds = $unscaledContentBounds")
       appendLine("contentLayoutSize = $contentLayoutSize")
       appendLine("zoomSpec = $zoomSpec")
+      append(deviceInfo)
       appendLine("Please share this error message to https://github.com/saket/telephoto/issues/41?")
     }
   }
