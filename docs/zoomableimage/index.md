@@ -50,8 +50,12 @@ For complex scenarios, `ZoomableImage` can also take full image requests:
       model = ImageRequest.Builder(LocalContext.current)
         .data("https://example.com/image.jpg")
         .listener(
-          onSuccess = { … },
-          onError = { … }
+          remember {
+            object : ImageRequest.Listener {
+              override fun onSuccess(…) {}
+              override fun onError(…) {}
+            }
+          }    
         )
         .crossfade(1_000)
         .memoryCachePolicy(CachePolicy.DISABLED)
