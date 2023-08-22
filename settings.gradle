@@ -1,3 +1,4 @@
+include ':benchmark'
 include ':test-util'
 include ':sample'
 include ':zoomable'

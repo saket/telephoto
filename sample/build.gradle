@@ -25,7 +25,12 @@ android {
   buildTypes {
     release {
       minifyEnabled true
-      signingConfig signingConfigs.release
+      signingConfig signingConfigs.debug
+    }
+    benchmark {
+      initWith release
+      matchingFallbacks = ['release']
+      debuggable false
     }
   }
   lint {
