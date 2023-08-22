@@ -4,6 +4,20 @@
 - [Observing pan & zoom](../zoomable/recipes.md#observing-pan-zoom)
 - [Resetting zoom](../zoomable/recipes.md#resetting-zoom)
 
+### Observing image loads
+
+```kotlin
+val imageState = rememberZoomableImageState()
+
+// Whether the full quality image is loaded. This be false for placeholders
+// or thumbnails, in which case isPlaceholderDisplayed can be used instead.
+val showLoadingIndicator = imageState.isImageDisplayed
+
+AnimatedVisibility(visible = showLoadingIndicator) {
+  CircularProgressIndicator()    
+}
+```
+
 ### Grabbing downloaded images
 
 **Low resolution** drawables can be accessed by using request listeners. These images are down-sampled by your image loading library to fit in memory and are suitable for simple use-cases such as [color extraction](https://developer.android.com/training/material/palette-colors).
