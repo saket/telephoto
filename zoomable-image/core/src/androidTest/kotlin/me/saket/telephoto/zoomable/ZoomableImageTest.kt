@@ -91,9 +91,6 @@ class ZoomableImageTest {
 
   @Before
   fun setup() {
-    // CI machines may have fewer CPU cores.
-    PooledImageRegionDecoder.overriddenMinPoolCount = 4
-
     rule.activityRule.scenario.onActivity {
       it.prepareForScreenshotTest()
     }

@@ -40,7 +40,7 @@ internal class PooledImageRegionDecoder private constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   companion object {
     @VisibleForTesting
-    internal var overriddenMinPoolCount: Int? = null
+    internal var overriddenPoolCount: Int? = null
 
     fun Factory(
       delegate: ImageRegionDecoder.Factory,
@@ -75,9 +75,12 @@ internal class PooledImageRegionDecoder private constructor(
       if (memoryInfo.lowMemory) {
         return 1
       }
-      return Runtime.getRuntime().availableProcessors()
-        .coerceAtLeast(2) // Same number used by Dispatchers.Default.
-        .coerceAtLeast(overriddenMinPoolCount ?: 1)
+      overriddenPoolCount?.let {
+        return it
+      }
+      // BitmapRegionDecoders are expensive on android. Folks working on android's graphics
+      // have suggested not using more than 2 instances to keep memory footprint low.
+      return minOf(2, Runtime.getRuntime().availableProcessors())
     }
   }
 }
