@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import androidx.tracing.trace
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
@@ -24,7 +25,7 @@ internal class AndroidImageRegionDecoder private constructor(
   override val imageSize: IntSize = decoder.size()
   override val imageOrientation: ImageOrientation get() = exif.orientation
 
-  override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+  override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap = trace("decodeRegion") {
     val options = BitmapFactory.Options().apply {
       inSampleSize = region.sampleSize.size
       inPreferredConfig = imageOptions.config.toAndroidConfig()
@@ -43,7 +44,7 @@ internal class AndroidImageRegionDecoder private constructor(
     checkNotNull(bitmap) {
       "BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource."
     }
-    return bitmap.asImageBitmap()
+    return@trace bitmap.asImageBitmap()
   }
 
   override fun recycle() {

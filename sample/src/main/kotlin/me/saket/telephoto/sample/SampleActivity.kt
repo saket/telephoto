@@ -95,7 +95,7 @@ class SampleActivity : AppCompatActivity() {
 }
 
 @Composable
-private fun TelephotoTheme(content: @Composable () -> Unit) {
+internal fun TelephotoTheme(content: @Composable () -> Unit) {
   val context = LocalContext.current
   MaterialTheme(
     colorScheme = if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context),

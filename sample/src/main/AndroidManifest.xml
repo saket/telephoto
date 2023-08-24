@@ -14,6 +14,9 @@
     android:theme="@style/AppTheme"
     tools:ignore="AllowBackup,DataExtractionRules,UnusedAttribute">
 
+    <!-- Required by the benchmarking library. -->
+    <profileable android:shell="true" />
+
     <activity
       android:name=".SampleActivity"
       android:exported="true"
@@ -21,6 +24,18 @@
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+
+    <activity
+      android:name=".PerformanceTestActivity"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data
+          android:host="performance"
+          android:scheme="telephoto" />
       </intent-filter>
     </activity>
   </application>

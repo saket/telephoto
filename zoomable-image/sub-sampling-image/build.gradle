@@ -21,6 +21,7 @@ dependencies {
   implementation(libs.compose.ui.util)
   implementation(libs.androidx.ktx.core)
   implementation(libs.androidx.exif)
+  implementation(libs.androidx.tracing)
 
   testImplementation(libs.junit)
   testImplementation(libs.truth)

@@ -1,4 +1,4 @@
-include ':benchmark'
+include ':benchmark:runner'
 include ':flick'
 include ':zoomable'
 include ':zoomable-image:core'
