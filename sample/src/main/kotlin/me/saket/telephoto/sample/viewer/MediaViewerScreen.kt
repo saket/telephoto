@@ -33,7 +33,7 @@ fun MediaViewerScreen(key: MediaViewerScreenKey) {
   Scaffold { contentPadding ->
     val pagerState = rememberPagerState(
       initialPage = key.initialIndex,
-      pageCount = { key.album.items.size }
+      pageCount = { key.album.items.size },
     )
     HorizontalPager(
       modifier = Modifier

@@ -1,4 +1,4 @@
-include ':benchmark'
+include ':benchmark:runner'
 include ':test-util'
 include ':sample'
 include ':zoomable'
