@@ -40,6 +40,7 @@ anrWatchDog = "1.4.0"
 espresso-core = "3.5.1"
 uiautomator = "2.2.0"
 benchmark-macro-junit4 = "1.2.0-beta03"
+flowExtensions = "0.7.1"  # https://github.com/hoc081098/FlowExt/releases
 
 [libraries]
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
@@ -104,3 +105,5 @@ anrWatchDog = { module = "com.github.anrwatchdog:anrwatchdog", version.ref = "an
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
 
 appyx = { module = "com.bumble.appyx:core", version.ref = "appyx" }
+
+flowExtensions = { module = "io.github.hoc081098:FlowExt", version.ref = "flowExtensions" }

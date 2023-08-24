@@ -22,6 +22,7 @@ dependencies {
   implementation(libs.androidx.ktx.core)
   implementation(libs.androidx.exif)
   implementation(libs.androidx.tracing)
+  implementation(libs.flowExtensions)
 
   testImplementation(libs.junit)
   testImplementation(libs.truth)
