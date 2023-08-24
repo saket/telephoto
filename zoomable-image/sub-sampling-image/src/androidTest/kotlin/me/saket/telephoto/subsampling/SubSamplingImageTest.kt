@@ -96,9 +96,6 @@ class SubSamplingImageTest {
 
   @Before
   fun setup() {
-    // CI machines may have fewer CPU cores.
-    PooledImageRegionDecoder.overriddenMinPoolCount = 4
-
     rule.activityRule.scenario.onActivity {
       it.prepareForScreenshotTest()
     }
@@ -263,9 +260,8 @@ class SubSamplingImageTest {
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
     screenshotValidator.tolerancePercentOnCi = 0.12f
 
-    assertWithMessage("This test blocks 2 decoders indefinitely so at least 3 decoders are needed")
-      .that(PooledImageRegionDecoder.overriddenMinPoolCount)
-      .isAtLeast(3)
+    // This test blocks 2 decoders indefinitely so at least 3 decoders are needed
+    PooledImageRegionDecoder.overriddenPoolCount = 3
 
     // This fake factory will ignore decoding of selected tiles.
     val shouldIgnore: (BitmapRegionTile) -> Boolean = { region ->
