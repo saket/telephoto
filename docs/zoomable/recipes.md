@@ -13,8 +13,11 @@ LaunchedEffect(state.contentTransformation) {
 }
 
 // Example use case: Hide system bars when image is zoomed in.
-val systemUiController = rememberSystemUiController()
-systemUiController.isSystemBarsVisible = state.zoomFraction == 0f
+val systemUi = rememberSystemUiController()
+val isZoomedOut = (zoomState.zoomFraction ?: 0f) < 0.1f
+LaunchedEffect(isZoomedOut) {
+  systemUi.isSystemBarsVisible = isZoomedOut
+}
 ```
 
 ### Resetting zoom
