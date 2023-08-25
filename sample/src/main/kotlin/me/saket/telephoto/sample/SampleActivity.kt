@@ -15,8 +15,6 @@ import androidx.core.view.WindowCompat
 import coil.Coil
 import coil.ImageLoader
 import coil.decode.ImageDecoderDecoder
-import com.bumble.appyx.core.integration.NodeHost
-import com.bumble.appyx.core.integrationpoint.ActivityIntegrationPoint
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import me.saket.telephoto.sample.gallery.MediaAlbum
 import me.saket.telephoto.sample.gallery.MediaItem
@@ -70,12 +68,9 @@ class SampleActivity : AppCompatActivity() {
       }
 
       TelephotoTheme {
-        NodeHost(ActivityIntegrationPoint(this, savedInstanceState)) {
-          RootNode(
-            buildContext = it,
-            initialScreen = GalleryScreenKey(album)
-          )
-        }
+        Navigation(
+          initialScreenKey = GalleryScreenKey(album)
+        )
       }
     }
   }

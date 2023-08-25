@@ -25,7 +25,6 @@ turbine = "1.0.0"  # https://github.com/cashapp/turbine/releases/
 paparazzi = "1.3.1"
 molecule = "1.2.0"
 coroutines = "1.7.3"  # https://github.com/kotlin/kotlinx.coroutines/releases
-appyx = "1.1.1"
 mavenPublish = "0.24.0"
 dropshots = "0.4.0"
 dropboxDiffer = "0.0.1"
@@ -93,5 +92,3 @@ dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropsho
 dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }
 anrWatchDog = { module = "com.github.anrwatchdog:anrwatchdog", version.ref = "anrWatchDog" }
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
-
-appyx = { module = "com.bumble.appyx:core", version.ref = "appyx" }
