@@ -1,7 +1,9 @@
 package me.saket.telephoto.sample
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -12,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import coil.Coil
 import coil.ImageLoader
 import coil.decode.ImageDecoderDecoder
@@ -22,7 +25,8 @@ import me.saket.telephoto.sample.gallery.MediaItem
 class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    WindowCompat.setDecorFitsSystemWindows(window, false)
+    enableEdgeToEdge()
+    setupImmersiveMode()
     super.onCreate(savedInstanceState)
 
     Coil.setImageLoader(
@@ -73,6 +77,18 @@ class SampleActivity : AppCompatActivity() {
         )
       }
     }
+  }
+
+  private fun setupImmersiveMode() {
+    // Draw behind display cutouts.
+    window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+
+    // No scrim behind transparent navigation bar.
+    window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+
+    // System bars use fade by default to hide/show. Make them slide instead.
+    val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+    insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
   }
 }
 

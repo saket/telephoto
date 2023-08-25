@@ -2,6 +2,7 @@ package me.saket.telephoto.sample.viewer
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -16,6 +17,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -30,7 +32,9 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 fun MediaViewerScreen(key: MediaViewerScreenKey) {
-  Scaffold { contentPadding ->
+  Scaffold(
+    contentWindowInsets = WindowInsets.none
+  ) { contentPadding ->
     val pagerState = rememberPagerState(
       initialPage = key.initialIndex,
       pageCount = { key.album.items.size }
@@ -96,3 +100,7 @@ private fun MediaPage(
     }
   }
 }
+
+private val WindowInsets.Companion.none: WindowInsets
+  @Stable
+  get() = WindowInsets(0, 0, 0, 0)
