@@ -21,14 +21,10 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Idle
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
 import kotlin.math.abs
 
-/**
- * @param dismissThresholdRatio Minimum distance the user's finger should move as a ratio
- * to the content's dimensions after which it can be dismissed.
- */
 @Stable
-class RealFlickToDismissState internal constructor(
-  private val dismissThresholdRatio: Float = 0.3f,
-  private val rotateOnDrag: Boolean = true,
+internal class RealFlickToDismissState(
+  private val dismissThresholdRatio: Float,
+  private val rotateOnDrag: Boolean,
 ) : FlickToDismissState {
   override var offset: Float by mutableStateOf(0f)
   override var gestureState: GestureState by mutableStateOf(Idle)

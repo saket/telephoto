@@ -4,9 +4,26 @@ import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
+/**
+ * Create a [FlickToDismissState] that can be used with [FlickToDismiss()][FlickToDismiss].
+ *
+ * @param dismissThresholdRatio Minimum distance the user's finger should move as a fraction
+ * of the content's height after which it can be dismissed.
+ *
+ * @param rotateOnDrag When enabled, a subtle rotation is applied to the content while its
+ * being dragged.
+ */
 @Composable
-fun rememberFlickToDismissState(): FlickToDismissState {
-  return remember { RealFlickToDismissState() }
+fun rememberFlickToDismissState(
+  dismissThresholdRatio: Float = 0.3f,
+  rotateOnDrag: Boolean = true,
+): FlickToDismissState {
+  return remember(dismissThresholdRatio, rotateOnDrag) {
+    RealFlickToDismissState(
+      dismissThresholdRatio = dismissThresholdRatio,
+      rotateOnDrag = rotateOnDrag
+    )
+  }
 }
 
 sealed interface FlickToDismissState {
