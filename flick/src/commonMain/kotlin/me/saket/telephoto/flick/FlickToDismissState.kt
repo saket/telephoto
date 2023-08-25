@@ -34,10 +34,10 @@ sealed interface FlickToDismissState {
   /**
    * Distance dragged as a fraction of the content's height.
    *
-   * @return A value between 0 and 1, where 0 indicates that the content is fully dismissed
-   * and 1 indicates that the content is fully settled in its default position.
+   * @return A value between 0 and 1, where 0 indicates that the content is past its dismiss
+   * threshold and 1 indicates that the content is fully settled in its default position.
    */
-  @get:FloatRange(from = -1.0, to = 1.0)
+  @get:FloatRange(from = 0.0, to = 1.0)
   val offsetFraction: Float
 
   sealed interface GestureState {

@@ -23,8 +23,8 @@ import kotlin.math.abs
 
 @Stable
 internal class RealFlickToDismissState(
-  private val dismissThresholdRatio: Float,
-  private val rotateOnDrag: Boolean,
+  internal val dismissThresholdRatio: Float = 0.3f,
+  private val rotateOnDrag: Boolean = true,
 ) : FlickToDismissState {
   override var offset: Float by mutableStateOf(0f)
   override var gestureState: GestureState by mutableStateOf(Idle)
@@ -39,7 +39,11 @@ internal class RealFlickToDismissState(
 
   override val offsetFraction: Float by derivedStateOf {
     val contentHeight = contentSize.height
-    if (contentHeight == 0) 0f else offset / contentHeight.toFloat()
+    if (contentHeight == 0) {
+      0f
+    } else {
+      (abs(offset) / contentHeight.toFloat()).coerceIn(0f, 1f)
+    }
   }
 
   internal var contentSize: IntSize by mutableStateOf(IntSize.Zero)
@@ -48,11 +52,16 @@ internal class RealFlickToDismissState(
   internal val draggableState = DraggableState { dy ->
     offset += dy
 
-    gestureState = when {
-      gestureState is Dismissed -> gestureState
-      gestureState is Resetting -> gestureState
-      abs(offset) < ZoomDeltaEpsilon -> Idle
-      else -> Dragging(willDismissOnRelease = abs(offsetFraction) > dismissThresholdRatio)
+    gestureState = when (gestureState) {
+      is Idle, is Dragging -> {
+        if (abs(offset) < ZoomDeltaEpsilon) {
+          Idle
+        } else {
+          Dragging(willDismissOnRelease = abs(offsetFraction) > dismissThresholdRatio)
+        }
+      }
+      is Resetting, is Dismissing -> gestureState
+      is Dismissed -> error("drags shouldn't be received after the content is dismissed")
     }
   }
 

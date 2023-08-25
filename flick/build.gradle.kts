@@ -15,7 +15,7 @@ kotlin {
   jvm("desktop")
 
   sourceSets {
-    named("commonMain") {
+    val commonMain by getting {
       dependencies {
         implementation(compose("org.jetbrains.compose.ui:ui-util"))
         api(compose.foundation)
@@ -23,9 +23,22 @@ kotlin {
       }
     }
 
-    named("commonTest") {
+    val commonTest by getting {
       dependencies {
         implementation(kotlin("test"))
+      }
+    }
+
+    val androidUnitTest by getting {
+      apply(plugin = "app.cash.paparazzi")
+
+      dependencies {
+        implementation(libs.junit)
+        implementation(libs.turbine)
+        implementation(libs.molecule.runtime)
+        implementation(libs.testParamInjector)
+        implementation(libs.compose.ui.material3)
+        implementation(libs.kotlinx.coroutines.test)
       }
     }
   }
