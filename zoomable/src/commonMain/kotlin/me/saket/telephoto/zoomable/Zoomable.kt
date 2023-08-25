@@ -2,12 +2,9 @@
 
 package me.saket.telephoto.zoomable
 
-import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
@@ -17,9 +14,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.MutatePriorities
-import me.saket.telephoto.zoomable.internal.tappableAndQuickZoomable
 import me.saket.telephoto.zoomable.internal.rememberHapticFeedbackPerformer
 import me.saket.telephoto.zoomable.internal.stopTransformation
+import me.saket.telephoto.zoomable.internal.tappableAndQuickZoomable
 import me.saket.telephoto.zoomable.internal.transformable
 
 /**
@@ -49,8 +46,6 @@ fun Modifier.zoomable(
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
 ): Modifier = composed {
-  val onClick by rememberUpdatedState(onClick)
-
   val zoomableModifier = if (state.isReadyToInteract) {
     val hapticFeedbackPerformer = rememberHapticFeedbackPerformer()
     val density = LocalDensity.current
