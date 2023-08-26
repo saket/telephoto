@@ -15,10 +15,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.core.view.children
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.screenshot.Screenshot
-import com.dropbox.dropshots.Dropshots
 
 fun Activity.prepareForScreenshotTest() {
+  if (Build.VERSION.SDK_INT >= 28) {
+    // Shouldn't be needed on > API 29, but dropshots is occasionally unable to write to external storage without this.
+    val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
+    uiAutomation.grantRuntimePermission(packageName, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+  }
+
   try {
     actionBar?.hide()
     window.setBackgroundDrawable(ColorDrawable(0xFF1C1A25.toInt()))

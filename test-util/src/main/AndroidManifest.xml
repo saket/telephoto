@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <!--
+    Shouldn't be needed on > API 29, but dropshots is occasionally unable to write to external storage without this.
+    FYI AGP complains that 'tools:node=replace' isn't needed, but it is.
+  -->
+  <uses-permission
+    android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    tools:node="replace" />
+</manifest>
