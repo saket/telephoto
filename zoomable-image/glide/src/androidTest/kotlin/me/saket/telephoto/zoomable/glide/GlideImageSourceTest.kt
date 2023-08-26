@@ -36,7 +36,6 @@ import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
-import me.saket.telephoto.util.assertSnapshot
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil

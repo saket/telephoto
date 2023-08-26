@@ -42,16 +42,6 @@ fun Activity.screenshotForMinSdk23(): Bitmap {
   return Screenshot.capture(contentView).bitmap
 }
 
-// TODO: remove when https://github.com/dropbox/dropshots/pull/51 is released.
-fun Dropshots.assertSnapshot(bitmap: Bitmap) {
-  val testName = run {
-    val nameField = javaClass.getDeclaredField("testName")
-    nameField.isAccessible = true
-    nameField.get(this) as String
-  }
-  assertSnapshot(bitmap, name = testName)
-}
-
 /** Workaround for [u/283219177](https://issuetracker.google.com/issues/283219177). */
 @SuppressLint("ViewConstructor")
 private class CorrectDisplayHeightLayout(
