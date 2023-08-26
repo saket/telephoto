@@ -141,7 +141,8 @@ class ZoomableImageTest {
 
   @Test fun retain_transformations_across_state_restorations(
     @TestParameter placeholderParam: UsePlaceholderParam,
-    @TestParameter subSamplingStatus: SubSamplingStatus
+    @TestParameter subSamplingStatus: SubSamplingStatus,
+    @TestParameter canZoom: CanZoomParam,
   ) {
     val stateRestorationTester = StateRestorationTester(rule)
     val isPlaceholderVisible = MutableStateFlow(false)
@@ -170,12 +171,14 @@ class ZoomableImageTest {
     }
 
     rule.waitUntil(5.seconds) { state.isImageDisplayed }
-    with(rule.onNodeWithTag("image")) {
-      performTouchInput {
-        doubleClick()
-      }
-      performTouchInput {
-        swipeLeft(startX = center.x, endX = centerLeft.x)
+    if (canZoom.canZoom) {
+      with(rule.onNodeWithTag("image")) {
+        performTouchInput {
+          doubleClick()
+        }
+        performTouchInput {
+          swipeLeft(startX = center.x, endX = centerLeft.x)
+        }
       }
     }
     rule.runOnIdle {
@@ -830,6 +833,12 @@ class ZoomableImageTest {
   enum class UsePlaceholderParam(val canBeUsed: Boolean) {
     PlaceholderEnabled(canBeUsed = true),
     PlaceholderDisabled(canBeUsed = false),
+  }
+
+  @Suppress("unused")
+  enum class CanZoomParam(val canZoom: Boolean) {
+    CanZoom(canZoom = true),
+    CanNotZoom(canZoom = false),
   }
 
   enum class ScrollDirection {

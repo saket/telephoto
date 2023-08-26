@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -89,8 +90,16 @@ fun ZoomableImage(
       label = "Crossfade animation",
     )
 
+    // If a state restoration happened and the image was previously zoomed in, the placeholder
+    // will no longer be aligned correctly. It'd be nice if the placeholder can also be kept in
+    // sync with the zoomable state once https://github.com/saket/telephoto/issues/8 is fixed.
+    var wasImageZoomedIn by rememberSaveable { mutableStateOf(false) }
+    if ((state.zoomableState.zoomFraction ?: 0f) > 0f) {
+      wasImageZoomedIn = true
+    }
+
     state.isPlaceholderDisplayed = resolved.placeholder != null && animatedAlpha < 1f
-    if (state.isPlaceholderDisplayed) {
+    if (state.isPlaceholderDisplayed && !wasImageZoomedIn) {
       Image(
         painter = animatedPainter(resolved.placeholder!!).scaledToMatch(
           // Align with the full-quality image even if the placeholder is smaller in size.
