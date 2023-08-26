@@ -2,6 +2,8 @@ package me.saket.telephoto.sample
 
 import android.os.Bundle
 import android.view.WindowManager
+import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -81,10 +83,10 @@ class SampleActivity : AppCompatActivity() {
 
   private fun setupImmersiveMode() {
     // Draw behind display cutouts.
-    window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+    window.attributes.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
 
     // No scrim behind transparent navigation bar.
-    window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+    window.setFlags(FLAG_LAYOUT_NO_LIMITS, FLAG_LAYOUT_NO_LIMITS)
 
     // System bars use fade by default to hide/show. Make them slide instead.
     val insetsController = WindowCompat.getInsetsController(window, window.decorView)

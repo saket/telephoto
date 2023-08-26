@@ -34,6 +34,7 @@ okhttp-mockWebServer = "4.11.0"
 dokka = "1.8.10"
 assertk = "0.26"
 anrWatchDog = "1.4.0"
+circuit = "0.13.0-beta01"
 
 [libraries]
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
@@ -92,3 +93,6 @@ dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropsho
 dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }
 anrWatchDog = { module = "com.github.anrwatchdog:anrwatchdog", version.ref = "anrWatchDog" }
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
+
+circuit-runtime = { module = "com.slack.circuit:circuit-foundation", version.ref = "circuit" }
+circuit-backstack = { module = "com.slack.circuit:circuit-backstack", version.ref = "circuit" }

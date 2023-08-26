@@ -40,12 +40,12 @@ import androidx.palette.graphics.Target
 import androidx.palette.graphics.get
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.slack.circuit.runtime.Navigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.sample.GalleryScreenKey
 import me.saket.telephoto.sample.MediaViewerScreenKey
-import me.saket.telephoto.sample.Navigator
 import me.saket.telephoto.sample.R
 
 @Composable
@@ -88,8 +88,7 @@ private fun AlbumGrid(
           .fillMaxWidth()
           .height(200.dp)
           .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
-          .clickable { navigator.lfg(MediaViewerScreenKey(album, initialIndex = index)) }
-,
+          .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) },
         contentAlignment = Alignment.BottomStart
       ) {
 
