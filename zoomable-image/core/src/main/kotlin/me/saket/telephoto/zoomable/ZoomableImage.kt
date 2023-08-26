@@ -21,14 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.zIndex
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
@@ -94,8 +92,6 @@ fun ZoomableImage(
     state.isPlaceholderDisplayed = resolved.placeholder != null && animatedAlpha < 1f
     if (state.isPlaceholderDisplayed) {
       Image(
-        modifier = Modifier.zIndex(100f),
-        //modifier = Modifier.applyTransformation(state.zoomableState.contentTransformation),
         painter = animatedPainter(resolved.placeholder!!).scaledToMatch(
           // Align with the full-quality image even if the placeholder is smaller in size.
           // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
@@ -105,7 +101,7 @@ fun ZoomableImage(
         alignment = alignment,
         contentScale = contentScale,
         alpha = alpha,
-        colorFilter = /*colorFilter*/ ColorFilter.lighting(Color.Cyan.copy(alpha = 0.1f), Color.Transparent)
+        colorFilter = colorFilter,
       )
     }
 
