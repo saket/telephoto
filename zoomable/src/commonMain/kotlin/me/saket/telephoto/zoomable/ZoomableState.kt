@@ -116,7 +116,7 @@ class ZoomableState internal constructor(
         ZoomableContentTransformation(
           isSpecified = false,
           contentSize = Size.Unspecified,
-          scale = ScaleFactor.Zero, // Effectively hide content until an initial zoom value is calculated.,
+          scale = ScaleFactor.Zero, // Effectively hide content until an initial zoom value is calculated.
           offset = Offset.Zero,
         )
       }

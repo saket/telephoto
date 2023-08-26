@@ -12,9 +12,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,12 +51,11 @@ import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.util.CiScreenshotValidator
-import me.saket.telephoto.util.assertSnapshot
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil
@@ -145,12 +144,13 @@ class ZoomableImageTest {
     @TestParameter subSamplingStatus: SubSamplingStatus
   ) {
     val stateRestorationTester = StateRestorationTester(rule)
-    var isImageDisplayed = false
+    val isPlaceholderVisible = MutableStateFlow(false)
+    lateinit var state: ZoomableImageState
 
     stateRestorationTester.setContent {
       val imageSource = ZoomableImageSource.asset("fox_1500.jpg", subSample = subSamplingStatus.enabled).let {
         if (placeholderParam.canBeUsed) {
-          it.withPlaceholder(assetPainter("fox_250.jpg"))
+          it.withPlaceholder(assetPainter("fox_250.jpg"), isPlaceholderVisible)
         } else {
           it
         }
@@ -164,12 +164,12 @@ class ZoomableImageTest {
         state = rememberZoomableImageState(
           rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 5f))
         ).also {
-          isImageDisplayed = it.isImageDisplayed
+          state = it
         },
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayed }
     with(rule.onNodeWithTag("image")) {
       performTouchInput {
         doubleClick()
@@ -182,11 +182,26 @@ class ZoomableImageTest {
       dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_before_state_restoration")
     }
 
+    isPlaceholderVisible.value = placeholderParam.canBeUsed
     stateRestorationTester.emulateSavedInstanceStateRestore()
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    if (placeholderParam.canBeUsed) {
+      rule.waitUntil(5.seconds) { state.isPlaceholderDisplayed }
+      rule.runOnIdle {
+        dropshots.assertSnapshot(
+          rule.activity.screenshotForMinSdk23(),
+          testName.methodName + "_placeholder_after_state_restoration"
+        )
+      }
+    }
+
+    isPlaceholderVisible.value = false
+    rule.waitUntil(5.seconds) { state.isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_after_state_restoration")
+      dropshots.assertSnapshot(
+        rule.activity.screenshotForMinSdk23(),
+        testName.methodName + "_full_image_after_state_restoration"
+      )
     }
   }
 
@@ -904,23 +919,19 @@ private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Bo
 }
 
 @Composable
-private fun ZoomableImageSource.withPlaceholder(placeholder: Painter): ZoomableImageSource {
+private fun ZoomableImageSource.withPlaceholder(
+  placeholder: Painter,
+  isPlaceholderVisible: MutableStateFlow<Boolean>
+): ZoomableImageSource {
   val delegate = this
-  return remember(delegate, placeholder) {
+  return remember(delegate, placeholder, isPlaceholderVisible) {
     object : ZoomableImageSource {
       @Composable
       override fun resolve(canvasSize: Flow<Size>): ResolveResult {
-        val canUseDelegate by produceState(initialValue = false) {
-          delay(200)
-          value = true
-        }
-        if (canUseDelegate) {
-          return delegate.resolve(canvasSize).copy(placeholder = placeholder)
-        } else {
-          return ResolveResult(
-            delegate = null,
-            placeholder = placeholder
-          )
+        val showPlaceholder by isPlaceholderVisible.collectAsState()
+        return when {
+          showPlaceholder -> ResolveResult(delegate = null, placeholder = placeholder)
+          else -> delegate.resolve(canvasSize).copy(placeholder = placeholder)
         }
       }
     }

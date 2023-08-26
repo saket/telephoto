@@ -40,8 +40,6 @@ import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import com.google.common.truth.TruthJUnit
-import com.google.common.truth.TruthJUnit.assume
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay

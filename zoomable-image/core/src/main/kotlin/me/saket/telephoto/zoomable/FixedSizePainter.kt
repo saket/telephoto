@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.RememberObserver
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
@@ -10,6 +11,7 @@ import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 
+@Stable
 @Composable
 internal fun Painter.scaledToMatch(size: Size): Painter {
   return remember(this, size) {
