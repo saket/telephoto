@@ -85,7 +85,8 @@ fun ZoomableImage(
     }
     val animatedAlpha by animateFloatAsState(
       targetValue = if (state.isImageDisplayed) 1f else 0f,
-      animationSpec = tween(resolved.crossfadeDurationMs)
+      animationSpec = tween(resolved.crossfadeDurationMs),
+      label = "Crossfade animation",
     )
 
     state.isPlaceholderDisplayed = resolved.placeholder != null && animatedAlpha < 1f
