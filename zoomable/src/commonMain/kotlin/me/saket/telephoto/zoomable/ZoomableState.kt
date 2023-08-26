@@ -103,11 +103,10 @@ class ZoomableState internal constructor(
    */
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     rawTransformation.let {
-      if (it != null) {
-        val scale = it.zoom.finalZoom()
-        val canContentBeShown = scale != ScaleFactor.Zero
+      val scale = it?.zoom?.finalZoom()
+      if (scale != null && scale != ScaleFactor.Zero) {
         ZoomableContentTransformation(
-          isSpecified = canContentBeShown,
+          isSpecified = true,
           contentSize = it.contentSize,
           scale = scale,
           offset = -it.offset * it.zoom,
