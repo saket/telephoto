@@ -13,6 +13,8 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -74,7 +76,11 @@ fun MediaViewerScreen(key: MediaViewerScreenKey) {
 
     TopAppBar(
       title = {},
-      navigationIcon = { CloseNavIconButton() },
+      navigationIcon = {
+        // This can be uncommented once screen transitions are setup so
+        // that this screen can smoothly fade-out when it's flick-dismissed.
+        /*CloseNavIconButton()*/
+      },
       colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
     )
   }
@@ -96,7 +102,12 @@ private fun CloseScreenOnFlickDismissEffect(flickState: FlickToDismissState) {
 @Composable
 private fun CloseNavIconButton() {
   val backDispatcher = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
-  IconButton(onClick = { backDispatcher.onBackPressed() }) {
+  IconButton(
+    onClick = { backDispatcher.onBackPressed() },
+    colors = IconButtonDefaults.iconButtonColors(
+      containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.4f)
+    ),
+  ) {
     Icon(Icons.Rounded.Close, contentDescription = "Go back")
   }
 }
