@@ -19,7 +19,10 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Idle
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
 import me.saket.telephoto.flick.internal.animateWithDuration
+import java.lang.Math.toRadians
 import kotlin.math.abs
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 @Stable
 internal class RealFlickToDismissState(
@@ -31,7 +34,7 @@ internal class RealFlickToDismissState(
 
   override val rotationZ: Float by derivedStateOf {
     if (rotateOnDrag) {
-      offsetFraction * if (dragStartedOnLeftSide) -20f else 20f
+      offsetFraction * if (dragStartedOnLeftSide) -MaxRotation else MaxRotation
     } else {
       0f
     }
@@ -42,7 +45,7 @@ internal class RealFlickToDismissState(
     if (contentHeight == 0) {
       0f
     } else {
-      (abs(offset) / contentHeight.toFloat()).coerceIn(0f, 1f)
+      (abs(offset) / contentHeight).coerceIn(0f, 1f)
     }
   }
 
@@ -79,9 +82,15 @@ internal class RealFlickToDismissState(
   internal suspend fun animateDismissal(velocity: Float) {
     draggableState.drag(MutatePriority.PreventUserInput) {
       try {
+        val distanceCoveredByRotation = if (rotateOnDrag) {
+          val theta = toRadians(MaxRotation.toDouble()).toFloat()
+          (1f - sin(theta)) * (theta * (contentSize.diagonal / 2))
+        } else {
+          0f
+        }
         animateWithDuration(
           initialValue = offset,
-          targetValue = contentSize.height * if (offset > 0f) 1f else -1f,
+          targetValue = (contentSize.height + distanceCoveredByRotation) * if (offset > 0f) 1f else -1f,
           initialVelocity = velocity,
           animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
           onStart = { duration ->
@@ -112,5 +121,10 @@ internal class RealFlickToDismissState(
   companion object {
     /** Differences below this value are ignored when comparing two zoom values. */
     private const val ZoomDeltaEpsilon = 0.01f
+
+    private const val MaxRotation = 20f
   }
 }
+
+private val IntSize.diagonal: Float
+  get() = sqrt((width * width + height * height).toFloat())

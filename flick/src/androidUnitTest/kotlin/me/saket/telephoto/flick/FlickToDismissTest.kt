@@ -2,6 +2,7 @@ package me.saket.telephoto.flick
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +12,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.cash.molecule.RecompositionMode
@@ -27,6 +31,9 @@ import assertk.assertions.isTrue
 import com.android.ide.common.rendering.api.SessionParams.RenderingMode
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissed
@@ -35,6 +42,7 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Idle
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
 import me.saket.telephoto.flick.FlickToDismissTest.DragStartLocationParam.*
+import me.saket.telephoto.flick.FlickToDismissTest.SwipeDirectionParam.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -94,6 +102,52 @@ class FlickToDismissTest {
               .padding(vertical = 24.dp)
               .background(MaterialTheme.colorScheme.tertiary)
               .height(200.dp)
+          )
+        }
+      }
+    }
+  }
+
+  @Test fun `account for rotation when calculating dismiss offset`(
+    @TestParameter swipeDirection: SwipeDirectionParam
+  ) = runBlocking {
+    val state = RealFlickToDismissState()
+    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = context.dp(300))
+    state.draggableState.drag {
+      dragBy(
+        when (swipeDirection) {
+          UpwardSwipe -> -1f
+          DownwardSwipe -> 1f
+        }
+      )
+    }
+
+    val scope = CoroutineScope(Dispatchers.IO)
+    scope.launchMolecule(mode = RecompositionMode.Immediate) {
+      LaunchedEffect(Unit) {
+        state.animateDismissal(velocity = 0f)
+      }
+    }
+    while (true) {
+      if (state.gestureState is Dismissed) {
+        scope.cancel()
+        break
+      }
+    }
+
+    paparazzi.snapshot {
+      Surface {
+        FlickToDismiss(
+          state = state,
+          modifier = Modifier
+            .padding(vertical = 16.dp)
+            .border(Dp.Hairline, Color.Black)
+        ) {
+          Box(
+            Modifier
+              .fillMaxWidth()
+              .background(MaterialTheme.colorScheme.tertiary)
+              .height(LocalDensity.current.run { state.contentSize.height.toDp() })
           )
         }
       }
@@ -199,6 +253,11 @@ class FlickToDismissTest {
   enum class DragStartLocationParam {
     DragStartedOnLeftSide,
     DragStartedOnRightSide,
+  }
+
+  enum class SwipeDirectionParam {
+    UpwardSwipe,
+    DownwardSwipe,
   }
 
   private fun Context.dp(value: Int): Int {
