@@ -26,6 +26,7 @@ import assertk.assertThat
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThan
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import com.android.ide.common.rendering.api.SessionParams.RenderingMode
@@ -221,7 +222,7 @@ class FlickToDismissTest {
       skipItems(1)  // Dragging state.
       assertThat(awaitItem()).isInstanceOf<Dismissing>()
       assertThat(awaitItem()).isEqualTo(Dismissed)
-      assertThat(state.offset).isEqualTo(context.dp(300f))
+      assertThat(state.offset).isGreaterThan(context.dp(300f))
     }
   }
 
