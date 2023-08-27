@@ -9,3 +9,13 @@ internal inline fun <T, R> List<T>.fastMapNotNull(transform: (T) -> R?): List<R>
   }
   return target
 }
+
+internal inline fun <T> List<T>.fastFilter(predicate: (T) -> Boolean): List<T> {
+  val target = ArrayList<T>(size)
+  fastForEach {
+    if (predicate(it)) {
+      target.add(it)
+    }
+  }
+  return target
+}

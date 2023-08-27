@@ -24,8 +24,8 @@ class BitmapLoaderTest {
 
   private fun TestScope.bitmapLoader(): BitmapLoader {
     return BitmapLoader(
+      scope = backgroundScope,
       decoder = decoder,
-      scope = this,
     )
   }
 

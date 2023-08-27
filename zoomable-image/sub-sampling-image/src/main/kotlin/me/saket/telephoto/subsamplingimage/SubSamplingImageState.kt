@@ -135,7 +135,7 @@ internal fun rememberSubSamplingImageState(
 
     val scope = rememberCoroutineScope()
     LaunchedEffect(state, transformations, decoder) {
-      val bitmapLoader = BitmapLoader(decoder, scope)
+      val bitmapLoader = BitmapLoader(scope, decoder)
       val canvasSizeChanges = snapshotFlow { state.canvasSize }
         .filterNotNull()
         .filter { it.minDimension > 0f }
