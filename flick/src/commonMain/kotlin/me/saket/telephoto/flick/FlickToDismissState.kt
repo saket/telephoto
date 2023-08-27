@@ -3,6 +3,7 @@ package me.saket.telephoto.flick
 import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import kotlin.time.Duration
 
 /**
  * Create a [FlickToDismissState] that can be used with [FlickToDismiss()][FlickToDismiss].
@@ -48,7 +49,30 @@ sealed interface FlickToDismissState {
     ) : GestureState
 
     object Resetting : GestureState
-    object Dismissing : GestureState
+
+    data class Dismissing(
+      /**
+       * Determines how long the content animates before it is fully dismissed.
+       * This can be used for scheduling an exit of your screen.
+       *
+       * ```
+       * val gestureState = flickState.gestureState
+       *
+       * if (gestureState is Dismissing) {
+       *   LaunchedEffect(Unit) {
+       *     delay(gestureState.animationDuration / 2f)
+       *     navigator.goBack()
+       *   }
+       * }
+       * ```
+       *
+       * You could also wait for the state to change to [Dismissed] as an exit signal,
+       * but that might be too late as most navigation frameworks have a delay from when
+       * an exit navigation is issued to when the screen actually hides from the UI.
+       */
+      val animationDuration: Duration
+    ) : GestureState
+
     object Dismissed : GestureState
   }
 }

@@ -2,7 +2,6 @@ package me.saket.telephoto.flick
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.DraggableState
@@ -19,6 +18,7 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Idle
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
+import me.saket.telephoto.flick.internal.animateWithDuration
 import kotlin.math.abs
 
 @Stable
@@ -78,13 +78,15 @@ internal class RealFlickToDismissState(
 
   internal suspend fun animateDismissal(velocity: Float) {
     draggableState.drag(MutatePriority.PreventUserInput) {
-      gestureState = Dismissing
       try {
-        animate(
+        animateWithDuration(
           initialValue = offset,
           targetValue = contentSize.height * if (offset > 0f) 1f else -1f,
           initialVelocity = velocity,
           animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+          onStart = { duration ->
+            gestureState = Dismissing(duration)
+          }
         ) { value, _ ->
           dragBy(value - offset)
         }
