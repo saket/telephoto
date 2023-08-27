@@ -67,20 +67,17 @@ internal class PooledImageRegionDecoder private constructor(
     }
 
     private fun calculatePoolCount(context: Context): Int {
-      val activityManager = context.getSystemService<ActivityManager>()!!
-      if (activityManager.isLowRamDevice) {
-        return 1
-      }
-      val memoryInfo = ActivityManager.MemoryInfo().apply(activityManager::getMemoryInfo)
-      if (memoryInfo.lowMemory) {
-        return 1
-      }
       overriddenPoolCount?.let {
         return it
       }
+      val activityManager = context.getSystemService<ActivityManager>()!!
+      val memoryInfo = ActivityManager.MemoryInfo().apply(activityManager::getMemoryInfo)
+      if (memoryInfo.lowMemory || activityManager.isLowRamDevice) {
+        return 1
+      }
       // BitmapRegionDecoders are expensive on android. Folks working on android's graphics
       // have suggested not using more than 2 instances to keep memory footprint low.
-      return minOf(2, Runtime.getRuntime().availableProcessors())
+      return Runtime.getRuntime().availableProcessors().coerceAtMost(2)
     }
   }
 }
