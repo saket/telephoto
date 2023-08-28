@@ -2,6 +2,7 @@ package me.saket.telephoto.flick
 
 import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import kotlin.time.Duration
 
@@ -27,6 +28,7 @@ fun rememberFlickToDismissState(
   }
 }
 
+@Stable
 sealed interface FlickToDismissState {
   val offset: Float
   val rotationZ: Float
