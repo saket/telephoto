@@ -44,12 +44,27 @@ sealed interface FlickToDismissState {
   val offsetFraction: Float
 
   sealed interface GestureState {
+    /**
+     * Content is resting at its default position with no ongoing drag gesture.
+     */
     object Idle : GestureState
 
     data class Dragging(
+      /**
+       * Whether the drag distance is sufficient to dismiss the content once it's released.
+       *
+       * The dismiss threshold is controlled by [dismissThresholdRatio][rememberFlickToDismissState].
+       *
+       * Keep in mind that the content can also be dismissed if the release velocity is
+       * sufficient enough regardless of whether [willDismissOnRelease] is true.
+       */
       val willDismissOnRelease: Boolean
     ) : GestureState
 
+    /**
+     * Content is settling back to its default position after it was released because the drag
+     * distance wasn't sufficient to dismiss the content.
+     */
     object Resetting : GestureState
 
     data class Dismissing(
@@ -75,6 +90,10 @@ sealed interface FlickToDismissState {
       val animationDuration: Duration
     ) : GestureState
 
+    /**
+     * Content was dismissed. At this point, [FlickToDismiss] is no longer usable
+     * and must be removed from composition.
+     */
     object Dismissed : GestureState
   }
 }
