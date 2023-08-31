@@ -25,7 +25,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isFinite
-import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -200,6 +199,10 @@ class ZoomableState internal constructor(
 
   @Suppress("NAME_SHADOWING")
   internal val transformableState = TransformableState { zoomDelta, panDelta, _, centroid ->
+    check(panDelta.isFinite && zoomDelta.isFinite() && centroid.isFinite) {
+      "Can't transform with zoomDelta=$zoomDelta, panDelta=$panDelta, centroid=$centroid. ${collectDebugInfoForIssue41()}"
+    }
+
     // This is the minimum scale needed to position the content
     // within its layout bounds w.r.t. its content scale.
     val baseZoom = contentScale.computeScaleFactor(
@@ -334,7 +337,17 @@ class ZoomableState internal constructor(
     //                  |                         |           (+ new translation)
     //                  |                         |                    |
     //     _____________|_____________    ________|_________   ________|_________
-    return (this + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)
+    return ((this + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)).also {
+      check(it.isFinite) {
+        val debugInfo = collectDebugInfoForIssue41(
+          "centroid" to centroid,
+          "panDelta" to panDelta,
+          "oldZoom" to oldZoom,
+          "newZoom" to newZoom,
+        )
+        "retainCentroidPositionAfterZoom() generated an infinite value. $debugInfo"
+      }
+    }
   }
 
   private fun Offset.coerceWithinBounds(proposedZoom: ContentZoom): Offset {
@@ -345,24 +358,10 @@ class ZoomableState internal constructor(
     val scaledTopLeft = unscaledContentBounds.topLeft * proposedZoom
 
     // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-    val coerced = withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
+    return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
       val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * proposedZoom)
-      check(expectedDrawRegion.size.isSpecified) {
-        val debugInfo = collectDebugInfoForIssue41(
-          "zoomed offset" to it,
-          "expectedDrawRegion" to expectedDrawRegion,
-          "proposedZoom" to proposedZoom,
-        )
-        "Draw region has an unspecified size $debugInfo"
-      }
       expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
     }
-
-    check(coerced.isFinite) {
-      val debugInfo = collectDebugInfoForIssue41("offset" to this, "proposedZoom" to proposedZoom)
-      "Coerced offset is infinite $debugInfo"
-    }
-    return coerced
   }
 
   private operator fun Offset.div(zoom: ContentZoom): Offset = div(zoom.finalZoom())
@@ -386,7 +385,7 @@ class ZoomableState internal constructor(
         centroid = Offset.Zero,
       )
     } else {
-      rawTransformation = null
+      rawTransformation = null  // todo: use mutex.
     }
   }
 
@@ -491,6 +490,8 @@ class ZoomableState internal constructor(
   }
 
   internal suspend fun fling(velocity: Velocity, density: Density) {
+    check(velocity.x.isFinite() && velocity.y.isFinite()) { "Invalid velocity = $velocity" }
+
     val start = rawTransformation!!
     transformableState.transform(MutatePriorities.FlingAnimation) {
       var previous = start.offset
@@ -501,7 +502,16 @@ class ZoomableState internal constructor(
       ).animateDecay(splineBasedDecay(density)) {
         transformBy(
           centroid = start.lastCentroid,
-          panChange = value - previous
+          panChange = (value - previous).also {
+            check(it.isFinite) {
+              val debugInfo = collectDebugInfoForIssue41(
+                "value" to value,
+                "previous" to previous,
+                "velocity" to velocity,
+              )
+              "Can't fling with an invalid pan = $it. $debugInfo"
+            }
+          }
         )
         previous = value
       }
