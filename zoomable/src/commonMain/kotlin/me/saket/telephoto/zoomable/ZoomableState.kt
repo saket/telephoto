@@ -385,7 +385,9 @@ class ZoomableState internal constructor(
         centroid = Offset.Zero,
       )
     } else {
-      rawTransformation = null  // todo: use mutex.
+      transformableState.transform(MutatePriority.PreventUserInput) {
+        rawTransformation = null
+      }
     }
   }
 
