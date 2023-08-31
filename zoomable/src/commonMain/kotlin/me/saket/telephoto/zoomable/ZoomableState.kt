@@ -364,10 +364,6 @@ class ZoomableState internal constructor(
     }
   }
 
-  private operator fun Offset.div(zoom: ContentZoom): Offset = div(zoom.finalZoom())
-  private operator fun Offset.times(zoom: ContentZoom): Offset = times(zoom.finalZoom())
-  private operator fun Size.times(zoom: ContentZoom): Size = times(zoom.finalZoom())
-
   /** See [ZoomableContentLocation]. */
   suspend fun setContentLocation(location: ZoomableContentLocation) {
     unscaledContentLocation = location

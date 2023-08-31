@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.unit.IntSize
+import me.saket.telephoto.zoomable.ContentZoom
 import kotlin.math.roundToInt
 
 internal fun Size.roundToIntSize() =
@@ -43,6 +44,15 @@ internal operator fun Offset.times(factor: ScaleFactor) =
 
 internal operator fun Offset.div(factor: ScaleFactor) =
   Offset(x = x / factor.scaleX, y = y / factor.scaleY)
+
+internal operator fun Offset.div(zoom: ContentZoom): Offset =
+  div(zoom.finalZoom())
+
+internal operator fun Offset.times(zoom: ContentZoom): Offset =
+  times(zoom.finalZoom())
+
+internal operator fun Size.times(zoom: ContentZoom): Size =
+  times(zoom.finalZoom())
 
 /**
  * Call [action] with [zoom] and [translate] applied to this offset. The value
