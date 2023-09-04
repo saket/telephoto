@@ -140,8 +140,8 @@ private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
         var dragged = false
         verticalDrag(secondDown.id) { drag ->
           dragged = true
-          val dragDelta = drag.positionChange()
-          val zoomDelta = 1f + (dragDelta.y * 0.004f) // Formula copied from https://github.com/usuiat/Zoomable.
+          val delta = drag.positionChange()
+          val zoomDelta = (1f + (delta.y * 0.004f)).coerceIn(0.1f, 2f) // Copied from https://github.com/usuiat/Zoomable
           onQuickZoom(Zooming(secondDown.position, zoomDelta))
           drag.consume()
         }

@@ -210,7 +210,7 @@ class ZoomableState internal constructor(
       dstSize = contentLayoutSize,
     )
     check(baseZoom.isPositiveAndFinite()) {
-      "Old zoom is invalid/infinite. ${collectDebugInfoForIssue41()}"
+      "Base zoom is invalid/infinite. ${collectDebugInfoForIssue41()}"
     }
 
     val oldZoom = ContentZoom(
@@ -247,6 +247,9 @@ class ZoomableState internal constructor(
       } else {
         it
       }
+    }
+    check(newZoom.finalZoom().isPositiveAndFinite()) {
+      "New zoom is invalid/infinite = $newZoom. ${collectDebugInfoForIssue41("zoomDelta" to zoomDelta)}"
     }
 
     val oldOffset = rawTransformation.let {
