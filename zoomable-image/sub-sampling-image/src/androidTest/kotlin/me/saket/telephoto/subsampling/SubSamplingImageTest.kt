@@ -496,7 +496,7 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
 
     rule.onNodeWithTag("image").performTouchInput {

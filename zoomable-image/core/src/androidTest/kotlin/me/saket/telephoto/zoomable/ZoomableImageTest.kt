@@ -233,7 +233,7 @@ class ZoomableImageTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName)
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
     }
 
     rule.onNodeWithTag("image").performTouchInput {
