@@ -17,7 +17,7 @@ import com.slack.circuit.runtime.Screen as CircuitScreenKey
 
 @Composable
 fun Navigation(
-  initialScreenKey: GalleryScreenKey,
+  initialScreenKey: ScreenKey,
 ) {
   val backstack = rememberSaveableBackStack { push(initialScreenKey) }
   val navigator = rememberCircuitNavigator(backstack)
@@ -28,7 +28,7 @@ fun Navigation(
         when (val screen = record.screen) {
           is GalleryScreenKey -> {
             GalleryScreen(
-              key = initialScreenKey,
+              key = screen,
               navigator = navigator
             )
           }
