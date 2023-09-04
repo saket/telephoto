@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.click
@@ -44,6 +46,7 @@ import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeWithVelocity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
 import com.dropbox.dropshots.Dropshots
@@ -54,7 +57,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
-import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.screenshotForMinSdk23
@@ -244,6 +246,50 @@ class ZoomableImageTest {
         end0 = centerLeft - by.toOffset(),
         end1 = centerLeft + by.toOffset(),
       )
+    }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed")
+    }
+
+    with(rule.onNodeWithTag("image")) {
+      performTouchInput {
+        swipeLeft(startX = center.x, endX = centerLeft.x)
+      }
+    }
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed_panned")
+    }
+  }
+
+  @Test fun rtl_layout_direction() {
+    screenshotValidator.tolerancePercentOnCi = 0.18f
+    var isImageDisplayed = false
+
+    rule.setContent {
+      CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        val state = rememberZoomableImageState()
+        isImageDisplayed = state.isImageDisplayed && state.zoomableState.contentTransformation.isSpecified
+
+        ZoomableImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImageSource.asset("fox_1500.jpg", subSample = true),
+          contentDescription = null,
+          state = state,
+        )
+      }
+    }
+
+    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+    }
+
+    rule.onNodeWithTag("image").performTouchInput {
+      doubleClick()
     }
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
