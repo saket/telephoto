@@ -1,4 +1,4 @@
-package me.saket.telephoto.viewport.internal
+package me.saket.telephoto.zoomable
 
 import androidx.compose.ui.geometry.Size
 import assertk.assertThat
@@ -19,9 +19,9 @@ class ZoomableContentLocationTest {
     assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(Size.Zero).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(Size(42f, 99f)).isSpecified).isTrue()
 
-    assertThat(ZoomableContentLocation.unscaledAndTopStartAligned(null).isSpecified).isFalse()
-    assertThat(ZoomableContentLocation.unscaledAndTopStartAligned(Size.Unspecified).isSpecified).isFalse()
-    assertThat(ZoomableContentLocation.unscaledAndTopStartAligned(Size.Zero).isSpecified).isTrue()
-    assertThat(ZoomableContentLocation.unscaledAndTopStartAligned(Size(42f, 99f)).isSpecified).isTrue()
+    assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(null).isSpecified).isFalse()
+    assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size.Unspecified).isSpecified).isFalse()
+    assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size.Zero).isSpecified).isTrue()
+    assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size(42f, 99f)).isSpecified).isTrue()
   }
 }

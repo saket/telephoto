@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -51,19 +52,26 @@ interface ZoomableContentLocation {
      * Describes a zoomable content's location that is positioned at 0,0 of its layout
      * and is never scaled.
      *
-     * That is, its alignment is [Alignment.TopStart] and scale is [ContentScale.None].
+     * That is, its alignment is [AbsoluteAlignment.TopLeft] and scale is [ContentScale.None].
      */
     @Stable
-    fun unscaledAndTopStartAligned(size: Size?): ZoomableContentLocation {
+    fun unscaledAndTopLeftAligned(size: Size?): ZoomableContentLocation {
       return when {
         size == null || size.isUnspecified -> Unspecified
         else -> RelativeContentLocation(
           size = size,
           scale = ContentScale.None,
-          alignment = Alignment.TopStart,
+          alignment = AbsoluteAlignment.TopLeft,
         )
       }
     }
+
+    @Deprecated(
+      message = "Use unscaledAndTopLeftAligned() instead",
+      replaceWith = ReplaceWith("ZoomableContentLocation.unscaledAndTopLeftAligned(size)"),
+      level = DeprecationLevel.ERROR,
+    )
+    fun unscaledAndTopStartAligned(size: Size?) = unscaledAndTopLeftAligned(size)
   }
 
   /**
