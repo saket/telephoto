@@ -366,11 +366,13 @@ class ZoomableState internal constructor(
 
   /** See [ZoomableContentLocation]. */
   suspend fun setContentLocation(location: ZoomableContentLocation) {
-    unscaledContentLocation = location
+    if (unscaledContentLocation != location) {
+      unscaledContentLocation = location
 
-    // Refresh content transformation synchronously so that the result is available immediately.
-    // Otherwise, the old position will be used with this new size and cause a flicker.
-    refreshContentTransformation()
+      // Refresh content transformation synchronously so that the result is available immediately.
+      // Otherwise, the old position will be used with this new size and cause a flicker.
+      refreshContentTransformation()
+    }
   }
 
   /** Reset content to its minimum zoom and zero offset. */
