@@ -10,17 +10,10 @@ import kotlin.math.absoluteValue
 import kotlin.math.ceil
 import kotlin.math.min
 
-internal fun Size.coerceAtLeast(other: IntSize): Size {
-  return Size(
-    width = width.coerceAtLeast(other.width.toFloat()),
-    height = height.coerceAtLeast(other.height.toFloat())
-  )
-}
-
-internal fun IntSize.coerceAtMost(other: IntSize): IntSize {
+internal fun IntSize.coerceIn(min: IntSize, max: IntSize): IntSize {
   return IntSize(
-    width = width.coerceAtMost(other.width),
-    height = height.coerceAtMost(other.height)
+    width = width.coerceIn(minimumValue = min.width, maximumValue = max.width),
+    height = height.coerceIn(minimumValue = min.height, maximumValue = max.height),
   )
 }
 
