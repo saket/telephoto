@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.plus
 import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
@@ -136,7 +137,7 @@ internal fun rememberSubSamplingImageState(
 
     val scope = rememberCoroutineScope()
     LaunchedEffect(state, transformations, decoder) {
-      val bitmapLoader = BitmapLoader(scope, decoder)
+      val bitmapLoader = BitmapLoader(scope + Dispatchers.IO, decoder)
       val canvasSizeChanges = snapshotFlow { state.canvasSize }
         .filterNotNull()
         .filter { it.minDimension > 0f }
