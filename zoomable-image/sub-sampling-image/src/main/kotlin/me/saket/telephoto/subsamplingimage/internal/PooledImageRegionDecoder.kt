@@ -44,23 +44,18 @@ internal class PooledImageRegionDecoder private constructor(
 
     fun Factory(
       delegate: ImageRegionDecoder.Factory,
-    ) = ImageRegionDecoder.Factory { context, imageSource, imageOptions, exif ->
-      val decoderCount = calculatePoolCount(context)
+    ) = ImageRegionDecoder.Factory { params ->
+      val decoderCount = calculatePoolCount(params.context)
       val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
 
       val decoders = withContext(dispatcher) {
         List(decoderCount) {
-          delegate.create(
-            context = context,
-            imageSource = imageSource,
-            imageOptions = imageOptions,
-            exif = exif,
-          )
+          delegate.create(params)
         }
       }
       PooledImageRegionDecoder(
         imageSize = decoders.first().imageSize,
-        imageOrientation = exif.orientation,
+        imageOrientation = params.exif.orientation,
         decoders = ResourcePool(decoders),
         dispatcher = dispatcher,
       )

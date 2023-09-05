@@ -69,12 +69,12 @@ internal class AndroidImageRegionDecoder private constructor(
   }
 
   companion object {
-    val Factory = ImageRegionDecoder.Factory { context, imageSource, imageOptions, exif ->
+    val Factory = ImageRegionDecoder.Factory { params ->
       AndroidImageRegionDecoder(
-        imageSource = imageSource,
-        imageOptions = imageOptions,
-        decoder = imageSource.decoder(context),
-        exif = exif,
+        imageSource = params.imageSource,
+        imageOptions = params.imageOptions,
+        decoder = params.imageSource.decoder(params.context),
+        exif = params.exif,
       )
     }
   }

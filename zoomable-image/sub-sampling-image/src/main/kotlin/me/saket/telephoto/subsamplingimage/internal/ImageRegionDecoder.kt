@@ -21,13 +21,15 @@ internal interface ImageRegionDecoder {
   fun recycle()
 
   fun interface Factory {
-    suspend fun create(
-      context: Context,
-      imageSource: SubSamplingImageSource,
-      imageOptions: ImageBitmapOptions,
-      exif: ExifMetadata,
-    ): ImageRegionDecoder
+    suspend fun create(params: FactoryParams): ImageRegionDecoder
   }
+
+  class FactoryParams(
+    val context: Context,
+    val imageSource: SubSamplingImageSource,
+    val imageOptions: ImageBitmapOptions,
+    val exif: ExifMetadata,
+  )
 }
 
 // Used for overriding the decoder in screenshot tests.

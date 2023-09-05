@@ -220,7 +220,14 @@ private fun createRegionDecoder(
     LaunchedEffect(imageSource) {
       try {
         val exif = ExifMetadata.read(context, imageSource)
-        decoder.value = factory.create(context, imageSource, imageOptions, exif)
+        decoder.value = factory.create(
+          ImageRegionDecoder.FactoryParams(
+            context = context,
+            imageSource = imageSource,
+            imageOptions = imageOptions,
+            exif = exif,
+          )
+        )
       } catch (e: IOException) {
         errorReporter.onImageLoadingFailed(e, imageSource)
       }

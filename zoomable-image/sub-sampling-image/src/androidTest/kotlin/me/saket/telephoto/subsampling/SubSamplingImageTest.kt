@@ -267,8 +267,8 @@ class SubSamplingImageTest {
     val shouldIgnore: (BitmapRegionTile) -> Boolean = { region ->
       region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
     }
-    val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { context, imageSource, imageOptions, exif ->
-      val real = AndroidImageRegionDecoder.Factory.create(context, imageSource, imageOptions, exif)
+    val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
+      val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
           return if (shouldIgnore(region)) {
@@ -522,8 +522,8 @@ class SubSamplingImageTest {
     val previewBitmapMutex = Mutex(locked = true)
     lateinit var state: SubSamplingImageState
 
-    val gatedDecoderFactory = ImageRegionDecoder.Factory { context, imageSource, imageOptions, exif ->
-      val real = AndroidImageRegionDecoder.Factory.create(context, imageSource, imageOptions, exif)
+    val gatedDecoderFactory = ImageRegionDecoder.Factory { params ->
+      val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
           return previewBitmapMutex.withLock {
