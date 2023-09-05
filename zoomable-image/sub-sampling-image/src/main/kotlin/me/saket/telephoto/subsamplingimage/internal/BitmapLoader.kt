@@ -3,6 +3,7 @@ package me.saket.telephoto.subsamplingimage.internal
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -33,7 +34,7 @@ internal class BitmapLoader(
   }
 
   init {
-    scope.launch {
+    scope.launch(Dispatchers.IO) {
       loadRequests.consumeAsFlow()
         // Throttle requests in case the image is animating its zoom.
         .throttleLatest(100.milliseconds)

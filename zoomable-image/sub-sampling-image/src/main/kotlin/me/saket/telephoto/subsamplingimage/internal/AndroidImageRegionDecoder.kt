@@ -9,6 +9,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.tracing.trace
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
@@ -20,12 +24,13 @@ internal class AndroidImageRegionDecoder private constructor(
   private val imageOptions: ImageBitmapOptions,
   private val decoder: BitmapRegionDecoder,
   private val exif: ExifMetadata,
+  private val dispatcher: ExecutorCoroutineDispatcher,
 ) : ImageRegionDecoder {
 
   override val imageSize: IntSize = decoder.size()
   override val imageOrientation: ImageOrientation get() = exif.orientation
 
-  override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap = trace("decodeRegion") {
+  override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
     val options = BitmapFactory.Options().apply {
       inSampleSize = region.sampleSize.size
       inPreferredConfig = imageOptions.config.toAndroidConfig()
@@ -39,12 +44,15 @@ internal class AndroidImageRegionDecoder private constructor(
       degrees = -exif.orientation.degrees,
       unRotatedParent = IntRect(offset = IntOffset.Zero, size = decoder.size())
     )
-    val bitmap = decoder.decodeRegion(bounds.toAndroidRect(), options)
 
-    checkNotNull(bitmap) {
+    val bitmap = withContext(dispatcher) {
+      trace("decodeRegion") {
+        decoder.decodeRegion(bounds.toAndroidRect(), options)?.asImageBitmap()
+      }
+    }
+    return checkNotNull(bitmap) {
       "BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource."
     }
-    return@trace bitmap.asImageBitmap()
   }
 
   override fun recycle() {
@@ -53,6 +61,7 @@ internal class AndroidImageRegionDecoder private constructor(
     // low memory because the native state of decoders aren't cleared after each test,
     // causing Android to panic and kill all processes (including the test).
     decoder.recycle()
+    dispatcher.close()
   }
 
   private fun BitmapRegionDecoder.size(): IntSize {
@@ -69,12 +78,18 @@ internal class AndroidImageRegionDecoder private constructor(
   }
 
   companion object {
+    @OptIn(DelicateCoroutinesApi::class)
     val Factory = ImageRegionDecoder.Factory { params ->
+      val dispatcher = newSingleThreadContext("AndroidImageRegionDecoder")
+
       AndroidImageRegionDecoder(
         imageSource = params.imageSource,
         imageOptions = params.imageOptions,
-        decoder = params.imageSource.decoder(params.context),
+        decoder = withContext(dispatcher) {
+          params.imageSource.decoder(params.context)
+        },
         exif = params.exif,
+        dispatcher = dispatcher,
       )
     }
   }

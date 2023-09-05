@@ -1,17 +1,13 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import android.app.ActivityManager
-import android.content.Context
 import android.graphics.BitmapRegionDecoder
 import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.getSystemService
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder.FactoryParams
 
 /**
  * Maintains a pool of decoders to load multiple bitmap regions in parallel. Without this,
@@ -22,14 +18,11 @@ internal class PooledImageRegionDecoder private constructor(
   override val imageSize: IntSize,
   override val imageOrientation: ExifMetadata.ImageOrientation,
   private val decoders: ResourcePool<ImageRegionDecoder>,
-  private val dispatcher: CoroutineDispatcher,
 ) : ImageRegionDecoder {
 
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
     return decoders.borrow { decoder ->
-      withContext(dispatcher) {
-        decoder.decodeRegion(region)
-      }
+      decoder.decodeRegion(region)
     }
   }
 
@@ -37,42 +30,42 @@ internal class PooledImageRegionDecoder private constructor(
     decoders.resources.forEach { it.recycle() }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   companion object {
     @VisibleForTesting
     internal var overriddenPoolCount: Int? = null
 
-    fun Factory(
-      delegate: ImageRegionDecoder.Factory,
-    ) = ImageRegionDecoder.Factory { params ->
-      val decoderCount = calculatePoolCount(params.context)
-      val dispatcher = Dispatchers.Default.limitedParallelism(decoderCount)
-
-      val decoders = withContext(dispatcher) {
-        List(decoderCount) {
-          delegate.create(params)
+    fun Factory(delegate: ImageRegionDecoder.Factory) = ImageRegionDecoder.Factory { params ->
+      val decoders = buildList<ImageRegionDecoder> {
+        add(delegate.create(params))
+        repeat(calculatePoolCount(params, first().imageSize) - 1) {
+          add(delegate.create(params))
         }
       }
       PooledImageRegionDecoder(
         imageSize = decoders.first().imageSize,
         imageOrientation = params.exif.orientation,
         decoders = ResourcePool(decoders),
-        dispatcher = dispatcher,
       )
     }
 
-    private fun calculatePoolCount(context: Context): Int {
+    private fun calculatePoolCount(params: FactoryParams, imageSize: IntSize): Int {
       overriddenPoolCount?.let {
         return it
       }
-      val activityManager = context.getSystemService<ActivityManager>()!!
+      val activityManager = params.context.getSystemService<ActivityManager>()!!
       val memoryInfo = ActivityManager.MemoryInfo().apply(activityManager::getMemoryInfo)
       if (memoryInfo.lowMemory || activityManager.isLowRamDevice) {
         return 1
       }
       // BitmapRegionDecoders are expensive on android. Folks working on android's graphics
       // have suggested not using more than 2 instances to keep memory footprint low.
-      return Runtime.getRuntime().availableProcessors().coerceAtMost(2)
+      // For large images, err on the side of caution and use a single decoder to reduce
+      // memory usage, especially for progressive JPEGs.
+      return if (imageSize.minDimension < 2_160) {
+        Runtime.getRuntime().availableProcessors().coerceAtMost(2)
+      } else {
+        1
+      }
     }
   }
 }
