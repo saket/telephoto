@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
@@ -76,6 +75,7 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
@@ -260,7 +260,7 @@ class SubSamplingImageTest {
   @Test fun draw_base_tile_to_fill_gaps_in_foreground_tiles() {
     screenshotValidator.tolerancePercentOnCi = 0.12f
 
-    // This test blocks 2 decoders indefinitely so at least 3 decoders are needed
+    // This test blocks 2 decoders indefinitely so at least 3 decoders are needed.
     PooledImageRegionDecoder.overriddenPoolCount = 3
 
     // This fake factory will ignore decoding of selected tiles.
@@ -323,6 +323,66 @@ class SubSamplingImageTest {
     }
   }
 
+  @Test fun draw_tile_under_centroid_first() {
+    screenshotValidator.tolerancePercentOnCi = 0.15f
+
+    // This test only allows 1 decoder to work so at least 2 decoders are needed.
+    PooledImageRegionDecoder.overriddenPoolCount = 2
+
+    // This fake factory will ignore decoding of all but the first tiles.
+    val firstNonBaseTileReceived = AtomicBoolean(false)
+    val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
+      val real = AndroidImageRegionDecoder.Factory.create(params)
+      object : ImageRegionDecoder by real {
+        override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+          val isBaseTile = region.sampleSize.size == 8
+          return if (isBaseTile || !firstNonBaseTileReceived.getAndSet(true)) {
+            real.decodeRegion(region)
+          } else {
+            delay(Long.MAX_VALUE)
+            error("shouldn't reach here")
+          }
+        }
+      }
+    }
+
+    var imageTiles: List<CanvasRegionTile>? = null
+    rule.setContent {
+      CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
+        val zoomableState = rememberZoomableState()
+        val imageState = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+        ).also {
+          it.showTileBounds = true
+        }
+        LaunchedEffect(imageState.tiles) {
+          imageTiles = imageState.tiles
+        }
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .zoomable(zoomableState)
+            .testTag("image"),
+          state = imageState,
+          contentDescription = null,
+        )
+      }
+    }
+
+    rule.onNodeWithTag("image").performTouchInput {
+      doubleClick(position = centerLeft + Offset(100f, 0f))
+    }
+    rule.runOnIdle {
+      rule.waitUntil(5.seconds) {
+        imageTiles!!.count { !it.isBaseTile && it.bitmap != null } == 1
+      }
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+    }
+  }
+
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
     screenshotValidator.tolerancePercentOnCi = 0.014f
 
@@ -344,6 +404,7 @@ class SubSamplingImageTest {
             rotationZ = 0f,
             offset = Offset(x = -1041.2019f, y = -10.483643f),
             transformOrigin = TransformOrigin(0f, 0f),
+            centroid = Offset.Zero,
           ),
         )
         LaunchedEffect(imageState.isImageLoadedInFullQuality) {

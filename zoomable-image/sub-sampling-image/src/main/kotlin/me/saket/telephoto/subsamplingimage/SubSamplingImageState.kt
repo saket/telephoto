@@ -40,6 +40,7 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
+import me.saket.telephoto.subsamplingimage.internal.contains
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.maxScale
@@ -189,7 +190,11 @@ internal fun rememberSubSamplingImageState(
           } else null
 
           // Side effect, ew :(.
-          bitmapLoader.loadOrUnloadForTiles(listOf(tileGrid.base) + foregroundTiles.map { it.bitmapRegion })
+          bitmapLoader.loadOrUnloadForTiles(
+            tiles = listOf(tileGrid.base) + foregroundTiles
+              .sortedByDescending { it.bounds.contains(transformation.centroid) }
+              .map { it.bitmapRegion },
+          )
 
           return@combine (listOfNotNull(baseTile) + foregroundTiles)
         }

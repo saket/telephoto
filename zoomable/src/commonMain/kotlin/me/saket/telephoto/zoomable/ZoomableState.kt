@@ -109,6 +109,7 @@ class ZoomableState internal constructor(
           contentSize = it.contentSize,
           scale = scale,
           offset = -it.offset * it.zoom,
+          centroid = it.lastCentroid,
         )
       } else {
         ZoomableContentTransformation(
@@ -116,6 +117,7 @@ class ZoomableState internal constructor(
           contentSize = Size.Unspecified,
           scale = ScaleFactor.Zero, // Effectively hide content until an initial zoom value is calculated.
           offset = Offset.Zero,
+          centroid = null,
         )
       }
     }

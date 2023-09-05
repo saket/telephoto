@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.absoluteValue
@@ -23,6 +24,18 @@ internal fun Size.discardFractionalParts(): IntSize {
 
 internal val IntSize.minDimension: Int
   get() = min(width.absoluteValue, height.absoluteValue)
+
+internal fun Offset.discardFractionalParts(): IntOffset {
+  return IntOffset(x = x.toInt(), y = y.toInt())
+}
+
+internal fun IntRect.contains(offset: Offset?): Boolean {
+  if (offset == null) {
+    return false
+  } else {
+    return contains(offset.discardFractionalParts())
+  }
+}
 
 internal fun Float.toCeilInt(): Int {
   return ceil(this).toInt()
@@ -51,6 +64,7 @@ internal fun Rect.discardFractionalValues(): IntRect {
  *
  * Copied from [Rect.overlaps]
  */
+@Suppress("RedundantIf")
 internal fun Rect.overlaps(other: IntSize): Boolean {
   if (right <= 0 || other.width <= left)
     return false

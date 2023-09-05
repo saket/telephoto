@@ -64,6 +64,12 @@ data class ZoomableContentTransformation internal constructor(
    * Offset percentage along the x and y axis for which [scale] and [offset] must be applied.
    */
   val transformOrigin: TransformOrigin = TransformOrigin.Zero,
+
+  /**
+   * Central point around which the last pan/zoom gesture was made with respect to the
+   * layout bounds. Will be unspecified if the content hasn't been interacted with yet.
+   */
+  val centroid: Offset?,
 ) {
   /** Inverse of [isSpecified]. */
   val isUnspecified: Boolean get() = !isSpecified
