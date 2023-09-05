@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.plus
-import me.saket.telephoto.subsamplingimage.internal.BitmapLoader
+import me.saket.telephoto.subsamplingimage.internal.BitmapCache
 import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTileGrid
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
@@ -137,7 +137,7 @@ internal fun rememberSubSamplingImageState(
 
     val scope = rememberCoroutineScope()
     LaunchedEffect(state, transformations, decoder) {
-      val bitmapLoader = BitmapLoader(scope + Dispatchers.IO, decoder)
+      val bitmapCache = BitmapCache(scope + Dispatchers.IO, decoder)
       val canvasSizeChanges = snapshotFlow { state.canvasSize }
         .filterNotNull()
         .filter { it.minDimension > 0f }
@@ -151,7 +151,7 @@ internal fun rememberSubSamplingImageState(
 
         combine(
           transformations,
-          bitmapLoader.cachedBitmaps()
+          bitmapCache.cachedBitmaps()
         ) { transformation, bitmaps ->
           val sampleSize = BitmapSampleSize.calculateFor(transformation.scale.maxScale)
           val foregroundRegions = tileGrid.foreground[sampleSize].orEmpty()
@@ -176,7 +176,7 @@ internal fun rememberSubSamplingImageState(
           val canDrawBaseTile = foregroundTiles.isEmpty() || foregroundTiles.fastAny { it.bitmap == null }
 
           // The base tile needs to be always present even if it isn't going to
-          // be drawn. Otherwise BitmapLoader will remove its bitmap from cache.
+          // be drawn. Otherwise BitmapCache will remove its bitmap from cache.
           val baseTile = if (canDrawBaseTile) {
             tileGrid.base.let { tile ->
               val bitmap = bitmaps[tile]
@@ -191,7 +191,7 @@ internal fun rememberSubSamplingImageState(
           } else null
 
           // Side effect, ew :(.
-          bitmapLoader.loadOrUnloadForTiles(
+          bitmapCache.loadOrUnloadForTiles(
             tiles = listOf(tileGrid.base) + foregroundTiles
               .sortedByDescending { it.bounds.contains(transformation.centroid) }
               .map { it.bitmapRegion },

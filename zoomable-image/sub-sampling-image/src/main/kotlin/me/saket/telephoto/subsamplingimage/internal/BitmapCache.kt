@@ -15,12 +15,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import me.saket.telephoto.subsamplingimage.internal.BitmapLoader.LoadingState.InFlight
-import me.saket.telephoto.subsamplingimage.internal.BitmapLoader.LoadingState.Loaded
+import me.saket.telephoto.subsamplingimage.internal.BitmapCache.LoadingState.InFlight
+import me.saket.telephoto.subsamplingimage.internal.BitmapCache.LoadingState.Loaded
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class BitmapLoader(
+internal class BitmapCache(
   scope: CoroutineScope,
   private val decoder: ImageRegionDecoder,
 ) {

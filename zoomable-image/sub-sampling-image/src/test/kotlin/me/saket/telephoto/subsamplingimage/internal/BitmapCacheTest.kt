@@ -19,11 +19,11 @@ import org.junit.Test
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
-class BitmapLoaderTest {
+class BitmapCacheTest {
   private val decoder = FakeImageRegionDecoder()
 
-  private fun TestScope.bitmapLoader(): BitmapLoader {
-    return BitmapLoader(
+  private fun TestScope.bitmapCache(): BitmapCache {
+    return BitmapCache(
       scope = backgroundScope,
       decoder = decoder,
     )
@@ -31,15 +31,15 @@ class BitmapLoaderTest {
 
   @Test fun `when tiles are received, load bitmaps only for new tiles`() = runTest(timeout = 1.seconds) {
     turbineScope {
-      val loader = bitmapLoader()
+      val cache = bitmapCache()
       val requestedRegions = decoder.requestedRegions.testIn(this)
-      val cachedBitmaps = loader.cachedBitmaps().testIn(this)
+      val cachedBitmaps = cache.cachedBitmaps().testIn(this)
       assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
       val tile1 = fakeBitmapRegionTile()
       val tile2 = fakeBitmapRegionTile()
 
-      loader.loadOrUnloadForTiles(listOf(tile1, tile2))
+      cache.loadOrUnloadForTiles(listOf(tile1, tile2))
       decoder.decodedBitmaps.send(FakeImageBitmap())
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
@@ -49,7 +49,7 @@ class BitmapLoaderTest {
       assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
 
       val tile3 = fakeBitmapRegionTile()
-      loader.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
+      cache.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
       assertThat(requestedRegions.awaitItem()).isEqualTo(tile3)
@@ -61,12 +61,12 @@ class BitmapLoaderTest {
   }
 
   @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(timeout = 1.seconds) {
-    val loader = bitmapLoader()
+    val cache = bitmapCache()
 
-    loader.cachedBitmaps().drop(1).test {
+    cache.cachedBitmaps().drop(1).test {
       val tile1 = fakeBitmapRegionTile()
       val tile2 = fakeBitmapRegionTile()
-      loader.loadOrUnloadForTiles(listOf(tile1, tile2))
+      cache.loadOrUnloadForTiles(listOf(tile1, tile2))
       decoder.decodedBitmaps.send(FakeImageBitmap())
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
@@ -74,7 +74,7 @@ class BitmapLoaderTest {
       assertThat(awaitItem().keys).containsExactly(tile1, tile2)
 
       val tile3 = fakeBitmapRegionTile()
-      loader.loadOrUnloadForTiles(listOf(tile3))
+      cache.loadOrUnloadForTiles(listOf(tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
       skipItems(1)
@@ -87,21 +87,21 @@ class BitmapLoaderTest {
   @Test fun `when a tile is removed before its bitmap could be loaded, cancel its in-flight load`() =
     runTest(timeout = 1.seconds) {
       turbineScope {
-        val loader = bitmapLoader()
+        val cache = bitmapCache()
         val requestedRegions = decoder.requestedRegions.testIn(this)
-        val cachedBitmaps = loader.cachedBitmaps().drop(1).testIn(this)
+        val cachedBitmaps = cache.cachedBitmaps().drop(1).testIn(this)
 
         val visibleTile = fakeBitmapRegionTile()
-        loader.loadOrUnloadForTiles(listOf(visibleTile))
+        cache.loadOrUnloadForTiles(listOf(visibleTile))
         assertThat(requestedRegions.awaitItem()).isEqualTo(visibleTile)
         cachedBitmaps.expectNoEvents()
 
-        loader.loadOrUnloadForTiles(emptyList())
+        cache.loadOrUnloadForTiles(emptyList())
         requestedRegions.cancelAndExpectNoEvents()
         cachedBitmaps.cancelAndExpectNoEvents()
 
-        // Verify that BitmapLoader has cancelled all loading jobs.
-        // I don't think it's possible to uniquely identify BitmapLoader's loading jobs.
+        // Verify that BitmapCache has cancelled all loading jobs.
+        // I don't think it's possible to uniquely identify BitmapCache's loading jobs.
         // Checking that there aren't any active jobs should be sufficient for now.
         assertThat(coroutineContext.job.children.none { it.isActive }).isTrue()
       }
