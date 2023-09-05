@@ -97,8 +97,7 @@ private fun AlbumGrid(
         val captionBackground = remember { Animatable(colorScheme.surface) }
 
         AsyncImage(
-          modifier = Modifier
-            .fillMaxSize(),
+          modifier = Modifier.fillMaxSize(),
           model = ImageRequest.Builder(LocalContext.current)
             .data(item.placeholderImageUrl)
             .memoryCacheKey(item.placeholderImageUrl)
