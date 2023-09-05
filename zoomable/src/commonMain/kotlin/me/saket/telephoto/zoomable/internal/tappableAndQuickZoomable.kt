@@ -5,6 +5,7 @@ package me.saket.telephoto.zoomable.internal
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -31,6 +32,9 @@ import kotlinx.coroutines.isActive
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.QuickZoomStopped
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.Zooming
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 
 /**
  * Detects tap and quick zoom gestures.
@@ -101,6 +105,7 @@ internal fun Modifier.tappableAndQuickZoomable(
   }
 }
 
+@OptIn(ExperimentalTime::class)
 private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
   onPress: (Offset) -> Unit,
   onTap: ((Offset) -> Unit)?,
@@ -130,6 +135,7 @@ private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
 
     if (firstUp != null) {
       val secondDown = awaitSecondDown(firstUp = firstUp)
+      val secondDownTime = TimeSource.Monotonic.markNow()
       secondDown?.consume()
 
       if (secondDown == null) {
@@ -137,23 +143,34 @@ private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
         onTap?.invoke(firstUp.position)
 
       } else if (areWithinTouchTargetSize(firstUp, secondDown)) {
-        var dragged = false
-        verticalDrag(secondDown.id) { drag ->
-          dragged = true
-          val delta = drag.positionChange()
-          val zoomDelta = (1f + (delta.y * 0.004f)).coerceIn(0.1f, 2f) // Copied from https://github.com/usuiat/Zoomable
-          onQuickZoom(Zooming(secondDown.position, zoomDelta))
-          drag.consume()
+        val dragStart = awaitVerticalTouchSlopOrCancellation(secondDown.id) { change, over ->
+          onQuickZoom(Zooming(secondDown.position, over.calculateQuickZoomDelta()))
+          change.consume()
         }
-
-        if (dragged) {
+        if (dragStart != null) {
+          verticalDrag(secondDown.id) { drag ->
+            onQuickZoom(Zooming(secondDown.position, drag.calculateQuickZoomDelta()))
+            drag.consume()
+          }
           onQuickZoom(QuickZoomStopped)
-        } else {
+
+        } else if (secondDownTime.elapsedNow() < viewConfiguration.doubleTapTimeoutMillis.milliseconds) {
           onDoubleTap(secondDown.position)
         }
       }
     }
   }
+}
+
+private fun PointerInputChange.calculateQuickZoomDelta(): Float {
+  return positionChange().y.calculateQuickZoomDelta()
+}
+
+private fun Float.calculateQuickZoomDelta(): Float {
+  // This formula was copied from https://github.com/usuiat/Zoomable.
+  // The coerceIn() call is important to prevent large zooms from generating
+  // a < 0 zoom delta which will cause infinite/invalid zooms errors.
+  return (1f + this * 0.004f).coerceIn(0.1f, 2f)
 }
 
 private fun PointerInputScope.areWithinTouchTargetSize(
