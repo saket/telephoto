@@ -250,7 +250,7 @@ private fun createRegionDecoder(
 
 /** State for [SubSamplingImage]. */
 @Stable
-class SubSamplingImageState internal constructor(val imageSource: SubSamplingImageSource) {
+class SubSamplingImageState internal constructor(private val imageSource: SubSamplingImageSource) {
   var imageSize: IntSize? by mutableStateOf(null)
     internal set
 
