@@ -2,7 +2,6 @@ package me.saket.telephoto.sample.viewer
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,11 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.request.ImageRequest
-import kotlinx.coroutines.delay
-import me.saket.telephoto.flick.FlickToDismiss
-import me.saket.telephoto.flick.FlickToDismissState
-import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing
-import me.saket.telephoto.flick.rememberFlickToDismissState
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
@@ -42,7 +36,6 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 fun MediaViewerScreen(key: MediaViewerScreenKey) {
   Scaffold(
     contentWindowInsets = WindowInsets.none,
-    containerColor = Color.Transparent,
     contentColor = Color.White,
   ) { contentPadding ->
     val pagerState = rememberPagerState(
@@ -57,45 +50,18 @@ fun MediaViewerScreen(key: MediaViewerScreenKey) {
       beyondBoundsPageCount = 1,
       pageSpacing = 16.dp,
     ) { pageNum ->
-      val flickState = rememberFlickToDismissState()
-      CloseScreenOnFlickDismissEffect(flickState)
-
-      FlickToDismiss(
-        state = flickState,
-        modifier = Modifier.background(
-          MaterialTheme.colorScheme.background.copy(alpha = 1f - flickState.offsetFraction)
-        )
-      ) {
-        MediaPage(
-          modifier = Modifier.fillMaxSize(),
-          model = key.album.items[pageNum],
-          isActivePage = pagerState.settledPage == pageNum,
-        )
-      }
+      MediaPage(
+        modifier = Modifier.fillMaxSize(),
+        model = key.album.items[pageNum],
+        isActivePage = pagerState.settledPage == pageNum,
+      )
     }
 
     TopAppBar(
       title = {},
-      navigationIcon = {
-        // This can be uncommented once screen transitions are setup so
-        // that this screen can smoothly fade-out when it's flick-dismissed.
-        /*CloseNavIconButton()*/
-      },
+      navigationIcon = { CloseNavIconButton() },
       colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
     )
-  }
-}
-
-@Composable
-private fun CloseScreenOnFlickDismissEffect(flickState: FlickToDismissState) {
-  val backDispatcher = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
-  val gestureState = flickState.gestureState
-
-  if (gestureState is Dismissing) {
-    LaunchedEffect(Unit) {
-      delay(gestureState.animationDuration / 2)
-      backDispatcher.onBackPressed()
-    }
   }
 }
 
