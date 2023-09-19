@@ -9,35 +9,46 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.Test
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class BitmapCacheTest {
   private val decoder = FakeImageRegionDecoder()
 
-  private fun TestScope.bitmapCache(): BitmapCache {
-    return BitmapCache(
-      scope = backgroundScope,
-      decoder = decoder,
-    )
-  }
+  private fun TestScope.bitmapCache(
+    throttleEvery: Duration = 100.milliseconds,
+    throttleDispatcher: CoroutineContext = EmptyCoroutineContext,
+  ) = BitmapCache(
+    scope = backgroundScope,
+    decoder = decoder,
+    throttleEvery = throttleEvery,
+    throttleDispatcher = throttleDispatcher,
+  )
 
   @Test fun `when tiles are received, load bitmaps only for new tiles`() = runTest(timeout = 1.seconds) {
     turbineScope {
-      val cache = bitmapCache()
+      val cache = bitmapCache(2.seconds)
       val requestedRegions = decoder.requestedRegions.testIn(this)
       val cachedBitmaps = cache.cachedBitmaps().testIn(this)
       assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
-      val tile1 = fakeBitmapRegionTile()
-      val tile2 = fakeBitmapRegionTile()
+      val tile1 = fakeBitmapRegionTile(4)
+      val tile2 = fakeBitmapRegionTile(4)
 
       cache.loadOrUnloadForTiles(listOf(tile1, tile2))
       decoder.decodedBitmaps.send(FakeImageBitmap())
@@ -48,7 +59,7 @@ class BitmapCacheTest {
       cachedBitmaps.skipItems(1)
       assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
 
-      val tile3 = fakeBitmapRegionTile()
+      val tile3 = fakeBitmapRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
@@ -61,11 +72,11 @@ class BitmapCacheTest {
   }
 
   @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(timeout = 1.seconds) {
-    val cache = bitmapCache()
+    val cache = bitmapCache(2.seconds)
 
     cache.cachedBitmaps().drop(1).test {
-      val tile1 = fakeBitmapRegionTile()
-      val tile2 = fakeBitmapRegionTile()
+      val tile1 = fakeBitmapRegionTile(4)
+      val tile2 = fakeBitmapRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2))
       decoder.decodedBitmaps.send(FakeImageBitmap())
       decoder.decodedBitmaps.send(FakeImageBitmap())
@@ -73,7 +84,7 @@ class BitmapCacheTest {
       skipItems(1)
       assertThat(awaitItem().keys).containsExactly(tile1, tile2)
 
-      val tile3 = fakeBitmapRegionTile()
+      val tile3 = fakeBitmapRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
@@ -87,11 +98,11 @@ class BitmapCacheTest {
   @Test fun `when a tile is removed before its bitmap could be loaded, cancel its in-flight load`() =
     runTest(timeout = 1.seconds) {
       turbineScope {
-        val cache = bitmapCache()
+        val cache = bitmapCache(2.seconds)
         val requestedRegions = decoder.requestedRegions.testIn(this)
         val cachedBitmaps = cache.cachedBitmaps().drop(1).testIn(this)
 
-        val visibleTile = fakeBitmapRegionTile()
+        val visibleTile = fakeBitmapRegionTile(4)
         cache.loadOrUnloadForTiles(listOf(visibleTile))
         assertThat(requestedRegions.awaitItem()).isEqualTo(visibleTile)
         cachedBitmaps.expectNoEvents()
@@ -107,14 +118,65 @@ class BitmapCacheTest {
       }
     }
 
-  private fun fakeBitmapRegionTile(): BitmapRegionTile {
+  @Test fun `latest tiles should not be discarded by throttling`() = runTest {
+    val cache = bitmapCache(
+      throttleEvery = 2.seconds,
+      throttleDispatcher = Dispatchers.NonDelaySkipping,
+    )
+    decoder.requestedRegions.test {
+      val baseTile = fakeBitmapRegionTile(sampleSize = 4)
+      val tile2 = fakeBitmapRegionTile(sampleSize = 1)
+      val tile3 = fakeBitmapRegionTile(sampleSize = 1)
+      val tileToSkip = fakeBitmapRegionTile(sampleSize = 8)
+
+      cache.loadOrUnloadForTiles(listOf(baseTile))
+      backgroundScope.launch {
+        nonSkippedDelay(500.milliseconds)
+        decoder.decodedBitmaps.send(FakeImageBitmap())
+      }
+
+      nonSkippedDelay(500.milliseconds)
+      cache.loadOrUnloadForTiles(listOf(tileToSkip))
+
+      // These tiles should override the previous one because the throttle window hasn't passed yet.
+      nonSkippedDelay(500.milliseconds)
+      cache.loadOrUnloadForTiles(listOf(baseTile, tile2, tile3))
+
+      backgroundScope.launch {
+        nonSkippedDelay(500.milliseconds)
+        decoder.decodedBitmaps.send(FakeImageBitmap())
+        decoder.decodedBitmaps.send(FakeImageBitmap())
+      }
+
+      // If the same tiles are requested again within the throttle
+      // window, they shouldn't get ignored for some reason.
+      cache.loadOrUnloadForTiles(listOf(baseTile, tile2, tile3))
+
+      assertThat(awaitItem()).isEqualTo(baseTile)
+      assertThat(awaitItem()).isEqualTo(tile2)
+      assertThat(awaitItem()).isEqualTo(tile3)
+    }
+  }
+
+  private fun fakeBitmapRegionTile(
+    sampleSize: Int = Random.nextInt(from = 0, until = 10) * 2,
+  ): BitmapRegionTile {
     val random = Random(seed = System.nanoTime())
     return BitmapRegionTile(
-      sampleSize = BitmapSampleSize(random.nextInt(from = 0, until = 10) * 2),
+      sampleSize = BitmapSampleSize(sampleSize),
       bounds = IntRect(random.nextInt(), random.nextInt(), random.nextInt(), random.nextInt())
     )
   }
+
+  private suspend fun nonSkippedDelay(duration: Duration) {
+    withContext(Dispatchers.NonDelaySkipping) {
+      delay(duration)
+    }
+  }
 }
+
+// Used to prevent runTest() from skipping delays.
+private val Dispatchers.NonDelaySkipping get() = Default
 
 private class FakeImageRegionDecoder : ImageRegionDecoder {
   override val imageSize: IntSize get() = error("unused")
