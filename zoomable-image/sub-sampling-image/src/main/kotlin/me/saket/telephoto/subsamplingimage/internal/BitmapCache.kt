@@ -8,7 +8,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -43,7 +42,7 @@ internal class BitmapCache(
       activeTiles.consumeAsFlow()
         .distinctUntilChanged()
         .throttleLatest(throttleEvery)  // In case the image is animating its zoom.
-        .collectLatest { regions ->
+        .collect { regions ->
           val tilesToLoad = regions.fastFilter { it !in cachedBitmaps.value }
           tilesToLoad.fastForEach { region ->
             val job = launch {
