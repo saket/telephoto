@@ -15,11 +15,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.internal.BitmapCache.LoadingState.InFlight
 import me.saket.telephoto.subsamplingimage.internal.BitmapCache.LoadingState.Loaded
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -27,7 +24,6 @@ internal class BitmapCache(
   scope: CoroutineScope,
   private val decoder: ImageRegionDecoder,
   private val throttleEvery: Duration = 100.milliseconds,
-  private val throttleDispatcher: CoroutineContext = EmptyCoroutineContext,
 ) {
   private val activeTiles = Channel<List<BitmapRegionTile>>(capacity = 10)
   private val cachedBitmaps = MutableStateFlow(emptyMap<BitmapRegionTile, LoadingState>())
@@ -82,9 +78,7 @@ internal class BitmapCache(
   private fun <T> Flow<T>.throttleLatest(delay: Duration): Flow<T> {
     return conflate().transform {
       emit(it)
-      withContext(throttleDispatcher) {
-        delay(delay)
-      }
+      delay(delay)
     }
   }
 }
