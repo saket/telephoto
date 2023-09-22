@@ -10,10 +10,8 @@ import org.junit.Test
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-@OptIn(ExperimentalTime::class)
 class BitmapTileGridGeneratorTest {
 
   @Test fun `empty canvas size`() {
@@ -126,6 +124,23 @@ class BitmapTileGridGeneratorTest {
     // The output time is very much machine dependent, so I'm concerned that this test may be flaky.
     println("Generated grids in $time")
     assertThat(time).isLessThan(30.milliseconds)
+  }
+
+  // Regression test for https://github.com/saket/telephoto/issues/49.
+  @Test fun `image size smaller than half of canvas in width`() {
+    val generateResult = runCatching {
+      BitmapRegionTileGrid.generate(
+        canvasSize = IntSize(
+          width = 2204,
+          height = 1080
+        ),
+        unscaledImageSize = IntSize(
+          width = 1080,
+          height = 4000
+        )
+      )
+    }
+    assertThat(generateResult.exceptionOrNull()).isNull()
   }
 }
 

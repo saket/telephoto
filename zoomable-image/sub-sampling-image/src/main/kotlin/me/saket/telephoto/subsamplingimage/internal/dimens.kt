@@ -18,6 +18,13 @@ internal fun IntSize.coerceIn(min: IntSize, max: IntSize): IntSize {
   )
 }
 
+internal fun IntSize.coerceAtLeast(min: IntSize): IntSize {
+  return IntSize(
+    width = width.coerceAtLeast(min.width),
+    height = height.coerceAtLeast(min.height),
+  )
+}
+
 internal fun Size.discardFractionalParts(): IntSize {
   return IntSize(width = width.toInt(), height = height.toInt())
 }

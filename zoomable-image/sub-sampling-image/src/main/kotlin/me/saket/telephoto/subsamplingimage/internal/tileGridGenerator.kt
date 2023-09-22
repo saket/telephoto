@@ -29,7 +29,7 @@ internal fun BitmapRegionTileGrid.Companion.generate(
   val foregroundTiles = possibleSampleSizes.associateWith { sampleSize ->
     val tileSize: IntSize = (unscaledImageSize.toSize() * (sampleSize.size / baseSampleSize.size.toFloat()))
       .discardFractionalParts()
-      .coerceIn(min = minTileSize, max = unscaledImageSize)
+      .coerceIn(min = minTileSize, max = unscaledImageSize.coerceAtLeast(minTileSize))
 
     // Number of tiles can be fractional. To avoid this, the fractional
     // part is discarded and the last tiles on each axis are stretched
