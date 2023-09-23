@@ -1,17 +1,17 @@
 # Release checklist
 
-- [ ] Check that sample compiles.
-- [ ] Run tests. Ensure that tests passed on CI.
+- [ ] Check that the sample compiles.
+- [ ] Check that tests have passed on CI.
 - [ ] Change version name from SNAPSHOT to an actual name.
 - [ ] Update project website with:
     - [ ] new version’s maven address
     - [ ] new APIs
-- [ ] Commit `Prepare to release vX.X.X`. DO NOT PUSH YET.
+- [ ] Commit `Prepare to release vX.X.X`. Do not push yet.
 - [ ] Upload archives to maven.
   `g clean publish --no-parallel --no-daemon`
 - [ ] Wait for artifacts to be available.
   `dependency-watch await me.saket.telephoto:zoomable:{version}`
-- [ ] Ensure that the release is available on maven by using it `:sample`
+- [ ] Ensure that the release is available on maven by using it in `:sample`
 - [ ] Check that library sources are available.
 - [ ] Run the sample app and ensure everything works. 
 - [ ] Run manual test cases that are difficult to automate:
