@@ -55,7 +55,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 // TODO: This fork of transformable() can be deleted when these are resolved:
-//  - https://issuetracker.google.com/issues/266976858
+//  - https://issuetracker.google.com/issues/278713689
 //  - https://issuetracker.google.com/issues/266829800
 //  - https://issuetracker.google.com/issues/266829790
 /**
@@ -131,7 +131,7 @@ fun Modifier.transformable(
               wasGestureCancelled = true
               if (!isActive) throw exception
             } finally {
-              val velocity = if (wasGestureCancelled) Velocity.Zero else velocityTracker.calculateVelocity()
+              val velocity = if (wasGestureCancelled) Velocity.Zero else velocityTracker.calculateFiniteVelocity()
               channel.trySend(TransformStopped(velocity))
             }
           }
@@ -227,4 +227,12 @@ private suspend fun AwaitPointerEventScope.detectZoom(
     // someone consumed while we were waiting for touch slop
     val finallyCanceled = finalEvent.changes.fastAny { it.isConsumed } && !pastTouchSlop
   } while (!canceled && !finallyCanceled && event.changes.fastAny { it.pressed })
+}
+
+// Workaround for https://github.com/saket/telephoto/issues/53.
+// I'm not sure why VelocityTracker#calculateVelocity() would
+// ever return an infinite value, but I'm at a loss for ideas.
+private fun VelocityTracker.calculateFiniteVelocity(): Velocity {
+  val calculated = calculateVelocity().takeIf { it.x.isFinite() && it.y.isFinite() }
+  return calculated ?: Velocity.Zero
 }
