@@ -89,7 +89,7 @@ fun Modifier.transformable(
   factory = {
     val updatePanZoomLock = rememberUpdatedState(lockRotationOnZoomPan)
     val updatedCanPan = rememberUpdatedState(canPan)
-    val updatedOnGestureEnd = rememberUpdatedState(onTransformStopped)
+    val updatedOnTransformStopped = rememberUpdatedState(onTransformStopped)
     val channel = remember { Channel<TransformEvent>(capacity = Channel.UNLIMITED) }
     if (enabled) {
       LaunchedEffect(state) {
@@ -106,7 +106,7 @@ fun Modifier.transformable(
               }
             }
             (event as? TransformStopped)?.let { event ->
-              updatedOnGestureEnd.value(event.velocity)
+              updatedOnTransformStopped.value(event.velocity)
             }
           } catch (_: CancellationException) {
             // ignore the cancellation and start over again.
