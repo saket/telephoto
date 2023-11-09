@@ -1,5 +1,3 @@
-@file:Suppress("NAME_SHADOWING")
-
 package me.saket.telephoto.zoomable
 
 import androidx.compose.foundation.clickable
