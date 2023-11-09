@@ -7,7 +7,10 @@ plugins {
 }
 
 android {
-  defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  defaultConfig {
+    targetSdk = libs.versions.compileSdk.get().toInt()  // Workaround for https://issuetracker.google.com/issues/283219177.
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
   testOptions.animationsDisabled = true
 }
 

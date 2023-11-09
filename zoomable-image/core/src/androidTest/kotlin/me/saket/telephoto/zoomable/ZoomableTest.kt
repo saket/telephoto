@@ -12,7 +12,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
 import me.saket.telephoto.util.prepareForScreenshotTest
-import me.saket.telephoto.util.screenshotForMinSdk23
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -51,7 +50,7 @@ class ZoomableTest {
       )
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 }

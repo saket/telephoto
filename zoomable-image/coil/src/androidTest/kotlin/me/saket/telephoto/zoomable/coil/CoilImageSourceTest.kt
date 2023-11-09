@@ -46,7 +46,6 @@ import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
 import me.saket.telephoto.util.prepareForScreenshotTest
-import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
@@ -222,12 +221,12 @@ class CoilImageSourceTest {
 
     rule.waitUntil(5.seconds) { state!!.isPlaceholderDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_placeholder")
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_placeholder")
     }
 
     rule.waitUntil(5.seconds) { state!!.isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_full_quality")
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_full_quality")
     }
   }
 
@@ -249,7 +248,7 @@ class CoilImageSourceTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_first_image")
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_first_image")
     }
 
     imageUrl = serverRule.server.url("full_image.png")
@@ -257,7 +256,7 @@ class CoilImageSourceTest {
     rule.waitUntil(5.seconds) { !isImageDisplayed }
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_second_image")
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_second_image")
     }
   }
 
@@ -279,7 +278,7 @@ class CoilImageSourceTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -321,7 +320,7 @@ class CoilImageSourceTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -345,7 +344,7 @@ class CoilImageSourceTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 

@@ -58,7 +58,6 @@ import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.prepareForScreenshotTest
-import me.saket.telephoto.util.screenshotForMinSdk23
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
@@ -130,7 +129,7 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -163,7 +162,7 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -203,7 +202,7 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
 
     rule.onNodeWithTag("image").performTouchInput {
@@ -214,7 +213,7 @@ class SubSamplingImageTest {
       rule.waitUntil(5.seconds) { tiles.all { it.bitmap != null } }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), name = testName.methodName + "_zoomed")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed")
     }
   }
 
@@ -249,7 +248,7 @@ class SubSamplingImageTest {
     rule.waitUntil { !isImageDisplayed }
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -286,7 +285,7 @@ class SubSamplingImageTest {
     rule.setContent {
       BoxWithConstraints {
         check(constraints.maxWidth == 1080 && constraints.maxHeight == 2400) {
-          "This test was written for a 1080x2400 display."
+          "This test was written for a 1080x2400 display. Current size = $constraints"
         }
         CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
           val zoomableState = rememberZoomableState(
@@ -319,7 +318,7 @@ class SubSamplingImageTest {
       imageTiles!!.count { !it.isBaseTile && it.bitmap != null } == 2
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -379,7 +378,7 @@ class SubSamplingImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -424,7 +423,7 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
 
       assertThat(imageTiles!!.map { it.bounds }).containsExactly(
         IntRect(-224, -10, 592, 703),
@@ -468,7 +467,7 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -514,7 +513,7 @@ class SubSamplingImageTest {
     }
     rule.waitUntil(5.seconds) { isImageDisplayedInFullQuality }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
@@ -557,7 +556,7 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23())
+      dropshots.assertSnapshot(rule.activity)
     }
 
     rule.onNodeWithTag("image").performTouchInput {
@@ -565,7 +564,7 @@ class SubSamplingImageTest {
     }
     rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed")
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
 
     with(rule.onNodeWithTag("image")) {
@@ -575,7 +574,7 @@ class SubSamplingImageTest {
     }
     rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), testName.methodName + "_zoomed_panned")
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
   }
 
@@ -619,13 +618,13 @@ class SubSamplingImageTest {
 
     rule.waitUntil(5.seconds) { state.isImageLoaded }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), name = testName.methodName + "_preview")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_preview")
     }
 
     previewBitmapMutex.unlock()
     rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity.screenshotForMinSdk23(), name = testName.methodName + "_full_quality")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_full_quality")
     }
   }
 
