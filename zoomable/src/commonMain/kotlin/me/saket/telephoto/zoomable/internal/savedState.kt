@@ -2,7 +2,7 @@ package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import me.saket.telephoto.zoomable.RawTransformation
+import me.saket.telephoto.zoomable.GestureState
 import me.saket.telephoto.zoomable.UserZoomFactor
 
 @AndroidParcelize
@@ -12,8 +12,14 @@ internal data class ZoomableSavedState(
   private val userZoom: Float?
 ) : AndroidParcelable {
 
-  fun gestureTransformation(): RawTransformation? {
-    return RawTransformation(
+  constructor(transformation: GestureState?) : this(
+    offsetX = transformation?.offset?.x,
+    offsetY = transformation?.offset?.y,
+    userZoom = transformation?.userZoomFactor?.value
+  )
+
+  fun asGestureState(): GestureState? {
+    return GestureState(
       offset = Offset(
         x = offsetX ?: return null,
         y = offsetY ?: return null
@@ -29,10 +35,3 @@ internal data class ZoomableSavedState(
     )
   }
 }
-
-internal fun ZoomableSavedState(transformation: RawTransformation?) =
-  ZoomableSavedState(
-    offsetX = transformation?.offset?.x,
-    offsetY = transformation?.offset?.y,
-    userZoom = transformation?.userZoomFactor?.value
-  )
