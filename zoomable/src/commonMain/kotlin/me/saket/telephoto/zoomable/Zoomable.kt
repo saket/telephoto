@@ -51,46 +51,44 @@ fun Modifier.zoomable(
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
 
-    Modifier
-      .transformable(
-        state = state.transformableState,
-        canPan = state::canConsumePanChange,
-        enabled = enabled,
-        onTransformStopped = { velocity ->
-          scope.launch {
-            if (state.isZoomOutsideRange()) {
-              hapticFeedbackPerformer.performHapticFeedback()
-              state.smoothlySettleZoomOnGestureEnd()
-            } else {
-              state.fling(velocity = velocity, density = density)
-            }
+    transformable(
+      state = state.transformableState,
+      canPan = state::canConsumePanChange,
+      enabled = enabled,
+      onTransformStopped = { velocity ->
+        scope.launch {
+          if (state.isZoomOutsideRange()) {
+            hapticFeedbackPerformer.performHapticFeedback()
+            state.smoothlySettleZoomOnGestureEnd()
+          } else {
+            state.fling(velocity = velocity, density = density)
           }
         }
-      )
-      .tappableAndQuickZoomable(
-        gesturesEnabled = enabled,
-        transformable = state.transformableState,
-        onPress = {
+      }
+    ).tappableAndQuickZoomable(
+      gesturesEnabled = enabled,
+      transformable = state.transformableState,
+      onPress = {
+        scope.launch {
+          state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
+        }
+      },
+      onTap = onClick,
+      onLongPress = onLongClick,
+      onDoubleTap = { centroid ->
+        scope.launch {
+          state.handleDoubleTapZoomTo(centroid = centroid)
+        }
+      },
+      onQuickZoomStopped = {
+        if (state.isZoomOutsideRange()) {
           scope.launch {
-            state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
+            hapticFeedbackPerformer.performHapticFeedback()
+            state.smoothlySettleZoomOnGestureEnd()
           }
-        },
-        onTap = onClick,
-        onLongPress = onLongClick,
-        onDoubleTap = { centroid ->
-          scope.launch {
-            state.handleDoubleTapZoomTo(centroid = centroid)
-          }
-        },
-        onQuickZoomStopped = {
-          if (state.isZoomOutsideRange()) {
-            scope.launch {
-              hapticFeedbackPerformer.performHapticFeedback()
-              state.smoothlySettleZoomOnGestureEnd()
-            }
-          }
-        },
-      )
+        }
+      },
+    )
   } else {
     Modifier
   }
