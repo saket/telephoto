@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,6 +38,7 @@ import me.saket.telephoto.zoomable.internal.transformable
  * @param clipToBounds defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  * */
+@OptIn(ExperimentalFoundationApi::class)
 fun Modifier.zoomable(
   state: ZoomableState,
   enabled: Boolean = true,

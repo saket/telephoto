@@ -18,6 +18,7 @@ package me.saket.telephoto.zoomable.internal
  * limitations under the License.
  */
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -26,28 +27,29 @@ import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputScope
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
-import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.TransformEvent.TransformDelta
 import me.saket.telephoto.zoomable.internal.TransformEvent.TransformStarted
 import me.saket.telephoto.zoomable.internal.TransformEvent.TransformStopped
@@ -73,26 +75,61 @@ import kotlin.math.abs
  * @param state [TransformableState] of the transformable. Defines how transformation events will be
  * interpreted by the user land logic, contains useful information about on-going events and
  * provides animation capabilities.
- * @param canPan whether the pan gesture can be performed or not
+ * @param canPan whether the pan gesture can be performed or not given the pan offset
  * @param lockRotationOnZoomPan If `true`, rotation is allowed only if touch slop is detected for
  * rotation before pan or zoom motions. If not, pan and zoom gestures will be detected, but rotation
  * gestures will not be. If `false`, once touch slop is reached, all three gestures are detected.
  * @param enabled whether zooming by gestures is enabled or not
  */
+@ExperimentalFoundationApi
 fun Modifier.transformable(
   state: TransformableState,
   canPan: (Offset) -> Boolean,
   lockRotationOnZoomPan: Boolean = false,
-  onTransformStopped: (velocity: Velocity) -> Unit = {},
   enabled: Boolean = true,
-) = composed(
-  factory = {
-    val updatePanZoomLock = rememberUpdatedState(lockRotationOnZoomPan)
-    val updatedCanPan = rememberUpdatedState(canPan)
-    val updatedOnTransformStopped = rememberUpdatedState(onTransformStopped)
-    val channel = remember { Channel<TransformEvent>(capacity = Channel.UNLIMITED) }
-    if (enabled) {
-      LaunchedEffect(state) {
+  onTransformStopped: (velocity: Velocity) -> Unit = {},
+) = this then TransformableElement(state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped)
+
+private data class TransformableElement(
+  private val state: TransformableState,
+  private val canPan: (Offset) -> Boolean,
+  private val lockRotationOnZoomPan: Boolean,
+  private val enabled: Boolean,
+  private val onTransformStopped: (velocity: Velocity) -> Unit = {},
+): ModifierNodeElement<TransformableNode>() {
+  override fun create(): TransformableNode = TransformableNode(
+    state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped)
+
+  override fun update(node: TransformableNode) {
+    node.update(state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped)
+  }
+
+  override fun InspectorInfo.inspectableProperties() {
+    name = "transformable"
+    properties["state"] = state
+    properties["canPan"] = canPan
+    properties["enabled"] = enabled
+    properties["lockRotationOnZoomPan"] = lockRotationOnZoomPan
+    properties["onTransformStopped"] = onTransformStopped
+  }
+}
+
+private class TransformableNode(
+  private var state: TransformableState,
+  private var canPan: (Offset) -> Boolean,
+  private var lockRotationOnZoomPan: Boolean,
+  private var enabled: Boolean,
+  private var onTransformStopped: (velocity: Velocity) -> Unit = {},
+): DelegatingNode() {
+
+  private val updatedCanPan: (Offset) -> Boolean = { canPan.invoke(it) }
+  private val updatedOnTransformStopped: (Velocity) -> Unit = { onTransformStopped.invoke(it) }
+  private val channel = Channel<TransformEvent>(capacity = Channel.UNLIMITED)
+
+  private val pointerInputNode = delegate(SuspendingPointerInputModifierNode {
+    if (!enabled) return@SuspendingPointerInputModifierNode
+    coroutineScope {
+      launch(start = CoroutineStart.UNDISPATCHED) {
         while (isActive) {
           var event = channel.receive()
           if (event !is TransformStarted) continue
@@ -106,64 +143,56 @@ fun Modifier.transformable(
               }
             }
             (event as? TransformStopped)?.let { event ->
-              updatedOnTransformStopped.value(event.velocity)
+              updatedOnTransformStopped(event.velocity)
             }
           } catch (_: CancellationException) {
             // ignore the cancellation and start over again.
           }
         }
       }
-    }
-    val block: suspend PointerInputScope.() -> Unit = remember {
-      {
-        coroutineScope {
-          awaitEachGesture {
-            val velocityTracker = VelocityTracker()
-            var wasGestureCancelled = false
-            try {
-              detectZoom(
-                panZoomLock = updatePanZoomLock,
-                channel = channel,
-                canPan = updatedCanPan,
-                velocityTracker = velocityTracker,
-              )
-            } catch (exception: CancellationException) {
-              wasGestureCancelled = true
-              if (!isActive) throw exception
-            } finally {
-              val velocity = if (wasGestureCancelled) Velocity.Zero else velocityTracker.calculateFiniteVelocity()
-              channel.trySend(TransformStopped(velocity))
-            }
-          }
+      awaitEachGesture {
+        val velocityTracker = VelocityTracker()
+        var wasCancelled = false
+        try {
+          detectZoom(lockRotationOnZoomPan, channel, updatedCanPan, velocityTracker)
+        } catch (exception: CancellationException) {
+          wasCancelled = true
+          if (!isActive) throw exception
+        } finally {
+          // todo: get this from LocalViewConfiguration.
+          val maximumVelocity = Velocity(Int.MAX_VALUE.toFloat(), Int.MAX_VALUE.toFloat())
+          val velocity = if (wasCancelled) Velocity.Zero else velocityTracker.calculateVelocity(maximumVelocity)
+          channel.trySend(TransformStopped(velocity))
         }
       }
     }
-    if (enabled) Modifier.pointerInput(Unit, block) else Modifier
-  },
-  inspectorInfo = debugInspectorInfo {
-    name = "transformable"
-    properties["state"] = state
-    properties["canPan"] = canPan
-    properties["enabled"] = enabled
-    properties["lockRotationOnZoomPan"] = lockRotationOnZoomPan
-  }
-)
+  })
 
-private sealed class TransformEvent {
-  object TransformStarted : TransformEvent()
-  data class TransformStopped(val velocity: Velocity) : TransformEvent()
-  class TransformDelta(
-    val zoomChange: Float,
-    val panChange: Offset,
-    val rotationChange: Float,
-    val centroid: Offset,
-  ) : TransformEvent()
+  fun update(
+    state: TransformableState,
+    canPan: (Offset) -> Boolean,
+    lockRotationOnZoomPan: Boolean,
+    enabled: Boolean,
+    onTransformStopped: (velocity: Velocity) -> Unit,
+  ) {
+    this.canPan = canPan
+    this.onTransformStopped = onTransformStopped
+    val needsReset = this.state != state ||
+      this.enabled != enabled ||
+      this.lockRotationOnZoomPan != lockRotationOnZoomPan
+    if (needsReset) {
+      this.state = state
+      this.enabled = enabled
+      this.lockRotationOnZoomPan = lockRotationOnZoomPan
+      pointerInputNode.resetPointerInputHandler()
+    }
+  }
 }
 
 private suspend fun AwaitPointerEventScope.detectZoom(
-  panZoomLock: State<Boolean>,
+  panZoomLock: Boolean,
   channel: Channel<TransformEvent>,
-  canPan: State<(Offset) -> Boolean>,
+  canPan: (Offset) -> Boolean,
   velocityTracker: VelocityTracker,
 ) {
   var rotation = 0f
@@ -197,10 +226,10 @@ private suspend fun AwaitPointerEventScope.detectZoom(
 
         if (zoomMotion > touchSlop ||
           rotationMotion > touchSlop ||
-          (panMotion > touchSlop && canPan.value(panChange))
+          (panMotion > touchSlop && canPan.invoke(panChange))
         ) {
           pastTouchSlop = true
-          lockedToPanZoom = panZoomLock.value && rotationMotion < touchSlop
+          lockedToPanZoom = panZoomLock && rotationMotion < touchSlop
           channel.trySend(TransformStarted)
         }
       }
@@ -210,7 +239,7 @@ private suspend fun AwaitPointerEventScope.detectZoom(
         val effectiveRotation = if (lockedToPanZoom) 0f else rotationChange
         if (effectiveRotation != 0f ||
           zoomChange != 1f ||
-          (panChange != Offset.Zero && canPan.value.invoke(panChange))
+          (panChange != Offset.Zero && canPan.invoke(panChange))
         ) {
           channel.trySend(TransformDelta(zoomChange, panChange, effectiveRotation, centroid))
         }
@@ -229,10 +258,23 @@ private suspend fun AwaitPointerEventScope.detectZoom(
   } while (!canceled && !finallyCanceled && event.changes.fastAny { it.pressed })
 }
 
+private sealed class TransformEvent {
+  object TransformStarted : TransformEvent()
+  class TransformStopped(val velocity: Velocity) : TransformEvent()
+  class TransformDelta(
+    val zoomChange: Float,
+    val panChange: Offset,
+    val rotationChange: Float,
+    val centroid: Offset,
+  ) : TransformEvent()
+}
+
 // Workaround for https://github.com/saket/telephoto/issues/53.
-// I'm not sure why VelocityTracker#calculateVelocity() would
-// ever return an infinite value, but I'm at a loss for ideas.
-private fun VelocityTracker.calculateFiniteVelocity(): Velocity {
-  val calculated = calculateVelocity().takeIf { it.x.isFinite() && it.y.isFinite() }
-  return calculated ?: Velocity.Zero
+// Also see https://issuetracker.google.com/issues/309841148.
+private fun VelocityTracker.calculateVelocity(maximumVelocity: Velocity): Velocity {
+  val calculated = calculateVelocity()
+  return Velocity(
+    calculated.x.coerceIn(-maximumVelocity.x, maximumVelocity.x),
+    calculated.y.coerceIn(-maximumVelocity.y, maximumVelocity.y),
+  )
 }
