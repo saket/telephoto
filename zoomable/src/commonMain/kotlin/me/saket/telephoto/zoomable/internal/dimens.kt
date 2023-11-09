@@ -33,7 +33,7 @@ internal val ScaleFactor.Companion.Zero
   get() = ScaleFactor(0f, 0f)
 
 internal fun ScaleFactor.isPositiveAndFinite(): Boolean {
-  return scaleX >= 0f && scaleY >= 0f && scaleX.isFinite() && scaleY.isFinite()
+  return scaleX.isFinite() && scaleY.isFinite() && scaleX >= 0f && scaleY >= 0f
 }
 
 internal val TransformOrigin.Companion.Zero

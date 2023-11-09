@@ -20,7 +20,7 @@ internal data class ZoomableSavedState(
         y = offsetY ?: return null
       ),
       zoom = ContentZoom(
-        baseZoom = ScaleFactor(0f, 0f), // Will get recalculated after restoration.
+        baseZoom = ScaleFactor.Zero, // Will get recalculated after restoration.
         userZoom = userZoom ?: return null
       ),
       lastCentroid = Offset.Zero,

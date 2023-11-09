@@ -1,3 +1,5 @@
+@file:Suppress("ConstPropertyName")
+
 package me.saket.telephoto.zoomable
 
 import androidx.annotation.FloatRange
@@ -102,12 +104,11 @@ class ZoomableState internal constructor(
    */
   val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     rawTransformation.let {
-      val scale = it?.zoom?.finalZoom()
-      if (scale != null && scale != ScaleFactor.Zero) {
+      if (it != null && it.isSpecified) {
         ZoomableContentTransformation(
           isSpecified = true,
           contentSize = it.contentSize,
-          scale = scale,
+          scale = it.zoom.finalZoom(),
           offset = -it.offset * it.zoom,
           centroid = it.lastCentroid,
         )
@@ -285,12 +286,16 @@ class ZoomableState internal constructor(
 
   internal fun canConsumePanChange(panDelta: Offset): Boolean {
     val current = rawTransformation
+      ?.takeIf { it.isSpecified }
       ?: return false // Content is probably not ready yet. Ignore this gesture.
 
     val panDeltaWithZoom = panDelta / current.zoom
     val newOffset = (current.offset - panDeltaWithZoom)
-    val newOffsetWithinBounds = newOffset.coerceWithinBounds(proposedZoom = current.zoom)
+    check(newOffset.isFinite) {
+      "Offset can't be infinite ${collectDebugInfoForIssue41("panDelta" to panDelta)}"
+    }
 
+    val newOffsetWithinBounds = newOffset.coerceWithinBounds(proposedZoom = current.zoom)
     val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
     val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
 
@@ -558,7 +563,9 @@ internal data class RawTransformation(
   val zoom: ContentZoom,
   val lastCentroid: Offset,
   val contentSize: Size,
-)
+) {
+  val isSpecified: Boolean get() = zoom.finalZoom().isPositiveAndFinite()
+}
 
 internal data class ContentZoom(
   /**
