@@ -32,7 +32,7 @@ data class ZoomableContentTransformation internal constructor(
   /**
    * The size of the zoomable content that is currently known to [Modifier.zoomable].
    * This is calculated using [ZoomableContentLocation.size] and may be one frame
-   * behind the UI.
+   * behind the UI. Useful for synchronizing other elements with the zoomable content.
    */
   val contentSize: Size = Size.Unspecified,
 

@@ -7,7 +7,9 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.unit.IntSize
-import me.saket.telephoto.zoomable.ContentZoom
+import me.saket.telephoto.zoomable.BaseZoomFactor
+import me.saket.telephoto.zoomable.ContentZoomFactor
+import me.saket.telephoto.zoomable.UserZoomFactor
 import kotlin.math.roundToInt
 
 internal fun Size.roundToIntSize() =
@@ -33,7 +35,11 @@ internal val ScaleFactor.Companion.Zero
   get() = ScaleFactor(0f, 0f)
 
 internal fun ScaleFactor.isPositiveAndFinite(): Boolean {
-  return scaleX.isFinite() && scaleY.isFinite() && scaleX >= 0f && scaleY >= 0f
+  return scaleX.isPositiveAndFinite() && scaleY.isPositiveAndFinite()
+}
+
+internal fun Float.isPositiveAndFinite(): Boolean {
+  return this.isFinite() && this >= 0f
 }
 
 internal val TransformOrigin.Companion.Zero
@@ -45,14 +51,32 @@ internal operator fun Offset.times(factor: ScaleFactor) =
 internal operator fun Offset.div(factor: ScaleFactor) =
   Offset(x = x / factor.scaleX, y = y / factor.scaleY)
 
-internal operator fun Offset.div(zoom: ContentZoom): Offset =
+internal operator fun Offset.div(zoom: ContentZoomFactor): Offset =
   div(zoom.finalZoom())
 
-internal operator fun Offset.times(zoom: ContentZoom): Offset =
+internal operator fun Offset.times(zoom: ContentZoomFactor): Offset =
   times(zoom.finalZoom())
 
-internal operator fun Size.times(zoom: ContentZoom): Size =
+internal operator fun Size.times(zoom: ContentZoomFactor): Size =
   times(zoom.finalZoom())
+
+internal operator fun UserZoomFactor.times(operand: Float): UserZoomFactor =
+  UserZoomFactor(value.times(operand))
+
+internal operator fun BaseZoomFactor.times(factor: UserZoomFactor): ScaleFactor =
+  value.times(factor.value)
+
+internal operator fun UserZoomFactor.minus(other: UserZoomFactor): UserZoomFactor {
+  return UserZoomFactor(value = value - other.value)
+}
+
+internal operator fun UserZoomFactor.div(other: UserZoomFactor): UserZoomFactor {
+  return UserZoomFactor(value = value / other.value)
+}
+
+internal fun UserZoomFactor.coerceIn(minimumValue: UserZoomFactor, maximumValue: UserZoomFactor): UserZoomFactor {
+  return UserZoomFactor(value = value.coerceIn(minimumValue.value, maximumValue.value))
+}
 
 /**
  * Call [action] with [zoom] and [translate] applied to this offset. The value
