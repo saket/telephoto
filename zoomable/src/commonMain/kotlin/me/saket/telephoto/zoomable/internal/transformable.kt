@@ -82,7 +82,7 @@ import kotlin.math.abs
  * @param enabled whether zooming by gestures is enabled or not
  */
 @ExperimentalFoundationApi
-fun Modifier.transformable(
+internal fun Modifier.transformable(
   state: TransformableState,
   canPan: (Offset) -> Boolean,
   lockRotationOnZoomPan: Boolean = false,

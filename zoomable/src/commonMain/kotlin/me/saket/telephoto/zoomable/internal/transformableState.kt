@@ -28,7 +28,7 @@ import kotlinx.coroutines.coroutineScope
  * using [transform] suspend function.
  */
 @JvmDefaultWithCompatibility
-interface TransformableState {
+internal interface TransformableState {
   /**
    * Call this function to take control of transformations and gain the ability to send transform
    * events via [TransformScope.transformBy]. All actions that change zoom, pan or rotation
@@ -54,7 +54,7 @@ interface TransformableState {
  * Scope used for suspending transformation operations
  */
 @JvmDefaultWithCompatibility
-interface TransformScope {
+internal interface TransformScope {
   /**
    * Attempts to transform by [zoomChange] in relative multiplied value, by [panChange] in
    * pixels and by [rotationChange] in degrees.
@@ -84,7 +84,7 @@ interface TransformScope {
  * change from the previous event. It's relative scale multiplier for zoom, [Offset] in pixels
  * for pan and degrees for rotation. Callers should update their state in this lambda.
  */
-fun TransformableState(
+internal fun TransformableState(
   onTransformation: (zoomChange: Float, panChange: Offset, rotationChange: Float, centroid: Offset) -> Unit
 ): TransformableState = DefaultTransformableState(onTransformation)
 
@@ -94,7 +94,7 @@ fun TransformableState(
  *
  * @param terminationPriority transformation that runs with this priority or lower will be stopped
  */
-suspend fun TransformableState.stopTransformation(
+internal suspend fun TransformableState.stopTransformation(
   terminationPriority: MutatePriority = MutatePriority.Default
 ) {
   this.transform(terminationPriority) {

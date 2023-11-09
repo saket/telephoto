@@ -3,6 +3,6 @@ package me.saket.telephoto.zoomable.internal
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
-actual typealias AndroidParcelize = Parcelize
+internal actual typealias AndroidParcelize = Parcelize
 
-actual typealias AndroidParcelable = Parcelable
+internal actual typealias AndroidParcelable = Parcelable
