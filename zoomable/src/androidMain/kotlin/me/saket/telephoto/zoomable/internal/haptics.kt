@@ -2,24 +2,19 @@ package me.saket.telephoto.zoomable.internal
 
 import android.os.Build
 import android.view.HapticFeedbackConstants
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
+import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.LocalView
 
-@Composable
-internal actual fun rememberHapticFeedbackPerformer(): HapticFeedbackPerformer {
-  val view = LocalView.current
-
-  return remember(view) {
-    object : HapticFeedbackPerformer {
-      override fun performHapticFeedback() {
-        view.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
-      }
+internal actual fun CompositionLocalConsumerModifierNode.hapticFeedbackPerformer(): HapticFeedbackPerformer {
+  return object : HapticFeedbackPerformer {
+    override fun performHapticFeedback() {
+      currentValueOf(LocalView).performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_END)
     }
   }
 }
 
-// Can be removed once https://issuetracker.google.com/u/1/issues/195043382 is fixed.
+// Can be removed once https://issuetracker.google.com/issues/195043382 is fixed.
 private object HapticFeedbackConstantsCompat {
   val GESTURE_END: Int
     get() {

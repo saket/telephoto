@@ -82,15 +82,7 @@ import kotlin.math.abs
  * @param enabled whether zooming by gestures is enabled or not
  */
 @ExperimentalFoundationApi
-internal fun Modifier.transformable(
-  state: TransformableState,
-  canPan: (Offset) -> Boolean,
-  lockRotationOnZoomPan: Boolean = false,
-  enabled: Boolean = true,
-  onTransformStopped: (velocity: Velocity) -> Unit = {},
-) = this then TransformableElement(state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped)
-
-private data class TransformableElement(
+internal data class TransformableElement(
   private val state: TransformableState,
   private val canPan: (Offset) -> Boolean,
   private val lockRotationOnZoomPan: Boolean,
@@ -114,7 +106,7 @@ private data class TransformableElement(
   }
 }
 
-private class TransformableNode(
+internal class TransformableNode(
   private var state: TransformableState,
   private var canPan: (Offset) -> Boolean,
   private var lockRotationOnZoomPan: Boolean,

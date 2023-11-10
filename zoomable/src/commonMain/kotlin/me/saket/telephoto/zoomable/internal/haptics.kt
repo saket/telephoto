@@ -1,12 +1,11 @@
 package me.saket.telephoto.zoomable.internal
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 
-@Composable
-internal expect fun rememberHapticFeedbackPerformer(): HapticFeedbackPerformer
+internal expect fun CompositionLocalConsumerModifierNode.hapticFeedbackPerformer(): HapticFeedbackPerformer
 
-/** Migrate to [HapticFeedback] once it supports the constant(s) we want */
+/** Alternative to [HapticFeedback] until it supports all possible feedback constants. */
 internal interface HapticFeedbackPerformer {
   fun performHapticFeedback()
 }

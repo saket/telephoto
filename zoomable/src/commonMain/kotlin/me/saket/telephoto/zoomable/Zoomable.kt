@@ -3,20 +3,24 @@ package me.saket.telephoto.zoomable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
+import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.requireDensity
+import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.MutatePriorities
-import me.saket.telephoto.zoomable.internal.rememberHapticFeedbackPerformer
+import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
+import me.saket.telephoto.zoomable.internal.TransformableElement
+import me.saket.telephoto.zoomable.internal.hapticFeedbackPerformer
 import me.saket.telephoto.zoomable.internal.stopTransformation
-import me.saket.telephoto.zoomable.internal.tappableAndQuickZoomable
-import me.saket.telephoto.zoomable.internal.transformable
 
 /**
  * A `Modifier` for handling pan & zoom gestures, designed to be shared across all your media
@@ -38,70 +42,150 @@ import me.saket.telephoto.zoomable.internal.transformable
  * @param clipToBounds defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  * */
-@OptIn(ExperimentalFoundationApi::class)
+@Stable
 fun Modifier.zoomable(
   state: ZoomableState,
   enabled: Boolean = true,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-): Modifier = composed {
-  val zoomableModifier = if (state.isReadyToInteract) {
-    val hapticFeedbackPerformer = rememberHapticFeedbackPerformer()
-    val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
-
-    transformable(
-      state = state.transformableState,
-      canPan = state::canConsumePanChange,
+): Modifier = this
+  .thenIf(clipToBounds) {
+    Modifier.clipToBounds()
+  }
+  .onSizeChanged { state.contentLayoutSize = it.toSize() }
+  .thenIf(state.isReadyToInteract) {
+    ZoomableElement(
+      state = state,
       enabled = enabled,
-      onTransformStopped = { velocity ->
-        scope.launch {
-          if (state.isZoomOutsideRange()) {
-            hapticFeedbackPerformer.performHapticFeedback()
-            state.smoothlySettleZoomOnGestureEnd()
-          } else {
-            state.fling(velocity = velocity, density = density)
-          }
-        }
-      }
-    ).tappableAndQuickZoomable(
-      gesturesEnabled = enabled,
-      transformableState = state.transformableState,
-      onPress = {
-        scope.launch {
-          state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
-        }
-      },
-      onTap = onClick,
-      onLongPress = onLongClick,
-      onDoubleTap = { centroid ->
-        scope.launch {
-          state.handleDoubleTapZoomTo(centroid = centroid)
-        }
-      },
-      onQuickZoomStopped = {
-        if (state.isZoomOutsideRange()) {
-          scope.launch {
-            hapticFeedbackPerformer.performHapticFeedback()
-            state.smoothlySettleZoomOnGestureEnd()
-          }
-        }
-      },
+      onClick = onClick,
+      onLongClick = onLongClick,
     )
-  } else {
-    Modifier
+  }
+  .thenIf(state.autoApplyTransformations) {
+    Modifier.applyTransformation(state.contentTransformation)
   }
 
-  this
-    .let { if (clipToBounds) it.clipToBounds() else it }
-    .onSizeChanged { state.contentLayoutSize = it.toSize() }
-    .then(zoomableModifier)
-    .then(
-      if (state.autoApplyTransformations) {
-        Modifier.applyTransformation(state.contentTransformation)
-      } else {
-        Modifier
-      }
+private data class ZoomableElement(
+  private val state: ZoomableState,
+  private val enabled: Boolean,
+  private val onClick: ((Offset) -> Unit)?,
+  private val onLongClick: ((Offset) -> Unit)?,
+) : ModifierNodeElement<ZoomableNode>() {
+
+  override fun create(): ZoomableNode = ZoomableNode(
+    state = state,
+    enabled = enabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+  )
+
+  override fun update(node: ZoomableNode) {
+    node.update(
+      state = state,
+      enabled = enabled,
+      onClick = onClick,
+      onLongClick = onLongClick,
     )
+  }
+
+  override fun InspectorInfo.inspectableProperties() {
+    name = "zoomable"
+    properties["state"] = state
+    properties["enabled"] = enabled
+    properties["onClick"] = onClick
+    properties["onLongClick"] = onLongClick
+  }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+private class ZoomableNode(
+  private var state: ZoomableState,
+  enabled: Boolean,
+  onClick: ((Offset) -> Unit)?,
+  onLongClick: ((Offset) -> Unit)?,
+) : DelegatingNode(), CompositionLocalConsumerModifierNode {
+
+  private val hapticFeedback = hapticFeedbackPerformer()
+
+  val onPress: (Offset) -> Unit = {
+    coroutineScope.launch {
+      state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
+    }
+  }
+  val onDoubleTap: (centroid: Offset) -> Unit = { centroid ->
+    coroutineScope.launch {
+      state.handleDoubleTapZoomTo(centroid = centroid)
+    }
+  }
+
+  val onQuickZoomStopped = {
+    if (state.isZoomOutsideRange()) {
+      coroutineScope.launch {
+        hapticFeedback.performHapticFeedback()
+        state.smoothlySettleZoomOnGestureEnd()
+      }
+    }
+  }
+  val onTransformStopped: (velocity: Velocity) -> Unit = { velocity ->
+    coroutineScope.launch {
+      if (state.isZoomOutsideRange()) {
+        hapticFeedback.performHapticFeedback()
+        state.smoothlySettleZoomOnGestureEnd()
+      } else {
+        state.fling(velocity = velocity, density = requireDensity())
+      }
+    }
+  }
+
+  private val tappableAndQuickZoomableNode = TappableAndQuickZoomableElement(
+    gesturesEnabled = enabled,
+    transformableState = state.transformableState,
+    onPress = onPress,
+    onTap = onClick,
+    onLongPress = onLongClick,
+    onDoubleTap = onDoubleTap,
+    onQuickZoomStopped = onQuickZoomStopped,
+  ).create()
+
+  private val transformableNode = TransformableElement(
+    state = state.transformableState,
+    canPan = state::canConsumePanChange,
+    enabled = enabled,
+    onTransformStopped = onTransformStopped,
+    lockRotationOnZoomPan = false,
+  ).create()
+
+  init {
+    delegate(transformableNode)
+    delegate(tappableAndQuickZoomableNode)
+  }
+
+  fun update(
+    state: ZoomableState,
+    enabled: Boolean,
+    onClick: ((Offset) -> Unit)?,
+    onLongClick: ((Offset) -> Unit)?,
+  ) {
+    transformableNode.update(
+      state = state.transformableState,
+      canPan = state::canConsumePanChange,
+      lockRotationOnZoomPan = false,
+      enabled = enabled,
+      onTransformStopped = onTransformStopped,
+    )
+    tappableAndQuickZoomableNode.update(
+      onPress = onPress,
+      onTap = onClick,
+      onLongPress = onLongClick,
+      onDoubleTap = onDoubleTap,
+      onQuickZoomStopped = onQuickZoomStopped,
+      transformableState = state.transformableState,
+      gesturesEnabled = enabled,
+    )
+  }
+}
+
+private fun Modifier.thenIf(predicate: Boolean, other: () -> Modifier): Modifier {
+  return if (predicate) this.then(other()) else this
 }

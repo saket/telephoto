@@ -7,7 +7,6 @@ import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -41,25 +40,7 @@ import kotlin.time.TimeSource
  * separately using [detectTapGestures]. That was removed because preventing [detectTapGestures]
  * from consuming all events was proving to be messy and slightly difficult to follow.
  */
-internal fun Modifier.tappableAndQuickZoomable(
-  onPress: (Offset) -> Unit,
-  onTap: ((Offset) -> Unit)?,
-  onLongPress: ((Offset) -> Unit)?,
-  onDoubleTap: (centroid: Offset) -> Unit,
-  onQuickZoomStopped: () -> Unit,
-  transformableState: TransformableState,
-  gesturesEnabled: Boolean,
-): Modifier = this then TappableAndQuickZoomableElement(
-  onPress = onPress,
-  onTap = onTap,
-  onLongPress = onLongPress,
-  onDoubleTap = onDoubleTap,
-  onQuickZoomStopped = onQuickZoomStopped,
-  transformableState = transformableState,
-  gesturesEnabled = gesturesEnabled
-)
-
-private data class TappableAndQuickZoomableElement(
+internal data class TappableAndQuickZoomableElement(
   private val onPress: (Offset) -> Unit,
   private val onTap: ((Offset) -> Unit)?,
   private val onLongPress: ((Offset) -> Unit)?,
@@ -94,7 +75,7 @@ private data class TappableAndQuickZoomableElement(
   }
 }
 
-private class TappableAndQuickZoomableNode(
+internal class TappableAndQuickZoomableNode(
   private var onPress: (Offset) -> Unit,
   private var onTap: ((Offset) -> Unit)?,
   private var onLongPress: ((Offset) -> Unit)?,

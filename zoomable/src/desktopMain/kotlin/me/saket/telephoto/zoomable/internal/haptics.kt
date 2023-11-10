@@ -1,14 +1,12 @@
 package me.saket.telephoto.zoomable.internal
 
-import androidx.compose.runtime.Composable
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 
 /** No haptics on desktop */
-@Composable
-internal actual fun rememberHapticFeedbackPerformer(): HapticFeedbackPerformer {
+internal actual fun CompositionLocalConsumerModifierNode.hapticFeedbackPerformer(): HapticFeedbackPerformer {
   return NoOpHapticFeedbackPerformer
 }
 
 private object NoOpHapticFeedbackPerformer : HapticFeedbackPerformer {
-  override fun performHapticFeedback() {
-  }
+  override fun performHapticFeedback() = Unit
 }
