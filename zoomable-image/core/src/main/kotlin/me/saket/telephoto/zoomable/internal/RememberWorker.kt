@@ -9,7 +9,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-abstract class RememberWorker : RememberObserver {
+internal abstract class RememberWorker : RememberObserver {
   private var scope: CoroutineScope? = null
 
   abstract suspend fun work()
