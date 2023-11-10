@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.toOffset
 import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
@@ -667,34 +668,68 @@ class ZoomableImageTest {
 
   @Test fun quick_zooming_works() {
     val maxZoomFactor = 2f
-    var currentZoom = 0f
+    var currentScale = ScaleFactor.Unspecified
+    var currentZoomFraction = 0f
+    lateinit var state: ZoomableState
 
     rule.setContent {
-      val state = rememberZoomableState(
+      state = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
       )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
           .testTag("zoomable"),
-        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
         contentDescription = null,
         state = rememberZoomableImageState(state),
         onClick = { error("click listener should not get called") },
         onLongClick = { error("long click listener should not get called") },
       )
 
-      LaunchedEffect(state.contentTransformation) {
-        currentZoom = state.contentTransformation.scale.scaleY
-      }
+      currentScale = state.contentTransformation.scale
+      currentZoomFraction = state.zoomFraction ?: 0f
     }
 
-    rule.onNodeWithTag("zoomable").performTouchInput {
-      quickZoom()
+    val zoomableNode = rule.onNodeWithTag("zoomable")
+    zoomableNode.performTouchInput {
+      quickZoomIn(byDistance = height.toFloat())
     }
     rule.runOnIdle {
       // Zoom should never cross the max zoom even if the gesture above over-zooms.
-      assertThat(currentZoom).isEqualTo(maxZoomFactor)
+      assertThat(currentScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
+      assertThat(currentZoomFraction).isEqualTo(1f)
+    }
+
+    // Regression test: the migration of Modifier.zoomable() to Modifier.Node caused
+    // a bug that prevented second quick-zooms from working. It would accept the first
+    // quick-zoom gesture, but treat subsequent quick-zoom gestures as double-taps.
+    assertWithMessage("This bug only happens when the image can still be panned")
+      .that(state.canConsumePanChange(Offset(1f, 1f)))
+      .isTrue()
+    zoomableNode.performTouchInput {
+      quickZoomIn(byDistance = height / 2f)
+    }
+    rule.runOnIdle {
+      assertWithMessage("Quick-zooming in again should not do anything because the image was already zoomed in")
+        .that(currentScale)
+        .isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
+      assertThat(currentZoomFraction).isEqualTo(1f)
+    }
+
+    zoomableNode.performTouchInput {
+      quickZoomOut(byDistance = 100f)
+    }
+    rule.runOnIdle {
+      assertThat(currentScale.scaleY).isWithin(0.1f).of(1.45f)
+      assertThat(currentZoomFraction).isWithin(0.1f).of(0.45f)
+    }
+    zoomableNode.performTouchInput {
+      quickZoomOut(byDistance = 100f)
+    }
+    rule.runOnIdle {
+      assertThat(currentScale.scaleY).isWithin(0.1f).of(1.1f)
+      assertThat(currentZoomFraction).isWithin(0.1f).of(0.1f)
     }
   }
 
@@ -763,7 +798,7 @@ class ZoomableImageTest {
         doubleClick()
       }
       performTouchInput {
-        quickZoom()
+        quickZoomIn()
       }
       performTouchInput {
         swipe(LeftToRight)
@@ -927,12 +962,26 @@ private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
   )
 }
 
-private fun TouchInjectionScope.quickZoom() {
+private fun TouchInjectionScope.quickZoomIn(byDistance: Float = height / 2f) {
   val doubleTapMinTimeMillis = 40L // From LocalViewConfiguration.current.doubleTapMinTimeMillis.
 
-  click(center)
+  val start = center
+  val endY = start.y + byDistance
+
+  click(start)
+  advanceEventTime(eventPeriodMillis + doubleTapMinTimeMillis)
+  swipeDown(startY = start.y, endY = endY, durationMillis = 1_000)
+}
+
+private fun TouchInjectionScope.quickZoomOut(byDistance: Float = height / 2f) {
+  val doubleTapMinTimeMillis = 40L // From LocalViewConfiguration.current.doubleTapMinTimeMillis.
+
+  val start = bottomCenter
+  val endY = start.y - byDistance
+
+  click(start)
   advanceEventTime(doubleTapMinTimeMillis + 2)
-  swipeDown(startY = centerY, endY = bottom, durationMillis = 1_000)
+  swipeUp(startY = start.y, endY = endY, durationMillis = 1_000)
 }
 
 @Composable

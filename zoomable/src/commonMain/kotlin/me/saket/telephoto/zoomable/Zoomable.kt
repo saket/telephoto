@@ -157,8 +157,9 @@ private class ZoomableNode(
   ).create()
 
   init {
-    delegate(transformableNode)
+    // Note to self: the order in which these nodes are delegated is important.
     delegate(tappableAndQuickZoomableNode)
+    delegate(transformableNode)
   }
 
   fun update(
