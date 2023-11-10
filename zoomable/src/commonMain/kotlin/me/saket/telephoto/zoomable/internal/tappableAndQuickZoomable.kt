@@ -1,5 +1,3 @@
-@file:Suppress("NAME_SHADOWING")
-
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.foundation.MutatePriority
@@ -9,26 +7,26 @@ import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.QuickZoomStopped
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.Zooming
 import kotlin.math.abs
@@ -49,47 +47,103 @@ internal fun Modifier.tappableAndQuickZoomable(
   onLongPress: ((Offset) -> Unit)?,
   onDoubleTap: (centroid: Offset) -> Unit,
   onQuickZoomStopped: () -> Unit,
-  transformable: TransformableState,
+  transformableState: TransformableState,
   gesturesEnabled: Boolean,
-): Modifier {
-  return composed {
-    val onPress by rememberUpdatedState(onPress)
-    val onTap by rememberUpdatedState(onTap)
-    val onLongPress by rememberUpdatedState(onLongPress)
-    val onDoubleTap by rememberUpdatedState(onDoubleTap)
-    val onQuickZoomStopped by rememberUpdatedState(onQuickZoomStopped)
+): Modifier = this then TappableAndQuickZoomableElement(
+  onPress = onPress,
+  onTap = onTap,
+  onLongPress = onLongPress,
+  onDoubleTap = onDoubleTap,
+  onQuickZoomStopped = onQuickZoomStopped,
+  transformableState = transformableState,
+  gesturesEnabled = gesturesEnabled
+)
 
-    val quickZoomEvents = remember { Channel<QuickZoomEvent>(capacity = Channel.UNLIMITED) }
-    LaunchedEffect(Unit) {
-      while (isActive) {
-        var event: QuickZoomEvent = quickZoomEvents.receive()
+private data class TappableAndQuickZoomableElement(
+  private val onPress: (Offset) -> Unit,
+  private val onTap: ((Offset) -> Unit)?,
+  private val onLongPress: ((Offset) -> Unit)?,
+  private val onDoubleTap: (centroid: Offset) -> Unit,
+  private val onQuickZoomStopped: () -> Unit,
+  private val transformableState: TransformableState,
+  private val gesturesEnabled: Boolean,
+) : ModifierNodeElement<TappableAndQuickZoomableNode>() {
 
-        try {
-          transformable.transform(MutatePriority.UserInput) {
-            while (event is Zooming) {
-              (event as? Zooming)?.let { event ->
-                transformBy(
-                  centroid = event.centroid,
-                  zoomChange = event.zoomDelta,
-                )
+  override fun create(): TappableAndQuickZoomableNode {
+    return TappableAndQuickZoomableNode(
+      onPress = onPress,
+      onTap = onTap,
+      onLongPress = onLongPress,
+      onDoubleTap = onDoubleTap,
+      onQuickZoomStopped = onQuickZoomStopped,
+      transformableState = transformableState,
+      gesturesEnabled = gesturesEnabled
+    )
+  }
+
+  override fun update(node: TappableAndQuickZoomableNode) {
+    node.update(
+      onPress = onPress,
+      onTap = onTap,
+      onLongPress = onLongPress,
+      onDoubleTap = onDoubleTap,
+      onQuickZoomStopped = onQuickZoomStopped,
+      transformableState = transformableState,
+      gesturesEnabled = gesturesEnabled,
+    )
+  }
+}
+
+private class TappableAndQuickZoomableNode(
+  private var onPress: (Offset) -> Unit,
+  private var onTap: ((Offset) -> Unit)?,
+  private var onLongPress: ((Offset) -> Unit)?,
+  private var onDoubleTap: (centroid: Offset) -> Unit,
+  private var onQuickZoomStopped: () -> Unit,
+  private var transformableState: TransformableState,
+  private var gesturesEnabled: Boolean,
+) : DelegatingNode() {
+
+  private val quickZoomEvents = Channel<QuickZoomEvent>(capacity = Channel.UNLIMITED)
+
+  private val pointerInputNode = delegate(SuspendingPointerInputModifierNode {
+    coroutineScope {
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        while (isActive) {
+          var event: QuickZoomEvent = quickZoomEvents.receive()
+          try {
+            transformableState.transform(MutatePriority.UserInput) {
+              while (event is Zooming) {
+                (event as? Zooming)?.let { event ->
+                  transformBy(
+                    centroid = event.centroid,
+                    zoomChange = event.zoomDelta,
+                  )
+                }
+                event = quickZoomEvents.receive()
               }
-              event = quickZoomEvents.receive()
             }
+            (event as? QuickZoomStopped)?.let {
+              onQuickZoomStopped()
+            }
+          } catch (e: CancellationException) {
+            // Ignore the cancellation and start over again.
           }
-          (event as? QuickZoomStopped)?.let {
-            onQuickZoomStopped()
-          }
-        } catch (e: CancellationException) {
-          // Ignore the cancellation and start over again.
         }
       }
-    }
 
-    return@composed pointerInput(gesturesEnabled) {
       detectTapAndQuickZoomGestures(
-        onPress = onPress,
-        onTap = onTap,
-        onLongPress = onLongPress,
+        // Note to self: these lambdas should not pass a reference
+        // to their delegated lambdas because they can change.
+        onPress = {
+          onPress(it)
+        },
+        onTap = if (onTap != null) {
+          { offset -> onTap?.invoke(offset) }
+        } else null,
+        onLongPress = if (onLongPress != null) {
+          { offset -> onLongPress?.invoke(offset) }
+        } else null,
         onDoubleTap = {
           if (gesturesEnabled) {
             onDoubleTap(it)
@@ -101,6 +155,38 @@ internal fun Modifier.tappableAndQuickZoomable(
           }
         },
       )
+    }
+  })
+
+  fun update(
+    onPress: (Offset) -> Unit,
+    onTap: ((Offset) -> Unit)?,
+    onLongPress: ((Offset) -> Unit)?,
+    onDoubleTap: (centroid: Offset) -> Unit,
+    onQuickZoomStopped: () -> Unit,
+    transformableState: TransformableState,
+    gesturesEnabled: Boolean,
+  ) {
+    // This node should be reset if:
+    // - Nullable args to detectTapAndQuickZoomGestures() go from not-defined to
+    //   defined and vice versa, as their nullability is captured by the args.
+    // - The entire gesture state is changed.
+    val needsReset = (this.onTap == null) != (onTap == null) ||
+      (this.onLongPress == null) != (onLongPress == null) ||
+      (this.transformableState != transformableState)
+
+    // These are captured as references inside callbacks to detectTapAndQuickZoomGestures,
+    // so there's no need to reset pointer input handling.
+    this.onPress = onPress
+    this.onDoubleTap = onDoubleTap
+    this.gesturesEnabled = gesturesEnabled
+    this.onQuickZoomStopped = onQuickZoomStopped
+
+    if (needsReset) {
+      this.onTap = onTap
+      this.onLongPress = onLongPress
+      this.transformableState = transformableState
+      pointerInputNode.resetPointerInputHandler()
     }
   }
 }

@@ -67,7 +67,7 @@ fun Modifier.zoomable(
       }
     ).tappableAndQuickZoomable(
       gesturesEnabled = enabled,
-      transformable = state.transformableState,
+      transformableState = state.transformableState,
       onPress = {
         scope.launch {
           state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
