@@ -8,7 +8,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 internal abstract class RememberWorker : RememberObserver {
   private var scope: CoroutineScope? = null
 

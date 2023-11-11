@@ -1,3 +1,5 @@
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+
 package me.saket.telephoto.zoomable.glide
 
 import android.graphics.drawable.BitmapDrawable
