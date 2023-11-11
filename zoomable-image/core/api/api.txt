@@ -1,0 +1,69 @@
+// Signature format: 4.0
+package me.saket.telephoto.zoomable {
+
+  public final class FixedSizePainterKt {
+  }
+
+  public final class ZoomableImageKt {
+    method @androidx.compose.runtime.Composable public static void ZoomableImage(me.saket.telephoto.zoomable.ZoomableImageSource image, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional me.saket.telephoto.zoomable.ZoomableImageState state, optional float alpha, optional androidx.compose.ui.graphics.ColorFilter? colorFilter, optional androidx.compose.ui.Alignment alignment, optional androidx.compose.ui.layout.ContentScale contentScale, optional boolean gesturesEnabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
+  }
+
+  @androidx.compose.runtime.Stable public interface ZoomableImageSource {
+    method @androidx.compose.runtime.Composable public me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult resolve(kotlinx.coroutines.flow.Flow<androidx.compose.ui.geometry.Size> canvasSize);
+    field public static final me.saket.telephoto.zoomable.ZoomableImageSource.Companion Companion;
+  }
+
+  public static final class ZoomableImageSource.Companion {
+  }
+
+  @androidx.compose.runtime.Stable public static sealed interface ZoomableImageSource.ImageDelegate {
+  }
+
+  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public static final value class ZoomableImageSource.PainterDelegate implements me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate {
+    ctor public ZoomableImageSource.PainterDelegate(androidx.compose.ui.graphics.painter.Painter? painter);
+    method public androidx.compose.ui.graphics.painter.Painter? getPainter();
+    property public final androidx.compose.ui.graphics.painter.Painter? painter;
+  }
+
+  @androidx.compose.runtime.Immutable public static final class ZoomableImageSource.ResolveResult {
+    ctor public ZoomableImageSource.ResolveResult(me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? delegate, optional long crossfadeDuration, optional androidx.compose.ui.graphics.painter.Painter? placeholder);
+    method public me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? component1();
+    method public long component2-UwyO8pc();
+    method public androidx.compose.ui.graphics.painter.Painter? component3();
+    method public me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult copy-8Mi8wO0(me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? delegate, long crossfadeDuration, androidx.compose.ui.graphics.painter.Painter? placeholder);
+    method public long getCrossfadeDuration();
+    method public me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? getDelegate();
+    method public androidx.compose.ui.graphics.painter.Painter? getPlaceholder();
+    property public final long crossfadeDuration;
+    property public final me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? delegate;
+    property public final androidx.compose.ui.graphics.painter.Painter? placeholder;
+  }
+
+  @androidx.compose.runtime.Immutable public static final class ZoomableImageSource.SubSamplingDelegate implements me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate {
+    ctor public ZoomableImageSource.SubSamplingDelegate(me.saket.telephoto.subsamplingimage.SubSamplingImageSource source, optional me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions);
+    method public me.saket.telephoto.subsamplingimage.SubSamplingImageSource component1();
+    method public me.saket.telephoto.subsamplingimage.ImageBitmapOptions component2();
+    method public me.saket.telephoto.zoomable.ZoomableImageSource.SubSamplingDelegate copy(me.saket.telephoto.subsamplingimage.SubSamplingImageSource source, me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions);
+    method public me.saket.telephoto.subsamplingimage.ImageBitmapOptions getImageOptions();
+    method public me.saket.telephoto.subsamplingimage.SubSamplingImageSource getSource();
+    property public final me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions;
+    property public final me.saket.telephoto.subsamplingimage.SubSamplingImageSource source;
+  }
+
+  @androidx.compose.runtime.Stable public final class ZoomableImageState {
+    method public me.saket.telephoto.zoomable.ZoomableState getZoomableState();
+    method public boolean isImageDisplayed();
+    method public boolean isPlaceholderDisplayed();
+    method public void setImageDisplayed(boolean);
+    method public void setPlaceholderDisplayed(boolean);
+    property public final boolean isImageDisplayed;
+    property public final boolean isPlaceholderDisplayed;
+    property public final me.saket.telephoto.zoomable.ZoomableState zoomableState;
+  }
+
+  public final class ZoomableImageStateKt {
+    method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableImageState rememberZoomableImageState(optional me.saket.telephoto.zoomable.ZoomableState zoomableState);
+  }
+
+}
+

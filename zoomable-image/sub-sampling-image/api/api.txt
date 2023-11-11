@@ -1,0 +1,88 @@
+// Signature format: 4.0
+package me.saket.telephoto.subsamplingimage {
+
+  @androidx.compose.runtime.Immutable public final class ImageBitmapOptions {
+    ctor public ImageBitmapOptions(optional int config);
+    method public int component1-_sVssgQ();
+    method public me.saket.telephoto.subsamplingimage.ImageBitmapOptions copy-1JJdX4A(int config);
+    method public int getConfig();
+    property public final int config;
+    field public static final me.saket.telephoto.subsamplingimage.ImageBitmapOptions.Companion Companion;
+  }
+
+  public static final class ImageBitmapOptions.Companion {
+    method public me.saket.telephoto.subsamplingimage.ImageBitmapOptions getDefault();
+    property public final me.saket.telephoto.subsamplingimage.ImageBitmapOptions Default;
+  }
+
+  public final class ImageBitmapOptionsKt {
+    method public static me.saket.telephoto.subsamplingimage.ImageBitmapOptions ImageBitmapOptions(android.graphics.Bitmap from);
+  }
+
+  public interface SubSamplingImageErrorReporter {
+    method public default void onImageLoadingFailed(java.io.IOException e, me.saket.telephoto.subsamplingimage.SubSamplingImageSource imageSource);
+    field public static final me.saket.telephoto.subsamplingimage.SubSamplingImageErrorReporter.Companion Companion;
+  }
+
+  public static final class SubSamplingImageErrorReporter.Companion {
+    method public me.saket.telephoto.subsamplingimage.SubSamplingImageErrorReporter getNoOpInRelease();
+    property public final me.saket.telephoto.subsamplingimage.SubSamplingImageErrorReporter NoOpInRelease;
+  }
+
+  public final class SubSamplingImageKt {
+    method @androidx.compose.runtime.Composable public static void SubSamplingImage(me.saket.telephoto.subsamplingimage.SubSamplingImageState state, optional androidx.compose.ui.Modifier modifier, String? contentDescription, optional float alpha, optional androidx.compose.ui.graphics.ColorFilter? colorFilter);
+  }
+
+  public sealed interface SubSamplingImageSource extends java.io.Closeable {
+    method public default void close();
+    method public suspend Object? decoder(android.content.Context context, kotlin.coroutines.Continuation<? super android.graphics.BitmapRegionDecoder>);
+    method public androidx.compose.ui.graphics.ImageBitmap? getPreview();
+    property public abstract androidx.compose.ui.graphics.ImageBitmap? preview;
+    field public static final me.saket.telephoto.subsamplingimage.SubSamplingImageSource.Companion Companion;
+  }
+
+  public static final class SubSamplingImageSource.Companion {
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.subsamplingimage.SubSamplingImageSource asset(String name, optional androidx.compose.ui.graphics.ImageBitmap? preview);
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.subsamplingimage.SubSamplingImageSource contentUri(android.net.Uri uri, optional androidx.compose.ui.graphics.ImageBitmap? preview);
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.subsamplingimage.SubSamplingImageSource file(okio.Path path, optional androidx.compose.ui.graphics.ImageBitmap? preview, optional java.io.Closeable? onClose);
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.subsamplingimage.SubSamplingImageSource rawSource(kotlin.jvm.functions.Function0<? extends okio.Source> source, optional androidx.compose.ui.graphics.ImageBitmap? preview, optional java.io.Closeable? onClose);
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.subsamplingimage.SubSamplingImageSource resource(@DrawableRes int id, optional androidx.compose.ui.graphics.ImageBitmap? preview);
+  }
+
+  public final class SubSamplingImageSourceKt {
+  }
+
+  @androidx.compose.runtime.Stable public final class SubSamplingImageState {
+    method public androidx.compose.ui.unit.IntSize? getImageSize();
+    method public boolean isImageLoaded();
+    method public boolean isImageLoadedInFullQuality();
+    property public final androidx.compose.ui.unit.IntSize? imageSize;
+    property public final boolean isImageLoaded;
+    property public final boolean isImageLoadedInFullQuality;
+  }
+
+  public final class SubSamplingImageStateKt {
+    method @androidx.compose.runtime.Composable public static me.saket.telephoto.subsamplingimage.SubSamplingImageState rememberSubSamplingImageState(me.saket.telephoto.subsamplingimage.SubSamplingImageSource imageSource, me.saket.telephoto.zoomable.ZoomableState zoomableState, optional me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions, optional me.saket.telephoto.subsamplingimage.SubSamplingImageErrorReporter errorReporter);
+  }
+
+}
+
+package me.saket.telephoto.subsamplingimage.internal {
+
+  public final class CollectionsKt {
+  }
+
+  public final class DimensKt {
+  }
+
+  public final class ImageRegionDecoderKt {
+  }
+
+  public final class RotationKt {
+  }
+
+  public final class TileGridGeneratorKt {
+  }
+
+}
+

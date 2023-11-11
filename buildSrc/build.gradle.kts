@@ -3,8 +3,9 @@ plugins {
 }
 
 repositories {
-  mavenCentral()
   google()
+  mavenCentral()
+  gradlePluginPortal()
 }
 
 dependencies  {
@@ -18,4 +19,5 @@ dependencies  {
   implementation(libs.plugin.mavenPublish)
   implementation(libs.plugin.dropshots)
   implementation(libs.plugin.emulatorWtf)
+  implementation(libs.plugin.metalava)
 }

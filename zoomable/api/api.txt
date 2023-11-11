@@ -1,0 +1,114 @@
+// Signature format: 4.0
+package me.saket.telephoto.zoomable {
+
+  public final class ZoomSpec {
+    ctor public ZoomSpec(optional float maxZoomFactor, optional boolean preventOverOrUnderZoom);
+    method public float component1();
+    method public boolean component2();
+    method public me.saket.telephoto.zoomable.ZoomSpec copy(float maxZoomFactor, boolean preventOverOrUnderZoom);
+    method public float getMaxZoomFactor();
+    method public boolean getPreventOverOrUnderZoom();
+    property public final float maxZoomFactor;
+    property public final boolean preventOverOrUnderZoom;
+  }
+
+  public interface ZoomableContentLocation {
+    method public androidx.compose.ui.geometry.Rect location(long layoutSize, androidx.compose.ui.unit.LayoutDirection direction);
+    method public long size(long layoutSize);
+    field public static final me.saket.telephoto.zoomable.ZoomableContentLocation.Companion Companion;
+  }
+
+  public static final class ZoomableContentLocation.Companion {
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.zoomable.ZoomableContentLocation scaledInsideAndCenterAligned(androidx.compose.ui.geometry.Size? size);
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.zoomable.ZoomableContentLocation unscaledAndTopLeftAligned(androidx.compose.ui.geometry.Size? size);
+    method @Deprecated public me.saket.telephoto.zoomable.ZoomableContentLocation unscaledAndTopStartAligned(androidx.compose.ui.geometry.Size? size);
+  }
+
+  public static final class ZoomableContentLocation.SameAsLayoutBounds implements me.saket.telephoto.zoomable.ZoomableContentLocation {
+    method public androidx.compose.ui.geometry.Rect location(long layoutSize, androidx.compose.ui.unit.LayoutDirection direction);
+    method public long size(long layoutSize);
+    field public static final me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds INSTANCE;
+  }
+
+  public static final class ZoomableContentLocation.Unspecified implements me.saket.telephoto.zoomable.ZoomableContentLocation {
+    method public Void location(long layoutSize, androidx.compose.ui.unit.LayoutDirection direction);
+    method public Void size(long layoutSize);
+    field public static final me.saket.telephoto.zoomable.ZoomableContentLocation.Unspecified INSTANCE;
+  }
+
+  public final class ZoomableContentLocationKt {
+  }
+
+  @androidx.compose.runtime.Immutable public interface ZoomableContentTransformation {
+    method public androidx.compose.ui.geometry.Offset? getCentroid();
+    method public long getContentSize();
+    method public long getOffset();
+    method public float getRotationZ();
+    method public long getScale();
+    method public long getTransformOrigin();
+    method public boolean isSpecified();
+    method public default boolean isUnspecified();
+    property public abstract androidx.compose.ui.geometry.Offset? centroid;
+    property public abstract long contentSize;
+    property public abstract boolean isSpecified;
+    property public default boolean isUnspecified;
+    property public abstract long offset;
+    property public abstract float rotationZ;
+    property public abstract long scale;
+    property public abstract long transformOrigin;
+  }
+
+  public final class ZoomableContentTransformationKt {
+  }
+
+  public final class ZoomableKt {
+    method @androidx.compose.runtime.Stable public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
+  }
+
+  @androidx.compose.runtime.Stable public final class ZoomableState {
+    method public boolean getAutoApplyTransformations();
+    method public androidx.compose.ui.Alignment getContentAlignment();
+    method public androidx.compose.ui.layout.ContentScale getContentScale();
+    method public me.saket.telephoto.zoomable.ZoomableContentTransformation getContentTransformation();
+    method @FloatRange(from=0.0, to=1.0) public Float? getZoomFraction();
+    method public suspend Object? resetZoom(optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public void setAutoApplyTransformations(boolean);
+    method public void setContentAlignment(androidx.compose.ui.Alignment);
+    method public suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public void setContentScale(androidx.compose.ui.layout.ContentScale);
+    property public final boolean autoApplyTransformations;
+    property public final androidx.compose.ui.Alignment contentAlignment;
+    property public final androidx.compose.ui.layout.ContentScale contentScale;
+    property public final me.saket.telephoto.zoomable.ZoomableContentTransformation contentTransformation;
+    property @FloatRange(from=0.0, to=1.0) public final Float? zoomFraction;
+    field public static final me.saket.telephoto.zoomable.ZoomableState.Companion Companion;
+  }
+
+  public static final class ZoomableState.Companion {
+  }
+
+  public final class ZoomableStateKt {
+    method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations);
+  }
+
+}
+
+package me.saket.telephoto.zoomable.internal {
+
+  public final class ContentPlacementKt {
+  }
+
+  public final class DimensKt {
+  }
+
+  public final class TappableAndQuickZoomableKt {
+  }
+
+  public final class TransformableKt {
+  }
+
+  public final class TransformableStateKt {
+  }
+
+}
+
