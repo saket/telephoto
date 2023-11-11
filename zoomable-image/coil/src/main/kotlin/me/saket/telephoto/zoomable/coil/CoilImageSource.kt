@@ -98,8 +98,10 @@ internal class Resolver(
         // Placeholder images should be small in size so sub-sampling isn't needed here.
         .target(
           onStart = {
-            resolved = resolved.copy(
-              placeholder = it?.asPainter()
+            resolved = ResolveResult(
+              placeholder = it?.asPainter(),
+              delegate = resolved.delegate,
+              crossfadeDuration = resolved.crossfadeDuration,
             )
           }
         )
@@ -107,7 +109,7 @@ internal class Resolver(
     )
 
     val imageSource = result.toSubSamplingImageSource()
-    resolved = resolved.copy(
+    resolved = ResolveResult(
       crossfadeDuration = result.crossfadeDuration(),
       delegate = if (result is SuccessResult && imageSource != null) {
         ZoomableImageSource.SubSamplingDelegate(

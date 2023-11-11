@@ -39,7 +39,8 @@ circuit = "0.13.0-beta01"
 espresso-core = "3.5.1"
 uiautomator = "2.2.0"
 benchmark-macro-junit4 = "1.2.0-beta03"
-metalava = "0.3.3"
+metalava = "0.3.3"  # https://github.com/tylerbwong/metalava-gradle/releases
+poko = "0.15.0" # https://github.com/drewhamilton/Poko/blob/main/CHANGELOG.md
 
 [libraries]
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
@@ -51,6 +52,7 @@ plugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", v
 plugin-dropshots = { module = "com.dropbox.dropshots:dropshots-gradle-plugin", version.ref = "dropshots" }
 plugin-emulatorWtf = { module = "wtf.emulator:gradle-plugin", version.ref = "emulatorWtf" }
 plugin-metalava = { module = "me.tylerbwong.gradle.metalava:plugin", version.ref = "metalava" }
+plugin-poko = { module = "dev.drewhamilton.poko:poko-gradle-plugin", version.ref = "poko" }
 
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }

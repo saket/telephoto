@@ -2,8 +2,10 @@ package me.saket.telephoto.flick
 
 import androidx.annotation.FloatRange
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
+import dev.drewhamilton.poko.Poko
 import kotlin.time.Duration
 
 /**
@@ -32,7 +34,7 @@ fun rememberFlickToDismissState(
 sealed interface FlickToDismissState {
   val offset: Float
   val rotationZ: Float
-  var gestureState: GestureState
+  val gestureState: GestureState
 
   /**
    * Distance dragged as a fraction of the content's height.
@@ -43,13 +45,15 @@ sealed interface FlickToDismissState {
   @get:FloatRange(from = 0.0, to = 1.0)
   val offsetFraction: Float
 
+  @Immutable
   sealed interface GestureState {
     /**
      * Content is resting at its default position with no ongoing drag gesture.
      */
     object Idle : GestureState
 
-    data class Dragging(
+    @Poko
+    class Dragging(
       /**
        * Whether the drag distance is sufficient to dismiss the content once it's released.
        *
@@ -67,7 +71,8 @@ sealed interface FlickToDismissState {
      */
     object Resetting : GestureState
 
-    data class Dismissing(
+    @Poko
+    class Dismissing(
       /**
        * Determines how long the content animates before it is fully dismissed.
        * This can be used for scheduling an exit of your screen.

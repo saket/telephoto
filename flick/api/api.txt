@@ -10,32 +10,27 @@ package me.saket.telephoto.flick {
     method public float getOffset();
     method @FloatRange(from=0.0, to=1.0) public float getOffsetFraction();
     method public float getRotationZ();
-    method public void setGestureState(me.saket.telephoto.flick.FlickToDismissState.GestureState);
     property public abstract me.saket.telephoto.flick.FlickToDismissState.GestureState gestureState;
     property public abstract float offset;
     property @FloatRange(from=0.0, to=1.0) public abstract float offsetFraction;
     property public abstract float rotationZ;
   }
 
-  public static sealed interface FlickToDismissState.GestureState {
+  @androidx.compose.runtime.Immutable public static sealed interface FlickToDismissState.GestureState {
   }
 
   public static final class FlickToDismissState.GestureState.Dismissed implements me.saket.telephoto.flick.FlickToDismissState.GestureState {
     field public static final me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissed INSTANCE;
   }
 
-  public static final class FlickToDismissState.GestureState.Dismissing implements me.saket.telephoto.flick.FlickToDismissState.GestureState {
+  @dev.drewhamilton.poko.Poko public static final class FlickToDismissState.GestureState.Dismissing implements me.saket.telephoto.flick.FlickToDismissState.GestureState {
     ctor public FlickToDismissState.GestureState.Dismissing(long animationDuration);
-    method public long component1-UwyO8pc();
-    method public me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing copy-LRDsOJo(long animationDuration);
     method public long getAnimationDuration();
     property public final long animationDuration;
   }
 
-  public static final class FlickToDismissState.GestureState.Dragging implements me.saket.telephoto.flick.FlickToDismissState.GestureState {
+  @dev.drewhamilton.poko.Poko public static final class FlickToDismissState.GestureState.Dragging implements me.saket.telephoto.flick.FlickToDismissState.GestureState {
     ctor public FlickToDismissState.GestureState.Dragging(boolean willDismissOnRelease);
-    method public boolean component1();
-    method public me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging copy(boolean willDismissOnRelease);
     method public boolean getWillDismissOnRelease();
     property public final boolean willDismissOnRelease;
   }
@@ -59,7 +54,7 @@ package me.saket.telephoto.flick {
 
 package me.saket.telephoto.flick.internal {
 
-  public final class _AnimateKt {
+  public final class AnimateKt {
   }
 
 }

@@ -1,6 +1,11 @@
 package me.saket.telephoto.zoomable
 
-data class ZoomSpec(
+import androidx.compose.runtime.Immutable
+import dev.drewhamilton.poko.Poko
+
+@Poko
+@Immutable
+class ZoomSpec(
   /**
    * The maximum zoom level as a percentage of the content size before rubber banding kicks in.
    *

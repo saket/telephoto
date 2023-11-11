@@ -4,9 +4,11 @@ import android.graphics.Bitmap
 import android.os.Build.VERSION.SDK_INT
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.ImageBitmapConfig
+import dev.drewhamilton.poko.Poko
 
+@Poko
 @Immutable
-data class ImageBitmapOptions(
+class ImageBitmapOptions(
   val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888
 ) {
   companion object {

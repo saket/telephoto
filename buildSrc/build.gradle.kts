@@ -20,4 +20,5 @@ dependencies  {
   implementation(libs.plugin.dropshots)
   implementation(libs.plugin.emulatorWtf)
   implementation(libs.plugin.metalava)
+  implementation(libs.plugin.poko)
 }

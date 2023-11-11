@@ -109,7 +109,7 @@ private class GlideImageResolver(
                   SubSamplingImageSource.file(file, preview = drawable.bitmap.asImageBitmap())
                 }
               }
-              resolved.copy(
+              ResolveResult(
                 crossfadeDuration = instant.transition.crossfadeDuration(),
                 delegate = if (subSamplingSource != null) {
                   ZoomableImageSource.SubSamplingDelegate(

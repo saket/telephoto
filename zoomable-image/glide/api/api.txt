@@ -4,14 +4,6 @@ package me.saket.telephoto.zoomable.glide {
   public final class FlowsKt {
   }
 
-  public class ForwardingDiskCacheStrategy extends com.bumptech.glide.load.engine.DiskCacheStrategy {
-    ctor public ForwardingDiskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy delegate);
-    method public boolean decodeCachedData();
-    method public boolean decodeCachedResource();
-    method public boolean isDataCacheable(com.bumptech.glide.load.DataSource dataSource);
-    method public boolean isResourceCacheable(boolean isFromAlternateCacheKey, com.bumptech.glide.load.DataSource dataSource, com.bumptech.glide.load.EncodeStrategy encodeStrategy);
-  }
-
   public final class GlideImageSourceKt {
   }
 

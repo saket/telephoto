@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
+import dev.drewhamilton.poko.Poko
 import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -24,8 +25,9 @@ interface ZoomableImageSource {
   @Composable
   fun resolve(canvasSize: Flow<Size>): ResolveResult
 
+  @Poko
   @Immutable
-  data class ResolveResult(
+  class ResolveResult(
     val delegate: ImageDelegate?,
     val crossfadeDuration: Duration = Duration.ZERO,
     val placeholder: Painter? = null,
@@ -45,8 +47,9 @@ interface ZoomableImageSource {
   ) : ImageDelegate
 
   /** Bitmaps that may not fit into memory and should be sub-sampled. */
+  @Poko
   @Immutable
-  data class SubSamplingDelegate(
+  class SubSamplingDelegate(
     val source: SubSamplingImageSource,
     val imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
   ) : ImageDelegate

@@ -1,10 +1,8 @@
 // Signature format: 4.0
 package me.saket.telephoto.subsamplingimage {
 
-  @androidx.compose.runtime.Immutable public final class ImageBitmapOptions {
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ImageBitmapOptions {
     ctor public ImageBitmapOptions(optional int config);
-    method public int component1-_sVssgQ();
-    method public me.saket.telephoto.subsamplingimage.ImageBitmapOptions copy-1JJdX4A(int config);
     method public int getConfig();
     property public final int config;
     field public static final me.saket.telephoto.subsamplingimage.ImageBitmapOptions.Companion Companion;

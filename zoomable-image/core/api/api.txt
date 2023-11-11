@@ -25,12 +25,8 @@ package me.saket.telephoto.zoomable {
     property public final androidx.compose.ui.graphics.painter.Painter? painter;
   }
 
-  @androidx.compose.runtime.Immutable public static final class ZoomableImageSource.ResolveResult {
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public static final class ZoomableImageSource.ResolveResult {
     ctor public ZoomableImageSource.ResolveResult(me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? delegate, optional long crossfadeDuration, optional androidx.compose.ui.graphics.painter.Painter? placeholder);
-    method public me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? component1();
-    method public long component2-UwyO8pc();
-    method public androidx.compose.ui.graphics.painter.Painter? component3();
-    method public me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult copy-8Mi8wO0(me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? delegate, long crossfadeDuration, androidx.compose.ui.graphics.painter.Painter? placeholder);
     method public long getCrossfadeDuration();
     method public me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate? getDelegate();
     method public androidx.compose.ui.graphics.painter.Painter? getPlaceholder();
@@ -39,11 +35,8 @@ package me.saket.telephoto.zoomable {
     property public final androidx.compose.ui.graphics.painter.Painter? placeholder;
   }
 
-  @androidx.compose.runtime.Immutable public static final class ZoomableImageSource.SubSamplingDelegate implements me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate {
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public static final class ZoomableImageSource.SubSamplingDelegate implements me.saket.telephoto.zoomable.ZoomableImageSource.ImageDelegate {
     ctor public ZoomableImageSource.SubSamplingDelegate(me.saket.telephoto.subsamplingimage.SubSamplingImageSource source, optional me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions);
-    method public me.saket.telephoto.subsamplingimage.SubSamplingImageSource component1();
-    method public me.saket.telephoto.subsamplingimage.ImageBitmapOptions component2();
-    method public me.saket.telephoto.zoomable.ZoomableImageSource.SubSamplingDelegate copy(me.saket.telephoto.subsamplingimage.SubSamplingImageSource source, me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions);
     method public me.saket.telephoto.subsamplingimage.ImageBitmapOptions getImageOptions();
     method public me.saket.telephoto.subsamplingimage.SubSamplingImageSource getSource();
     property public final me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions;

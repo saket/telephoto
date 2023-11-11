@@ -4,7 +4,7 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.EncodeStrategy
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 
-open class ForwardingDiskCacheStrategy(
+internal open class ForwardingDiskCacheStrategy(
   private val delegate: DiskCacheStrategy
 ) : DiskCacheStrategy() {
 

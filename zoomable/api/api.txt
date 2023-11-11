@@ -1,11 +1,8 @@
 // Signature format: 4.0
 package me.saket.telephoto.zoomable {
 
-  public final class ZoomSpec {
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ZoomSpec {
     ctor public ZoomSpec(optional float maxZoomFactor, optional boolean preventOverOrUnderZoom);
-    method public float component1();
-    method public boolean component2();
-    method public me.saket.telephoto.zoomable.ZoomSpec copy(float maxZoomFactor, boolean preventOverOrUnderZoom);
     method public float getMaxZoomFactor();
     method public boolean getPreventOverOrUnderZoom();
     property public final float maxZoomFactor;
