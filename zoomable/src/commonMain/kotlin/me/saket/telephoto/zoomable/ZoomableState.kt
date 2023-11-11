@@ -40,6 +40,7 @@ import androidx.compose.ui.util.lerp
 import me.saket.telephoto.zoomable.ContentZoomFactor.Companion.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.MutatePriorities
+import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
@@ -111,7 +112,7 @@ class ZoomableState internal constructor(
 
     if (gestureState != null && baseZoomFactor != null) {
       val contentZoom = ContentZoomFactor(baseZoomFactor, gestureState.userZoomFactor)
-      ZoomableContentTransformation(
+      RealZoomableContentTransformation(
         isSpecified = true,
         contentSize = gestureState.contentSize,
         scale = contentZoom.finalZoom(),
@@ -119,9 +120,9 @@ class ZoomableState internal constructor(
         centroid = gestureState.lastCentroid,
       )
     } else {
-      ZoomableContentTransformation(
+      RealZoomableContentTransformation(
         isSpecified = false,
-        contentSize = Size.Unspecified,
+        contentSize = Size.Zero,
         scale = ScaleFactor.Zero, // Effectively hide content until an initial zoom value is calculated.
         offset = Offset.Zero,
         centroid = null,

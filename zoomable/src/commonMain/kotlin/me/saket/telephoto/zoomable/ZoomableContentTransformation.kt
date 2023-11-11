@@ -18,7 +18,7 @@ import me.saket.telephoto.zoomable.internal.Zero
  * a bespoke manner.
  */
 @Immutable
-data class ZoomableContentTransformation internal constructor(
+interface ZoomableContentTransformation {
   /**
    * Whether this object contains non-placeholder values. This will be false when
    * [Modifier.zoomable] is initializing and sufficient information to position
@@ -27,14 +27,14 @@ data class ZoomableContentTransformation internal constructor(
    * Until specified transformations are received, zoomable content should stay hidden.
    * This is done automatically if [ZoomableState.autoApplyTransformations] is `true`.
    */
-  val isSpecified: Boolean,
+  val isSpecified: Boolean
 
   /**
    * The size of the zoomable content that is currently known to [Modifier.zoomable].
    * This is calculated using [ZoomableContentLocation.size] and may be one frame
    * behind the UI. Useful for synchronizing other elements with the zoomable content.
    */
-  val contentSize: Size = Size.Unspecified,
+  val contentSize: Size
 
   /**
    * The scale of the zoomable content along the x and y axes, generated in response
@@ -44,33 +44,33 @@ data class ZoomableContentTransformation internal constructor(
    * Values on both the axes can be less than 0 if the image size is larger than
    * its layout size.
    */
-  val scale: ScaleFactor,
+  val scale: ScaleFactor
 
   /**
    * The rotation of the zoomable content around the z-axis. This parameter is currently
    * unused and defaults to `0`, but may be used in the future if [Modifier.zoomable]
    * adds support for rotation gestures.
    */
-  val rotationZ: Float = 0f,
+  val rotationZ: Float
 
   /**
    * The translation of the zoomable content along the x and y axes, generated in
    * response to pan gestures. This value represents the amount by which the content
    * should be translated to achieve the desired pan position.
    */
-  val offset: Offset,
+  val offset: Offset
 
   /**
    * Offset percentage along the x and y axis for which [scale] and [offset] must be applied.
    */
-  val transformOrigin: TransformOrigin = TransformOrigin.Zero,
+  val transformOrigin: TransformOrigin
 
   /**
    * Central point around which the last pan/zoom gesture was made with respect to the
    * layout bounds. Will be unspecified if the content hasn't been interacted with yet.
    */
-  val centroid: Offset?,
-) {
+  val centroid: Offset?
+
   /** Inverse of [isSpecified]. */
   val isUnspecified: Boolean get() = !isSpecified
 }
