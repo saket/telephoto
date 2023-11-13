@@ -140,7 +140,7 @@ internal class RealZoomableState internal constructor(
         layoutSize = contentLayoutSize,
         direction = layoutDirection
       )
-    } else Rect(Offset.Unspecified, Size.Unspecified)
+    } else Rect.Zero
   }
 
   /**
