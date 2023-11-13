@@ -400,6 +400,10 @@ class SubSamplingImageTest {
             isSpecified = true,
             contentSize = Size.Unspecified,
             scale = ScaleFactor(scaleX = 0.5949996f, scaleY = 0.5949996f),
+            scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
+              initialScale = ScaleFactor.Unspecified,
+              userZoom = 0f,
+            ),
             rotationZ = 0f,
             offset = Offset(x = -1041.2019f, y = -10.483643f),
             transformOrigin = TransformOrigin(0f, 0f),

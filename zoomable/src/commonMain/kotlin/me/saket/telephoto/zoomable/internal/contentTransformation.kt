@@ -9,9 +9,16 @@ import me.saket.telephoto.zoomable.ZoomableContentTransformation
 internal data class RealZoomableContentTransformation(
   override val isSpecified: Boolean,
   override val scale: ScaleFactor,
+  override val scaleMetadata: ScaleMetadata,
   override val offset: Offset,
   override val centroid: Offset?,
   override val contentSize: Size = Size.Unspecified,
   override val rotationZ: Float = 0f,
   override val transformOrigin: TransformOrigin = TransformOrigin.Zero,
-) : ZoomableContentTransformation
+) : ZoomableContentTransformation {
+
+  data class ScaleMetadata(
+    override val initialScale: ScaleFactor,
+    override val userZoom: Float,
+  ) : ZoomableContentTransformation.ScaleMetadata
+}

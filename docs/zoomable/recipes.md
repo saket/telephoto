@@ -9,7 +9,7 @@ Box(
 LaunchedEffect(state.contentTransformation) {
   println("Pan = ${state.contentTransformation.offset}")
   println("Zoom = ${state.contentTransformation.scale}")
-  println("Zoom percent = ${state.zoomFraction * 100}%")
+  println("Zoom fraction = ${state.zoomFraction}")
 }
 
 // Example use case: Hide system bars when image is zoomed in.

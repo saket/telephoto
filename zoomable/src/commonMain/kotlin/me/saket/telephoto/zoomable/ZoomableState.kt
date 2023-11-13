@@ -114,6 +114,10 @@ class ZoomableState internal constructor(
         isSpecified = true,
         contentSize = gestureState.contentSize,
         scale = contentZoom.finalZoom(),
+        scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
+          initialScale = baseZoomFactor.value,
+          userZoom = gestureState.userZoomFactor.value,
+        ),
         offset = -gestureState.offset * contentZoom.finalZoom(),
         centroid = gestureState.lastCentroid,
       )
@@ -122,6 +126,10 @@ class ZoomableState internal constructor(
         isSpecified = false,
         contentSize = Size.Zero,
         scale = ScaleFactor.Zero, // Effectively hide content until an initial zoom value is calculated.
+        scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
+          initialScale = ScaleFactor.Zero,
+          userZoom = 0f,
+        ),
         offset = Offset.Zero,
         centroid = null,
       )
@@ -598,7 +606,7 @@ internal data class GestureState(
 
 /**
  * The minimum scale needed to position the content within its layout
- * bounds (with respect to [ZoomableState.contentScale]).
+ * bounds with respect to [ZoomableState.contentScale].
  * */
 @JvmInline
 @Immutable
