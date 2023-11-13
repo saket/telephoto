@@ -49,25 +49,28 @@ fun Modifier.zoomable(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-): Modifier = this
-  .thenIf(clipToBounds) {
-    Modifier.clipToBounds()
-  }
-  .onSizeChanged { state.contentLayoutSize = it.toSize() }
-  .thenIf(state.isReadyToInteract) {
-    ZoomableElement(
-      state = state,
-      enabled = enabled,
-      onClick = onClick,
-      onLongClick = onLongClick,
-    )
-  }
-  .thenIf(state.autoApplyTransformations) {
-    Modifier.applyTransformation(state.contentTransformation)
-  }
+): Modifier {
+  check(state is RealZoomableState)
+  return this
+    .thenIf(clipToBounds) {
+      Modifier.clipToBounds()
+    }
+    .onSizeChanged { state.contentLayoutSize = it.toSize() }
+    .thenIf(state.isReadyToInteract) {
+      ZoomableElement(
+        state = state,
+        enabled = enabled,
+        onClick = onClick,
+        onLongClick = onLongClick,
+      )
+    }
+    .thenIf(state.autoApplyTransformations) {
+      Modifier.applyTransformation(state.contentTransformation)
+    }
+}
 
 private data class ZoomableElement(
-  private val state: ZoomableState,
+  private val state: RealZoomableState,
   private val enabled: Boolean,
   private val onClick: ((Offset) -> Unit)?,
   private val onLongClick: ((Offset) -> Unit)?,
@@ -100,7 +103,7 @@ private data class ZoomableElement(
 
 @OptIn(ExperimentalFoundationApi::class)
 private class ZoomableNode(
-  private var state: ZoomableState,
+  private var state: RealZoomableState,
   enabled: Boolean,
   onClick: ((Offset) -> Unit)?,
   onLongClick: ((Offset) -> Unit)?,
@@ -163,7 +166,7 @@ private class ZoomableNode(
   }
 
   fun update(
-    state: ZoomableState,
+    state: RealZoomableState,
     enabled: Boolean,
     onClick: ((Offset) -> Unit)?,
     onLongClick: ((Offset) -> Unit)?,
