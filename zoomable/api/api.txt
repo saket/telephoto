@@ -42,6 +42,7 @@ package me.saket.telephoto.zoomable {
     method public long getOffset();
     method public float getRotationZ();
     method public long getScale();
+    method public me.saket.telephoto.zoomable.ZoomableContentTransformation.ScaleMetadata getScaleMetadata();
     method public long getTransformOrigin();
     method public boolean isSpecified();
     method public default boolean isUnspecified();
@@ -52,7 +53,15 @@ package me.saket.telephoto.zoomable {
     property public abstract long offset;
     property public abstract float rotationZ;
     property public abstract long scale;
+    property public abstract me.saket.telephoto.zoomable.ZoomableContentTransformation.ScaleMetadata scaleMetadata;
     property public abstract long transformOrigin;
+  }
+
+  public static interface ZoomableContentTransformation.ScaleMetadata {
+    method public long getInitialScale();
+    method public float getUserZoom();
+    property public abstract long initialScale;
+    property public abstract float userZoom;
   }
 
   public final class ZoomableContentTransformationKt {
