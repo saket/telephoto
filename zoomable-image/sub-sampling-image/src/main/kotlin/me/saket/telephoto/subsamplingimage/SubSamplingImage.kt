@@ -47,6 +47,7 @@ fun SubSamplingImage(
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
 ) {
+  check(state is RealSubSamplingImageState)
   val paint = remember { Paint() }.also {
     it.alpha = alpha
     it.colorFilter = colorFilter

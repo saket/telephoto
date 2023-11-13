@@ -44,6 +44,7 @@ import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import me.saket.telephoto.subsamplingimage.RealSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
@@ -182,7 +183,7 @@ class SubSamplingImageTest {
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-      )
+      ).asReal()
       LaunchedEffect(imageState.isImageLoadedInFullQuality) {
         isImageDisplayed = imageState.isImageLoadedInFullQuality
       }
@@ -296,7 +297,7 @@ class SubSamplingImageTest {
           val imageState = rememberSubSamplingImageState(
             zoomableState = zoomableState,
             imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-          ).also {
+          ).asReal().also {
             it.showTileBounds = true
           }
           LaunchedEffect(imageState.tiles) {
@@ -352,7 +353,7 @@ class SubSamplingImageTest {
         val imageState = rememberSubSamplingImageState(
           zoomableState = zoomableState,
           imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-        ).also {
+        ).asReal().also {
           it.showTileBounds = true
         }
         LaunchedEffect(imageState.tiles) {
@@ -409,7 +410,7 @@ class SubSamplingImageTest {
             transformOrigin = TransformOrigin(0f, 0f),
             centroid = Offset.Zero,
           ),
-        )
+        ).asReal()
         LaunchedEffect(imageState.isImageLoadedInFullQuality) {
           isImageDisplayed = imageState.isImageLoadedInFullQuality
         }
@@ -489,7 +490,7 @@ class SubSamplingImageTest {
       val imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-      ).also {
+      ).asReal().also {
         it.showTileBounds = true
       }
       LaunchedEffect(imageState.isImageLoadedInFullQuality) {
@@ -684,3 +685,5 @@ private fun Context.createFileFromAsset(assetName: String): Path {
     }
   }
 }
+
+private fun SubSamplingImageState.asReal() = this as RealSubSamplingImageState
