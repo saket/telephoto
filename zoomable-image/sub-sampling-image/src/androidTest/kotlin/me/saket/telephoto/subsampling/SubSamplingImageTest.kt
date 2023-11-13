@@ -60,7 +60,7 @@ import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomSpec
-import me.saket.telephoto.zoomable.ZoomableContentTransformation
+import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
 import me.saket.telephoto.zoomable.rememberZoomableState
 import me.saket.telephoto.zoomable.zoomable
 import okio.FileSystem
@@ -396,7 +396,7 @@ class SubSamplingImageTest {
 
         val imageState = rememberSubSamplingImageState(
           imageSource = SubSamplingImageSource.asset("path.jpg"),
-          transformation = ZoomableContentTransformation(
+          transformation = RealZoomableContentTransformation(
             isSpecified = true,
             contentSize = Size.Unspecified,
             scale = ScaleFactor(scaleX = 0.5949996f, scaleY = 0.5949996f),
