@@ -14,7 +14,7 @@ implementation("me.saket.telephoto:sub-sampling-image:{{ versions.telephoto }}")
 val zoomableState = rememberZoomableState()
 val imageState = rememberSubSamplingImageState(
   zoomableState = zoomableState,
-  imageSource = ImageSource.asset("fox.jpg")
+  imageSource = SubSamplingImageSource.asset("fox.jpg")
 )
 
 SubSamplingImage(
