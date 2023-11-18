@@ -65,6 +65,7 @@ import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
+import me.saket.telephoto.zoomable.internal.copy
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -1025,13 +1026,7 @@ private fun ZoomableImageSource.withPlaceholder(
         val showPlaceholder by isPlaceholderVisible.collectAsState()
         return when {
           showPlaceholder -> ResolveResult(delegate = null, placeholder = placeholder)
-          else -> delegate.resolve(canvasSize).let { delegateResult ->
-            ResolveResult(
-              delegate = delegateResult.delegate,
-              crossfadeDuration = delegateResult.crossfadeDuration,
-              placeholder = placeholder,
-            )
-          }
+          else -> delegate.resolve(canvasSize).copy(placeholder = placeholder)
         }
       }
     }

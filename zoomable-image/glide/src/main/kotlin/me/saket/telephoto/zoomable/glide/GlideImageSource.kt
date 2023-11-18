@@ -34,6 +34,7 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import me.saket.telephoto.zoomable.glide.Size as GlideSize
+import me.saket.telephoto.zoomable.internal.copy
 
 internal class GlideImageSource(
   private val requestManager: RequestManager,
@@ -93,8 +94,7 @@ private class GlideImageResolver(
           is Placeholder -> {
             if (instant.placeholder != null) {
               // Placeholder images should be small in size so sub-sampling isn't needed here.
-              resolved = ResolveResult(
-                delegate = null,
+              resolved = resolved.copy(
                 placeholder = instant.placeholder.asPainter()
               )
             }
@@ -109,7 +109,7 @@ private class GlideImageResolver(
                   SubSamplingImageSource.file(file, preview = drawable.bitmap.asImageBitmap())
                 }
               }
-              ResolveResult(
+              resolved.copy(
                 crossfadeDuration = instant.transition.crossfadeDuration(),
                 delegate = if (subSamplingSource != null) {
                   ZoomableImageSource.SubSamplingDelegate(

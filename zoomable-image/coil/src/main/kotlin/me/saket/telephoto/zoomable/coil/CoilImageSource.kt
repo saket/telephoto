@@ -36,6 +36,7 @@ import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceFactory
 import me.saket.telephoto.zoomable.internal.RememberWorker
+import me.saket.telephoto.zoomable.internal.copy
 import okio.Path.Companion.toPath
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -98,10 +99,8 @@ internal class Resolver(
         // Placeholder images should be small in size so sub-sampling isn't needed here.
         .target(
           onStart = {
-            resolved = ResolveResult(
+            resolved = resolved.copy(
               placeholder = it?.asPainter(),
-              delegate = resolved.delegate,
-              crossfadeDuration = resolved.crossfadeDuration,
             )
           }
         )
@@ -109,7 +108,7 @@ internal class Resolver(
     )
 
     val imageSource = result.toSubSamplingImageSource()
-    resolved = ResolveResult(
+    resolved = resolved.copy(
       crossfadeDuration = result.crossfadeDuration(),
       delegate = if (result is SuccessResult && imageSource != null) {
         ZoomableImageSource.SubSamplingDelegate(
@@ -120,7 +119,7 @@ internal class Resolver(
         ZoomableImageSource.PainterDelegate(
           painter = result.drawable?.asPainter()
         )
-      }
+      },
     )
   }
 
