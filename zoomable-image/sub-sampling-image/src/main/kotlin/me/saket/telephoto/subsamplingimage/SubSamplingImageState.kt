@@ -248,7 +248,7 @@ private fun createRegionDecoder(
 /** State for [SubSamplingImage]. */
 @Stable
 sealed interface SubSamplingImageState {
-  var imageSize: IntSize?
+  val imageSize: IntSize?
 
   /**
    * Whether all the visible tiles have been loaded and the image is displayed (not necessarily in its full quality).
