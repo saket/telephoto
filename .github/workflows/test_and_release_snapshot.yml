@@ -25,7 +25,7 @@ jobs:
         with:
           secrets: ${{ toJSON(secrets) }}
 
-      - name: Run unit tests
+      - name: Run unit tests and friends
         run: ./gradlew check
 
       - name: Run paparazzi screenshot tests

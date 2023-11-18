@@ -1,6 +1,5 @@
 # Release checklist
 
-- [ ] Check that the sample compiles.
 - [ ] Check that tests have passed on CI.
 - [ ] Change version name from SNAPSHOT to an actual name.
 - [ ] Update project website with:

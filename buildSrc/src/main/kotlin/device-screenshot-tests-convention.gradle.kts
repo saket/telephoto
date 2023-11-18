@@ -8,7 +8,9 @@ plugins {
 
 android {
   defaultConfig {
-    targetSdk = libs.versions.compileSdk.get().toInt()  // Workaround for https://issuetracker.google.com/issues/283219177.
+    // targetSdk version has no effect for libraries. This is only used for
+    // the test APK. Workarounds https://issuetracker.google.com/issues/283219177.
+    targetSdk = libs.versions.compileSdk.get().toInt()
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
   testOptions.animationsDisabled = true
