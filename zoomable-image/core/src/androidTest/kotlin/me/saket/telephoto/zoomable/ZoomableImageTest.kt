@@ -670,12 +670,12 @@ class ZoomableImageTest {
     val maxZoomFactor = 2f
     var currentScale = ScaleFactor.Unspecified
     var currentZoomFraction = 0f
-    lateinit var state: ZoomableState
+    lateinit var state: RealZoomableState
 
     rule.setContent {
       state = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
-      )
+      ) as RealZoomableState
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -1025,7 +1025,13 @@ private fun ZoomableImageSource.withPlaceholder(
         val showPlaceholder by isPlaceholderVisible.collectAsState()
         return when {
           showPlaceholder -> ResolveResult(delegate = null, placeholder = placeholder)
-          else -> delegate.resolve(canvasSize).copy(placeholder = placeholder)
+          else -> delegate.resolve(canvasSize).let { delegateResult ->
+            ResolveResult(
+              delegate = delegateResult.delegate,
+              crossfadeDuration = delegateResult.crossfadeDuration,
+              placeholder = placeholder,
+            )
+          }
         }
       }
     }
