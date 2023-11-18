@@ -71,7 +71,7 @@ package me.saket.telephoto.zoomable {
     method @androidx.compose.runtime.Stable public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
   }
 
-  @androidx.compose.runtime.Stable public final class ZoomableState {
+  @androidx.compose.runtime.Stable public sealed interface ZoomableState {
     method public boolean getAutoApplyTransformations();
     method public androidx.compose.ui.Alignment getContentAlignment();
     method public androidx.compose.ui.layout.ContentScale getContentScale();
@@ -82,15 +82,11 @@ package me.saket.telephoto.zoomable {
     method public void setContentAlignment(androidx.compose.ui.Alignment);
     method public suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
-    property public final boolean autoApplyTransformations;
-    property public final androidx.compose.ui.Alignment contentAlignment;
-    property public final androidx.compose.ui.layout.ContentScale contentScale;
-    property public final me.saket.telephoto.zoomable.ZoomableContentTransformation contentTransformation;
-    property @FloatRange(from=0.0, to=1.0) public final Float? zoomFraction;
-    field public static final me.saket.telephoto.zoomable.ZoomableState.Companion Companion;
-  }
-
-  public static final class ZoomableState.Companion {
+    property public abstract boolean autoApplyTransformations;
+    property public abstract androidx.compose.ui.Alignment contentAlignment;
+    property public abstract androidx.compose.ui.layout.ContentScale contentScale;
+    property public abstract me.saket.telephoto.zoomable.ZoomableContentTransformation contentTransformation;
+    property @FloatRange(from=0.0, to=1.0) public abstract Float? zoomFraction;
   }
 
   public final class ZoomableStateKt {

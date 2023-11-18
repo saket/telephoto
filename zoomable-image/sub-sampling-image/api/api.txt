@@ -50,13 +50,13 @@ package me.saket.telephoto.subsamplingimage {
   public final class SubSamplingImageSourceKt {
   }
 
-  @androidx.compose.runtime.Stable public final class SubSamplingImageState {
+  @androidx.compose.runtime.Stable public sealed interface SubSamplingImageState {
     method public androidx.compose.ui.unit.IntSize? getImageSize();
     method public boolean isImageLoaded();
     method public boolean isImageLoadedInFullQuality();
-    property public final androidx.compose.ui.unit.IntSize? imageSize;
-    property public final boolean isImageLoaded;
-    property public final boolean isImageLoadedInFullQuality;
+    property public abstract androidx.compose.ui.unit.IntSize? imageSize;
+    property public abstract boolean isImageLoaded;
+    property public abstract boolean isImageLoadedInFullQuality;
   }
 
   public final class SubSamplingImageStateKt {
