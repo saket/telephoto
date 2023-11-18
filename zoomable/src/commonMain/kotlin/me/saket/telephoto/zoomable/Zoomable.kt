@@ -42,7 +42,6 @@ import me.saket.telephoto.zoomable.internal.stopTransformation
  * @param clipToBounds defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  * */
-@Stable
 fun Modifier.zoomable(
   state: ZoomableState,
   enabled: Boolean = true,
