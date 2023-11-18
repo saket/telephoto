@@ -1,6 +1,10 @@
 # Release checklist
 
 - [ ] Check that tests have passed on CI.
+- [ ] Run manual test cases that are difficult to automate:
+  - [ ] Fling animations can be interrupted by pressing anywhere.
+  - [ ] Double-tap-to-zoom animations can be interrupted **only** by starting another swipe gesture.
+  - [ ] Images that use a placeholder play a cross-fade animation when the image is loaded.
 - [ ] Change version name from SNAPSHOT to an actual name.
 - [ ] Update project website with:
     - [ ] new version’s maven address
@@ -12,11 +16,7 @@
   `dependency-watch await me.saket.telephoto:zoomable:{version}`
 - [ ] Ensure that the release is available on maven by using it in `:sample`
 - [ ] Check that the library sources were correctly available.
-- [ ] Run the sample app and ensure everything works. 
-- [ ] Run manual test cases that are difficult to automate:
-  - [ ] Fling animations can be interrupted by pressing anywhere.
-  - [ ] Double-tap-to-zoom animations can be interrupted **only** by starting another swipe gesture.
-  - [ ] Images that use a placeholder play a cross-fade animation when the image is loaded.
+- [ ] Run the sample app and perform sanity tests.
 - [ ] Push commit.
 - [ ] Generate a sample APK.
 - [ ] Draft a changelog.
