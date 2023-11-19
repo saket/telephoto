@@ -60,3 +60,10 @@ package me.saket.telephoto.zoomable {
 
 }
 
+package me.saket.telephoto.zoomable.internal {
+
+  public final class ResolveResultKt {
+  }
+
+}
+

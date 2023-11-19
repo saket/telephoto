@@ -68,7 +68,7 @@ package me.saket.telephoto.zoomable {
   }
 
   public final class ZoomableKt {
-    method @androidx.compose.runtime.Stable public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
+    method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
   }
 
   @androidx.compose.runtime.Stable public sealed interface ZoomableState {
