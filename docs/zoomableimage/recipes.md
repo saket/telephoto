@@ -4,12 +4,39 @@
 - [Observing pan & zoom](../zoomable/recipes.md#observing-pan-zoom)
 - [Resetting zoom](../zoomable/recipes.md#resetting-zoom)
 
+### Setting zoom limits
+
+=== "Coil"
+    ```kotlin hl_lines="2"
+    val zoomableState = rememberZoomableState(
+      zoomSpec = ZoomSpec(maxZoomFactor = 4f)
+    )
+    
+    ZoomableAsyncImage(
+      state = rememberZoomableImageState(zoomableState),
+      model = "https://example.com/image.jpg",
+      contentDescription = …,
+    )
+    ```
+=== "Glide"
+    ```kotlin hl_lines="2"
+    val zoomableState = rememberZoomableState(
+      zoomSpec = ZoomSpec(maxZoomFactor = 4f)
+    )
+    
+    ZoomableGlideImage(
+      state = rememberZoomableImageState(zoomableState),
+      model = "https://example.com/image.jpg",
+      contentDescription = …,
+    )
+    ```
+
 ### Observing image loads
 
 ```kotlin
 val imageState = rememberZoomableImageState()
 
-// Whether the full quality image is loaded. This be false for placeholders
+// Whether the full quality image is loaded. This will be false for placeholders
 // or thumbnails, in which case isPlaceholderDisplayed can be used instead.
 val showLoadingIndicator = imageState.isImageDisplayed
 
