@@ -705,7 +705,7 @@ class ZoomableImageTest {
     // Regression test: the migration of Modifier.zoomable() to Modifier.Node caused
     // a bug that prevented second quick-zooms from working. It would accept the first
     // quick-zoom gesture, but treat subsequent quick-zoom gestures as double-taps.
-    assertWithMessage("This bug only happens when the image can still be panned")
+    assertWithMessage("This bug happens only when the image can still be panned")
       .that(state.canConsumePanChange(Offset(1f, 1f)))
       .isTrue()
     zoomableNode.performTouchInput {
