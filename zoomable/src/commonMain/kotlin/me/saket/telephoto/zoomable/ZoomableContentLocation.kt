@@ -16,16 +16,18 @@ import androidx.compose.ui.unit.toOffset
 import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
 /**
- * [Modifier.zoomable] uses [ZoomableContentLocation] to understand the content's visual size and position
- * in order to prevent it from going out of bounds during pan & zoom gestures.
+ * [Modifier.zoomable] uses [ZoomableContentLocation] to understand the content's _visual_ size and
+ * position in order to prevent it from going out of bounds during pan & zoom gestures.
  *
- * The default value is [ZoomableContentLocation.SameAsLayoutBounds].
+ * The default value is [ZoomableContentLocation.SameAsLayoutBounds]. This is good enough for composables
+ * that fill every pixel of their drawing space.
  *
- * [Modifier.zoomable] can't calculate this on its own by relying on the layout bounds of the content.
- * because they may be smaller or larger than the content's visual size. For example, an `Image` composable
- * that uses `Modifier.fillMaxSize()` could actually be drawing an image that only fills half its height.
- * Another example is a sub-sampled composable such as a map whose full sized content could be at an
- * order of magnitude larger than its layout bounds.
+ * For richer content such as an `Image()` composable whose visual size may not always match its layout
+ * size, [ZoomableContentLocation] is used to indicate the visual region where pixels are actually drawn.
+ *
+ * If these words are proving confusing, refer to this
+ * [video comparison](https://saket.github.io/telephoto/zoomable/#edge-detection) of zoomable content with
+ * versus without [ZoomableContentLocation].
  */
 interface ZoomableContentLocation {
   companion object {
@@ -43,6 +45,28 @@ interface ZoomableContentLocation {
         else -> RelativeContentLocation(
           size = size,
           scale = ContentScale.Inside,
+          alignment = Alignment.Center,
+        )
+      }
+    }
+
+    /**
+     * Describes a zoomable content's location that is positioned in the center of its layout
+     * and is already scaled to fit the layout bounds while maintaining its original aspect ratio.
+     *
+     * That is, its alignment is [Alignment.Center] and scale is [ContentScale.Fit].
+     *
+     * In most cases [ZoomableContentLocation.scaledInsideAndCenterAligned] should be preferred over
+     * this because telephoto works best when [ZoomableState.contentScale] is the source of truth of
+     * the content's scale.
+     */
+    @Stable
+    fun scaledToFitAndCenterAligned(size: Size?): ZoomableContentLocation {
+      return when {
+        size == null || size.isUnspecified -> Unspecified
+        else -> RelativeContentLocation(
+          size = size,
+          scale = ContentScale.Fit,
           alignment = Alignment.Center,
         )
       }
