@@ -11,7 +11,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
+import leakcanary.LeakAssertions
 import me.saket.telephoto.util.prepareForScreenshotTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -28,6 +30,11 @@ class ZoomableTest {
     rule.activityRule.scenario.onActivity {
       it.prepareForScreenshotTest()
     }
+  }
+
+  @After
+  fun tearDown() {
+    LeakAssertions.assertNoLeaks()
   }
 
   @Test fun canary() {

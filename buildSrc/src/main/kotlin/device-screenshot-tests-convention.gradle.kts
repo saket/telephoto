@@ -38,4 +38,9 @@ dependencies {
   androidTestImplementation(libs.truth)
   androidTestImplementation(libs.testParamInjector)
   debugImplementation(libs.compose.ui.test.activityManifest)
+  androidTestImplementation(libs.leakcanary.test)
+  debugImplementation(libs.leakcanary.core) {
+    // Workaround https://github.com/square/leakcanary/pull/2624.
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+  }
 }

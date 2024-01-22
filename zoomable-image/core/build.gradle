@@ -3,7 +3,6 @@ plugins {
   id("published-library-convention")
   id("device-screenshot-tests-convention")
 }
-
 apply plugin: 'app.cash.paparazzi'
 
 android {

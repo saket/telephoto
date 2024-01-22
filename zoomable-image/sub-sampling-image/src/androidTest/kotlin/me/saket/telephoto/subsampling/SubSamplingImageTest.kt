@@ -44,6 +44,7 @@ import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.RealSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -68,6 +69,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import okio.source
+import org.junit.After
 import org.junit.AssumptionViolatedException
 import org.junit.Before
 import org.junit.Rule
@@ -99,6 +101,11 @@ class SubSamplingImageTest {
     rule.activityRule.scenario.onActivity {
       it.prepareForScreenshotTest()
     }
+  }
+
+  @After
+  fun tearDown() {
+    LeakAssertions.assertNoLeaks()
   }
 
   @Test fun various_image_sources(

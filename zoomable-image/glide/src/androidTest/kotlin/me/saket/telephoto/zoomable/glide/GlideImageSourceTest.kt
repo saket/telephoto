@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
+import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
@@ -107,6 +108,7 @@ class GlideImageSourceTest {
       it.onDestroy()
     }
     Glide.tearDown()
+    LeakAssertions.assertNoLeaks()
   }
 
   @Test fun images_should_always_be_written_to_disk(

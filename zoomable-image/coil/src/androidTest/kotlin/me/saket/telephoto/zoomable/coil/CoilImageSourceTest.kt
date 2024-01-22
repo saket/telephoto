@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
+import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.CompositionLocalProviderReturnable
@@ -63,6 +64,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import okio.source
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -111,6 +113,11 @@ class CoilImageSourceTest {
         }
       }
     }
+  }
+
+  @After
+  fun tearDown() {
+    LeakAssertions.assertNoLeaks()
   }
 
   @Test fun images_should_always_be_written_to_disk(
