@@ -1,6 +1,7 @@
 package me.saket.telephoto.sample
 
 import android.os.Bundle
+import android.os.StrictMode
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
 import androidx.activity.compose.setContent
@@ -26,6 +27,19 @@ import me.saket.telephoto.sample.gallery.MediaItem
 class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
+    StrictMode.setThreadPolicy(
+      StrictMode.ThreadPolicy.Builder()
+        .detectAll()
+        .penaltyDeath()
+        .build()
+    )
+    StrictMode.setVmPolicy(
+      StrictMode.VmPolicy.Builder()
+        .detectAll()
+        .penaltyLog() // Can't use penaltyDeath() due to https://stackoverflow.com/q/67444092.
+        .build()
+    )
+
     enableEdgeToEdge()
     setupImmersiveMode()
     super.onCreate(savedInstanceState)
