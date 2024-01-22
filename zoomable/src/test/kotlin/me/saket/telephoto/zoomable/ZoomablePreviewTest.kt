@@ -19,7 +19,7 @@ import app.cash.paparazzi.Paparazzi
 import org.junit.Rule
 import org.junit.Test
 
-// TODO: move this test to :zoomable once https://github.com/cashapp/paparazzi/issues/595 is fixed.
+// TODO: rename this module to :androidUnitTest once https://github.com/cashapp/paparazzi/issues/595 is fixed.
 class ZoomablePreviewTest {
   @get:Rule val paparazzi = Paparazzi(
     deviceConfig = DeviceConfig.PIXEL_5

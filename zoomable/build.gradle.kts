@@ -4,8 +4,8 @@ plugins {
   id("kotlin-multiplatform-library-convention")
   id("published-library-convention")
 }
-
 apply(plugin = "kotlin-parcelize")
+apply(plugin = "app.cash.paparazzi")
 
 kotlin {
   sourceSets {

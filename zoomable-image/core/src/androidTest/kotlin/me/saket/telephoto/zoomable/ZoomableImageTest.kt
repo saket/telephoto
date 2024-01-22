@@ -57,6 +57,7 @@ import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.prepareForScreenshotTest
@@ -66,6 +67,7 @@ import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
 import me.saket.telephoto.zoomable.internal.copy
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -96,6 +98,11 @@ class ZoomableImageTest {
     rule.activityRule.scenario.onActivity {
       it.prepareForScreenshotTest()
     }
+  }
+
+  @After
+  fun tearDown() {
+    LeakAssertions.assertNoLeaks()
   }
 
   @Test fun canary() {
