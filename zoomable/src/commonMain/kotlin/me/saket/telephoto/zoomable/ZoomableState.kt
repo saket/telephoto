@@ -8,6 +8,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
 
 /**
@@ -24,9 +25,11 @@ fun rememberZoomableState(
   zoomSpec: ZoomSpec = ZoomSpec(),
   autoApplyTransformations: Boolean = true,
 ): ZoomableState {
+  val isLayoutPreview = LocalInspectionMode.current
   val state = rememberSaveable(saver = RealZoomableState.Saver) {
     RealZoomableState(
-      autoApplyTransformations = autoApplyTransformations
+      autoApplyTransformations = autoApplyTransformations,
+      isLayoutPreview = isLayoutPreview,
     )
   }.also {
     it.zoomSpec = zoomSpec

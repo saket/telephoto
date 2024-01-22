@@ -56,6 +56,7 @@ import kotlin.math.abs
 internal class RealZoomableState internal constructor(
   initialGestureState: GestureState? = null,
   autoApplyTransformations: Boolean = true,
+  private val isLayoutPreview: Boolean = false,
 ) : ZoomableState {
 
   /**
@@ -84,7 +85,10 @@ internal class RealZoomableState internal constructor(
       RealZoomableContentTransformation(
         isSpecified = false,
         contentSize = Size.Zero,
-        scale = ScaleFactor.Zero, // Effectively hide content until an initial zoom value is calculated.
+        scale = when {
+          isLayoutPreview -> ScaleFactor(1f, 1f)
+          else -> ScaleFactor.Zero  // Effectively hide the content until an initial zoom value is calculated.
+        },
         scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
           initialScale = ScaleFactor.Zero,
           userZoom = 0f,
