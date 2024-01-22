@@ -35,18 +35,20 @@ internal data class ExifMetadata(
           is ResourceImageSource -> source.peek(context)
           is UriImageSource -> source.peek(context)
         }
-        val exif = ExifInterface(
-          ExifInterfaceCompatibleInputStream(inputStream)
-        )
-        ExifMetadata(
-          orientation = when (exif.rotationDegrees) {
-            0 -> ImageOrientation.None
-            90 -> ImageOrientation.Orientation90
-            180 -> ImageOrientation.Orientation180
-            270 -> ImageOrientation.Orientation270
-            else -> error("Invalid image orientation at ${exif.rotationDegrees}°")
-          }
-        )
+        inputStream.use {
+          val exif = ExifInterface(
+            ExifInterfaceCompatibleInputStream(inputStream)
+          )
+          ExifMetadata(
+            orientation = when (exif.rotationDegrees) {
+              0 -> ImageOrientation.None
+              90 -> ImageOrientation.Orientation90
+              180 -> ImageOrientation.Orientation180
+              270 -> ImageOrientation.Orientation270
+              else -> error("Invalid image orientation at ${exif.rotationDegrees}°")
+            }
+          )
+        }
       }
     }
   }
