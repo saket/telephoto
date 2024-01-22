@@ -82,7 +82,7 @@ sealed interface FlickToDismissState {
        *
        * if (gestureState is Dismissing) {
        *   LaunchedEffect(Unit) {
-       *     delay(gestureState.animationDuration / 2f)
+       *     delay(gestureState.animationDuration / 2)
        *     navigator.goBack()
        *   }
        * }
