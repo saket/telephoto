@@ -31,6 +31,7 @@ import androidx.compose.ui.layout.layout
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
+import me.saket.telephoto.zoomable.internal.scaledToMatch
 
 /**
  * A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures
