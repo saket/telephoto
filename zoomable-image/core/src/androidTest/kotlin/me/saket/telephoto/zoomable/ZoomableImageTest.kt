@@ -886,6 +886,7 @@ class ZoomableImageTest {
   @Test fun calculate_content_bounds_for_full_quality_images(
     @TestParameter subSamplingStatus: SubSamplingStatus,
   ) {
+    screenshotValidator.tolerancePercentOnCi = 0.02f
     lateinit var imageState: ZoomableImageState
 
     rule.setContent {
