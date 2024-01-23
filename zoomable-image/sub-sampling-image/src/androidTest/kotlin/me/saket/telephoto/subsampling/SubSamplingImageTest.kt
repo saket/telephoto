@@ -414,7 +414,6 @@ class SubSamplingImageTest {
             ),
             rotationZ = 0f,
             offset = Offset(x = -1041.2019f, y = -10.483643f),
-            transformOrigin = TransformOrigin(0f, 0f),
             centroid = Offset.Zero,
           ),
         ).asReal()
