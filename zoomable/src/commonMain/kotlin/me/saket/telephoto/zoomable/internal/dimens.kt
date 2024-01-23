@@ -1,11 +1,14 @@
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.layout.div
+import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.zoomable.BaseZoomFactor
 import me.saket.telephoto.zoomable.ContentZoomFactor
@@ -14,12 +17,6 @@ import kotlin.math.roundToInt
 
 internal fun Size.roundToIntSize() =
   IntSize(width.roundToInt(), height.roundToInt())
-
-internal operator fun Size.times(scale: ScaleFactor) =
-  Size(
-    width = width * scale.scaleX,
-    height = height * scale.scaleY,
-  )
 
 internal fun Size.discardFractionalParts(): IntSize {
   return IntSize(width = width.toInt(), height = height.toInt())
@@ -90,4 +87,17 @@ internal fun Offset.withZoomAndTranslate(
   action: (Offset) -> Offset,
 ): Offset {
   return (action((this * zoom) + translate) - translate) / zoom
+}
+
+internal fun Rect.times(scale: ScaleFactor): Rect =
+  Rect(offset = topLeft * scale, size = size * scale)
+
+internal fun Rect.withOrigin(origin: TransformOrigin, action: Rect.() -> Rect): Rect {
+  val pivot = Offset(
+    x = size.width * origin.pivotFractionX,
+    y = size.height * origin.pivotFractionY,
+  )
+  val atOrigin = this.translate(-pivot)
+  val newRect = atOrigin.action()
+  return newRect.translate(pivot)
 }

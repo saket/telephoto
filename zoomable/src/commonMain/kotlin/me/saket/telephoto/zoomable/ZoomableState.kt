@@ -7,6 +7,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -84,6 +85,16 @@ sealed interface ZoomableState {
    * is large enough to fill all available space. After that, they're scaled uniformly.
    * */
   var contentAlignment: Alignment
+
+  /**
+   * The visual bounds of the content, calculated by applying the scale and translation of pan and zoom
+   * gestures to the value given to [ZoomableState.setContentLocation]. Useful for drawing decorations
+   * around the content or performing hit tests.
+   *
+   * Because [ZoomableState.setContentLocation] can only be called asynchronously, this may be one frame
+   * behind the UI.
+   */
+  val transformedContentBounds: Rect
 
   /**
    * The content's current zoom as a fraction of its min and max allowed zoom factors.

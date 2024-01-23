@@ -25,9 +25,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isFinite
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
@@ -49,6 +51,7 @@ import me.saket.telephoto.zoomable.internal.minus
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.unaryMinus
+import me.saket.telephoto.zoomable.internal.withOrigin
 import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
 import kotlin.math.abs
 
@@ -59,11 +62,6 @@ internal class RealZoomableState internal constructor(
   private val isLayoutPreview: Boolean = false,
 ) : ZoomableState {
 
-  /**
-   * Transformations that should be applied to [Modifier.zoomable]'s content.
-   *
-   * See [ZoomableContentTransformation].
-   */
   override val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     val baseZoomFactor = baseZoomFactor
     val gestureState = gestureState
@@ -164,6 +162,19 @@ internal class RealZoomableState internal constructor(
       }
     } else {
       null
+    }
+  }
+
+  // todo: make this work for placeholder images.
+  override val transformedContentBounds: Rect by derivedStateOf {
+    with(contentTransformation) {
+      if (isSpecified) {
+        unscaledContentBounds.withOrigin(transformOrigin) {
+          times(scale).translate(offset)
+        }
+      } else {
+        Rect.Zero
+      }
     }
   }
 

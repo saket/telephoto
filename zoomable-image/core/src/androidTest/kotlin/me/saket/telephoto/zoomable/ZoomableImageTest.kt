@@ -875,6 +875,55 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun calculate_content_bounds_for_full_quality_images(
+    @TestParameter subSamplingStatus: SubSamplingStatus,
+  ) {
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+      Box(
+        Modifier
+          .fillMaxSize()
+          .systemBarsPadding()
+          .padding(24.dp)
+      ) {
+        ZoomableImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImageSource.asset("forest_fox_1000.jpg", subSample = subSamplingStatus.enabled),
+          contentDescription = null,
+          state = rememberZoomableImageState(zoomableState).also { imageState = it },
+        )
+        Canvas(
+          Modifier
+            .matchParentSize()
+            .clipToBounds()
+        ) {
+          val bounds = zoomableState.transformedContentBounds
+          drawRect(
+            color = Color.Yellow,
+            topLeft = bounds.topLeft,
+            size = bounds.size,
+            style = Stroke(width = 2.dp.toPx()),
+          )
+        }
+      }
+    }
+    rule.waitUntil { imageState.isImageDisplayed }
+    dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_out")
+
+    rule.onNodeWithTag("image").run {
+      performTouchInput { doubleClick() }
+      performTouchInput { swipeRight() }
+    }
+    rule.waitUntil { imageState.zoomableState.zoomFraction == 1f }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_in")
+    }
+  }
+
   @Suppress("unused")
   enum class LayoutSizeParam(val modifier: Modifier) {
     FillMaxSize(Modifier.fillMaxSize()),

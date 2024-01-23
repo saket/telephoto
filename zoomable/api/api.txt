@@ -43,7 +43,7 @@ package me.saket.telephoto.zoomable {
     method public float getRotationZ();
     method public long getScale();
     method public me.saket.telephoto.zoomable.ZoomableContentTransformation.ScaleMetadata getScaleMetadata();
-    method public long getTransformOrigin();
+    method public default long getTransformOrigin();
     method public boolean isSpecified();
     method public default boolean isUnspecified();
     property public abstract androidx.compose.ui.geometry.Offset? centroid;
@@ -54,7 +54,7 @@ package me.saket.telephoto.zoomable {
     property public abstract float rotationZ;
     property public abstract long scale;
     property public abstract me.saket.telephoto.zoomable.ZoomableContentTransformation.ScaleMetadata scaleMetadata;
-    property public abstract long transformOrigin;
+    property public default long transformOrigin;
   }
 
   public static interface ZoomableContentTransformation.ScaleMetadata {
@@ -76,6 +76,7 @@ package me.saket.telephoto.zoomable {
     method public androidx.compose.ui.Alignment getContentAlignment();
     method public androidx.compose.ui.layout.ContentScale getContentScale();
     method public me.saket.telephoto.zoomable.ZoomableContentTransformation getContentTransformation();
+    method public androidx.compose.ui.geometry.Rect getTransformedContentBounds();
     method @FloatRange(from=0.0, to=1.0) public Float? getZoomFraction();
     method public suspend Object? resetZoom(optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setAutoApplyTransformations(boolean);
@@ -86,6 +87,7 @@ package me.saket.telephoto.zoomable {
     property public abstract androidx.compose.ui.Alignment contentAlignment;
     property public abstract androidx.compose.ui.layout.ContentScale contentScale;
     property public abstract me.saket.telephoto.zoomable.ZoomableContentTransformation contentTransformation;
+    property public abstract androidx.compose.ui.geometry.Rect transformedContentBounds;
     property @FloatRange(from=0.0, to=1.0) public abstract Float? zoomFraction;
   }
 
