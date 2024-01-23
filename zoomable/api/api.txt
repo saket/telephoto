@@ -17,6 +17,7 @@ package me.saket.telephoto.zoomable {
 
   public static final class ZoomableContentLocation.Companion {
     method @androidx.compose.runtime.Stable public me.saket.telephoto.zoomable.ZoomableContentLocation scaledInsideAndCenterAligned(androidx.compose.ui.geometry.Size? size);
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.zoomable.ZoomableContentLocation scaledToFitAndCenterAligned(androidx.compose.ui.geometry.Size? size);
     method @androidx.compose.runtime.Stable public me.saket.telephoto.zoomable.ZoomableContentLocation unscaledAndTopLeftAligned(androidx.compose.ui.geometry.Size? size);
     method @Deprecated public me.saket.telephoto.zoomable.ZoomableContentLocation unscaledAndTopStartAligned(androidx.compose.ui.geometry.Size? size);
   }
