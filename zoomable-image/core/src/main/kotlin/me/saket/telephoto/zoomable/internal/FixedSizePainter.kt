@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable
+package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.RememberObserver
