@@ -1,11 +1,11 @@
 package me.saket.telephoto.zoomable
 
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import assertk.assertThat
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import me.saket.telephoto.zoomable.ZoomableContentLocation
-import me.saket.telephoto.zoomable.isSpecified
+import kotlin.random.Random
 import kotlin.test.Test
 
 class ZoomableContentLocationTest {
@@ -23,5 +23,13 @@ class ZoomableContentLocationTest {
     assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size.Unspecified).isSpecified).isFalse()
     assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size.Zero).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size(42f, 99f)).isSpecified).isTrue()
+
+    assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(null).isSpecified).isFalse()
+    assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size.Unspecified).isSpecified).isFalse()
+    assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size.Zero).isSpecified).isTrue()
+    assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size(42f, 99f)).isSpecified).isTrue()
   }
+
+  private val ZoomableContentLocation.isSpecified
+    get() = this.size(layoutSize = Size(width = Random.nextFloat(), height = Random.nextFloat())).isSpecified
 }

@@ -103,7 +103,7 @@ interface ZoomableContentLocation {
    * isn't calculated yet. The content will stay hidden until this is replaced.
    */
   object Unspecified : ZoomableContentLocation {
-    override fun size(layoutSize: Size) = throw UnsupportedOperationException()
+    override fun size(layoutSize: Size) = Size.Unspecified
     override fun location(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
     override fun toString(): String = this::class.simpleName!!
   }
@@ -125,9 +125,6 @@ interface ZoomableContentLocation {
   fun location(layoutSize: Size, direction: LayoutDirection): Rect
 }
 
-internal val ZoomableContentLocation.isSpecified
-  get() = this !is ZoomableContentLocation.Unspecified
-
 /**
  * This isn't public because only a few combinations of [ContentScale]
  * and [Alignment] work perfectly for all kinds of content.
@@ -141,6 +138,8 @@ internal data class RelativeContentLocation(
   override fun size(layoutSize: Size): Size = size
 
   override fun location(layoutSize: Size, direction: LayoutDirection): Rect {
+    check(!layoutSize.isEmpty()) { "Layout size is empty" }
+
     val scaleFactor = scale.computeScaleFactor(
       srcSize = size,
       dstSize = layoutSize,

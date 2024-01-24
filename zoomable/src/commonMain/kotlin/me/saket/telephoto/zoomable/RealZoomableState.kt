@@ -183,8 +183,8 @@ internal class RealZoomableState internal constructor(
    * listening to pan & zoom gestures.
    */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    unscaledContentLocation.isSpecified
-      && contentLayoutSize.minDimension != 0f // Prevent division by zero errors.
+    contentLayoutSize.minDimension > 0f // Prevent division by zero errors.
+      && unscaledContentLocation.size(contentLayoutSize).let { it.isSpecified && it.minDimension > 0f }
   }
 
   @Suppress("NAME_SHADOWING")
