@@ -1,3 +1,5 @@
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package me.saket.telephoto.zoomable
 
 import androidx.compose.animation.core.animateFloatAsState
@@ -28,9 +30,11 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
+import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.scaledToMatch
 
 /**
@@ -80,11 +84,6 @@ fun ZoomableImage(
     modifier = modifier.onMeasure { canvasSize = it },
     propagateMinConstraints = true,
   ) {
-    state.isImageDisplayed = when (resolved.delegate) {
-      is ZoomableImageSource.PainterDelegate -> resolved.delegate.painter != null
-      is ZoomableImageSource.SubSamplingDelegate -> state.subSamplingState?.isImageLoaded ?: false
-      else -> false
-    }
     val animatedAlpha by animateFloatAsState(
       targetValue = if (state.isImageDisplayed) 1f else 0f,
       animationSpec = tween(resolved.crossfadeDurationMs),
@@ -99,14 +98,29 @@ fun ZoomableImage(
       wasImageZoomedIn = true
     }
 
+    state.isImageDisplayed = when (resolved.delegate) {
+      is ZoomableImageSource.PainterDelegate -> resolved.delegate.painter != null
+      is ZoomableImageSource.SubSamplingDelegate -> state.subSamplingState?.isImageLoaded ?: false
+      else -> false
+    }
     state.isPlaceholderDisplayed = resolved.placeholder != null && animatedAlpha < 1f
+
     if (state.isPlaceholderDisplayed && !wasImageZoomedIn) {
+      val painter = animatedPainter(resolved.placeholder!!).scaledToMatch(
+        // Align with the full-quality image even if the placeholder is smaller in size.
+        // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
+        state.zoomableState.contentTransformation.contentSize,
+      )
+      val boundsProvider = PlaceholderBoundsProvider(contentSize = painter.intrinsicSize)
+      DisposableEffect(boundsProvider) {
+        state.realZoomableState.placeholderBoundsProvider = boundsProvider
+        onDispose {
+          state.realZoomableState.placeholderBoundsProvider = null
+        }
+      }
       Image(
-        painter = animatedPainter(resolved.placeholder!!).scaledToMatch(
-          // Align with the full-quality image even if the placeholder is smaller in size.
-          // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
-          state.zoomableState.contentTransformation.contentSize,
-        ),
+        modifier = Modifier.onSizeChanged { boundsProvider.layoutSize = it },
+        painter = painter,
         contentDescription = contentDescription,
         alignment = alignment,
         contentScale = contentScale,
@@ -204,3 +218,6 @@ private object EmptyPainter : Painter() {
 
 private val ZoomableImageSource.ResolveResult.crossfadeDurationMs: Int
   get() = crossfadeDuration.inWholeMilliseconds.toInt()
+
+private val ZoomableImageState.realZoomableState: RealZoomableState
+  get() = zoomableState as RealZoomableState  // Safe because ZoomableState is a sealed type.

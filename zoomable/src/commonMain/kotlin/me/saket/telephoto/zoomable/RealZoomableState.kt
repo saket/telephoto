@@ -20,7 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -38,6 +37,7 @@ import androidx.compose.ui.util.lerp
 import me.saket.telephoto.zoomable.ContentZoomFactor.Companion.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.MutatePriorities
+import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
@@ -165,7 +165,9 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  // todo: make this work for placeholder images.
+  /** See [PlaceholderBoundsProvider]. */
+  internal var placeholderBoundsProvider: PlaceholderBoundsProvider? by mutableStateOf(null)
+
   override val transformedContentBounds: Rect by derivedStateOf {
     with(contentTransformation) {
       if (isSpecified) {
@@ -173,7 +175,7 @@ internal class RealZoomableState internal constructor(
           times(scale).translate(offset)
         }
       } else {
-        Rect.Zero
+        placeholderBoundsProvider?.calculate(state = this@RealZoomableState) ?: Rect.Zero
       }
     }
   }

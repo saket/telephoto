@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -933,6 +934,44 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun calculate_content_bounds_for_placeholder_images(
+    @TestParameter placeholderParam: PlaceholderImageParam
+  ) {
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+      Box(
+        Modifier
+          .fillMaxSize()
+          .systemBarsPadding()
+          .padding(24.dp)
+      ) {
+        ZoomableImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImageSource.placeholderOnly(placeholderParam.painter()),
+          contentDescription = null,
+          state = rememberZoomableImageState(zoomableState).also {
+            imageState = it
+          },
+        )
+        Canvas(Modifier.matchParentSize()) {
+          val bounds = zoomableState.transformedContentBounds
+          drawRect(
+            color = Color.Yellow,
+            topLeft = bounds.topLeft,
+            size = bounds.size,
+            style = Stroke(width = 2.dp.toPx()),
+          )
+        }
+      }
+    }
+    rule.waitUntil { imageState.isPlaceholderDisplayed && !imageState.zoomableState.transformedContentBounds.isEmpty }
+    dropshots.assertSnapshot(rule.activity)
+  }
+
   @Suppress("unused")
   enum class LayoutSizeParam(val modifier: Modifier) {
     FillMaxSize(Modifier.fillMaxSize()),
@@ -981,6 +1020,12 @@ class ZoomableImageTest {
   enum class ScrollDirection {
     RightToLeft,
     LeftToRight
+  }
+
+  @Suppress("unused")
+  enum class PlaceholderImageParam(val painter: @Composable () -> Painter) {
+    WithIntrinsicSize(painter = { assetPainter("fox_250.jpg") }),
+    WithoutIntrinsicSize(painter = { ColorPainter(Color.Gray) }),
   }
 }
 
@@ -1093,6 +1138,22 @@ private fun ZoomableImageSource.withPlaceholder(
           showPlaceholder -> ResolveResult(delegate = null, placeholder = placeholder)
           else -> delegate.resolve(canvasSize).copy(placeholder = placeholder)
         }
+      }
+    }
+  }
+}
+
+@Composable
+private fun ZoomableImageSource.Companion.placeholderOnly(
+  placeholder: Painter
+): ZoomableImageSource {
+  return remember(placeholder) {
+    object : ZoomableImageSource {
+      @Composable override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        return ResolveResult(
+          delegate = null,
+          placeholder = placeholder,
+        )
       }
     }
   }
