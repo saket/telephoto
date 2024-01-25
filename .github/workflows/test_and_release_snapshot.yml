@@ -19,7 +19,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
-      - uses: gradle/gradle-build-action@v3
+      - uses: gradle/gradle-build-action@v3.0.0-beta.4
 
       - uses: oNaiPs/secrets-to-env-action@v1
         with:
