@@ -7,7 +7,6 @@ buildscript {
     google()
     mavenCentral()
   }
-
   dependencies {
     classpath libs.plugin.paparazzi
   }
@@ -17,8 +16,6 @@ allprojects {
   repositories {
     google()
     mavenCentral()
-    maven { url "https://maven.pkg.jetbrains.space/public/p/compose/dev" }
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
   }
 }
 
