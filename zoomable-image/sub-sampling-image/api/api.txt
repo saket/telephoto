@@ -28,7 +28,7 @@ package me.saket.telephoto.subsamplingimage {
   }
 
   public final class SubSamplingImageKt {
-    method @androidx.compose.runtime.Composable public static void SubSamplingImage(me.saket.telephoto.subsamplingimage.SubSamplingImageState state, optional androidx.compose.ui.Modifier modifier, String? contentDescription, optional float alpha, optional androidx.compose.ui.graphics.ColorFilter? colorFilter);
+    method @androidx.compose.runtime.Composable public static void SubSamplingImage(me.saket.telephoto.subsamplingimage.SubSamplingImageState state, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional float alpha, optional androidx.compose.ui.graphics.ColorFilter? colorFilter);
   }
 
   public sealed interface SubSamplingImageSource extends java.io.Closeable {

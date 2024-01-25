@@ -30,11 +30,8 @@ package me.saket.telephoto.zoomable {
 
   public static final class ZoomableContentLocation.Unspecified implements me.saket.telephoto.zoomable.ZoomableContentLocation {
     method public Void location(long layoutSize, androidx.compose.ui.unit.LayoutDirection direction);
-    method public Void size(long layoutSize);
+    method public long size(long layoutSize);
     field public static final me.saket.telephoto.zoomable.ZoomableContentLocation.Unspecified INSTANCE;
-  }
-
-  public final class ZoomableContentLocationKt {
   }
 
   @androidx.compose.runtime.Immutable public interface ZoomableContentTransformation {
