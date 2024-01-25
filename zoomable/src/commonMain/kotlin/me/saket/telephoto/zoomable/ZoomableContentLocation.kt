@@ -41,7 +41,8 @@ interface ZoomableContentLocation {
     @Stable
     fun scaledInsideAndCenterAligned(size: Size?): ZoomableContentLocation {
       return when {
-        size == null || size.isUnspecified -> Unspecified
+        size == null -> Unspecified
+        size.isUnspecified -> SameAsLayoutBounds
         else -> RelativeContentLocation(
           size = size,
           scale = ContentScale.Inside,
@@ -63,7 +64,8 @@ interface ZoomableContentLocation {
     @Stable
     fun scaledToFitAndCenterAligned(size: Size?): ZoomableContentLocation {
       return when {
-        size == null || size.isUnspecified -> Unspecified
+        size == null -> Unspecified
+        size.isUnspecified -> SameAsLayoutBounds
         else -> RelativeContentLocation(
           size = size,
           scale = ContentScale.Fit,
@@ -81,7 +83,8 @@ interface ZoomableContentLocation {
     @Stable
     fun unscaledAndTopLeftAligned(size: Size?): ZoomableContentLocation {
       return when {
-        size == null || size.isUnspecified -> Unspecified
+        size == null -> Unspecified
+        size.isUnspecified -> SameAsLayoutBounds
         else -> RelativeContentLocation(
           size = size,
           scale = ContentScale.None,

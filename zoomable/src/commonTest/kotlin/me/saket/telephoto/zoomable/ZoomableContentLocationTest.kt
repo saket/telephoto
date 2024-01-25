@@ -15,17 +15,17 @@ class ZoomableContentLocationTest {
    */
   @Test fun `when size is null, set location as unspecified`() {
     assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(null).isSpecified).isFalse()
-    assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(Size.Unspecified).isSpecified).isFalse()
+    assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(Size.Unspecified).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(Size.Zero).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(Size(42f, 99f)).isSpecified).isTrue()
 
     assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(null).isSpecified).isFalse()
-    assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size.Unspecified).isSpecified).isFalse()
+    assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size.Unspecified).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size.Zero).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.unscaledAndTopLeftAligned(Size(42f, 99f)).isSpecified).isTrue()
 
     assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(null).isSpecified).isFalse()
-    assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size.Unspecified).isSpecified).isFalse()
+    assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size.Unspecified).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size.Zero).isSpecified).isTrue()
     assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size(42f, 99f)).isSpecified).isTrue()
   }

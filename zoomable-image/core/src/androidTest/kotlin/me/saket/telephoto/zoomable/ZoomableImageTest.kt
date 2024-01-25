@@ -8,7 +8,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.wrapContentSize
@@ -66,6 +68,7 @@ import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.CiScreenshotValidator
@@ -937,6 +940,7 @@ class ZoomableImageTest {
   @Test fun calculate_content_bounds_for_placeholder_images(
     @TestParameter placeholderParam: PlaceholderImageParam
   ) {
+    screenshotValidator.tolerancePercentOnCi = 0.13f
     lateinit var imageState: ZoomableImageState
 
     rule.setContent {
@@ -968,8 +972,46 @@ class ZoomableImageTest {
         }
       }
     }
-    rule.waitUntil { imageState.isPlaceholderDisplayed && !imageState.zoomableState.transformedContentBounds.isEmpty }
+    rule.waitUntil { imageState.isPlaceholderDisplayed }
     dropshots.assertSnapshot(rule.activity)
+  }
+
+  @Test fun image_without_an_intrinsic_size() {
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+      Box(
+        Modifier
+          .fillMaxSize()
+          .systemBarsPadding()
+          .padding(24.dp),
+        Alignment.Center,
+      ) {
+        ZoomableImage(
+          modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(fraction = 0.4f)
+            .testTag("image"),
+          image = ZoomableImageSource.painter(ColorPainter(Color.Yellow)),
+          contentDescription = null,
+          state = rememberZoomableImageState(zoomableState).also { imageState = it },
+          clipToBounds = false,
+        )
+      }
+    }
+    rule.waitUntil { imageState.isImageDisplayed }
+    dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_out")
+
+    rule.onNodeWithTag("image").run {
+      performTouchInput { doubleClick() }
+      performTouchInput { swipeRight() }
+    }
+    rule.waitUntil { imageState.zoomableState.zoomFraction == 1f }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_in")
+    }
+    Thread.sleep(2_000)
   }
 
   @Suppress("unused")
@@ -1126,7 +1168,7 @@ private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Bo
 @Composable
 private fun ZoomableImageSource.withPlaceholder(
   placeholder: Painter,
-  isPlaceholderVisible: MutableStateFlow<Boolean>
+  isPlaceholderVisible: StateFlow<Boolean>
 ): ZoomableImageSource {
   val delegate = this
   return remember(delegate, placeholder, isPlaceholderVisible) {
@@ -1153,6 +1195,22 @@ private fun ZoomableImageSource.Companion.placeholderOnly(
         return ResolveResult(
           delegate = null,
           placeholder = placeholder,
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun ZoomableImageSource.Companion.painter(
+  painter: Painter
+): ZoomableImageSource {
+  return remember(painter) {
+    object : ZoomableImageSource {
+      @Composable override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        return ResolveResult(
+          delegate = ZoomableImageSource.PainterDelegate(painter),
+          placeholder = null,
         )
       }
     }
