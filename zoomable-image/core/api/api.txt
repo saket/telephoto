@@ -57,13 +57,3 @@ package me.saket.telephoto.zoomable {
 
 }
 
-package me.saket.telephoto.zoomable.internal {
-
-  public final class FixedSizePainterKt {
-  }
-
-  public final class ResolveResultKt {
-  }
-
-}
-

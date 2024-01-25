@@ -62,9 +62,6 @@ package me.saket.telephoto.zoomable {
     property public abstract float userZoom;
   }
 
-  public final class ZoomableContentTransformationKt {
-  }
-
   public final class ZoomableKt {
     method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
   }
@@ -91,25 +88,6 @@ package me.saket.telephoto.zoomable {
 
   public final class ZoomableStateKt {
     method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations);
-  }
-
-}
-
-package me.saket.telephoto.zoomable.internal {
-
-  public final class ContentPlacementKt {
-  }
-
-  public final class DimensKt {
-  }
-
-  public final class TappableAndQuickZoomableKt {
-  }
-
-  public final class TransformableKt {
-  }
-
-  public final class TransformableStateKt {
   }
 
 }

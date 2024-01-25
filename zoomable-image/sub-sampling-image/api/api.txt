@@ -2,8 +2,8 @@
 package me.saket.telephoto.subsamplingimage {
 
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ImageBitmapOptions {
-    ctor public ImageBitmapOptions(optional int config, optional androidx.compose.ui.graphics.colorspace.ColorSpace? colorSpace);
     ctor @Deprecated public ImageBitmapOptions(int config);
+    ctor public ImageBitmapOptions(optional int config, optional androidx.compose.ui.graphics.colorspace.ColorSpace? colorSpace);
     method public androidx.compose.ui.graphics.colorspace.ColorSpace? getColorSpace();
     method public int getConfig();
     property public final androidx.compose.ui.graphics.colorspace.ColorSpace? colorSpace;
@@ -31,8 +31,8 @@ package me.saket.telephoto.subsamplingimage {
   }
 
   public final class SubSamplingImageKt {
+    method @Deprecated @androidx.compose.runtime.Composable public static void SubSamplingImage(me.saket.telephoto.subsamplingimage.SubSamplingImageState state, optional androidx.compose.ui.Modifier modifier, String? contentDescription, optional float alpha, optional androidx.compose.ui.graphics.ColorFilter? colorFilter);
     method @androidx.compose.runtime.Composable public static void SubSamplingImage(me.saket.telephoto.subsamplingimage.SubSamplingImageState state, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional float alpha, optional androidx.compose.ui.graphics.ColorFilter? colorFilter);
-    method @Deprecated @androidx.compose.runtime.Composable public static void SubSamplingImage(me.saket.telephoto.subsamplingimage.SubSamplingImageState state, optional androidx.compose.ui.Modifier modifier, String contentDescription, optional float alpha, optional androidx.compose.ui.graphics.ColorFilter? colorFilter);
   }
 
   public sealed interface SubSamplingImageSource extends java.io.Closeable {
@@ -51,9 +51,6 @@ package me.saket.telephoto.subsamplingimage {
     method @androidx.compose.runtime.Stable public me.saket.telephoto.subsamplingimage.SubSamplingImageSource resource(@DrawableRes int id, optional androidx.compose.ui.graphics.ImageBitmap? preview);
   }
 
-  public final class SubSamplingImageSourceKt {
-  }
-
   @androidx.compose.runtime.Stable public sealed interface SubSamplingImageState {
     method public androidx.compose.ui.unit.IntSize? getImageSize();
     method public boolean isImageLoaded();
@@ -65,25 +62,6 @@ package me.saket.telephoto.subsamplingimage {
 
   public final class SubSamplingImageStateKt {
     method @androidx.compose.runtime.Composable public static me.saket.telephoto.subsamplingimage.SubSamplingImageState rememberSubSamplingImageState(me.saket.telephoto.subsamplingimage.SubSamplingImageSource imageSource, me.saket.telephoto.zoomable.ZoomableState zoomableState, optional me.saket.telephoto.subsamplingimage.ImageBitmapOptions imageOptions, optional me.saket.telephoto.subsamplingimage.SubSamplingImageErrorReporter errorReporter);
-  }
-
-}
-
-package me.saket.telephoto.subsamplingimage.internal {
-
-  public final class CollectionsKt {
-  }
-
-  public final class DimensKt {
-  }
-
-  public final class ImageRegionDecoderKt {
-  }
-
-  public final class RotationKt {
-  }
-
-  public final class TileGridGeneratorKt {
   }
 
 }

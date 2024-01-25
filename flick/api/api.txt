@@ -47,15 +47,5 @@ package me.saket.telephoto.flick {
     method @androidx.compose.runtime.Composable public static me.saket.telephoto.flick.FlickToDismissState rememberFlickToDismissState(optional float dismissThresholdRatio, optional boolean rotateOnDrag);
   }
 
-  public final class RealFlickToDismissStateKt {
-  }
-
-}
-
-package me.saket.telephoto.flick.internal {
-
-  public final class AnimateKt {
-  }
-
 }
 
