@@ -120,14 +120,14 @@ fun ZoomableImage(
       }
       Image(
         modifier = Modifier
+          .onSizeChanged { boundsProvider.layoutSize = it }
           .zoomable(
-            state = rememberZoomableState(),
+            state = rememberZoomableState(autoApplyTransformations = false),
             enabled = false,
             onClick = onClick,
             onLongClick = onLongClick,
             clipToBounds = clipToBounds,
-          )
-          .onSizeChanged { boundsProvider.layoutSize = it },
+          ),
         painter = painter,
         contentDescription = contentDescription,
         alignment = alignment,
