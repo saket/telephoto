@@ -42,6 +42,7 @@ uiautomator = "2.2.0"
 benchmark-macro-junit4 = "1.2.0-beta03"
 metalava = "0.3.3"  # https://github.com/tylerbwong/metalava-gradle/releases
 poko = "0.15.0" # https://github.com/drewhamilton/Poko/blob/main/CHANGELOG.md
+composeLintChecks = "1.2.0" # https://slackhq.github.io/compose-lints/changelog/
 
 [libraries]
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
@@ -111,3 +112,4 @@ assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assert
 
 circuit-runtime = { module = "com.slack.circuit:circuit-foundation", version.ref = "circuit" }
 circuit-backstack = { module = "com.slack.circuit:circuit-backstack", version.ref = "circuit" }
+composeLintChecks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }

@@ -45,7 +45,7 @@ import kotlinx.coroutines.withContext
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
-import me.saket.telephoto.util.CompositionLocalProviderReturnable
+import me.saket.telephoto.util.compositionLocalProviderReturnable
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
@@ -380,7 +380,7 @@ class CoilImageSourceTest {
     imageRequest: @Composable () -> Any
   ): StateFlow<ResolveResult> {
     return backgroundScope.launchMolecule(mode = RecompositionMode.Immediate) {
-      CompositionLocalProviderReturnable(LocalContext provides context) {
+      compositionLocalProviderReturnable(LocalContext provides context) {
         val source = ZoomableImageSource.coil(imageRequest())
         source.resolve(flowOf(canvasSize))
       }

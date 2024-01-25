@@ -138,7 +138,7 @@ fun ZoomableImage(
     )
     when (val delegate = resolved.delegate) {
       null -> {
-        Box(modifier)
+        Box(Modifier)
       }
 
       is ZoomableImageSource.PainterDelegate -> {

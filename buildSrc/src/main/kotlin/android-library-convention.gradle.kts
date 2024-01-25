@@ -24,4 +24,5 @@ android {
 
 dependencies {
   implementation(libs.compose.runtime)
+  lintChecks(libs.composeLintChecks)
 }

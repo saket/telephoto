@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
-import me.saket.telephoto.util.CompositionLocalProviderReturnable
+import me.saket.telephoto.util.compositionLocalProviderReturnable
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
@@ -297,7 +297,7 @@ class GlideImageSourceTest {
     canvasSize: Size = Size(1080f, 1920f)
   ): Flow<ResolveResult> {
     return backgroundScope.launchMolecule(mode = RecompositionMode.Immediate) {
-      CompositionLocalProviderReturnable(LocalContext provides rule.activity) {
+      compositionLocalProviderReturnable(LocalContext provides rule.activity) {
         val source = ZoomableImageSource.glide(model, requestBuilder)
         source.resolve(flowOf(canvasSize))
       }

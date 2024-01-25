@@ -42,8 +42,8 @@ import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 @Composable
 fun SubSamplingImage(
   state: SubSamplingImageState,
-  modifier: Modifier = Modifier,
   contentDescription: String?,
+  modifier: Modifier = Modifier,
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
 ) {
