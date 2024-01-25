@@ -614,7 +614,7 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun click_listeners_work() {
+  @Test fun click_listeners_work_on_a_fully_loaded_image() {
     var clicksCount = 0
     var longClicksCount = 0
     val composableTag = "zoomable_image"
@@ -631,8 +631,8 @@ class ZoomableImageTest {
         contentDescription = null,
         state = rememberZoomableImageState(state),
         contentScale = ContentScale.Inside,
-        onClick = { ++clicksCount },
-        onLongClick = { ++longClicksCount }
+        onClick = { clicksCount++ },
+        onLongClick = { longClicksCount++ }
       )
     }
 
@@ -683,6 +683,39 @@ class ZoomableImageTest {
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
     rule.runOnIdle {
       assertThat(longClicksCount).isEqualTo(3)
+    }
+  }
+
+  @Test fun click_listeners_work_on_a_placeholder_image() {
+    var clicksCount = 0
+    var longClicksCount = 0
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.placeholderOnly(ColorPainter(Color.Yellow)),
+        contentDescription = null,
+        state = rememberZoomableImageState(zoomableState).also { imageState = it },
+        onClick = { clicksCount++ },
+        onLongClick = { longClicksCount++ },
+      )
+    }
+    rule.waitUntil { imageState.isPlaceholderDisplayed }
+
+    rule.onNodeWithTag("image").performClick()
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(clicksCount).isEqualTo(1)
+    }
+
+    rule.onNodeWithTag("image").performTouchInput { longClick() }
+    rule.runOnIdle {
+      assertThat(clicksCount).isEqualTo(1)
+      assertThat(longClicksCount).isEqualTo(1)
     }
   }
 
@@ -1011,7 +1044,6 @@ class ZoomableImageTest {
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_in")
     }
-    Thread.sleep(2_000)
   }
 
   @Suppress("unused")
