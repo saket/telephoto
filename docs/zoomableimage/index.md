@@ -14,6 +14,8 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 - Compatibility with nested scrolling
 - Click listeners
 
+### Installation
+
 === "Coil"
     ```groovy
     implementation("me.saket.telephoto:zoomable-image-coil:{{ versions.telephoto }}")

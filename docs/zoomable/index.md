@@ -9,6 +9,8 @@ A `Modifier` for handling pan & zoom gestures, designed to be shared across all 
 - Compatibility with nested scrolling
 - Click listeners
 
+### Installation
+
 ```groovy
 implementation("me.saket.telephoto:zoomable:{{ versions.telephoto }}")
 ```
