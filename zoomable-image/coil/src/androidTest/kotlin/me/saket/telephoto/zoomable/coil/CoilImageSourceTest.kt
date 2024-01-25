@@ -14,6 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
+import androidx.compose.ui.graphics.colorspace.ColorSpace
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
+import androidx.compose.ui.graphics.colorspace.Rgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
@@ -76,6 +79,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import android.graphics.ColorSpace as AndroidColorSpace
 import coil.size.Size as CoilSize
 
 @RunWith(TestParameterInjector::class)
@@ -183,13 +187,19 @@ class CoilImageSourceTest {
         .data(serverRule.server.url("full_image.png"))
         .crossfade(9_000)
         .bitmapConfig(Bitmap.Config.RGB_565)
+        .colorSpace(AndroidColorSpace.get(AndroidColorSpace.Named.SRGB))
         .build()
     }.test {
       skipItems(1) // Default item.
       with(awaitItem()) {
         val delegate = delegate as ZoomableImageSource.SubSamplingDelegate
         assertThat(delegate.source.preview).isNotNull()
-        assertThat(delegate.imageOptions).isEqualTo(ImageBitmapOptions(config = ImageBitmapConfig.Rgb565))
+        assertThat(delegate.imageOptions).isEqualTo(
+          ImageBitmapOptions(
+            config = ImageBitmapConfig.Rgb565,
+            colorSpace = ColorSpaces.Srgb,
+          )
+        )
         assertThat(crossfadeDuration).isEqualTo(9.seconds)
       }
     }

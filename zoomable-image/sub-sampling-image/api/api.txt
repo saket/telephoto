@@ -2,8 +2,11 @@
 package me.saket.telephoto.subsamplingimage {
 
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ImageBitmapOptions {
-    ctor public ImageBitmapOptions(optional int config);
+    ctor public ImageBitmapOptions(optional int config, optional androidx.compose.ui.graphics.colorspace.ColorSpace? colorSpace);
+    ctor @Deprecated public ImageBitmapOptions(int config);
+    method public androidx.compose.ui.graphics.colorspace.ColorSpace? getColorSpace();
     method public int getConfig();
+    property public final androidx.compose.ui.graphics.colorspace.ColorSpace? colorSpace;
     property public final int config;
     field public static final me.saket.telephoto.subsamplingimage.ImageBitmapOptions.Companion Companion;
   }

@@ -2,8 +2,10 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
+import android.os.Build
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toAndroidColorSpace
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
@@ -34,6 +36,9 @@ internal class AndroidImageRegionDecoder private constructor(
     val options = BitmapFactory.Options().apply {
       inSampleSize = region.sampleSize.size
       inPreferredConfig = imageOptions.config.toAndroidConfig()
+      if (Build.VERSION.SDK_INT >= 26) {
+        inPreferredColorSpace = imageOptions.colorSpace?.toAndroidColorSpace()
+      }
     }
 
     val bounds = region.bounds.rotateBy(

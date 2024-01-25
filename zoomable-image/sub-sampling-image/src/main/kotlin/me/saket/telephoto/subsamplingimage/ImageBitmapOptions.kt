@@ -4,13 +4,24 @@ import android.graphics.Bitmap
 import android.os.Build.VERSION.SDK_INT
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.ImageBitmapConfig
+import androidx.compose.ui.graphics.colorspace.ColorSpace
+import androidx.compose.ui.graphics.toComposeColorSpace
 import dev.drewhamilton.poko.Poko
+
+/**
+ * @param colorSpace If this is null, Android's decoder will pick either the color space
+ * embedded in the image or the color space best suited for the requested image configuration.
+ */
 
 @Poko
 @Immutable
 class ImageBitmapOptions(
-  val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888
+  val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888,
+  val colorSpace: ColorSpace? = null,
 ) {
+  @Deprecated("", level = DeprecationLevel.HIDDEN)  // For binary compatibility.
+  constructor(config: ImageBitmapConfig) : this(config, null)
+
   companion object {
     val Default = ImageBitmapOptions()
   }
@@ -18,10 +29,12 @@ class ImageBitmapOptions(
 
 fun ImageBitmapOptions(from: Bitmap): ImageBitmapOptions {
   return ImageBitmapOptions(
-    config = from.config.toComposeConfig()
+    config = from.config.toComposeConfig(),
+    colorSpace = if (SDK_INT >= 26) from.colorSpace?.toComposeColorSpace() else null,
   )
 }
 
+// TODO: remove when https://issuetracker.google.com/issues/322269945 is resolved
 private fun Bitmap.Config.toComposeConfig(): ImageBitmapConfig {
   return when {
     SDK_INT >= 26 && this == Bitmap.Config.HARDWARE -> ImageBitmapConfig.Gpu
