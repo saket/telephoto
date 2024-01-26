@@ -1,6 +1,7 @@
 package me.saket.telephoto.sample.viewer
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -11,6 +12,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,10 +25,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 import me.saket.telephoto.flick.FlickToDismiss
@@ -102,10 +104,10 @@ private fun MediaPage(
     when (model) {
       is MediaItem.Image -> {
         // TODO: handle errors here.
-        // TODO: show loading.
+        val imageState = rememberZoomableImageState(zoomableState)
         ZoomableAsyncImage(
           modifier = modifier,
-          state = rememberZoomableImageState(zoomableState),
+          state = imageState,
           model = ImageRequest.Builder(LocalContext.current)
             .data(model.fullSizedUrl)
             .placeholderMemoryCacheKey(model.placeholderImageUrl)
@@ -113,6 +115,13 @@ private fun MediaPage(
             .build(),
           contentDescription = model.caption,
         )
+
+        AnimatedVisibility(
+          modifier = Modifier.align(Alignment.Center),
+          visible = !imageState.isImageDisplayed
+        ) {
+          CircularProgressIndicator(color = Color.White)
+        }
       }
     }
   }
