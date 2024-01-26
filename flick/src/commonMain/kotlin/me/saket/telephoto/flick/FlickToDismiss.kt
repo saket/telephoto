@@ -3,6 +3,7 @@ package me.saket.telephoto.flick
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,7 +23,7 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
 fun FlickToDismiss(
   state: FlickToDismissState,
   modifier: Modifier = Modifier,
-  content: @Composable () -> Unit,
+  content: @Composable BoxScope.() -> Unit,
 ) {
   val scope = rememberCoroutineScope()
   val haptic = LocalHapticFeedback.current
