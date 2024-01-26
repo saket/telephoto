@@ -19,7 +19,7 @@ import kotlin.time.Duration
  */
 @Composable
 fun rememberFlickToDismissState(
-  dismissThresholdRatio: Float = 0.3f,
+  dismissThresholdRatio: Float = 0.2f,
   rotateOnDrag: Boolean = true,
 ): FlickToDismissState {
   return remember(dismissThresholdRatio, rotateOnDrag) {

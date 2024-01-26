@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+  implementation(projects.flick)
   implementation(projects.zoomableImage.coil)
   implementation(projects.zoomableImage.glide)
 
