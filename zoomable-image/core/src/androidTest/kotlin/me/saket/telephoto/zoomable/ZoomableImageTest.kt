@@ -7,6 +7,9 @@ import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.DraggableState
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -874,6 +877,48 @@ class ZoomableImageTest {
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
       assertThat(onClickCalled).isTrue()
+    }
+  }
+
+  @Test fun gestures_are_swallowed_on_a_placeholder_image() {
+    lateinit var imageState: ZoomableImageState
+
+    val dragEvents = mutableListOf<String>()
+    val draggableState = DraggableState { dy ->
+      dragEvents.add("dragged by $dy")
+    }
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+      Box(
+        Modifier
+          .draggable(
+            state = draggableState,
+            orientation = Orientation.Vertical,
+            onDragStarted = { dragEvents.add("drag started") },
+          )
+          .testTag("image_parent")
+      ) {
+        ZoomableImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImageSource.placeholderOnly(ColorPainter(Color.Yellow)),
+          contentDescription = null,
+          state = rememberZoomableImageState(zoomableState).also { imageState = it },
+        )
+      }
+    }
+    rule.waitUntil { imageState.isPlaceholderDisplayed }
+
+    rule.onNodeWithTag("image_parent").performTouchInput {
+      quickZoomIn()
+    }
+    rule.runOnIdle {
+      assertWithMessage(
+        "Quick-zoom gestures made before the image is fully loaded should not be ignored. This will cause " +
+          "FlickToDismiss() to accidentally flick the image. Same for other similar gesture parents."
+      ).that(dragEvents).isEmpty()
     }
   }
 

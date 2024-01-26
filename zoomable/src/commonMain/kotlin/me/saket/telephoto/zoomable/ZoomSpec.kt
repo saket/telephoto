@@ -17,7 +17,8 @@ class ZoomSpec(
   /**
    * Whether to apply rubber banding to zoom gestures when content is over or under zoomed
    * as a form of visual feedback that the content can't be zoomed any further. When set to false,
-   * content will keep zooming in a free-form manner even when it goes beyond its boundaries.
+   * content will keep zooming in a free-form manner even when it goes beyond its boundaries
+   * (until the gesture is released).
    */
   val preventOverOrUnderZoom: Boolean = true,
 ) {

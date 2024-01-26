@@ -122,8 +122,10 @@ fun ZoomableImage(
         modifier = Modifier
           .onSizeChanged { boundsProvider.layoutSize = it }
           .zoomable(
+            // Handle gestures, but do ignore their transformations. This will prevent
+            // FlickToDismiss() (and other gesture containers) from accidentally dismissing
+            // this image when a quick-zoom gesture is made before the image is fully loaded.
             state = rememberZoomableState(autoApplyTransformations = false),
-            enabled = false,
             onClick = onClick,
             onLongClick = onLongClick,
             clipToBounds = clipToBounds,
