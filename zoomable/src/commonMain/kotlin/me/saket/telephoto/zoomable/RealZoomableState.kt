@@ -370,9 +370,8 @@ internal class RealZoomableState internal constructor(
         centroid = Offset.Zero,
       )
     } else {
-      transformableState.transform(MutatePriority.PreventUserInput) {
-        gestureState = null
-      }
+      gestureState = null
+      refreshContentTransformation()
     }
   }
 

@@ -22,6 +22,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -526,6 +527,7 @@ class ZoomableImageTest {
     val maxZoomFactor = 2f
     var imageScale = ScaleFactor.Unspecified
     val resetTriggers = Channel<Unit>()
+    val transformations = mutableListOf<ZoomableContentTransformation>()
 
     rule.setContent {
       val zoomableState = rememberZoomableState(
@@ -539,7 +541,9 @@ class ZoomableImageTest {
         image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
         contentDescription = null,
       )
-
+      SideEffect {
+        transformations.add(zoomableState.contentTransformation)
+      }
       LaunchedEffect(zoomableState.contentTransformation) {
         imageScale = zoomableState.contentTransformation.scale
       }
@@ -556,9 +560,15 @@ class ZoomableImageTest {
       assertThat(imageScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
     }
 
+    transformations.clear()
     resetTriggers.trySend(Unit)
+
     rule.runOnIdle {
       assertThat(imageScale).isEqualTo(ScaleFactor(1f, 1f))
+
+      assertWithMessage(
+        "Resetting the zoom shouldn't cause the transformations to become unusable. This will result in UI flickers"
+      ).that(transformations.filter { !it.isSpecified }).isEmpty()
     }
   }
 

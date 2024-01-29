@@ -43,7 +43,6 @@ fun rememberZoomableState(
       state.contentAlignment,
       state.contentScale,
       state.layoutDirection,
-      state.gestureState == null,
     ) {
       state.refreshContentTransformation()
     }
