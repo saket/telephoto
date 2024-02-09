@@ -90,12 +90,17 @@ fun ZoomableImage(
       label = "Crossfade animation",
     )
 
-    // If a state restoration happened and the image was previously zoomed in, the placeholder
-    // will no longer be aligned correctly. It'd be nice if the placeholder can also be kept in
-    // sync with the zoomable state once https://github.com/saket/telephoto/issues/8 is fixed.
+    // If a state restoration happened and the image was previously zoomed in, the placeholder will
+    // no longer be aligned correctly and can't be displayed anymore. It'd be nice if the placeholder
+    // can also be kept in sync with the zoomable state, but that's a hard problem to solve.
     var wasImageZoomedIn by rememberSaveable { mutableStateOf(false) }
-    if ((state.zoomableState.zoomFraction ?: 0f) > 0f) {
-      wasImageZoomedIn = true
+    DisposableEffect(Unit) {
+      onDispose {
+        // Note to self: it is important that this value update happens only after
+        // the composition is disposed. Otherwise the placeholder will not be
+        // displayed for images that are displayed in full-zoom by default.
+        wasImageZoomedIn = state.zoomableState.zoomFraction.let { it != null && it > 0f }
+      }
     }
 
     state.isImageDisplayed = when (resolved.delegate) {
