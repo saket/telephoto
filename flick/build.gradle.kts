@@ -6,14 +6,7 @@ plugins {
   id("published-library-convention")
 }
 
-@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
-  // https://kotlinlang.org/docs/multiplatform-hierarchy.html#default-hierarchy
-  targetHierarchy.default()
-
-  android()
-  jvm("desktop")
-
   sourceSets {
     val commonMain by getting {
       dependencies {

@@ -8,7 +8,7 @@ plugins {
 }
 
 kotlin {
-  android {
+  androidTarget {
     publishLibraryVariants("release")
     compilations.configureEach {
       kotlinOptions {
