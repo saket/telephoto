@@ -130,7 +130,10 @@ fun ZoomableImage(
             // Handle gestures, but do ignore their transformations. This will prevent
             // FlickToDismiss() (and other gesture containers) from accidentally dismissing
             // this image when a quick-zoom gesture is made before the image is fully loaded.
-            state = rememberZoomableState(autoApplyTransformations = false),
+            state = rememberZoomableState(
+              zoomSpec = ZoomSpec(maxZoomFactor = 1f, preventOverOrUnderZoom = false),
+              autoApplyTransformations = false,
+            ),
             onClick = onClick,
             onLongClick = onLongClick,
             clipToBounds = clipToBounds,

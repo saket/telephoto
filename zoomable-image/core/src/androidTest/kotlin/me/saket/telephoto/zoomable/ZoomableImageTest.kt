@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -396,6 +397,46 @@ class ZoomableImageTest {
     rule.mainClock.advanceTimeByFrame()
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
+    }
+  }
+
+  @Test fun pager_can_be_scrolled_when_the_placeholder_is_visible(
+    @TestParameter scrollDirection: ScrollDirection
+  ) {
+    val assetNames = listOf(
+      "forest_fox_1000.jpg",
+      "fox_1500.jpg",
+      "cat_1920.jpg"
+    )
+
+    lateinit var pagerState: PagerState
+
+    rule.setContent {
+      HorizontalPager(
+        modifier = Modifier.testTag("pager"),
+        state = rememberPagerState(initialPage = 1, pageCount = { assetNames.size }).also { pagerState = it },
+      ) { pageNum ->
+        ZoomableImage(
+          modifier = Modifier.fillMaxSize(),
+          image = ZoomableImageSource.placeholderOnly(assetPainter(assetNames[pageNum])),
+          state = rememberZoomableImageState(
+            rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 1f))
+          ),
+          contentDescription = null,
+        )
+      }
+    }
+
+    rule.onNodeWithTag("pager").performTouchInput {
+      swipeWithVelocity(scrollDirection)
+    }
+    rule.mainClock.advanceTimeByFrame()
+    rule.runOnIdle {
+      val expectedPageNum = when (scrollDirection) {
+        RightToLeft -> 2
+        LeftToRight -> 0
+      }
+      assertThat(pagerState.settledPage).isEqualTo(expectedPageNum)
     }
   }
 
@@ -890,7 +931,7 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun gestures_are_swallowed_on_a_placeholder_image() {
+  @Test fun zoom_gestures_are_swallowed_on_a_placeholder_image() {
     lateinit var imageState: ZoomableImageState
 
     val dragEvents = mutableListOf<String>()
@@ -899,7 +940,6 @@ class ZoomableImageTest {
     }
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
       Box(
         Modifier
           .draggable(
@@ -913,16 +953,22 @@ class ZoomableImageTest {
           modifier = Modifier
             .fillMaxSize()
             .testTag("image"),
-          image = ZoomableImageSource.placeholderOnly(ColorPainter(Color.Yellow)),
+          image = ZoomableImageSource.placeholderOnly(assetPainter("fox_250.jpg")),
           contentDescription = null,
-          state = rememberZoomableImageState(zoomableState).also { imageState = it },
+          state = rememberZoomableImageState().also { imageState = it },
         )
       }
     }
     rule.waitUntil { imageState.isPlaceholderDisplayed }
 
-    rule.onNodeWithTag("image_parent").performTouchInput {
-      quickZoomIn()
+    rule.onNodeWithTag("image_parent").run {
+      performTouchInput {
+        val touchSlop = viewConfiguration.touchSlop.toInt()
+        pinchToZoomBy(IntOffset(touchSlop + 2, touchSlop + 2))
+      }
+      performTouchInput {
+        quickZoomIn()
+      }
     }
     rule.runOnIdle {
       assertWithMessage(
