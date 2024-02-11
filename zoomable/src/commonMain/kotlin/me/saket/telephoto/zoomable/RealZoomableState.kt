@@ -47,6 +47,7 @@ import me.saket.telephoto.zoomable.internal.coerceIn
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
 import me.saket.telephoto.zoomable.internal.maxScale
+import me.saket.telephoto.zoomable.internal.minScale
 import me.saket.telephoto.zoomable.internal.minus
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
@@ -230,7 +231,7 @@ internal class RealZoomableState internal constructor(
         it
       }
     }
-    check(newZoom.finalZoom().isPositiveAndFinite()) {
+    check(newZoom.finalZoom().let { it.isPositiveAndFinite() && it.minScale > 0f }) {
       "New zoom is invalid/infinite = $newZoom. ${collectDebugInfoForIssue41("zoomDelta" to zoomDelta)}"
     }
 
@@ -521,7 +522,7 @@ internal class RealZoomableState internal constructor(
       extras.forEach { (key, value) ->
         appendLine("$key = $value")
       }
-      appendLine("rawTransformation = $gestureState")
+      appendLine("gestureState = $gestureState")
       appendLine("contentTransformation = $contentTransformation")
       appendLine("contentScale = $contentScale")
       appendLine("contentAlignment = $contentAlignment")
