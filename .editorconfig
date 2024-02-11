@@ -1,4 +1,10 @@
 [*]
 indent_size = 2
+ij_continuation_indent_size = 2
 insert_final_newline = true
 max_line_length = 120
+
+[*.kt]
+ij_kotlin_line_break_after_multiline_when_entry = false
+ij_kotlin_method_annotation_wrap = off
+ij_kotlin_field_annotation_wrap = off
