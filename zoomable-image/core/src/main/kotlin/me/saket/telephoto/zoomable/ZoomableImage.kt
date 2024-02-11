@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalInspectionMode
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
@@ -84,11 +86,15 @@ fun ZoomableImage(
     modifier = modifier.onMeasure { canvasSize = it },
     propagateMinConstraints = true,
   ) {
-    val animatedAlpha by animateFloatAsState(
-      targetValue = if (state.isImageDisplayed) 1f else 0f,
-      animationSpec = tween(resolved.crossfadeDurationMs),
-      label = "Crossfade animation",
-    )
+    val animatedAlpha by if (LocalInspectionMode.current) {
+      remember { mutableFloatStateOf(1f) }
+    } else {
+      animateFloatAsState(
+        targetValue = if (state.isImageDisplayed) 1f else 0f,
+        animationSpec = tween(resolved.crossfadeDurationMs),
+        label = "Crossfade animation",
+      )
+    }
 
     // If a state restoration happened and the image was previously zoomed in, the placeholder will
     // no longer be aligned correctly and can't be displayed anymore. It'd be nice if the placeholder
