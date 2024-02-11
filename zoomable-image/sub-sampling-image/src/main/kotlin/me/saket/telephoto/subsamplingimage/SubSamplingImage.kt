@@ -129,22 +129,3 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
 @Stable
 private val Constraints.hasFixedSize
   get() = hasFixedWidth && hasFixedHeight
-
-@Deprecated("", level = DeprecationLevel.HIDDEN)  // For binary compatibility.
-@Composable
-@SuppressLint("ComposeParameterOrder")
-fun SubSamplingImage(
-  state: SubSamplingImageState,
-  modifier: Modifier = Modifier,
-  contentDescription: String?,
-  alpha: Float = DefaultAlpha,
-  colorFilter: ColorFilter? = null,
-) {
-  SubSamplingImage(
-    state,
-    contentDescription,
-    modifier,
-    alpha,
-    colorFilter
-  )
-}
