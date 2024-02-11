@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isFinite
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -348,9 +349,19 @@ internal class RealZoomableState internal constructor(
     val scaledTopLeft = unscaledContentBounds.topLeft * proposedZoom
 
     // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-    return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
-      val expectedDrawRegion = Rect(offset = it, size = unscaledContentBounds.size * proposedZoom)
+    return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) { offset ->
+      val expectedDrawRegion = Rect(offset, unscaledContentBounds.size * proposedZoom).throwIfDrawRegionIsTooLarge()
       expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
+    }
+  }
+
+  private fun Rect.throwIfDrawRegionIsTooLarge(): Rect {
+    return also {
+      check (size.isSpecified) {
+        "The zoomable content is too large to safely calculate its draw region. This can happen if you're using" +
+          " an unusually large value for ZoomSpec#maxZoomFactor (for e.g., Float.MAX_VALUE). Please file an issue" +
+          " on https://github.com/saket/telephoto/issues if you think this is a mistake."
+      }
     }
   }
 
