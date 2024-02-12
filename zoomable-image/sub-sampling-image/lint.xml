@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<lint>
-  <!-- Lint's cmd-line tool is reporting this as an error but it's already suppressed in code. -->
-  <issue id="ComposeParameterOrder">
-    <ignore path="src/main/kotlin/me/saket/telephoto/subsamplingimage/deprecated.kt" />
-  </issue>
-</lint>
