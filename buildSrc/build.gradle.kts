@@ -21,4 +21,10 @@ dependencies  {
   implementation(libs.plugin.emulatorWtf)
   implementation(libs.plugin.metalava)
   implementation(libs.plugin.poko)
+
+  if (System.getenv("CI") == null) {
+    implementation(libs.plugin.jetbrains.compose)
+  } else {
+    implementation("org.jetbrains.compose:compose-gradle-plugin:1.6.0-beta02")
+  }
 }
