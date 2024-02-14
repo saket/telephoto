@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
@@ -135,7 +136,12 @@ class GlideImageSourceTest {
       with(awaitItem()) {
         val delegate = delegate as SubSamplingDelegate
         assertThat(delegate.source.preview).isNotNull()
-        assertThat(delegate.imageOptions).isEqualTo(ImageBitmapOptions(config = ImageBitmapConfig.Argb8888))
+        assertThat(delegate.imageOptions).isEqualTo(
+          ImageBitmapOptions(
+            config = ImageBitmapConfig.Argb8888,
+            colorSpace = ColorSpaces.Srgb,
+          )
+        )
         assertThat(crossfadeDuration).isEqualTo(9.seconds)
       }
     }
