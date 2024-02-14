@@ -55,14 +55,14 @@ fun Modifier.zoomable(
       Modifier.clipToBounds()
     }
     .onSizeChanged { state.contentLayoutSize = it.toSize() }
-    .thenIf(state.isReadyToInteract) {
+    .then(
       ZoomableElement(
         state = state,
         enabled = enabled,
         onClick = onClick,
         onLongClick = onLongClick,
       )
-    }
+    )
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation(state.contentTransformation)
     }
@@ -189,6 +189,6 @@ private class ZoomableNode(
   }
 }
 
-private fun Modifier.thenIf(predicate: Boolean, other: () -> Modifier): Modifier {
+private inline fun Modifier.thenIf(predicate: Boolean, other: () -> Modifier): Modifier {
   return if (predicate) this.then(other()) else this
 }
