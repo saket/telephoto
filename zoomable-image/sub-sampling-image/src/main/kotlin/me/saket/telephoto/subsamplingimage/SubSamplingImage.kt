@@ -1,6 +1,5 @@
 package me.saket.telephoto.subsamplingimage
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
