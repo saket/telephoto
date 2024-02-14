@@ -108,7 +108,7 @@ interface ZoomableContentLocation {
   object Unspecified : ZoomableContentLocation {
     override fun size(layoutSize: Size) = Size.Unspecified
     override fun location(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
-    override fun toString(): String = this::class.simpleName!!
+    override fun toString(): String = "ZoomableContentLocation.Unspecified"
   }
 
   /**
@@ -121,6 +121,7 @@ interface ZoomableContentLocation {
   object SameAsLayoutBounds : ZoomableContentLocation {
     override fun size(layoutSize: Size): Size = layoutSize
     override fun location(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
+    override fun toString(): String = "ZoomableContentLocation.SameAsLayoutBounds"
   }
 
   fun size(layoutSize: Size): Size
