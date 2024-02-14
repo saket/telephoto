@@ -75,7 +75,11 @@ internal class RealFlickToDismissState(
   internal fun willDismissOnRelease(velocity: Float): Boolean {
     return when (val state = gestureState) {
       !is Dragging -> false
-      else -> state.willDismissOnRelease || abs(velocity) >= contentSize.height * dismissThresholdRatio
+      else -> {
+        // Calculate a velocity threshold that excludes short flings.
+        val thresholdVelocity = 10f * contentSize.height * dismissThresholdRatio
+        (state.willDismissOnRelease || abs(velocity) >= thresholdVelocity)
+      }
     }
   }
 
@@ -118,6 +122,7 @@ internal class RealFlickToDismissState(
     }
   }
 
+  @Suppress("ConstPropertyName")
   companion object {
     /** Differences below this value are ignored when comparing two zoom values. */
     private const val ZoomDeltaEpsilon = 0.01f
