@@ -669,8 +669,8 @@ class ZoomableImageTest {
   }
 
   @Test fun click_listeners_work_on_a_fully_loaded_image() {
-    var clicksCount = 0
-    var longClicksCount = 0
+    var clickCount = 0
+    var longClickCount = 0
     val composableTag = "zoomable_image"
 
     rule.setContent {
@@ -685,8 +685,8 @@ class ZoomableImageTest {
         contentDescription = null,
         state = rememberZoomableImageState(state),
         contentScale = ContentScale.Inside,
-        onClick = { clicksCount++ },
-        onLongClick = { longClicksCount++ }
+        onClick = { clickCount++ },
+        onLongClick = { longClickCount++ }
       )
     }
 
@@ -694,18 +694,18 @@ class ZoomableImageTest {
     rule.runOnIdle {
       // Clicks are delayed until they're confirmed to not be double clicks
       // so make sure that onClick does not get called prematurely.
-      assertThat(clicksCount).isEqualTo(0)
+      assertThat(clickCount).isEqualTo(0)
     }
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
-      assertThat(clicksCount).isEqualTo(1)
-      assertThat(longClicksCount).isEqualTo(0)
+      assertThat(clickCount).isEqualTo(1)
+      assertThat(longClickCount).isEqualTo(0)
     }
 
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
     rule.runOnIdle {
-      assertThat(clicksCount).isEqualTo(1)
-      assertThat(longClicksCount).isEqualTo(1)
+      assertThat(clickCount).isEqualTo(1)
+      assertThat(longClickCount).isEqualTo(1)
     }
 
     // Regression testing for https://github.com/saket/telephoto/issues/18.
@@ -716,12 +716,12 @@ class ZoomableImageTest {
     rule.onNodeWithTag(composableTag).performClick()
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
-      assertThat(clicksCount).isEqualTo(2)
+      assertThat(clickCount).isEqualTo(2)
     }
 
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
     rule.runOnIdle {
-      assertThat(longClicksCount).isEqualTo(2)
+      assertThat(longClickCount).isEqualTo(2)
     }
 
     // Perform double click to zoom out and make sure click listeners still work
@@ -731,12 +731,12 @@ class ZoomableImageTest {
     rule.onNodeWithTag(composableTag).performClick()
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
-      assertThat(clicksCount).isEqualTo(3)
+      assertThat(clickCount).isEqualTo(3)
     }
 
     rule.onNodeWithTag(composableTag).performTouchInput { longClick() }
     rule.runOnIdle {
-      assertThat(longClicksCount).isEqualTo(3)
+      assertThat(longClickCount).isEqualTo(3)
     }
   }
 
