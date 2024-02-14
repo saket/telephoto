@@ -216,7 +216,8 @@ private suspend fun AwaitPointerEventScope.detectZoom(
         val rotationMotion = abs(rotation * PI.toFloat() * centroidSize / 180f)
         val panMotion = pan.getDistance()
 
-        if (zoomMotion > touchSlop ||
+        if (event.changes.size > 1 ||
+          zoomMotion > touchSlop ||
           rotationMotion > touchSlop ||
           (panMotion > touchSlop && canPan.invoke(panChange))
         ) {

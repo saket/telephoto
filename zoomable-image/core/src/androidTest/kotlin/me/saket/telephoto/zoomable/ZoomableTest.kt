@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pinch
 import androidx.compose.ui.unit.dp
 import com.dropbox.dropshots.Dropshots
 import com.google.common.truth.Truth.assertThat
@@ -79,7 +82,6 @@ class ZoomableTest {
       }
       Box(
         Modifier
-          .padding(16.dp)
           .fillMaxSize()
           .zoomable(
             state = zoomableState,
@@ -93,6 +95,38 @@ class ZoomableTest {
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
       assertThat(clickCount).isEqualTo(1)
+    }
+  }
+
+  @Test fun consume_gestures_immediately_if_multiple_pointer_events_are_detected() {
+    lateinit var state: ZoomableState
+
+    rule.setContent {
+      Box(
+        Modifier
+          .fillMaxSize()
+          .zoomable(rememberZoomableState().also { state = it })
+          .testTag("content")
+      )
+    }
+
+    rule.runOnIdle {
+      assertThat(state.zoomFraction).isEqualTo(0f)
+    }
+
+    val touchSlop = ViewConfiguration.get(rule.activity).scaledTouchSlop
+    rule.onNodeWithTag("content").performTouchInput {
+      val distance = Offset(x = 0f, y = 1f) // I should use touchSlop here, but https://issuetracker.google.com/issues/275752829.
+      assertThat(distance.getDistance()).isLessThan(touchSlop)
+      pinch(
+        start0 = center,
+        start1 = center,
+        end0 = center,
+        end1 = center + distance,
+      )
+    }
+    rule.runOnIdle {
+      assertThat(state.zoomFraction).isGreaterThan(0f)
     }
   }
 }
