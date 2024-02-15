@@ -76,8 +76,7 @@ internal class RealFlickToDismissState(
     return when (val state = gestureState) {
       !is Dragging -> false
       else -> {
-        // Calculate a velocity threshold that excludes short flings.
-        val thresholdVelocity = 10f * contentSize.height * dismissThresholdRatio
+        val thresholdVelocity = contentSize.height * dismissThresholdRatio * FlingSlopMultiplier
         (state.willDismissOnRelease || abs(velocity) >= thresholdVelocity)
       }
     }
@@ -128,6 +127,8 @@ internal class RealFlickToDismissState(
     private const val ZoomDeltaEpsilon = 0.01f
 
     private const val MaxRotation = 20f
+
+    internal const val FlingSlopMultiplier = 10f // A large enough value to exclude short flings.
   }
 }
 

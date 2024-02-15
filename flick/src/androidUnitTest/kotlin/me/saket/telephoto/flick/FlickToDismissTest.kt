@@ -42,8 +42,11 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Idle
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
-import me.saket.telephoto.flick.FlickToDismissTest.DragStartLocationParam.*
-import me.saket.telephoto.flick.FlickToDismissTest.SwipeDirectionParam.*
+import me.saket.telephoto.flick.FlickToDismissTest.DragStartLocationParam.DragStartedOnLeftSide
+import me.saket.telephoto.flick.FlickToDismissTest.DragStartLocationParam.DragStartedOnRightSide
+import me.saket.telephoto.flick.FlickToDismissTest.SwipeDirectionParam.DownwardSwipe
+import me.saket.telephoto.flick.FlickToDismissTest.SwipeDirectionParam.UpwardSwipe
+import me.saket.telephoto.flick.RealFlickToDismissState.Companion.FlingSlopMultiplier
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -165,7 +168,7 @@ class FlickToDismissTest {
 
     // When a fling is registered, the content can be dismissed if the velocity
     // is sufficient even if the content wasn't dragged past its threshold distance.
-    val flingVelocity = state.contentSize.height * state.dismissThresholdRatio + 1f
+    val flingVelocity = (state.contentSize.height * state.dismissThresholdRatio + 1f) * FlingSlopMultiplier
     assertThat(state.willDismissOnRelease(velocity = flingVelocity)).isTrue()
 
     val dragNeededToDismiss = state.contentSize.height * state.dismissThresholdRatio + 1f
