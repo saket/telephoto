@@ -9,9 +9,15 @@ android {
 }
 
 dependencies {
+  api(libs.truth) {
+    // Workaround for:
+    // Duplicate class com.google.common.util.concurrent.ListenableFuture found in modules guava-33.0.0-android
+    // (com.google.guava:guava:33.0.0-android) and listenablefuture-1.0 (com.google.guava:listenablefuture:1.0)
+    exclude group: 'com.google.guava'
+  }
+
   implementation(libs.dropshots)
   implementation(libs.dropboxDiffer)
   implementation(libs.compose.ui.test.junit)
   implementation(libs.androidx.test.runner) // Needed for Screenshot.capture().
-  implementation(libs.truth)
 }
