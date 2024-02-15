@@ -130,6 +130,7 @@ internal data class FileImageSource(
 
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return ParcelFileDescriptor.open(path.toFile(), ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
+      @Suppress("DEPRECATION")
       BitmapRegionDecoder.newInstance(fd.fileDescriptor, /* ignored */ false)
     }
   }
@@ -154,6 +155,7 @@ internal data class AssetImageSource(
       check (stream is AssetManager.AssetInputStream) {
         error("BitmapRegionDecoder won't be able to optimize reading of this asset")
       }
+      @Suppress("DEPRECATION")
       BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
     }
   }
@@ -172,6 +174,7 @@ internal data class ResourceImageSource(
 
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return peek(context).use { stream ->
+      @Suppress("DEPRECATION")
       BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
     }
   }
@@ -188,6 +191,7 @@ internal data class UriImageSource(
   }
 
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
+    @Suppress("DEPRECATION")
     return peek(context).use {
       stream -> BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
     }
@@ -207,6 +211,7 @@ internal data class RawImageSource(
 
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return source().buffer().inputStream().use { stream ->
+      @Suppress("DEPRECATION")
       BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
     }
   }

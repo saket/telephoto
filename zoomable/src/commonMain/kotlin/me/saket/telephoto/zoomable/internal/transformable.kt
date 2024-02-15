@@ -27,13 +27,9 @@ import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.runtime.State
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
@@ -88,7 +84,7 @@ internal data class TransformableElement(
   private val lockRotationOnZoomPan: Boolean,
   private val enabled: Boolean,
   private val onTransformStopped: (velocity: Velocity) -> Unit = {},
-): ModifierNodeElement<TransformableNode>() {
+) : ModifierNodeElement<TransformableNode>() {
   override fun create(): TransformableNode = TransformableNode(
     state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped)
 
@@ -112,7 +108,7 @@ internal class TransformableNode(
   private var lockRotationOnZoomPan: Boolean,
   private var enabled: Boolean,
   private var onTransformStopped: (velocity: Velocity) -> Unit = {},
-): DelegatingNode() {
+) : DelegatingNode() {
 
   private val updatedCanPan: (Offset) -> Boolean = { canPan.invoke(it) }
   private val updatedOnTransformStopped: (Velocity) -> Unit = { onTransformStopped.invoke(it) }
@@ -260,14 +256,4 @@ private sealed class TransformEvent {
     val rotationChange: Float,
     val centroid: Offset,
   ) : TransformEvent()
-}
-
-// Workaround for https://github.com/saket/telephoto/issues/53.
-// Also see https://issuetracker.google.com/issues/309841148.
-private fun VelocityTracker.calculateVelocity(maximumVelocity: Velocity): Velocity {
-  val calculated = calculateVelocity()
-  return Velocity(
-    calculated.x.coerceIn(-maximumVelocity.x, maximumVelocity.x),
-    calculated.y.coerceIn(-maximumVelocity.y, maximumVelocity.y),
-  )
 }
