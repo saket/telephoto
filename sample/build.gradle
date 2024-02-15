@@ -1,6 +1,7 @@
 plugins {
-  id("com.android.application")
-  id("kotlin-android")
+  id("me.saket.android.application")
+  id("me.saket.kotlin.android")
+  id("me.saket.compose")
   id("kotlin-parcelize")
 }
 

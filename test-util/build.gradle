@@ -1,5 +1,7 @@
 plugins {
-  id("android-library-convention")
+  id("me.saket.android.library")
+  id("me.saket.kotlin.android")
+  id("me.saket.android.test")
 }
 
 android {

@@ -1,8 +1,9 @@
 import org.jetbrains.compose.compose
 
 plugins {
-  id("kotlin-multiplatform-library-convention")
-  id("published-library-convention")
+  id("me.saket.android.library")
+  id("me.saket.android.library.publishing")
+  id("me.saket.kotlin.multiplatform")
 }
 apply(plugin = "kotlin-parcelize")
 apply(plugin = "app.cash.paparazzi")

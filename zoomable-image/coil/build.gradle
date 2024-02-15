@@ -1,7 +1,9 @@
 plugins {
-  id("android-library-convention")
-  id("published-library-convention")
-  id("device-screenshot-tests-convention")
+  id("me.saket.android.library")
+  id("me.saket.android.library.publishing")
+  id("me.saket.kotlin.android")
+  id("me.saket.compose")
+  id("me.saket.android.test")
   id("app.cash.molecule") version libs.versions.molecule
 }
 

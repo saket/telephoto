@@ -1,14 +1,15 @@
 import org.jetbrains.compose.compose
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
-  id("kotlin-multiplatform-library-convention")
-  id("published-library-convention")
+  id("me.saket.android.library")
+  id("me.saket.android.library.publishing")
+  id("me.saket.kotlin.multiplatform")
 }
+apply(plugin = "app.cash.paparazzi")
 
 kotlin {
   sourceSets {
-    val commonMain by getting {
+    commonMain {
       dependencies {
         implementation(compose("org.jetbrains.compose.ui:ui-util"))
         api(compose.foundation)
@@ -16,15 +17,13 @@ kotlin {
       }
     }
 
-    val commonTest by getting {
+    commonTest {
       dependencies {
         implementation(kotlin("test"))
       }
     }
 
-    val androidUnitTest by getting {
-      apply(plugin = "app.cash.paparazzi")
-
+    androidUnitTest {
       dependencies {
         implementation(libs.junit)
         implementation(libs.turbine)

@@ -1,50 +1,16 @@
-import com.android.build.gradle.BasePlugin as AndroidBasePlugin
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-
-buildscript {
-  repositories {
-    google()
-    mavenCentral()
-  }
-  dependencies {
-    classpath libs.plugin.paparazzi
-  }
-}
-
-allprojects {
-  repositories {
-    google()
-    mavenCentral()
-  }
-}
-
-tasks.register('clean', Delete) {
-  delete rootProject.buildDir
-}
-
-allprojects {
-  plugins.withType(AndroidBasePlugin).configureEach {
-    project.android {
-      compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-      }
-    }
-  }
-  tasks.withType(JavaCompile).configureEach {
-    sourceCompatibility = JavaVersion.VERSION_11.toString()
-    targetCompatibility = JavaVersion.VERSION_11.toString()
-  }
-  tasks.withType(KotlinJvmCompile).configureEach {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_11)
-      freeCompilerArgs.addAll([
-        "-Xcontext-receivers",
-        "-Xjvm-default=all", // TODO: IDE complains this isn't set. See transformableState.kt.
-      ])
-    }
-  }
+plugins {
+  alias(libs.plugins.android.application) apply false
+  alias(libs.plugins.android.library) apply false
+  alias(libs.plugins.kotlin.android) apply false
+  alias(libs.plugins.kotlin.multiplatform) apply false
+  alias(libs.plugins.jetbrains.compose) apply false
+  alias(libs.plugins.paparazzi) apply false
+  alias(libs.plugins.dokka) apply false
+  alias(libs.plugins.mavenPublish) apply false
+  alias(libs.plugins.dropshots) apply false
+  alias(libs.plugins.emulatorWtf) apply false
+  alias(libs.plugins.metalava) apply false
+  alias(libs.plugins.poko) apply false
 }
 
 // https://github.com/cashapp/paparazzi/issues/1231

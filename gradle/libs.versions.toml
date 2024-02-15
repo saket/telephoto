@@ -2,8 +2,8 @@
 minSdk = "23"
 compileSdk = "34"
 kotlin = "1.9.22"
-agp = "8.1.4"
-jetbrains-compose = "1.5.12" # https://github.com/JetBrains/compose-multiplatform/releases
+agp = "8.3.0-rc02"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
+compose-multiplatform = "1.5.12" # https://github.com/JetBrains/compose-multiplatform/releases
 androidx-compose-runtime = "1.6.1" # https://developer.android.com/jetpack/androidx/releases/compose
 androidx-compose-ui = "1.6.1"
 androidx-compose-ui-material3 = "1.2.0" # https://developer.android.com/jetpack/androidx/releases/compose-material3
@@ -46,11 +46,26 @@ metalava = "0.3.5"  # https://github.com/tylerbwong/metalava-gradle/releases
 poko = "0.15.2" # https://github.com/drewhamilton/Poko/blob/main/CHANGELOG.md
 composeLintChecks = "1.2.0" # https://slackhq.github.io/compose-lints/changelog/
 
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+dropshots = { id = "com.dropbox.dropshots", version.ref = "dropshots" }
+emulatorWtf = { id = "wtf.emulator.gradle", version.ref = "emulatorWtf" }
+metalava = { id = "me.tylerbwong.gradle.metalava", version.ref = "metalava" }
+poko = { id = "dev.drewhamilton.poko", version.ref = "poko" }
+
 [libraries]
+# Build logic dependencies
 plugin-paparazzi = { module = "app.cash.paparazzi:paparazzi-gradle-plugin", version.ref = "paparazzi" }
 plugin-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-plugin-jetbrains-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "jetbrains-compose" }
+plugin-jetbrains-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose-multiplatform" }
 plugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 plugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "mavenPublish" }
 plugin-dropshots = { module = "com.dropbox.dropshots:dropshots-gradle-plugin", version.ref = "dropshots" }
