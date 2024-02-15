@@ -18,6 +18,7 @@ dependencies {
   api(libs.compose.foundation)
 
   testImplementation(libs.junit)
+  testImplementation(libs.truth)
 
   androidTestImplementation(projects.testUtil)
 }
