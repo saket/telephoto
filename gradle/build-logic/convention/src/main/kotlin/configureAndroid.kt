@@ -6,7 +6,6 @@ internal fun Project.configureAndroid(commonExtension: CommonExtension <*, *, *,
     compileSdk = libs.findVersion("compileSdk").get().toString().toInt()
     defaultConfig {
       minSdk = libs.findVersion("minSdk").get().toString().toInt()
-      resourcePrefix = "_telephoto"
     }
     lint {
       abortOnError = true

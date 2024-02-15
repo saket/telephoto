@@ -42,7 +42,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-fun MediaViewerScreen(key: MediaViewerScreenKey) {
+internal fun MediaViewerScreen(key: MediaViewerScreenKey) {
   Scaffold(
     contentWindowInsets = WindowInsets.none,
     contentColor = Color.White,
@@ -90,8 +90,8 @@ private fun CloseNavIconButton() {
 @Composable
 private fun MediaPage(
   model: MediaItem,
-  modifier: Modifier = Modifier,
   isActivePage: Boolean,
+  modifier: Modifier = Modifier,
 ) {
   val zoomableState = rememberZoomableState()
   val flickState = rememberFlickToDismissState(dismissThresholdRatio = 0.05f)

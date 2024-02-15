@@ -70,13 +70,6 @@ class CoerceInsideTest {
     ).isEqualTo(Offset(x = 0f, y = 0f))
   }
 
-  @Test fun `vertical movement when zoomed content is bigger than layout size in height`() {
-    val layoutSize = Rect(Offset.Zero, Size(1000f, 2000f))
-    val contentSize = Size(1000f, 3000f)
-
-    // todo.
-  }
-
   @Test fun `2d movement when zoomed content is bigger than layout size in both width and height`() {
     val layoutSize = Size(1000f, 2000f)
     val contentSize = Size(2000f, 3000f)

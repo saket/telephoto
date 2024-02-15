@@ -16,7 +16,7 @@ import me.saket.telephoto.sample.viewer.MediaViewerScreen
 import com.slack.circuit.runtime.Screen as CircuitScreenKey
 
 @Composable
-fun Navigation(
+internal fun Navigation(
   initialScreenKey: ScreenKey,
 ) {
   val backstack = rememberSaveableBackStack { push(initialScreenKey) }

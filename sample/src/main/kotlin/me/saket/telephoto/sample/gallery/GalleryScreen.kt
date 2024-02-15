@@ -50,7 +50,7 @@ import me.saket.telephoto.sample.R
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun GalleryScreen(
+internal fun GalleryScreen(
   key: GalleryScreenKey,
   navigator: Navigator,
 ) {
@@ -72,8 +72,8 @@ fun GalleryScreen(
 @Composable
 private fun AlbumGrid(
   album: MediaAlbum,
-  modifier: Modifier = Modifier,
-  navigator: Navigator
+  navigator: Navigator,
+  modifier: Modifier = Modifier
 ) {
   LazyVerticalGrid(
     modifier = modifier,

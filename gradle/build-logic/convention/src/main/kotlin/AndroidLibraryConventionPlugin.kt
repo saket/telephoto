@@ -10,6 +10,9 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
     }
 
     extensions.configure<LibraryExtension> {
+      defaultConfig {
+        resourcePrefix = "_telephoto"
+      }
       configureAndroid(this)
     }
   }
