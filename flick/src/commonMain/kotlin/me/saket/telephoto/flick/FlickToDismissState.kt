@@ -50,7 +50,7 @@ sealed interface FlickToDismissState {
     /**
      * Content is resting at its default position with no ongoing drag gesture.
      */
-    object Idle : GestureState
+    data object Idle : GestureState
 
     @Poko
     class Dragging(
@@ -69,7 +69,7 @@ sealed interface FlickToDismissState {
      * Content is settling back to its default position after it was released because the drag
      * distance wasn't sufficient to dismiss the content.
      */
-    object Resetting : GestureState
+    data object Resetting : GestureState
 
     @Poko
     class Dismissing(
@@ -99,6 +99,6 @@ sealed interface FlickToDismissState {
      * Content was dismissed. At this point, [FlickToDismiss] is no longer usable
      * and must be removed from composition.
      */
-    object Dismissed : GestureState
+    data object Dismissed : GestureState
   }
 }

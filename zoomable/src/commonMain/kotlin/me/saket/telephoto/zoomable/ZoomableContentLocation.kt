@@ -105,10 +105,9 @@ interface ZoomableContentLocation {
    * A placeholder value for indicating that the zoomable content's location
    * isn't calculated yet. The content will stay hidden until this is replaced.
    */
-  object Unspecified : ZoomableContentLocation {
+  data object Unspecified : ZoomableContentLocation {
     override fun size(layoutSize: Size) = Size.Unspecified
     override fun location(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
-    override fun toString(): String = "ZoomableContentLocation.Unspecified"
   }
 
   /**
@@ -118,10 +117,9 @@ interface ZoomableContentLocation {
    * For richer content such as images whose visual size may not always match its layout
    * size, you should provide a different value using [ZoomableState.setContentLocation].
    */
-  object SameAsLayoutBounds : ZoomableContentLocation {
+  data object SameAsLayoutBounds : ZoomableContentLocation {
     override fun size(layoutSize: Size): Size = layoutSize
     override fun location(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
-    override fun toString(): String = "ZoomableContentLocation.SameAsLayoutBounds"
   }
 
   fun size(layoutSize: Size): Size

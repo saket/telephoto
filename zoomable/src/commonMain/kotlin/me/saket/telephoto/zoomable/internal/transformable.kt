@@ -248,7 +248,7 @@ private suspend fun AwaitPointerEventScope.detectZoom(
 }
 
 private sealed class TransformEvent {
-  object TransformStarted : TransformEvent()
+  data object TransformStarted : TransformEvent()
   class TransformStopped(val velocity: Velocity) : TransformEvent()
   class TransformDelta(
     val zoomChange: Float,

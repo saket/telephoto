@@ -256,7 +256,7 @@ private sealed interface QuickZoomEvent {
     val zoomDelta: Float,
   ) : QuickZoomEvent
 
-  object QuickZoomStopped : QuickZoomEvent
+  data object QuickZoomStopped : QuickZoomEvent
 }
 
 /**
