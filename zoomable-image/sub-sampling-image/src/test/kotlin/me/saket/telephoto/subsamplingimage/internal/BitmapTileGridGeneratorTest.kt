@@ -3,6 +3,7 @@ package me.saket.telephoto.subsamplingimage.internal
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
@@ -20,7 +21,7 @@ import kotlin.time.measureTime
 class BitmapTileGridGeneratorTest {
 
   @Test fun `empty canvas size`() {
-    assertThrows {
+    assertFailure {
       BitmapRegionTileGrid.generate(
         canvasSize = IntSize(1080, 0),
         unscaledImageSize = IntSize(10, 10),
