@@ -21,6 +21,8 @@ import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotInstanceOf
 import assertk.assertions.isNotNull
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
@@ -31,7 +33,6 @@ import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
@@ -70,7 +71,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** Note to self: this should ideally be a junit test, but Glide was unable to decode HTTP responses in a fake environment. */
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(TestParameterInjector::class)
 class GlideImageSourceTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
@@ -122,7 +122,7 @@ class GlideImageSourceTest {
       requestBuilder = { it.diskCacheStrategy(strategyParam.strategy) }
     ).test {
       skipItems(1)  // Default item.
-      assertThat(awaitItem().delegate).isInstanceOf(SubSamplingDelegate::class.java)
+      assertThat(awaitItem().delegate!!).isInstanceOf(SubSamplingDelegate::class.java)
     }
   }
 
@@ -245,7 +245,7 @@ class GlideImageSourceTest {
       model = serverRule.server.url("animated_image.gif").toString()
     ).test {
       skipItems(1) // Default item.
-      assertThat(awaitItem().delegate).isNotInstanceOf(SubSamplingDelegate::class.java)
+      assertThat(awaitItem().delegate!!).isNotInstanceOf(SubSamplingDelegate::class.java)
     }
   }
 

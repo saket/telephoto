@@ -9,6 +9,7 @@ import org.gradle.kotlin.dsl.closureOf
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.exclude
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer.ArgumentType.Companion.all
 import wtf.emulator.EwExtension
 import java.time.Duration
 import com.android.build.api.dsl.LibraryExtension as AndroidLibraryExtension
@@ -47,6 +48,10 @@ class AndroidTestConventionPlugin : Plugin<Project> {
         // Workaround for https://github.com/square/leakcanary/pull/2624.
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
       })
+    }
+    configurations.configureEach {
+      // What the hell google https://stackoverflow.com/q/56639529.
+      exclude(group = "com.google.guava", module = "listenablefuture")
     }
 
     emulatorwtf {
