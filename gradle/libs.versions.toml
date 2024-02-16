@@ -33,6 +33,7 @@ mavenPublish = "0.27.0"
 dropshots = "0.4.1"
 dropboxDiffer = "0.0.1"
 emulatorWtf = "0.15.1"  # https://docs.emulator.wtf/changelog/
+emulatorWtfCli = "0.10.9"  # https://docs.emulator.wtf/changelog/
 okio = "3.7.0"
 okhttp-mockWebServer = "4.11.0"
 dokka = "1.9.10"

@@ -55,6 +55,7 @@ class AndroidTestConventionPlugin : Plugin<Project> {
     }
 
     emulatorwtf {
+      version.set(libs.findVersion("emulatorWtfCli").get().toString())
       devices.set(
         listOf(
           mapOf("model" to "Pixel7Atd", "version" to 31)
