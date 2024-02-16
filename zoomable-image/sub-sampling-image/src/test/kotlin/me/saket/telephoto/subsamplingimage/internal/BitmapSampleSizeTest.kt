@@ -1,7 +1,9 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.unit.IntSize
-import com.google.common.truth.Truth.assertThat
+import assertk.assertFailure
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import org.junit.Test
 
 class BitmapSampleSizeTest {
@@ -33,19 +35,19 @@ class BitmapSampleSizeTest {
   }
 
   @Test fun `throw when canvas size is unavailable`() {
-    assertThrows {
+    assertFailure {
       BitmapSampleSize.calculateFor(
         canvasSize = IntSize.Zero,
         scaledImageSize = IntSize(2_000, 1_000),
       )
     }
-    assertThrows {
+    assertFailure {
       BitmapSampleSize.calculateFor(
         canvasSize = IntSize(200, 0),
         scaledImageSize = IntSize(2_000, 1_000),
       )
     }
-    assertThrows {
+    assertFailure {
       BitmapSampleSize.calculateFor(
         canvasSize = IntSize(0, 200),
         scaledImageSize = IntSize(2_000, 1_000),

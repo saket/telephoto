@@ -8,7 +8,13 @@ import androidx.compose.ui.unit.IntSize
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -55,14 +61,14 @@ class BitmapCacheTest {
       assertThat(requestedRegions.awaitItem()).isEqualTo(tile1)
       assertThat(requestedRegions.awaitItem()).isEqualTo(tile2)
       cachedBitmaps.skipItems(1)
-      assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2)
+      assertThat(cachedBitmaps.awaitItem().keys.toList()).containsExactly(tile1, tile2)
 
       val tile3 = fakeBitmapRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
       assertThat(requestedRegions.awaitItem()).isEqualTo(tile3)
-      assertThat(cachedBitmaps.awaitItem().keys).containsExactly(tile1, tile2, tile3)
+      assertThat(cachedBitmaps.awaitItem().keys.toList()).containsExactly(tile1, tile2, tile3)
 
       requestedRegions.cancelAndExpectNoEvents()
       cachedBitmaps.cancelAndExpectNoEvents()
@@ -80,14 +86,14 @@ class BitmapCacheTest {
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
       skipItems(1)
-      assertThat(awaitItem().keys).containsExactly(tile1, tile2)
+      assertThat(awaitItem().keys.toList()).containsExactly(tile1, tile2)
 
       val tile3 = fakeBitmapRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
       skipItems(1)
-      assertThat(awaitItem().keys).containsExactly(tile3)
+      assertThat(awaitItem().keys.toList()).containsExactly(tile3)
 
       cancelAndExpectNoEvents()
     }

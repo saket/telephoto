@@ -3,8 +3,13 @@ package me.saket.telephoto.subsamplingimage.internal
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
-import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isLessThan
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNull
 import org.junit.Ignore
 import org.junit.Test
 import kotlin.random.Random
@@ -71,7 +76,7 @@ class BitmapTileGridGeneratorTest {
     // Verify that the layers are sorted by their sample size.
     // Max sampling at the top. Highest quality layer with least sampling at the bottom.
     assertThat(tileGrid.base.sampleSize.size).isEqualTo(8)
-    assertThat(tileGrid.foreground.keys.map { it.size }).containsExactly(4, 2, 1).inOrder()
+    assertThat(tileGrid.foreground.keys.map { it.size }).containsExactly(4, 2, 1)
 
     // Verify that the number of tiles for each sample size is correct.
     assertThat(
@@ -85,14 +90,14 @@ class BitmapTileGridGeneratorTest {
     assertThat(tileGrid.base.bounds).isEqualTo(IntRect(IntOffset.Zero, imageSize))
 
     tileGrid.foreground.forEach { (sampleSize, tiles) ->
-      val assert = assertWithMessage("Sample size = ${sampleSize.size}")
+      val name = "Sample size = ${sampleSize.size}"
 
       // Verify that the tiles cover the entire image without any gaps.
-      assert.that(tiles.minOf { it.bounds.left }).isEqualTo(0)
-      assert.that(tiles.minOf { it.bounds.top }).isEqualTo(0)
-      assert.that(tiles.maxOf { it.bounds.right }).isEqualTo(imageSize.width)
-      assert.that(tiles.maxOf { it.bounds.bottom }).isEqualTo(imageSize.height)
-      assert.that(tiles.sumOf { it.bounds.area }).isEqualTo(imageSize.area)
+      assertThat(tiles.minOf { it.bounds.left }, name).isEqualTo(0)
+      assertThat(tiles.minOf { it.bounds.top }, name).isEqualTo(0)
+      assertThat(tiles.maxOf { it.bounds.right }, name).isEqualTo(imageSize.width)
+      assertThat(tiles.maxOf { it.bounds.bottom }, name).isEqualTo(imageSize.height)
+      assertThat(tiles.sumOf { it.bounds.area }, name).isEqualTo(imageSize.area)
 
       // Verify that the tiles don't have any overlap.
       val overlappingTiles: List<BitmapRegionTile> = tiles.flatMap { tile ->
@@ -100,7 +105,7 @@ class BitmapTileGridGeneratorTest {
           tile.bounds.overlaps(other.bounds)
         }
       }
-      assert.that(overlappingTiles).isEmpty()
+      assertThat(overlappingTiles, name).isEmpty()
     }
   }
 

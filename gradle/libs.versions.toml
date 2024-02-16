@@ -22,7 +22,6 @@ androidx-test-junit = "1.1.5"
 accompanist = "0.32.0"  # https://github.com/google/accompanist/releases
 testParamInjector = "1.15"
 junit = "4.13.2"
-truth = "1.4.0"
 coil = "2.5.0"
 glide = "4.15.1"
 turbine = "1.0.0"  # https://github.com/cashapp/turbine/releases/
@@ -121,7 +120,6 @@ leakcanary-core = { module = "com.squareup.leakcanary:leakcanary-android", versi
 leakcanary-test = { module = "com.squareup.leakcanary:leakcanary-android-instrumentation", version.ref = "leakcanary" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
-truth = { module = "com.google.truth:truth", version.ref = "truth" }
 testParamInjector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "testParamInjector" }
 dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropshots" }
 dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }

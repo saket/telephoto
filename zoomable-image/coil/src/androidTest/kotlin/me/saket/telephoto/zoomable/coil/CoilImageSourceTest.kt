@@ -14,15 +14,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
-import androidx.compose.ui.graphics.colorspace.ColorSpace
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
-import androidx.compose.ui.graphics.colorspace.Rgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotInstanceOf
+import assertk.assertions.isNotNull
 import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -35,7 +38,6 @@ import coil.request.SuccessResult
 import coil.size.Dimension
 import coil.test.FakeImageLoaderEngine
 import com.dropbox.dropshots.Dropshots
-import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.Dispatchers
@@ -134,7 +136,7 @@ class CoilImageSourceTest {
         .build()
     }.test {
       skipItems(1)  // Default item.
-      assertThat(awaitItem().delegate).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
+      assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
     }
   }
 
@@ -380,7 +382,7 @@ class CoilImageSourceTest {
       serverRule.server.url("animated_image.gif")
     }.test {
       skipItems(1) // Default item.
-      assertThat(awaitItem().delegate).isNotInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
+      assertThat(awaitItem().delegate!!).isNotInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
     }
   }
 

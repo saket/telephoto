@@ -11,7 +11,8 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.platform.LocalInspectionMode
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.isNull
 import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import org.junit.Rule

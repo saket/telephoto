@@ -26,6 +26,7 @@ dependencies {
   implementation(libs.androidx.tracing)
 
   testImplementation(libs.junit)
+  testImplementation(libs.assertk)
   testImplementation(libs.testParamInjector)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.turbine)

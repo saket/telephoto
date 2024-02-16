@@ -3,8 +3,8 @@ package me.saket.telephoto.subsamplingimage.internal
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
-import com.android.internal.R.attr.x
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import org.junit.Test
 
 class RotationTest {

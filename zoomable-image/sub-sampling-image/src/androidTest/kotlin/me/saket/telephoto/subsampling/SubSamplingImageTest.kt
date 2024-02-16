@@ -23,7 +23,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -37,8 +36,9 @@ import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
+import assertk.assertThat
+import assertk.assertions.containsExactly
 import com.dropbox.dropshots.Dropshots
-import com.google.common.truth.Truth.assertThat
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.delay

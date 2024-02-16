@@ -65,9 +65,14 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
+import assertk.all
+import assertk.assertThat
+import assertk.assertions.isBetween
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
-import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
@@ -607,9 +612,11 @@ class ZoomableImageTest {
     rule.runOnIdle {
       assertThat(imageScale).isEqualTo(ScaleFactor(1f, 1f))
 
-      assertWithMessage(
-        "Resetting the zoom shouldn't cause the transformations to become unusable. This will result in UI flickers"
-      ).that(transformations.filter { !it.isSpecified }).isEmpty()
+      assertThat(transformations.filter { !it.isSpecified }).all(
+        "Resetting the zoom shouldn't cause the transformations to become unusable. This will result in UI flickers",
+      ) {
+        isEmpty()
+      }
     }
   }
 
@@ -656,7 +663,7 @@ class ZoomableImageTest {
         pinchToZoomBy(IntOffset(0, 5))
       }
       rule.runOnIdle {
-        assertThat(zoomFraction()).isWithin(0.1f).of(0.6f)
+        assertThat(zoomFraction()!!).isBetween(0.5f, 0.7f)
       }
 
       rule.onNodeWithTag("image").performTouchInput {
@@ -811,16 +818,20 @@ class ZoomableImageTest {
     // Regression test: the migration of Modifier.zoomable() to Modifier.Node caused
     // a bug that prevented second quick-zooms from working. It would accept the first
     // quick-zoom gesture, but treat subsequent quick-zoom gestures as double-taps.
-    assertWithMessage("This bug happens only when the image can still be panned")
-      .that(state.canConsumePanChange(Offset(1f, 1f)))
-      .isTrue()
+    assertThat(state.canConsumePanChange(Offset(1f, 1f))).all(
+      "This bug happens only when the image can still be panned"
+    ) {
+      isTrue()
+    }
     zoomableNode.performTouchInput {
       quickZoomIn(byDistance = height / 2f)
     }
     rule.runOnIdle {
-      assertWithMessage("Quick-zooming in again should not do anything because the image was already zoomed in")
-        .that(currentScale)
-        .isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
+      assertThat(currentScale).all(
+        "Quick-zooming in again should not do anything because the image was already zoomed in"
+      ) {
+        isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
+      }
       assertThat(currentZoomFraction).isEqualTo(1f)
     }
 
@@ -828,15 +839,15 @@ class ZoomableImageTest {
       quickZoomOut(byDistance = 100f)
     }
     rule.runOnIdle {
-      assertThat(currentScale.scaleY).isWithin(0.1f).of(1.45f)
-      assertThat(currentZoomFraction).isWithin(0.1f).of(0.45f)
+      assertThat(currentScale.scaleY).isCloseTo(1.45f, delta = 0.05f)
+      assertThat(currentZoomFraction).isCloseTo(0.45f, delta = 0.01f)
     }
     zoomableNode.performTouchInput {
       quickZoomOut(byDistance = 100f)
     }
     rule.runOnIdle {
-      assertThat(currentScale.scaleY).isWithin(0.1f).of(1.1f)
-      assertThat(currentZoomFraction).isWithin(0.1f).of(0.1f)
+      assertThat(currentScale.scaleY).isCloseTo(1.1f, delta = 0.05f)
+      assertThat(currentZoomFraction).isCloseTo(0.1f, delta = 0.01f)
     }
   }
 
@@ -971,10 +982,12 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      assertWithMessage(
+      assertThat(dragEvents).all(
         "Quick-zoom gestures made before the image is fully loaded should not be ignored. This will cause " +
           "FlickToDismiss() to accidentally flick the image. Same for other similar gesture parents."
-      ).that(dragEvents).isEmpty()
+      ) {
+        isEmpty()
+      }
     }
   }
 

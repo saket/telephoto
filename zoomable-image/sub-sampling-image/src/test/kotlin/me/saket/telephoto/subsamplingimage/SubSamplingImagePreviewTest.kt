@@ -4,7 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalInspectionMode
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.isNull
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import me.saket.telephoto.zoomable.rememberZoomableState

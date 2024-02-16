@@ -6,7 +6,8 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import org.junit.Test
 
 class DimensTest {

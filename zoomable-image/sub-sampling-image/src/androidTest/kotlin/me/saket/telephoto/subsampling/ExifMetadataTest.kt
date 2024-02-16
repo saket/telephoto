@@ -3,14 +3,15 @@ package me.saket.telephoto.subsampling
 import android.content.Context
 import android.os.Build.VERSION.SDK_INT
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.TruthJUnit.assume
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import kotlinx.coroutines.runBlocking
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation.None
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation.Orientation270
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation.Orientation90
+import org.junit.AssumptionViolatedException
 import org.junit.Test
 
 class ExifMetadataTest {
@@ -48,8 +49,9 @@ class ExifMetadataTest {
   }
 
   @Test fun not_rotated_heic() = runBlocking {
-    // HEIC files are not supported before API 30.
-    assume().that(SDK_INT).isAtLeast(30)
+    if (SDK_INT < 30) {
+      throw AssumptionViolatedException("HEIC files are not supported before API 30.")
+    }
 
     val metadata = ExifMetadata.read(
       context = context,

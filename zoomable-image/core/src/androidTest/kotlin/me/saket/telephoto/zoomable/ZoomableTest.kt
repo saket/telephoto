@@ -18,8 +18,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.unit.dp
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isLessThan
 import com.dropbox.dropshots.Dropshots
-import com.google.common.truth.Truth.assertThat
 import leakcanary.LeakAssertions
 import me.saket.telephoto.util.prepareForScreenshotTest
 import org.junit.After
@@ -117,7 +120,7 @@ class ZoomableTest {
     val touchSlop = ViewConfiguration.get(rule.activity).scaledTouchSlop
     rule.onNodeWithTag("content").performTouchInput {
       val distance = Offset(x = 0f, y = 1f) // I should use touchSlop here, but https://issuetracker.google.com/issues/275752829.
-      assertThat(distance.getDistance()).isLessThan(touchSlop)
+      assertThat(distance.getDistance()).isLessThan(touchSlop.toFloat())
       pinch(
         start0 = center,
         start1 = center,
@@ -126,7 +129,7 @@ class ZoomableTest {
       )
     }
     rule.runOnIdle {
-      assertThat(state.zoomFraction).isGreaterThan(0f)
+      assertThat(state.zoomFraction!!).isGreaterThan(0f)
     }
   }
 }
