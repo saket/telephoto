@@ -1,7 +1,7 @@
 plugins {
   id("me.saket.android.library")
   id("me.saket.kotlin.android")
-  id("me.saket.android.test")
+  id("me.saket.compose")
 }
 
 android {
