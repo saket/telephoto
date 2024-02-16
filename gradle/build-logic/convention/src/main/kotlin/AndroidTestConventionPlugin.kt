@@ -1,7 +1,14 @@
+import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ModuleDependency
+import org.gradle.api.artifacts.dsl.DependencyHandler
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
+import org.gradle.kotlin.dsl.closureOf
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.exclude
 import wtf.emulator.EwExtension
 import java.time.Duration
 import com.android.build.api.dsl.LibraryExtension as AndroidLibraryExtension
@@ -27,6 +34,21 @@ class AndroidTestConventionPlugin : Plugin<Project> {
       testOptions.animationsDisabled = true
     }
 
+    dependencies {
+      add("androidTestImplementation", libs.findLibrary("androidx.test.ktx").get())
+      add("androidTestImplementation", libs.findLibrary("androidx.test.rules").get())
+      add("androidTestImplementation", libs.findLibrary("androidx.test.junit").get())
+      add("androidTestImplementation", libs.findLibrary("compose.ui.test.junit").get())
+      add("androidTestImplementation", libs.findLibrary("assertk").get())
+      add("androidTestImplementation", libs.findLibrary("testParamInjector").get())
+      add("androidTestImplementation", libs.findLibrary("compose.ui.test.activityManifest").get())
+      add("androidTestImplementation", libs.findLibrary("leakcanary.test").get())
+      add("debugImplementation", libs.findLibrary("leakcanary.core").get(), configureClosure {
+        // Workaround for https://github.com/square/leakcanary/pull/2624.
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+      })
+    }
+
     emulatorwtf {
       devices.set(
         listOf(
@@ -44,5 +66,10 @@ class AndroidTestConventionPlugin : Plugin<Project> {
   }
 }
 
-internal fun Project.emulatorwtf(configure: Action<EwExtension>) =
+private fun Project.emulatorwtf(configure: Action<EwExtension>) =
   extensions.configure("emulatorwtf", configure)
+
+private fun Any.configureClosure(action: ModuleDependency.() -> Unit): Closure<Any> {
+  @Suppress("UNCHECKED_CAST")
+  return closureOf(action) as Closure<Any>
+}
