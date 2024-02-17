@@ -21,7 +21,7 @@ internal fun Project.configureKotlin() {
     }
   }
 
-  val targetJdkVersion = "17"
+  val targetJdkVersion = "11"
   tasks.withType<KotlinCompile>().configureEach {
     compilerOptions {
       jvmTarget.set(JvmTarget.fromTarget(targetJdkVersion))
