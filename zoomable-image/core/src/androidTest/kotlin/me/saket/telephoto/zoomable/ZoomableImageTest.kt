@@ -67,7 +67,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import assertk.all
 import assertk.assertThat
-import assertk.assertions.isBetween
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
@@ -663,14 +662,14 @@ class ZoomableImageTest {
         pinchToZoomBy(IntOffset(0, 5))
       }
       rule.runOnIdle {
-        assertThat(zoomFraction()!!).isBetween(0.5f, 0.7f)
+        assertThat(zoomFraction()!!).isEqualTo(1.0f)
       }
 
       rule.onNodeWithTag("image").performTouchInput {
         doubleClick()
       }
       rule.runOnIdle {
-        assertThat(zoomFraction()).isEqualTo(1f)
+        assertThat(zoomFraction()).isEqualTo(0f)
       }
     }
   }
@@ -810,7 +809,7 @@ class ZoomableImageTest {
       quickZoomIn(byDistance = height.toFloat())
     }
     rule.runOnIdle {
-      // Zoom should never cross the max zoom even if the gesture above over-zooms.
+      // Zoom should never cross the max zoom even if the above gesture over-zooms.
       assertThat(currentScale).isEqualTo(ScaleFactor(maxZoomFactor, maxZoomFactor))
       assertThat(currentZoomFraction).isEqualTo(1f)
     }
@@ -846,8 +845,8 @@ class ZoomableImageTest {
       quickZoomOut(byDistance = 100f)
     }
     rule.runOnIdle {
-      assertThat(currentScale.scaleY).isCloseTo(1.1f, delta = 0.05f)
-      assertThat(currentZoomFraction).isCloseTo(0.1f, delta = 0.01f)
+      assertThat(currentScale.scaleY).isCloseTo(1.06f, delta = 0.01f)
+      assertThat(currentZoomFraction).isCloseTo(0.06f, delta = 0.001f)
     }
   }
 

@@ -25,7 +25,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isFinite
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -357,7 +356,7 @@ internal class RealZoomableState internal constructor(
 
   private fun Rect.throwIfDrawRegionIsTooLarge(): Rect {
     return also {
-      check (size.isSpecified) {
+      check(size.isSpecified) {
         "The zoomable content is too large to safely calculate its draw region. This can happen if you're using" +
           " an unusually large value for ZoomSpec#maxZoomFactor (for e.g., Float.MAX_VALUE). Please file an issue" +
           " on https://github.com/saket/telephoto/issues if you think this is a mistake."

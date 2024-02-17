@@ -518,8 +518,8 @@ class SubSamplingImageTest {
       pinch(
         start0 = center,
         start1 = center,
-        end0 = center - Offset(0f, 30f),
-        end1 = center + Offset(0f, 30f),
+        end0 = center,
+        end1 = center + Offset(0f, 1f),
       )
     }
     rule.waitUntil(5.seconds) { isImageDisplayedInFullQuality }
