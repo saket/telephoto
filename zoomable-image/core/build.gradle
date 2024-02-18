@@ -21,4 +21,5 @@ dependencies {
   testImplementation(libs.assertk)
 
   androidTestImplementation(projects.testUtil)
+  androidTestImplementation(libs.androidx.test.uiautomator)
 }

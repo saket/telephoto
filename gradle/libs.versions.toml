@@ -19,6 +19,7 @@ androidx-test-core = "1.6.0-alpha05"  # https://developer.android.com/jetpack/an
 androidx-test-rules = "1.6.0-alpha03"  # https://developer.android.com/jetpack/androidx/releases/test
 androidx-test-runner = "1.6.0-alpha06"  # https://developer.android.com/jetpack/androidx/releases/test
 androidx-test-junit = "1.1.5"
+androidx-test-uiautomator = "2.3.0-rc01"  # https://developer.android.com/jetpack/androidx/releases/test-uiautomator
 accompanist = "0.32.0"  # https://github.com/google/accompanist/releases
 testParamInjector = "1.15"
 junit = "4.13.2"
@@ -84,6 +85,7 @@ androidx-test-ktx = { module = "androidx.test:core-ktx", version.ref = "androidx
 androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidx-test-rules" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
 androidx-test-junit = { module = "androidx.test.ext:junit-ktx", version.ref = "androidx-test-junit" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidx-test-uiautomator" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark-macro-junit4" }

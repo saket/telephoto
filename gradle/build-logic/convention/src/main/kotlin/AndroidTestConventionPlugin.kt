@@ -32,7 +32,7 @@ class AndroidTestConventionPlugin : Plugin<Project> {
         targetSdk = libs.findVersion("compileSdk").get().toString().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
       }
-      testOptions.animationsDisabled = true
+      testOptions.animationsDisabled = false
     }
 
     dependencies {

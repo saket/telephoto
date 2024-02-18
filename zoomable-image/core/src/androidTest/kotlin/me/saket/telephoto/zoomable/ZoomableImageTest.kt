@@ -1293,7 +1293,7 @@ private fun assetPainter(assetName: String): Painter {
 }
 
 @Composable
-private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Boolean): ZoomableImageSource {
+internal fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Boolean): ZoomableImageSource {
   return remember(assetName) {
     object : ZoomableImageSource {
       @Composable
