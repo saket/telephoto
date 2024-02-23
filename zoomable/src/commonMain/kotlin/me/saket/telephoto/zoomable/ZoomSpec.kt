@@ -21,6 +21,11 @@ class ZoomSpec(
    * (until the gesture is released).
    */
   val preventOverOrUnderZoom: Boolean = true,
+
+  /**
+   * Whether the content can be panned, individually from translation while zooming.
+   */
+  val enablePan: Boolean = true,
 ) {
   internal val range = ZoomRange(maxZoomAsRatioOfSize = maxZoomFactor)
 }

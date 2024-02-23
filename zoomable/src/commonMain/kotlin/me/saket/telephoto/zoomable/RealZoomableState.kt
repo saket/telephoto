@@ -265,6 +265,9 @@ internal class RealZoomableState internal constructor(
   }
 
   internal fun canConsumePanChange(panDelta: Offset): Boolean {
+    if (!zoomSpec.enablePan) {
+      return false
+    }
     val baseZoomFactor = baseZoomFactor ?: return false // Content is probably not ready yet. Ignore this gesture.
     val current = gestureState ?: return false
 
