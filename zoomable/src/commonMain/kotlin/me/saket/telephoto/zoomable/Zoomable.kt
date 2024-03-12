@@ -3,7 +3,6 @@ package me.saket.telephoto.zoomable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -16,6 +15,7 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.ZoomableState.Companion.doubleTapDefaultZoom
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
 import me.saket.telephoto.zoomable.internal.TransformableElement
@@ -106,6 +106,7 @@ private class ZoomableNode(
   enabled: Boolean,
   onClick: ((Offset) -> Unit)?,
   onLongClick: ((Offset) -> Unit)?,
+  onDoubleTap: suspend (minZoomFactor: Float, maxZoomFactor: Float, position: Offset) -> Unit = state.doubleTapDefaultZoom,
 ) : DelegatingNode(), CompositionLocalConsumerModifierNode {
 
   private val hapticFeedback = hapticFeedbackPerformer()
@@ -115,9 +116,9 @@ private class ZoomableNode(
       state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
     }
   }
-  val onDoubleTap: (centroid: Offset) -> Unit = { centroid ->
+  val onDoubleTapInternal: (centroid: Offset) -> Unit = { centroid ->
     coroutineScope.launch {
-      state.handleDoubleTapZoomTo(centroid = centroid)
+      onDoubleTap(state.minZoomFactor, state.maxZoomFactor, centroid)
     }
   }
 
@@ -146,7 +147,7 @@ private class ZoomableNode(
     onPress = onPress,
     onTap = onClick,
     onLongPress = onLongClick,
-    onDoubleTap = onDoubleTap,
+    onDoubleTap = onDoubleTapInternal,
     onQuickZoomStopped = onQuickZoomStopped,
   ).create()
 
@@ -181,7 +182,7 @@ private class ZoomableNode(
       onPress = onPress,
       onTap = onClick,
       onLongPress = onLongClick,
-      onDoubleTap = onDoubleTap,
+      onDoubleTap = onDoubleTapInternal,
       onQuickZoomStopped = onQuickZoomStopped,
       transformableState = state.transformableState,
       gesturesEnabled = enabled,
