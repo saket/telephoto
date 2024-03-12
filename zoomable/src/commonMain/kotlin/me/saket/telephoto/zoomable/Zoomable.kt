@@ -47,6 +47,7 @@ fun Modifier.zoomable(
   enabled: Boolean = true,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
+  onDoubleTap: suspend (minZoomFactor: Float, maxZoomFactor: Float, position: Offset) -> Unit = state.doubleTapDefaultZoom,
   clipToBounds: Boolean = true,
 ): Modifier {
   check(state is RealZoomableState)
@@ -61,6 +62,7 @@ fun Modifier.zoomable(
         enabled = enabled,
         onClick = onClick,
         onLongClick = onLongClick,
+        onDoubleTap = onDoubleTap,
       )
     )
     .thenIf(state.autoApplyTransformations) {
@@ -73,6 +75,7 @@ private data class ZoomableElement(
   private val enabled: Boolean,
   private val onClick: ((Offset) -> Unit)?,
   private val onLongClick: ((Offset) -> Unit)?,
+  private val onDoubleTap: suspend (minZoomFactor: Float, maxZoomFactor: Float, position: Offset) -> Unit,
 ) : ModifierNodeElement<ZoomableNode>() {
 
   override fun create(): ZoomableNode = ZoomableNode(
@@ -80,6 +83,7 @@ private data class ZoomableElement(
     enabled = enabled,
     onClick = onClick,
     onLongClick = onLongClick,
+    onDoubleTap = onDoubleTap,
   )
 
   override fun update(node: ZoomableNode) {
@@ -106,7 +110,7 @@ private class ZoomableNode(
   enabled: Boolean,
   onClick: ((Offset) -> Unit)?,
   onLongClick: ((Offset) -> Unit)?,
-  onDoubleTap: suspend (minZoomFactor: Float, maxZoomFactor: Float, position: Offset) -> Unit = state.doubleTapDefaultZoom,
+  onDoubleTap: suspend (minZoomFactor: Float, maxZoomFactor: Float, position: Offset) -> Unit,
 ) : DelegatingNode(), CompositionLocalConsumerModifierNode {
 
   private val hapticFeedback = hapticFeedbackPerformer()
