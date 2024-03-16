@@ -2,23 +2,29 @@ package me.saket.telephoto.zoomable
 
 import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
+import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
@@ -130,6 +136,55 @@ class ZoomableTest {
     }
     rule.runOnIdle {
       assertThat(state.zoomFraction!!).isGreaterThan(0f)
+    }
+  }
+
+  // Regression test for:
+  // - https://github.com/saket/telephoto/issues/70
+  // - https://github.com/saket/telephoto/issues/72
+  @OptIn(ExperimentalFoundationApi::class)
+  @Test fun recycling_of_zoomable_modifier_works() {
+    val pageNames = listOf("page_a", "page_b")
+    val zoomFractions = mutableMapOf<String, Float?>()
+
+    rule.setContent {
+      val pagerState = rememberPagerState(
+        pageCount = { pageNames.size },
+      )
+      HorizontalPager(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("pager"),
+        state = pagerState,
+        key = { pageNames[it] },
+      ) { pageNum ->
+        val zoomableState = rememberZoomableState().also {
+          val pageName = pageNames[pageNum]
+          zoomFractions[pageName] = it.zoomFraction
+        }
+        Box(
+          Modifier
+            .fillMaxSize()
+            .zoomable(zoomableState)
+            .testTag("content")
+        )
+      }
+    }
+
+    // Steps taken from https://github.com/saket/telephoto/issues/72#issuecomment-1980497743.
+    rule.onNodeWithTag("pager").run {
+      performScrollToKey("page_b")
+      performScrollToKey("page_a")
+    }
+    rule.onNodeWithTag("content").performTouchInput {
+      doubleClick()
+    }
+
+    rule.runOnIdle {
+      assertThat(zoomFractions).containsOnly(
+        "page_a" to 1f,
+        "page_b" to 0f,
+      )
     }
   }
 }

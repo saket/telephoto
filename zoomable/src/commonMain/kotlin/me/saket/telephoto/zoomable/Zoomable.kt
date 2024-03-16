@@ -3,7 +3,6 @@ package me.saket.telephoto.zoomable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -120,7 +119,6 @@ private class ZoomableNode(
       state.handleDoubleTapZoomTo(centroid = centroid)
     }
   }
-
   val onQuickZoomStopped = {
     if (state.isZoomOutsideRange()) {
       coroutineScope.launch {
@@ -170,6 +168,11 @@ private class ZoomableNode(
     onClick: ((Offset) -> Unit)?,
     onLongClick: ((Offset) -> Unit)?,
   ) {
+    if (this.state != state) {
+      // Note to self: when the state is updated, the delegated
+      // nodes are implicitly reset in the following lines.
+      this.state = state
+    }
     transformableNode.update(
       state = state.transformableState,
       canPan = state::canConsumePanChange,
