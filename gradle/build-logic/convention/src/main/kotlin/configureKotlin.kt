@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 internal fun Project.configureKotlin() {
   tasks.withType<KotlinCompilationTask<*>>().configureEach {
     compilerOptions {
-      allWarningsAsErrors.set(true)
       freeCompilerArgs.addAll(
         "-Xjvm-default=all",
         "-Xcontext-receivers",
