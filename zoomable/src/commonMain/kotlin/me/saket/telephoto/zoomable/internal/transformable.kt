@@ -189,13 +189,15 @@ private suspend fun AwaitPointerEventScope.detectZoom(
   var pastTouchSlop = false
   val touchSlop = viewConfiguration.touchSlop
   var lockedToPanZoom = false
-  awaitFirstDown(requireUnconsumed = false)
+  val trackingPointerId = awaitFirstDown(requireUnconsumed = false).id
   do {
     val event = awaitPointerEvent()
     val canceled = event.changes.fastAny { it.isConsumed }
     if (!canceled) {
       event.changes.fastForEach {
-        velocityTracker.addPointerInputChange(it)
+        if (it.id == trackingPointerId) {
+          velocityTracker.addPointerInputChange(it)
+        }
       }
 
       val zoomChange = event.calculateZoom()
