@@ -65,7 +65,7 @@ plugins:
 
 extra:
   versions:
-    telephoto: '0.8.0' # Env var for the latest version on maven.
+    telephoto: '0.9.0' # Env var for the latest version on maven.
 
 nav:
   - 'Overview': index.md
