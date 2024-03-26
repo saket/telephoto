@@ -7,10 +7,14 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
+import me.saket.telephoto.zoomable.ContentZoomFactor.Companion.ZoomDeltaEpsilon
+import me.saket.telephoto.zoomable.internal.maxScale
+import kotlin.math.round
 
 /**
  * Create a [ZoomableState] that can be used with [Modifier.zoomable].
@@ -111,4 +115,47 @@ sealed interface ZoomableState {
 
   /** Reset content to its minimum zoom and zero offset. */
   suspend fun resetZoom(withAnimation: Boolean = true)
+
+  /**
+   * Toggle the scale between [scale] and the content's minimum zoom.
+   *
+   * @param scale Scale to be set if the content is currently at its minimum zoom.
+   * @param centroid The point around which the zoom should be centered.
+   */
+  suspend fun toggleScale(scale: Float, centroid: Offset)
+
+  /**
+   * Change the scale to [scale] around [centroid].
+   *
+   * @param scale The new scale to be set.
+   * @param centroid The point around which the zoom should be centered.
+   */
+  suspend fun changeScale(scale: Float, centroid: Offset)
+
+  companion object {
+    val ZoomableState.doubleTapDefaultZoom: suspend (minZoomFactor: Float, maxZoomFactor: Float, centroid: Offset) -> Unit
+      get() = { _, maxZoomFactor, centroid -> toggleScale(scale = maxZoomFactor, centroid = centroid) }
+
+    val ZoomableState.doubleTapThreeLevelZoom: suspend (minZoomFactor: Float, maxZoomFactor: Float, centroid: Offset) -> Unit
+      get() = { minZoomFactor, maxZoomFactor, centroid ->
+
+        val minZoomFactorRange = minZoomFactor.roundToZoomRange()
+        val maxZoomFactorRange = maxZoomFactor.roundToZoomRange()
+        val currentScale = contentTransformation.scale.maxScale.roundToZoomRange()
+
+        val midZoomFactor = ((maxZoomFactor - minZoomFactor) / 2f).roundToZoomRange()
+
+        val newScale = when (currentScale) {
+          in minZoomFactorRange..<midZoomFactor -> midZoomFactor
+          in midZoomFactor..<maxZoomFactorRange -> maxZoomFactor
+          else -> minZoomFactor
+        }
+
+        changeScale(newScale, centroid)
+      }
+
+    private fun Float.roundToZoomRange(): Float {
+      return round(this * 1 / ZoomDeltaEpsilon) * ZoomDeltaEpsilon
+    }
+  }
 }

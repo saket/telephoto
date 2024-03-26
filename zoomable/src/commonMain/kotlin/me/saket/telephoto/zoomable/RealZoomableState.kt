@@ -55,6 +55,7 @@ import me.saket.telephoto.zoomable.internal.unaryMinus
 import me.saket.telephoto.zoomable.internal.withOrigin
 import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
 import kotlin.math.abs
+import kotlin.math.min
 
 @Stable
 internal class RealZoomableState internal constructor(
@@ -165,6 +166,12 @@ internal class RealZoomableState internal constructor(
       null
     }
   }
+
+  internal val maxZoomFactor: Float
+    get() = baseZoomFactor?.let { zoomSpec.range.maxZoomFactor(it) } ?: 1f
+
+  internal val minZoomFactor: Float
+    get() = baseZoomFactor?.let { zoomSpec.range.minZoomFactor(it) } ?: 1f
 
   /** See [PlaceholderBoundsProvider]. */
   internal var placeholderBoundsProvider: PlaceholderBoundsProvider? by mutableStateOf(null)
@@ -386,6 +393,39 @@ internal class RealZoomableState internal constructor(
     }
   }
 
+  override suspend fun toggleScale(scale: Float, centroid: Offset) {
+    val startTransformation = gestureState ?: return
+    val baseZoomFactor = baseZoomFactor ?: return
+
+    val currentZoom = ContentZoomFactor(baseZoomFactor, startTransformation.userZoomFactor)
+
+    val targetZoom = if (currentZoom.isAtMinZoom(zoomSpec.range)) {
+      val maxZoomFactor = min(scale, maxZoomFactor)
+
+      ContentZoomFactor(
+        baseZoom = baseZoomFactor,
+        userZoom = UserZoomFactor(maxZoomFactor / baseZoomFactor.maxScale),
+      )
+    } else {
+      ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range)
+    }
+
+    smoothlyToggleZoom(targetZoom, centroid)
+  }
+
+  override suspend fun changeScale(scale: Float, centroid: Offset) {
+    val baseZoomFactor = baseZoomFactor ?: return
+
+    val zoomFactor = scale.coerceIn(minZoomFactor, maxZoomFactor)
+
+    val targetZoom = ContentZoomFactor(
+      baseZoom = baseZoomFactor,
+      userZoom = UserZoomFactor(zoomFactor / baseZoomFactor.maxScale),
+    )
+
+    smoothlyToggleZoom(targetZoom, centroid)
+  }
+
   /**
    * Update the content's position. This is called when values
    * such as [contentScale] and [contentAlignment] are updated.
@@ -398,29 +438,31 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  internal suspend fun handleDoubleTapZoomTo(centroid: Offset) {
+  private suspend fun smoothlyToggleZoom(
+    shouldZoomIn: Boolean,
+    centroid: Offset
+  ) {
     val baseZoomFactor = baseZoomFactor ?: return
-    val gestureState = gestureState ?: return
-    val currentZoom = ContentZoomFactor(baseZoomFactor, gestureState.userZoomFactor)
+    val targetZoom = if (shouldZoomIn) {
+      ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range)
+    } else {
+      ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range)
+    }
 
-    smoothlyToggleZoom(
-      shouldZoomIn = !currentZoom.isAtMaxZoom(zoomSpec.range),
-      centroid = centroid
-    )
+    smoothlyToggleZoom(targetZoom, centroid)
   }
 
   private suspend fun smoothlyToggleZoom(
-    shouldZoomIn: Boolean,
+    targetZoom: ContentZoomFactor,
     centroid: Offset
   ) {
     val startTransformation = gestureState ?: return
     val baseZoomFactor = baseZoomFactor ?: return
 
     val startZoom = ContentZoomFactor(baseZoomFactor, startTransformation.userZoomFactor)
-    val targetZoom = if (shouldZoomIn) {
-      ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range)
-    } else {
-      ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range)
+
+    if (abs(startZoom.userZoom.value - targetZoom.userZoom.value) < ZoomDeltaEpsilon) {
+      return
     }
 
     val targetOffset = startTransformation.offset
@@ -629,7 +671,7 @@ internal data class ContentZoomFactor(
 }
 
 internal data class ZoomRange(
-  private val minZoomAsRatioOfBaseZoom: Float = 1f,
+  internal val minZoomAsRatioOfBaseZoom: Float = 1f,
   private val maxZoomAsRatioOfSize: Float,
 ) {
 

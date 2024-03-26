@@ -70,6 +70,19 @@ Modifier.zoomable(
   state = rememberZoomableState(),
   onClick = { … },
   onLongClick = { … },
+  onDoubleTap = { … },
+)
+```
+
+#### Double Tap Click Listener
+By default, the double tap gesture is used for zooming in and out. To add a click listener to the double tap gesture, use the `onDoubleTap` parameter.
+
+There is also a default parameter available if you want to use three different zoom levels for the double tap gesture.
+
+```kotlin
+Modifier.zoomable(
+  state = zoomableState,
+  onDoubleTap = zoomableState.doubleTapThreeLevelZoom
 )
 ```
 
