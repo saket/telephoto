@@ -19,10 +19,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.geometry.isFinite
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
@@ -30,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toOffset
@@ -264,6 +267,11 @@ internal class RealZoomableState internal constructor(
     )
   }
 
+  internal fun canConsumeKeyboardPan(): Boolean {
+    val zoomFactor = gestureState?.userZoomFactor ?: return false
+    return zoomFactor.value > 1f
+  }
+
   internal fun canConsumePanChange(panDelta: Offset): Boolean {
     val baseZoomFactor = baseZoomFactor ?: return false // Content is probably not ready yet. Ignore this gesture.
     val current = gestureState ?: return false
@@ -409,19 +417,54 @@ internal class RealZoomableState internal constructor(
     )
   }
 
+  internal suspend fun zoomBy(factor: Float) {
+    val startTransformation = gestureState ?: return
+    val baseZoomFactor = baseZoomFactor ?: return
+    val targetZoom = ContentZoomFactor(baseZoomFactor, startTransformation.userZoomFactor * factor)
+      .coerceUserZoomIn(zoomSpec.range)
+    val visualCenter = contentLayoutSize.center
+    smoothlyZoomTo(
+      targetZoom = targetZoom,
+      centroid = visualCenter
+    )
+  }
+
+  internal suspend fun panBy(delta: Offset) {
+    transformableState.transform(MutatePriority.UserInput) {
+      var previous = Offset.Zero
+      AnimationState(
+        typeConverter = Offset.VectorConverter,
+        initialValue = Offset.Zero,
+      ).animateTo(delta) {
+        transformBy(panChange = previous - value)
+        previous = value
+      }
+    }
+  }
+
   private suspend fun smoothlyToggleZoom(
     shouldZoomIn: Boolean,
+    centroid: Offset
+  ) {
+    val baseZoomFactor = baseZoomFactor ?: return
+    smoothlyZoomTo(
+      targetZoom = if (shouldZoomIn) {
+        ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range)
+      } else {
+        ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range)
+      },
+      centroid = centroid,
+    )
+  }
+
+  private suspend fun smoothlyZoomTo(
+    targetZoom: ContentZoomFactor,
     centroid: Offset
   ) {
     val startTransformation = gestureState ?: return
     val baseZoomFactor = baseZoomFactor ?: return
 
     val startZoom = ContentZoomFactor(baseZoomFactor, startTransformation.userZoomFactor)
-    val targetZoom = if (shouldZoomIn) {
-      ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range)
-    } else {
-      ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range)
-    }
 
     val targetOffset = startTransformation.offset
       .retainCentroidPositionAfterZoom(

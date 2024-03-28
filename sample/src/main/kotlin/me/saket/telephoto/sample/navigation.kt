@@ -23,20 +23,19 @@ internal fun Navigation(
   val navigator = rememberCircuitNavigator(backstack)
 
   Box(Modifier.fillMaxSize()) {
-    for (record in backstack.take(2).asReversed()) {
-      key(record.key) {
-        when (val screen = record.screen) {
-          is GalleryScreenKey -> {
-            GalleryScreen(
-              key = screen,
-              navigator = navigator
-            )
-          }
-          is MediaViewerScreenKey -> {
-            MediaViewerScreen(
-              key = screen
-            )
-          }
+    val record = backstack.first()
+    key(record.key) {
+      when (val screen = record.screen) {
+        is GalleryScreenKey -> {
+          GalleryScreen(
+            key = screen,
+            navigator = navigator
+          )
+        }
+        is MediaViewerScreenKey -> {
+          MediaViewerScreen(
+            key = screen
+          )
         }
       }
     }
