@@ -2,6 +2,7 @@ import me.tylerbwong.gradle.metalava.extension.MetalavaExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.exclude
 
 class AndroidLibraryPublishingConventionPlugin : Plugin<Project> {
   override fun apply(target: Project): Unit = with(target) {
@@ -10,6 +11,13 @@ class AndroidLibraryPublishingConventionPlugin : Plugin<Project> {
       apply("org.jetbrains.dokka")
       apply("me.tylerbwong.gradle.metalava")
       apply("dev.drewhamilton.poko")
+    }
+
+    // exclude poko annotations dependency from runtime as it's only needed for compilation
+    configurations.all {
+      if (name.endsWith("RuntimeClasspath")) {
+        exclude(group = "dev.drewhamilton.poko")
+      }
     }
 
     // Used on CI to prevent publishing of non-snapshot versions.
