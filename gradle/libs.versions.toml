@@ -5,7 +5,7 @@ kotlin = "1.9.22"
 agp = "8.3.1"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
 compose-multiplatform = "1.6.1" # https://github.com/JetBrains/compose-multiplatform/releases
 androidx-compose-runtime = "1.6.3" # https://developer.android.com/jetpack/androidx/releases/compose
-androidx-compose-ui = "1.6.3"
+androidx-compose-ui = "1.6.3" # https://developer.android.com/jetpack/androidx/releases/compose/ui
 androidx-compose-ui-material3 = "1.2.1" # https://developer.android.com/jetpack/androidx/releases/compose-material3
 androidx-annotation = "1.7.1"
 androidx-compose-compiler = "1.5.10"

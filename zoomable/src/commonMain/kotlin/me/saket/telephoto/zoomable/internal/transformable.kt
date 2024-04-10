@@ -34,9 +34,12 @@ import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
@@ -86,7 +89,8 @@ internal data class TransformableElement(
   private val onTransformStopped: (velocity: Velocity) -> Unit = {},
 ) : ModifierNodeElement<TransformableNode>() {
   override fun create(): TransformableNode = TransformableNode(
-    state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped)
+    state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped
+  )
 
   override fun update(node: TransformableNode) {
     node.update(state, canPan, lockRotationOnZoomPan, enabled, onTransformStopped)
@@ -108,7 +112,7 @@ internal class TransformableNode(
   private var lockRotationOnZoomPan: Boolean,
   private var enabled: Boolean,
   private var onTransformStopped: (velocity: Velocity) -> Unit = {},
-) : DelegatingNode() {
+) : DelegatingNode(), CompositionLocalConsumerModifierNode {
 
   private val updatedCanPan: (Offset) -> Boolean = { canPan.invoke(it) }
   private val updatedOnTransformStopped: (Velocity) -> Unit = { onTransformStopped.invoke(it) }
@@ -147,8 +151,9 @@ internal class TransformableNode(
           wasCancelled = true
           if (!isActive) throw exception
         } finally {
-          // todo: get this from LocalViewConfiguration.
-          val maximumVelocity = Velocity(Int.MAX_VALUE.toFloat(), Int.MAX_VALUE.toFloat())
+          val maximumVelocity = currentValueOf(LocalViewConfiguration).let {
+            Velocity(it.maximumFlingVelocity, it.maximumFlingVelocity)
+          }
           val velocity = if (wasCancelled) Velocity.Zero else velocityTracker.calculateVelocity(maximumVelocity)
           channel.trySend(TransformStopped(velocity))
         }
