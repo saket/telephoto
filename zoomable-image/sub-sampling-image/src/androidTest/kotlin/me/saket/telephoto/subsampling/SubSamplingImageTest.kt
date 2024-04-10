@@ -344,6 +344,11 @@ class SubSamplingImageTest {
         override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
           val isBaseTile = region.sampleSize.size == 8
           return if (isBaseTile || !firstNonBaseTileReceived.getAndSet(true)) {
+            if (!isBaseTile) {
+              check(region.bounds == IntRect(0, 1200, 1216, 3265)) {
+                "Incorrect first tile received: $region. Possible race condition?"
+              }
+            }
             real.decodeRegion(region)
           } else {
             delay(Long.MAX_VALUE)

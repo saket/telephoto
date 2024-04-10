@@ -3,6 +3,8 @@ package me.saket.telephoto.subsamplingimage.internal
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -41,7 +43,11 @@ internal class BitmapCache(
         .collect { regions ->
           val tilesToLoad = regions.fastFilter { it !in cachedBitmaps.value }
           tilesToLoad.fastForEach { region ->
-            val job = launch {
+            // CoroutineStart.UNDISPATCHED is used to ensure that the coroutines are executed
+            // in the same order they were launched. Otherwise, the tiles may load in a different
+            // order than what was requested. SubSamplingImageTest#draw_tile_under_centroid_first()
+            // test will also become flaky.
+            val job = launch(start = CoroutineStart.UNDISPATCHED) {
               val bitmap = decoder.decodeRegion(region)
               cachedBitmaps.update { it + (region to Loaded(bitmap)) }
             }
