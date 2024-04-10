@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,8 +15,10 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import me.saket.telephoto.subsamplingimage.internal.BitmapCache.LoadingState.InFlight
 import me.saket.telephoto.subsamplingimage.internal.BitmapCache.LoadingState.Loaded
@@ -47,11 +50,16 @@ internal class BitmapCache(
             // in the same order they were launched. Otherwise, the tiles may load in a different
             // order than what was requested. SubSamplingImageTest#draw_tile_under_centroid_first()
             // test will also become flaky.
-            val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
+              cachedBitmaps.update {
+                check(region !in it)
+                it + (region to InFlight(currentCoroutineContext().job))
+              }
               val bitmap = decoder.decodeRegion(region)
-              cachedBitmaps.update { it + (region to Loaded(bitmap)) }
+              cachedBitmaps.update {
+                it + (region to Loaded(bitmap))
+              }
             }
-            cachedBitmaps.update { it + (region to InFlight(job)) }
           }
 
           val tilesToUnload = cachedBitmaps.value.keys.filter { it !in regions }
