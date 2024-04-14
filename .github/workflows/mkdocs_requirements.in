@@ -10,3 +10,4 @@ mkdocs-material==9.0.6
 # https://github.com/saket/telephoto/security/dependabot/2
 pymdown-extensions==10.0
 requests==2.31.0
+idna==3.7
