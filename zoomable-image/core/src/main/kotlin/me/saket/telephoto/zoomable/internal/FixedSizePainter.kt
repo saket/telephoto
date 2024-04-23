@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.painter.Painter
 @Stable
 @Composable
 internal fun Painter.scaledToMatch(size: Size): Painter {
-  return remember(this, size) {
+  return remember(this, intrinsicSize, size) {
     FixedSizePainter(
       painter = this,
       overriddenSize = if (size.isSpecified && !size.isEmpty() && intrinsicSize.isSpecified) {

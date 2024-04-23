@@ -98,7 +98,6 @@ class CoilImageSourceTest {
   @get:Rule val serverRule = MockWebServerRule()
   @get:Rule val testName = TestName()
   @get:Rule val dropshots = Dropshots(
-    recordScreenshots = true,
     filenameFunc = { it },
     resultValidator = CiScreenshotValidator(
       context = { rule.activity },
@@ -443,14 +442,15 @@ class CoilImageSourceTest {
     }
 
     rule.waitUntil(5.seconds) { placeholderLoaded }
+    rule.waitForIdle()
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = "placeholder_placeholder")
+      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_placeholder")
     }
     displayImage = true
     rule.waitForIdle()
     rule.waitUntil(5.seconds) { state.isImageDisplayed }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = "placeholder_image")
+      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_full_image")
     }
   }
 
