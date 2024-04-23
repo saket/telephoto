@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import app.cash.molecule.RecompositionMode
@@ -29,6 +31,7 @@ import assertk.assertions.isNotNull
 import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
 import coil.imageLoader
@@ -41,6 +44,7 @@ import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -49,10 +53,12 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.compositionLocalProviderReturnable
 import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.waitUntil
+import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageState
@@ -92,6 +98,7 @@ class CoilImageSourceTest {
   @get:Rule val serverRule = MockWebServerRule()
   @get:Rule val testName = TestName()
   @get:Rule val dropshots = Dropshots(
+    recordScreenshots = true,
     filenameFunc = { it },
     resultValidator = CiScreenshotValidator(
       context = { rule.activity },
@@ -112,6 +119,7 @@ class CoilImageSourceTest {
       override fun dispatch(request: RecordedRequest): MockResponse {
         return when (request.path) {
           "/placeholder_image.png" -> assetAsResponse("placeholder_image.png")
+          "/slow_placeholder_image.png" -> assetAsResponse("placeholder_image.png", delay = 1000.milliseconds)
           "/full_image.png" -> assetAsResponse("full_image.png", delay = 300.milliseconds)
           "/animated_image.gif" -> assetAsResponse("animated_image.gif", delay = 300.milliseconds)
           "/emoji.svg" -> assetAsResponse("emoji.svg")
@@ -383,6 +391,66 @@ class CoilImageSourceTest {
     }.test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isNotInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
+    }
+  }
+
+  @Test fun loads_placeholder_for_subsampled_image() = runTest {
+    val imageUrl = serverRule.server.url("/slow_placeholder_image.png")
+    lateinit var state: ZoomableImageState
+    var displayImage by mutableStateOf(false)
+    var placeholderLoaded = false
+
+    rule.setContent {
+      state = rememberZoomableImageState()
+
+      val placeholderPainter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(context)
+          .data(imageUrl)
+          .allowHardware(false) // Unsupported by Screenshot.capture()
+          .listener(
+            onSuccess = { _, _ ->
+              placeholderLoaded = true
+            }
+          )
+          .build()
+      )
+      val source = object : ZoomableImageSource {
+        @Composable
+        override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+          val delegate = remember(displayImage) {
+            if (displayImage) {
+              ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset("night_watch_14000.jpg"))
+            } else {
+              null
+            }
+          }
+
+          return ResolveResult(
+            delegate = delegate,
+            placeholder = placeholderPainter,
+          )
+        }
+      }
+
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image =  source,
+        contentDescription = null,
+        state = state,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { placeholderLoaded }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = "placeholder_placeholder")
+    }
+    displayImage = true
+    rule.waitForIdle()
+    rule.waitUntil(5.seconds) { state.isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = "placeholder_image")
     }
   }
 
