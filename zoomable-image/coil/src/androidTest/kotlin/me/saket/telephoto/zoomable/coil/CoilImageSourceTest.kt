@@ -256,6 +256,67 @@ class CoilImageSourceTest {
     }
   }
 
+  @Test fun uses_updated_async_placeholder_size_when_available() = runTest {
+    val imageUrl = serverRule.server.url("/slow_placeholder_image.png")
+    lateinit var state: ZoomableImageState
+    var displayImage by mutableStateOf(false)
+    var placeholderLoaded = false
+
+    rule.setContent {
+      state = rememberZoomableImageState()
+
+      val placeholderPainter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(context)
+          .data(imageUrl)
+          .allowHardware(false) // Unsupported by Screenshot.capture()
+          .listener(
+            onSuccess = { _, _ ->
+              placeholderLoaded = true
+            }
+          )
+          .build()
+      )
+      val source = object : ZoomableImageSource {
+        @Composable
+        override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+          val delegate = remember(displayImage) {
+            if (displayImage) {
+              ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset("night_watch_14000.jpg"))
+            } else {
+              null
+            }
+          }
+
+          return ResolveResult(
+            delegate = delegate,
+            placeholder = placeholderPainter,
+          )
+        }
+      }
+
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image =  source,
+        contentDescription = null,
+        state = state,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { placeholderLoaded }
+    rule.waitForIdle()
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_placeholder")
+    }
+    displayImage = true
+    rule.waitForIdle()
+    rule.waitUntil(5.seconds) { state.isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_full_image")
+    }
+  }
+
   @Test fun reload_image_when_image_request_changes() = runTest {
     var imageUrl by mutableStateOf(serverRule.server.url("placeholder_image.png"))
 
@@ -390,67 +451,6 @@ class CoilImageSourceTest {
     }.test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isNotInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
-    }
-  }
-
-  @Test fun loads_placeholder_for_subsampled_image() = runTest {
-    val imageUrl = serverRule.server.url("/slow_placeholder_image.png")
-    lateinit var state: ZoomableImageState
-    var displayImage by mutableStateOf(false)
-    var placeholderLoaded = false
-
-    rule.setContent {
-      state = rememberZoomableImageState()
-
-      val placeholderPainter = rememberAsyncImagePainter(
-        model = ImageRequest.Builder(context)
-          .data(imageUrl)
-          .allowHardware(false) // Unsupported by Screenshot.capture()
-          .listener(
-            onSuccess = { _, _ ->
-              placeholderLoaded = true
-            }
-          )
-          .build()
-      )
-      val source = object : ZoomableImageSource {
-        @Composable
-        override fun resolve(canvasSize: Flow<Size>): ResolveResult {
-          val delegate = remember(displayImage) {
-            if (displayImage) {
-              ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset("night_watch_14000.jpg"))
-            } else {
-              null
-            }
-          }
-
-          return ResolveResult(
-            delegate = delegate,
-            placeholder = placeholderPainter,
-          )
-        }
-      }
-
-      ZoomableImage(
-        modifier = Modifier
-          .fillMaxSize()
-          .testTag("image"),
-        image =  source,
-        contentDescription = null,
-        state = state,
-      )
-    }
-
-    rule.waitUntil(5.seconds) { placeholderLoaded }
-    rule.waitForIdle()
-    rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_placeholder")
-    }
-    displayImage = true
-    rule.waitForIdle()
-    rule.waitUntil(5.seconds) { state.isImageDisplayed }
-    rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_full_image")
     }
   }
 
