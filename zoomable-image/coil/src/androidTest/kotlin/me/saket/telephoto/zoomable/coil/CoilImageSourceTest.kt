@@ -281,7 +281,7 @@ class CoilImageSourceTest {
         override fun resolve(canvasSize: Flow<Size>): ResolveResult {
           val delegate = remember(displayImage) {
             if (displayImage) {
-              ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset("night_watch_14000.jpg"))
+              ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset("full_image.png"))
             } else {
               null
             }
