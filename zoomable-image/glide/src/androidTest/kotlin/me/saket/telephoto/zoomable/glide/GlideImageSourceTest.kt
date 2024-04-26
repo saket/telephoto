@@ -99,6 +99,7 @@ class GlideImageSourceTest {
         "/full_image.png" -> assetAsResponse("full_image.png", delay = 300.milliseconds)
         "/placeholder_image.png" -> assetAsResponse("placeholder_image.png")
         "/animated_image.gif" -> assetAsResponse("animated_image.gif")
+        "/single_frame_gif.gif" -> assetAsResponse("single_frame_gif.gif")
         else -> error("unknown path = ${request.path}")
       }
     }
@@ -240,9 +241,11 @@ class GlideImageSourceTest {
   @Test fun show_error_drawable_if_request_fails() = runTest {
   }
 
-  @Test fun non_bitmaps_should_not_be_sub_sampled() = runTest {
+  @Test fun gifs_should_not_be_sub_sampled(
+    @TestParameter param: GifRequestDataParam
+  ) = runTest {
     resolve(
-      model = serverRule.server.url("animated_image.gif").toString()
+      model = serverRule.server.url(param.url).toString()
     ).test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isNotInstanceOf(SubSamplingDelegate::class.java)
@@ -296,6 +299,12 @@ class GlideImageSourceTest {
     Data(DiskCacheStrategy.DATA),
     Automatic(DiskCacheStrategy.AUTOMATIC),
     Resource(DiskCacheStrategy.RESOURCE),
+  }
+
+  @Suppress("unused")
+  enum class GifRequestDataParam(val url: String) {
+    AnimatedGif("animated_image.gif"),
+    SingleFrameGif("single_frame_gif.gif"),
   }
 
   context(TestScope)
