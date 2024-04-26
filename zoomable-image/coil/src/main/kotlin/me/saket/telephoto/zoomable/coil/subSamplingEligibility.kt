@@ -22,22 +22,12 @@ context(Resolver)
 internal suspend fun SubSamplingImageSource.canBeSubSampled(): Boolean {
   val preventSubSampling = when (this) {
     is ResourceImageSource -> isVectorDrawable()
-    is AssetImageSource -> isSvgDecoderPresent() && isSvg()
-    is UriImageSource -> isSvgDecoderPresent() && isSvg()
-    is FileImageSource -> isSvgDecoderPresent() && isSvg(FileSystem.SYSTEM.source(path))
-    is RawImageSource -> isSvgDecoderPresent() && isSvg(source.invoke())
+    is AssetImageSource -> canBeSubSampled()
+    is UriImageSource -> canBeSubSampled()
+    is FileImageSource -> canBeSubSampled(FileSystem.SYSTEM.source(path))
+    is RawImageSource -> canBeSubSampled(source.invoke())
   }
   return !preventSubSampling
-}
-
-context(Resolver)
-private fun isSvgDecoderPresent(): Boolean {
-  // Searching for coil's SvgDecoder by name isn't the best idea,
-  // but it'll prevent opening of bitmap sources and inspecting
-  // them for SVGs for projects that don't need SVGs.
-  return imageLoader.components.decoderFactories.any {
-    it::class.qualifiedName?.contains("svg", ignoreCase = true) == true
-  }
 }
 
 context(Resolver)
@@ -47,16 +37,18 @@ private fun ResourceImageSource.isVectorDrawable(): Boolean =
   }.string.endsWith(".xml")
 
 context(Resolver)
-private suspend fun AssetImageSource.isSvg(): Boolean =
-  isSvg(peek(request.context).source())
+private suspend fun AssetImageSource.canBeSubSampled(): Boolean =
+  canBeSubSampled(peek(request.context).source())
 
 context(Resolver)
 @SuppressLint("Recycle")
-private suspend fun UriImageSource.isSvg(): Boolean =
-  isSvg(peek(request.context).source())
+private suspend fun UriImageSource.canBeSubSampled(): Boolean =
+  canBeSubSampled(peek(request.context).source())
 
-private suspend fun isSvg(source: Source?): Boolean {
+private suspend fun canBeSubSampled(source: Source): Boolean {
   return withContext(Dispatchers.IO) {
-    source?.buffer()?.use(DecodeUtils::isSvg) == true
+    source.buffer().use {
+      DecodeUtils.isSvg(it) || DecodeUtils.isGif(it)
+    }
   }
 }
