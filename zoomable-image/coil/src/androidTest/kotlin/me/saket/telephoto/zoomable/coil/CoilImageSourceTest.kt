@@ -121,6 +121,7 @@ class CoilImageSourceTest {
           "/slow_placeholder_image.png" -> assetAsResponse("placeholder_image.png", delay = 1000.milliseconds)
           "/full_image.png" -> assetAsResponse("full_image.png", delay = 300.milliseconds)
           "/animated_image.gif" -> assetAsResponse("animated_image.gif", delay = 300.milliseconds)
+          "/single_frame_gif.gif" -> assetAsResponse("single_frame_gif.gif", delay = 300.milliseconds)
           "/emoji.svg" -> assetAsResponse("emoji.svg")
           else -> error("unknown path = ${request.path}")
         }
@@ -439,7 +440,9 @@ class CoilImageSourceTest {
   @Test fun show_error_drawable_if_request_fails() {
   }
 
-  @Test fun non_bitmaps_should_not_be_sub_sampled() = runTest {
+  @Test fun gifs_should_not_be_sub_sampled(
+    @TestParameter param: GifRequestDataParam
+  ) = runTest {
     Coil.setImageLoader(
       ImageLoader.Builder(context)
         .components { add(ImageDecoderDecoder.Factory()) }  // For GIFs.
@@ -447,7 +450,7 @@ class CoilImageSourceTest {
     )
 
     resolve {
-      serverRule.server.url("animated_image.gif")
+      serverRule.server.url(param.url)
     }.test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isNotInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
@@ -489,6 +492,12 @@ class CoilImageSourceTest {
     RemoteUrl({ error("unsupported") }),
     AssetContentUriSvg({ Uri.parse("file:///android_asset/emoji.svg") }),
     FileContentUriSvg({ Uri.parse("file:///${createFileFromAsset("emoji.svg")}") }),
+  }
+
+  @Suppress("unused")
+  enum class GifRequestDataParam(val url: String) {
+    AnimatedGif("animated_image.gif"),
+    SingleFrameGif("single_frame_gif.gif"),
   }
 
   @Suppress("unused")
