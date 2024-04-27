@@ -7,6 +7,8 @@ import android.view.WindowManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
+import androidx.core.view.doOnLayout
+import androidx.core.view.doOnNextLayout
 import androidx.test.platform.app.InstrumentationRegistry
 
 fun Activity.prepareForScreenshotTest() {
@@ -28,5 +30,11 @@ fun Activity.prepareForScreenshotTest() {
   } catch (e: Throwable) {
     println("Failed to prepare activity for screenshot test:")
     e.printStackTrace()
+  }
+
+  window.decorView.doOnNextLayout {
+    check (Build.VERSION.SDK_INT == 31 && it.width == 1080 && it.height == 2400) {
+      "telephoto's test screenshots were generated on an API 31 device with a 1080 x 2400 display/window size."
+    }
   }
 }
