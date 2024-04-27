@@ -36,6 +36,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.ColorPainter
@@ -78,6 +79,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.CiScreenshotValidator
@@ -95,6 +97,7 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
+import java.io.InputStream
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1156,6 +1159,66 @@ class ZoomableImageTest {
     rule.waitUntil { imageState.zoomableState.zoomFraction == 1f }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_in")
+    }
+  }
+
+  @Test fun uses_updated_async_placeholder_size_when_available() = runTest {
+    lateinit var state: ZoomableImageState
+
+    val asyncPlaceholderPainter = PainterStub(initialSize = Size.Unspecified)
+    val imageSource = object : ZoomableImageSource {
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        return ResolveResult(
+          delegate = null,
+          placeholder = asyncPlaceholderPainter,
+        )
+      }
+    }
+
+    rule.setContent {
+      state = rememberZoomableImageState()
+      ZoomableImage(
+        modifier = Modifier.fillMaxSize(),
+        image = imageSource,
+        contentDescription = null,
+        state = state,
+      )
+    }
+
+    // Bug description: https://github.com/saket/telephoto/pull/84
+    // When the placeholder's intrinsic size is updated, the preview wasn't using the updated size.
+    // When using an AsyncImagePainter from Coil, this was causing the preview to permanently use
+    // Size.Unspecified, causing the placeholder to fill the view.
+    rule.waitForIdle()
+    asyncPlaceholderPainter.loadImage {
+      rule.activity.assets.open("fox_250.jpg")
+    }
+
+    rule.waitUntil(5.seconds) { asyncPlaceholderPainter.loaded }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_placeholder")
+    }
+  }
+
+  private class PainterStub(private val initialSize: Size) : Painter() {
+    private var delegatePainter: Painter? by mutableStateOf(null)
+    private var loaded = false
+
+    override val intrinsicSize: Size
+      get() = delegatePainter?.intrinsicSize ?: initialSize
+
+    override fun DrawScope.onDraw() {
+      delegatePainter?.run {
+        draw(size)
+      }
+    }
+
+    fun loadImage(imageStream: () -> InputStream) {
+      delegatePainter = imageStream().use { stream ->
+        BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+      }
+      loaded = true
     }
   }
 

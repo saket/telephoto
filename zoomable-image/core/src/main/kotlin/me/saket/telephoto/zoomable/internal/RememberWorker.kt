@@ -1,6 +1,5 @@
 package me.saket.telephoto.zoomable.internal
 
-import androidx.annotation.RestrictTo
 import androidx.compose.runtime.RememberObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
