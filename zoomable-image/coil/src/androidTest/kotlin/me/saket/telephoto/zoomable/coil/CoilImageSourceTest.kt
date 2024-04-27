@@ -32,6 +32,7 @@ import coil.annotation.ExperimentalCoilApi
 import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
 import coil.imageLoader
+import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
@@ -209,7 +210,7 @@ class CoilImageSourceTest {
   }
 
   @Test fun start_with_the_placeholder_image_then_load_the_full_image_using_subsampling() = runTest {
-    // Seed the placeholder image in cache.
+    // Seed the placeholder image in memory cache.
     val seedResult = context.imageLoader.execute(
       ImageRequest.Builder(context)
         .data(serverRule.server.url("placeholder_image.png"))
@@ -386,6 +387,37 @@ class CoilImageSourceTest {
     }.test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isNotInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
+    }
+  }
+
+  // Regression test for https://github.com/saket/telephoto/issues/37.
+  @Test fun reload_image_if_its_evicted_from_the_disk_cache_but_is_still_present_in_the_memory_cache() = runTest {
+    val memoryCache = context.imageLoader.memoryCache!!
+    val diskCache = context.imageLoader.diskCache!!
+
+    // Seed the image in both caches.
+    val imageUrl = serverRule.server.url("full_image.png").toString()
+    context.imageLoader.execute(
+      ImageRequest.Builder(context)
+        .data(imageUrl)
+        .memoryCachePolicy(CachePolicy.ENABLED)
+        .diskCachePolicy(CachePolicy.ENABLED)
+        .build()
+    )
+    assertThat(memoryCache[MemoryCache.Key(imageUrl)]).isNotNull()
+    diskCache.openSnapshot(imageUrl).let { snapshot ->
+      assertThat(snapshot).isNotNull()
+      snapshot!!.close()
+    }
+
+    // Clear only the disk cache.
+    diskCache.fileSystem.deleteRecursively(diskCache.directory)
+    assertThat(memoryCache[MemoryCache.Key(imageUrl)]).isNotNull()
+
+    // Make sure that the image gets reloaded from the network.
+    resolve { imageUrl }.test {
+      skipItems(1) // Default item.
+      assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
     }
   }
 
