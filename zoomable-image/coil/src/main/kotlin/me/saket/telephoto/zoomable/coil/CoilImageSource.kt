@@ -24,6 +24,7 @@ import coil.request.ImageRequest
 import coil.request.ImageResult
 import coil.request.SuccessResult
 import coil.size.Dimension
+import coil.size.Precision
 import coil.size.SizeResolver
 import coil.transition.CrossfadeTransition
 import com.google.accompanist.drawablepainter.DrawablePainter
@@ -104,6 +105,9 @@ internal class Resolver(
             )
           }
         )
+        // Increase memory cache hit rate because the image will anyway fit the canvas
+        // size at draw time.
+        .precision(Precision.INEXACT)
         .build()
     )
 
