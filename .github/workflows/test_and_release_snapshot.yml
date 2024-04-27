@@ -2,7 +2,6 @@ name: Run tests and publish snapshot
 
 on:
   push:
-    branches: [ trunk ]
   pull_request:
 
 jobs:
