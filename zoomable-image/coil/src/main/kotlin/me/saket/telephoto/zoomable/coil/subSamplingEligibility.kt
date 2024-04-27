@@ -20,16 +20,15 @@ import okio.source
 
 context(Resolver)
 internal suspend fun SubSamplingImageSource.canBeSubSampled(): Boolean {
-  val preventSubSampling = withContext(Dispatchers.IO) {
+  return withContext(Dispatchers.IO) {
     when (this@canBeSubSampled) {
-      is ResourceImageSource -> isVectorDrawable()
+      is ResourceImageSource -> !isVectorDrawable()
       is AssetImageSource -> canBeSubSampled()
       is UriImageSource -> canBeSubSampled()
       is FileImageSource -> canBeSubSampled(FileSystem.SYSTEM.source(path))
       is RawImageSource -> canBeSubSampled(source.invoke())
     }
   }
-  return !preventSubSampling
 }
 
 context(Resolver)
@@ -49,6 +48,7 @@ private fun UriImageSource.canBeSubSampled(): Boolean =
 
 private fun canBeSubSampled(source: Source): Boolean {
   return source.buffer().use {
-    DecodeUtils.isSvg(it) || DecodeUtils.isGif(it)
+    // Check for GIFs as well because Android's ImageDecoder can return a Bitmap for single-frame GIFs.
+    !DecodeUtils.isSvg(it) && !DecodeUtils.isGif(it)
   }
 }
