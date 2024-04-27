@@ -28,13 +28,17 @@ import coil.size.Precision
 import coil.size.SizeResolver
 import coil.transition.CrossfadeTransition
 import com.google.accompanist.drawablepainter.DrawablePainter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.asAssetPathOrNull
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
+import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceCreationResult.EligibleForSubSampling
+import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceCreationResult.ImageDeletedOnlyFromDiskCache
 import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceFactory
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import me.saket.telephoto.zoomable.internal.copy
@@ -82,6 +86,10 @@ internal class Resolver(
   )
 
   override suspend fun work() {
+    work(forcedMemoryCachePolicy = null)
+  }
+
+  private suspend fun work(forcedMemoryCachePolicy: CachePolicy?) {
     val result = imageLoader.execute(
       request.newBuilder()
         .size(request.defined.sizeResolver ?: sizeResolver)
@@ -95,6 +103,7 @@ internal class Resolver(
             CachePolicy.DISABLED -> CachePolicy.WRITE_ONLY
           }
         )
+        .memoryCachePolicy(forcedMemoryCachePolicy ?: request.memoryCachePolicy)
         // This will unfortunately replace any existing target, but it is also the only
         // way to read placeholder images set using ImageRequest#placeholderMemoryCacheKey.
         // Placeholder images should be small in size so sub-sampling isn't needed here.
@@ -111,7 +120,18 @@ internal class Resolver(
         .build()
     )
 
-    val imageSource = result.toSubSamplingImageSource()
+    val imageSource = when (val it = result.toSubSamplingImageSource()) {
+      null -> null
+      is EligibleForSubSampling -> it.source
+      is ImageDeletedOnlyFromDiskCache -> {
+        println("Image was deleted from the disk cache, but is still present in the memory cache. Reloading request.")
+        // The app's disk cache was possibly deleted, but the image is
+        // still cached in memory. Reload the image from the network.
+        work(forcedMemoryCachePolicy = CachePolicy.WRITE_ONLY)
+        return
+      }
+    }
+
     resolved = resolved.copy(
       crossfadeDuration = result.crossfadeDuration(),
       delegate = if (result is SuccessResult && imageSource != null) {
@@ -127,8 +147,15 @@ internal class Resolver(
     )
   }
 
+  private sealed interface ImageSourceCreationResult {
+    data class EligibleForSubSampling(val source: SubSamplingImageSource) : ImageSourceCreationResult
+
+    /** Image was deleted from the disk cache, but is still present in the memory cache. */
+    data object ImageDeletedOnlyFromDiskCache : ImageSourceCreationResult
+  }
+
   @OptIn(ExperimentalCoilApi::class)
-  private suspend fun ImageResult.toSubSamplingImageSource(): SubSamplingImageSource? {
+  private suspend fun ImageResult.toSubSamplingImageSource(): ImageSourceCreationResult? {
     val result = this
     val sourceFactory = if (result is SuccessResult && result.drawable is BitmapDrawable) {
       when {
@@ -136,7 +163,15 @@ internal class Resolver(
         // it is significantly faster than reading from their input streams.
         result.diskCacheKey != null -> {
           val diskCache = imageLoader.diskCache!!
-          val snapshot = diskCache.openSnapshot(result.diskCacheKey!!) ?: error("Coil returned a null cache snapshot")
+          val snapshot = withContext(Dispatchers.IO) {  // IO because openSnapshot() can delete files.
+            diskCache.openSnapshot(result.diskCacheKey!!)
+          }
+          if (snapshot == null) {
+            return when (result.dataSource) {
+              DataSource.MEMORY_CACHE -> ImageDeletedOnlyFromDiskCache
+              else -> error("Coil returned an image that is missing from its disk cache")
+            }
+          }
           ImageSourceFactory { SubSamplingImageSource.file(snapshot.data, preview = it, onClose = snapshot::close) }
         }
 
@@ -155,7 +190,7 @@ internal class Resolver(
 
     val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
     val source = sourceFactory.create(preview)
-    return if (source?.canBeSubSampled() == true) source else null
+    return if (source?.canBeSubSampled() == true) EligibleForSubSampling(source) else null
   }
 
   fun interface ImageSourceFactory {
