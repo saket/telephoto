@@ -3,6 +3,7 @@ package me.saket.telephoto.util
 import android.app.Activity
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
+import android.os.StrictMode
 import android.view.WindowManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -37,4 +38,17 @@ fun Activity.prepareForScreenshotTest() {
       "telephoto's test screenshots were generated on an API 31 device with a 1080 x 2400 display/window size."
     }
   }
+
+  StrictMode.setThreadPolicy(
+    StrictMode.ThreadPolicy.Builder()
+      .detectAll()
+      .penaltyDeath()
+      .build()
+  )
+  StrictMode.setVmPolicy(
+    StrictMode.VmPolicy.Builder()
+      .detectAll()
+      .penaltyDeath()
+      .build()
+  )
 }
