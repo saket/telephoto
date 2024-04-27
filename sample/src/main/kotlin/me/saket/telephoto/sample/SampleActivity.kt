@@ -2,6 +2,7 @@ package me.saket.telephoto.sample
 
 import android.os.Bundle
 import android.os.StrictMode
+import android.os.strictmode.Violation
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
 import androidx.activity.compose.setContent
@@ -23,6 +24,7 @@ import coil.decode.ImageDecoderDecoder
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import me.saket.telephoto.sample.gallery.MediaAlbum
 import me.saket.telephoto.sample.gallery.MediaItem
+import java.util.concurrent.Executor
 
 class SampleActivity : AppCompatActivity() {
 
@@ -30,13 +32,18 @@ class SampleActivity : AppCompatActivity() {
     StrictMode.setThreadPolicy(
       StrictMode.ThreadPolicy.Builder()
         .detectAll()
-        .penaltyLog()
+        .penaltyDeath()
         .build()
     )
     StrictMode.setVmPolicy(
       StrictMode.VmPolicy.Builder()
-        .detectAll()
-        .penaltyLog() // Can't use penaltyDeath() due to https://stackoverflow.com/q/67444092.
+        .detectLeakedClosableObjects()
+        .penaltyListener(Executor(Runnable::run)) {
+          // https://github.com/aosp-mirror/platform_frameworks_base/commit/e7ae30f76788bcec4457c4e0b0c9cbff2cf892f3
+          if (!it.stackTraceToString().contains("sun.nio.fs.UnixSecureDirectoryStream.finalize")) {
+            throw it
+          }
+        }
         .build()
     )
 
