@@ -20,12 +20,14 @@ import okio.source
 
 context(Resolver)
 internal suspend fun SubSamplingImageSource.canBeSubSampled(): Boolean {
-  val preventSubSampling = when (this) {
-    is ResourceImageSource -> isVectorDrawable()
-    is AssetImageSource -> canBeSubSampled()
-    is UriImageSource -> canBeSubSampled()
-    is FileImageSource -> canBeSubSampled(FileSystem.SYSTEM.source(path))
-    is RawImageSource -> canBeSubSampled(source.invoke())
+  val preventSubSampling = withContext(Dispatchers.IO) {
+    when (this@canBeSubSampled) {
+      is ResourceImageSource -> isVectorDrawable()
+      is AssetImageSource -> canBeSubSampled()
+      is UriImageSource -> canBeSubSampled()
+      is FileImageSource -> canBeSubSampled(FileSystem.SYSTEM.source(path))
+      is RawImageSource -> canBeSubSampled(source.invoke())
+    }
   }
   return !preventSubSampling
 }
@@ -37,18 +39,16 @@ private fun ResourceImageSource.isVectorDrawable(): Boolean =
   }.string.endsWith(".xml")
 
 context(Resolver)
-private suspend fun AssetImageSource.canBeSubSampled(): Boolean =
+private fun AssetImageSource.canBeSubSampled(): Boolean =
   canBeSubSampled(peek(request.context).source())
 
 context(Resolver)
 @SuppressLint("Recycle")
-private suspend fun UriImageSource.canBeSubSampled(): Boolean =
+private fun UriImageSource.canBeSubSampled(): Boolean =
   canBeSubSampled(peek(request.context).source())
 
-private suspend fun canBeSubSampled(source: Source): Boolean {
-  return withContext(Dispatchers.IO) {
-    source.buffer().use {
-      DecodeUtils.isSvg(it) || DecodeUtils.isGif(it)
-    }
+private fun canBeSubSampled(source: Source): Boolean {
+  return source.buffer().use {
+    DecodeUtils.isSvg(it) || DecodeUtils.isGif(it)
   }
 }
