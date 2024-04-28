@@ -116,7 +116,12 @@ internal class Resolver(
         )
         // Increase memory cache hit rate because the image will anyway fit the canvas
         // size at draw time.
-        .precision(Precision.INEXACT)
+        .precision(
+          when (request.defined.precision) {
+            Precision.EXACT -> request.precision
+            else -> Precision.INEXACT
+          }
+        )
         .build()
     )
 
