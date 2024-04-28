@@ -86,10 +86,10 @@ internal class Resolver(
   )
 
   override suspend fun work() {
-    work(forcedMemoryCachePolicy = null)
+    work(skipMemoryCache = false)
   }
 
-  private suspend fun work(forcedMemoryCachePolicy: CachePolicy?) {
+  private suspend fun work(skipMemoryCache: Boolean) {
     val result = imageLoader.execute(
       request.newBuilder()
         .size(request.defined.sizeResolver ?: sizeResolver)
@@ -103,7 +103,9 @@ internal class Resolver(
             CachePolicy.DISABLED -> CachePolicy.WRITE_ONLY
           }
         )
-        .memoryCachePolicy(forcedMemoryCachePolicy ?: request.memoryCachePolicy)
+        .memoryCachePolicy(
+          if (skipMemoryCache) CachePolicy.WRITE_ONLY else request.memoryCachePolicy
+        )
         // This will unfortunately replace any existing target, but it is also the only
         // way to read placeholder images set using ImageRequest#placeholderMemoryCacheKey.
         // Placeholder images should be small in size so sub-sampling isn't needed here.
@@ -129,10 +131,13 @@ internal class Resolver(
       null -> null
       is EligibleForSubSampling -> it.source
       is ImageDeletedOnlyFromDiskCache -> {
-        println("Image was deleted from the disk cache, but is still present in the memory cache. Reloading request.")
-        // The app's disk cache was possibly deleted, but the image is
-        // still cached in memory. Reload the image from the network.
-        work(forcedMemoryCachePolicy = CachePolicy.WRITE_ONLY)
+        if (skipMemoryCache) {
+          error("Coil returned an image that is missing from both its memory and disk caches")
+        } else {
+          // The app's disk cache was possibly deleted, but the image is
+          // still cached in memory. Reload the image from the network.
+          work(skipMemoryCache = true)
+        }
         return
       }
     }
