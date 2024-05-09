@@ -3,6 +3,7 @@ package me.saket.telephoto.zoomable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -12,9 +13,12 @@ import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.internal.KeyboardActionsElement
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
 import me.saket.telephoto.zoomable.internal.TransformableElement
@@ -62,6 +66,7 @@ fun Modifier.zoomable(
         onLongClick = onLongClick,
       )
     )
+    .focusable()
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation(state.contentTransformation)
     }
@@ -98,6 +103,10 @@ private data class ZoomableElement(
     properties["onLongClick"] = onLongClick
   }
 }
+
+// TODO: make configurable?
+private const val KeyboardZoomStep = 1.2f
+private val KeyboardPanStep = 50.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 private class ZoomableNode(
@@ -137,6 +146,24 @@ private class ZoomableNode(
       }
     }
   }
+  val onKeyboardZoom: (Float) -> Unit = { factor ->
+    coroutineScope.launch {
+      state.animateZoomBy(factor)
+    }
+  }
+  val onKeyboardResetZoom: () -> Unit = {
+    coroutineScope.launch {
+      state.resetZoom()
+    }
+  }
+  val onKeyboardPan: (DpOffset) -> Unit = { delta ->
+    coroutineScope.launch {
+      state.animatePanBy(
+        with(requireDensity()) {
+          Offset(x = delta.x.toPx(), y = delta.y.toPx())
+        })
+    }
+  }
 
   private val tappableAndQuickZoomableNode = TappableAndQuickZoomableElement(
     gesturesEnabled = enabled,
@@ -156,10 +183,20 @@ private class ZoomableNode(
     lockRotationOnZoomPan = false,
   ).create()
 
+  private val keyboardActionsNode = KeyboardActionsElement(
+    zoomStep = KeyboardZoomStep,
+    panStep = KeyboardPanStep,
+    canPan = state::canConsumeKeyboardPan,
+    onZoom = onKeyboardZoom,
+    onResetZoom = onKeyboardResetZoom,
+    onPan = onKeyboardPan,
+  ).create()
+
   init {
     // Note to self: the order in which these nodes are delegated is important.
     delegate(tappableAndQuickZoomableNode)
     delegate(transformableNode)
+    delegate(keyboardActionsNode)
   }
 
   fun update(
@@ -188,6 +225,14 @@ private class ZoomableNode(
       onQuickZoomStopped = onQuickZoomStopped,
       transformableState = state.transformableState,
       gesturesEnabled = enabled,
+    )
+    keyboardActionsNode.update(
+      zoomStep = KeyboardZoomStep,
+      panStep = KeyboardPanStep,
+      canPan = state::canConsumeKeyboardPan,
+      onZoom = onKeyboardZoom,
+      onResetZoom = onKeyboardResetZoom,
+      onPan = onKeyboardPan,
     )
   }
 }

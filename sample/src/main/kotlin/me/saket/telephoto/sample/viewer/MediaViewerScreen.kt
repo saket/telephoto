@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
@@ -96,7 +98,6 @@ private fun MediaPage(
   val zoomableState = rememberZoomableState()
   val flickState = rememberFlickToDismissState(dismissThresholdRatio = 0.05f)
   CloseScreenOnFlickDismissEffect(flickState)
-
   FlickToDismiss(
     state = flickState,
     modifier = Modifier.background(backgroundColorFor(flickState.gestureState)),
