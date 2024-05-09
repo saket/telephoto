@@ -1036,6 +1036,51 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun pan_and_zoom_from_code() {
+    lateinit var state: ZoomableImageState
+    var animateZoom by mutableStateOf(false)
+    var animatePan by mutableStateOf(false)
+
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
+        contentDescription = null,
+        state = rememberZoomableImageState(
+          rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+        ).also {
+          state = it
+        },
+      )
+
+      if (animateZoom) {
+        LaunchedEffect(Unit) {
+          state.zoomableState.animateZoomBy(1.3f)
+        }
+      }
+      if (animatePan) {
+        LaunchedEffect(Unit) {
+          state.zoomableState.animatePanBy(Offset(x = 100f, y = 150f))
+        }
+      }
+    }
+
+    rule.waitUntil(5.seconds) { state.isImageDisplayed }
+    dropshots.assertSnapshot(rule.activity, name = testName.methodName)
+
+    animateZoom = true
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_after_zoom")
+    }
+
+    animatePan = true
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_after_zoom_and_pan")
+    }
+  }
+
   @Test fun calculate_content_bounds_for_full_quality_images(
     @TestParameter subSamplingStatus: SubSamplingStatus,
   ) {

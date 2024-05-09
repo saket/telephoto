@@ -7,6 +7,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -111,4 +112,23 @@ sealed interface ZoomableState {
 
   /** Reset content to its minimum zoom and zero offset. */
   suspend fun resetZoom(withAnimation: Boolean = true)
+
+  // todo: should these two APIs accept an animation spec?
+  //  if they do, should the double-tap-to-zoom animation spec also be customizable?
+  /**
+   * Animate zoom around [centroid] by a ratio of [zoomFactor] over the current size and suspend until
+   * its finished.
+   *
+   * @param zoomFactor Ratio over the current size by which to zoom. For example, if [zoomFactor]
+   * is `3f`, zoom will be increased 3 fold from the current value.
+   *
+   * @param centroid the focal point for this zoom within the content's size. Defaults to the center
+   * of the content.
+   */
+  suspend fun animateZoomBy(zoomFactor: Float, centroid: Offset = Offset.Unspecified)
+
+  /**
+   * Animate pan by [offset] Offset in pixels and suspend until its finished.
+   */
+  suspend fun animatePanBy(offset: Offset)
 }

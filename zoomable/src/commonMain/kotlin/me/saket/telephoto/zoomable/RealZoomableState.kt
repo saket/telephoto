@@ -6,6 +6,7 @@ import androidx.annotation.FloatRange
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.AnimationVector
 import androidx.compose.animation.core.Spring.StiffnessMediumLow
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.animateTo
@@ -23,9 +24,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.geometry.isFinite
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
@@ -44,6 +47,7 @@ import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.coerceIn
+import me.saket.telephoto.zoomable.internal.copy
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
 import me.saket.telephoto.zoomable.internal.maxScale
@@ -125,6 +129,9 @@ internal class RealZoomableState internal constructor(
 
   internal var zoomSpec by mutableStateOf(ZoomSpec())
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
+
+  private val zoomAnimationSpec: SpringSpec<Float> = spring(stiffness = StiffnessMediumLow)
+  private val panAnimationSpec: SpringSpec<Offset> = spring(stiffness = StiffnessMediumLow)
 
   /**
    * Raw size of the zoomable content without any scaling applied.
@@ -379,6 +386,7 @@ internal class RealZoomableState internal constructor(
       smoothlyToggleZoom(
         shouldZoomIn = false,
         centroid = Offset.Zero,
+        mutatePriority = MutatePriority.Default,
       )
     } else {
       gestureState = null
@@ -405,24 +413,67 @@ internal class RealZoomableState internal constructor(
 
     smoothlyToggleZoom(
       shouldZoomIn = !currentZoom.isAtMaxZoom(zoomSpec.range),
-      centroid = centroid
+      centroid = centroid,
+      mutatePriority = MutatePriority.UserInput,
     )
+  }
+
+  override suspend fun animateZoomBy(zoomFactor: Float, centroid: Offset) {
+    val startTransformation = gestureState ?: return
+    val baseZoomFactor = baseZoomFactor ?: return
+    val targetZoom = ContentZoomFactor(
+      baseZoom = baseZoomFactor,
+      userZoom = startTransformation.userZoomFactor * zoomFactor
+    ).coerceUserZoomIn(zoomSpec.range)
+    smoothlyZoomTo(
+      targetZoom = targetZoom,
+      centroid = centroid.takeOrElse { contentLayoutSize.center },
+      mutatePriority = MutatePriority.Default,
+    )
+  }
+
+  override suspend fun animatePanBy(offset: Offset) {
+    transformableState.transform(MutatePriority.Default) {
+      var previous = Offset.Zero
+      AnimationState(
+        typeConverter = Offset.VectorConverter,
+        initialValue = Offset.Zero,
+      ).animateTo(
+        targetValue = offset,
+        animationSpec = panAnimationSpec,
+      ) {
+        transformBy(panChange = previous - value)
+        previous = value
+      }
+    }
   }
 
   private suspend fun smoothlyToggleZoom(
     shouldZoomIn: Boolean,
-    centroid: Offset
+    centroid: Offset,
+    mutatePriority: MutatePriority,
+  ) {
+    val baseZoomFactor = baseZoomFactor ?: return
+    smoothlyZoomTo(
+      targetZoom = if (shouldZoomIn) {
+        ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range)
+      } else {
+        ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range)
+      },
+      centroid = centroid,
+      mutatePriority = mutatePriority,
+    )
+  }
+
+  private suspend fun smoothlyZoomTo(
+    targetZoom: ContentZoomFactor,
+    centroid: Offset,
+    mutatePriority: MutatePriority,
   ) {
     val startTransformation = gestureState ?: return
     val baseZoomFactor = baseZoomFactor ?: return
 
     val startZoom = ContentZoomFactor(baseZoomFactor, startTransformation.userZoomFactor)
-    val targetZoom = if (shouldZoomIn) {
-      ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range)
-    } else {
-      ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range)
-    }
-
     val targetOffset = startTransformation.offset
       .retainCentroidPositionAfterZoom(
         centroid = centroid,
@@ -431,12 +482,12 @@ internal class RealZoomableState internal constructor(
       )
       .coerceWithinBounds(proposedZoom = targetZoom)
 
-    transformableState.transform(MutatePriority.UserInput) {
+    transformableState.transform(mutatePriority) {
       AnimationState(initialValue = 0f).animateTo(
         targetValue = 1f,
         // Without a low visibility threshold, spring() makes a huge
         // jump on its last frame causing a few frames to be dropped.
-        animationSpec = spring(stiffness = StiffnessMediumLow, visibilityThreshold = 0.0001f)
+        animationSpec = zoomAnimationSpec.copy(visibilityThreshold = 0.0001f),
       ) {
         val animatedZoom: ContentZoomFactor = startZoom.copy(
           userZoom = UserZoomFactor(
