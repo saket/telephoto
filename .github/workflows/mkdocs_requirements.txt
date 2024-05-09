@@ -15,8 +15,10 @@ colorama==0.4.6
 ghp-import==2.1.0
     # via mkdocs
 idna==3.7
-    # via requests
-jinja2==3.1.2
+    # via
+    #   -r mkdocs_requirements.in
+    #   requests
+jinja2==3.1.4
     # via
     #   mkdocs
     #   mkdocs-macros-plugin
