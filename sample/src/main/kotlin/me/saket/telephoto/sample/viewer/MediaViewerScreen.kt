@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,10 +25,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
@@ -96,8 +97,11 @@ private fun MediaPage(
   modifier: Modifier = Modifier,
 ) {
   val zoomableState = rememberZoomableState()
+  val focusRequester = remember { FocusRequester() }
+
   val flickState = rememberFlickToDismissState(dismissThresholdRatio = 0.05f)
   CloseScreenOnFlickDismissEffect(flickState)
+
   FlickToDismiss(
     state = flickState,
     modifier = Modifier.background(backgroundColorFor(flickState.gestureState)),
@@ -107,7 +111,7 @@ private fun MediaPage(
         // TODO: handle errors here.
         val imageState = rememberZoomableImageState(zoomableState)
         ZoomableAsyncImage(
-          modifier = modifier,
+          modifier = modifier.focusRequester(focusRequester),
           state = imageState,
           model = ImageRequest.Builder(LocalContext.current)
             .data(model.fullSizedUrl)
@@ -116,6 +120,14 @@ private fun MediaPage(
             .build(),
           contentDescription = model.caption,
         )
+
+        // todo: it's unfortunate that the image can only be focused when it is fully loaded.
+        //  - can ZoomableImage() take focus and forward all events to Modifier.zoomable()?
+        if (isActivePage && imageState.isImageDisplayed) {
+          LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+          }
+        }
 
         AnimatedVisibility(
           modifier = Modifier.align(Alignment.Center),

@@ -51,6 +51,7 @@ fun Modifier.zoomable(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
+  enableKeyboardEvents: Boolean = false,  // todo: replace this with KeyboardShortcutsSpec
 ): Modifier {
   check(state is RealZoomableState)
   return this
@@ -66,7 +67,10 @@ fun Modifier.zoomable(
         onLongClick = onLongClick,
       )
     )
-    .focusable()
+    .thenIf(enableKeyboardEvents) {
+      // todo: maybe listen to keyboard events only if this is enabled?
+      Modifier.focusable()
+    }
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation(state.contentTransformation)
     }
@@ -103,10 +107,6 @@ private data class ZoomableElement(
     properties["onLongClick"] = onLongClick
   }
 }
-
-// TODO: make configurable?
-private const val KeyboardZoomStep = 1.2f
-private val KeyboardPanStep = 50.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 private class ZoomableNode(
@@ -151,13 +151,9 @@ private class ZoomableNode(
       state.animateZoomBy(factor)
     }
   }
-  val onKeyboardResetZoom: () -> Unit = {
-    coroutineScope.launch {
-      state.resetZoom()
-    }
-  }
   val onKeyboardPan: (DpOffset) -> Unit = { delta ->
     coroutineScope.launch {
+      // todo: accept an animation spec for pans. some apps may not want to pan with animation?
       state.animatePanBy(
         with(requireDensity()) {
           Offset(x = delta.x.toPx(), y = delta.y.toPx())
@@ -183,12 +179,10 @@ private class ZoomableNode(
     lockRotationOnZoomPan = false,
   ).create()
 
+  // todo: why not pass state.transformableState instead?
   private val keyboardActionsNode = KeyboardActionsElement(
-    zoomStep = KeyboardZoomStep,
-    panStep = KeyboardPanStep,
     canPan = state::canConsumeKeyboardPan,
     onZoom = onKeyboardZoom,
-    onResetZoom = onKeyboardResetZoom,
     onPan = onKeyboardPan,
   ).create()
 
@@ -227,11 +221,8 @@ private class ZoomableNode(
       gesturesEnabled = enabled,
     )
     keyboardActionsNode.update(
-      zoomStep = KeyboardZoomStep,
-      panStep = KeyboardPanStep,
       canPan = state::canConsumeKeyboardPan,
       onZoom = onKeyboardZoom,
-      onResetZoom = onKeyboardResetZoom,
       onPan = onKeyboardPan,
     )
   }

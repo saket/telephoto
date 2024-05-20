@@ -7,7 +7,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -144,6 +143,7 @@ fun ZoomableImage(
             onClick = onClick,
             onLongClick = onLongClick,
             clipToBounds = clipToBounds,
+            enableKeyboardEvents = false,
           ),
         painter = painter,
         contentDescription = contentDescription,
@@ -160,6 +160,7 @@ fun ZoomableImage(
       onClick = onClick,
       onLongClick = onLongClick,
       clipToBounds = clipToBounds,
+      enableKeyboardEvents = true,
     )
     when (val delegate = resolved.delegate) {
       null -> {

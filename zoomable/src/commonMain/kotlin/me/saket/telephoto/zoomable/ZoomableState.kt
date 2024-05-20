@@ -110,6 +110,7 @@ sealed interface ZoomableState {
   /** See [ZoomableContentLocation]. */
   suspend fun setContentLocation(location: ZoomableContentLocation)
 
+  // todo: should this be renamed to animateResetZooom()?
   /** Reset content to its minimum zoom and zero offset. */
   suspend fun resetZoom(withAnimation: Boolean = true)
 
