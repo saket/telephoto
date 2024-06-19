@@ -35,6 +35,7 @@ fun rememberZoomableState(
     )
   }.also {
     it.zoomSpec = zoomSpec
+    it.hotkeysSpec = HotkeysSpec()
     it.layoutDirection = LocalLayoutDirection.current
   }
 

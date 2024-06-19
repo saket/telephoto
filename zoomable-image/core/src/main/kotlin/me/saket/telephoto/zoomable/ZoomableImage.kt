@@ -139,11 +139,12 @@ fun ZoomableImage(
             state = rememberZoomableState(
               zoomSpec = ZoomSpec(maxZoomFactor = 1f, preventOverOrUnderZoom = false),
               autoApplyTransformations = false,
-            ),
+            ).also {
+              it.realZoomableState.hotkeysSpec = HotkeysSpec.Disabled
+            },
             onClick = onClick,
             onLongClick = onLongClick,
             clipToBounds = clipToBounds,
-            enableKeyboardEvents = false,
           ),
         painter = painter,
         contentDescription = contentDescription,
@@ -160,7 +161,6 @@ fun ZoomableImage(
       onClick = onClick,
       onLongClick = onLongClick,
       clipToBounds = clipToBounds,
-      enableKeyboardEvents = true,
     )
     when (val delegate = resolved.delegate) {
       null -> {
@@ -247,3 +247,6 @@ private val ZoomableImageSource.ResolveResult.crossfadeDurationMs: Int
 
 private val ZoomableImageState.realZoomableState: RealZoomableState
   get() = zoomableState as RealZoomableState  // Safe because ZoomableState is a sealed type.
+
+private val ZoomableState.realZoomableState: RealZoomableState
+  get() = this as RealZoomableState  // Safe because ZoomableState is a sealed type.

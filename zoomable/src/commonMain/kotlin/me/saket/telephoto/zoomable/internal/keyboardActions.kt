@@ -5,18 +5,26 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.KeyInputModifierNode
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.PointerInputModifierNode
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import me.saket.telephoto.zoomable.HotkeysSpec
 
 /** Responds to keyboard events to zoom and pan. */
 internal data class KeyboardActionsElement(
-  private var canPan: () -> Boolean,
-  private var onZoom: (Float) -> Unit,
-  private var onPan: (DpOffset) -> Unit,
+  private val spec: HotkeysSpec,
+  private val canPan: () -> Boolean,
+  private val onZoom: (Float) -> Unit,
+  private val onPan: (DpOffset) -> Unit,
 ) : ModifierNodeElement<KeyboardActionsNode>() {
+
   override fun create(): KeyboardActionsNode {
     return KeyboardActionsNode(
+      spec = spec,
       canPan = canPan,
       onZoom = onZoom,
       onPan = onPan,
@@ -25,6 +33,7 @@ internal data class KeyboardActionsElement(
 
   override fun update(node: KeyboardActionsNode) {
     node.update(
+      spec = spec,
       canPan = canPan,
       onZoom = onZoom,
       onPan = onPan,
@@ -33,16 +42,20 @@ internal data class KeyboardActionsElement(
 }
 
 internal class KeyboardActionsNode(
+  private var spec: HotkeysSpec,
   private var canPan: () -> Boolean,
   private var onZoom: (Float) -> Unit,
   private var onPan: (DpOffset) -> Unit,
-) : Modifier.Node(), KeyInputModifierNode {
+) : Modifier.Node(), KeyInputModifierNode, PointerInputModifierNode {
 
   fun update(
     canPan: () -> Boolean,
     onZoom: (Float) -> Unit,
     onPan: (DpOffset) -> Unit,
+    spec: HotkeysSpec,
   ) {
+
+    this.spec = spec
     this.canPan = canPan
     this.onZoom = onZoom
     this.onPan = onPan
@@ -69,9 +82,8 @@ internal class KeyboardActionsNode(
     //  on android, chrome scrolls 17x.
     val zoomStep = 1.2f
     val panStep = 50.dp
-    val shortcutDetector: KeyboardShortcutDetector = AndroidKeyboardShortcutDetector
 
-    when (val it = shortcutDetector.detect(event)) {
+    when (val it = spec.detector.detect(event)) {
       is KeyboardShortcut.Zoom -> {
         when (it.direction) {
           KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep)
@@ -104,5 +116,11 @@ internal class KeyboardActionsNode(
 
   override fun onPreKeyEvent(event: KeyEvent): Boolean {
     return false
+  }
+
+  override fun onCancelPointerInput() = Unit
+
+  override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
+    // todo: detect mouse scroll events.
   }
 }

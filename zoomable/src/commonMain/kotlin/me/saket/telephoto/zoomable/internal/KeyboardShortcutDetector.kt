@@ -11,9 +11,13 @@ import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanType
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomType
 
-// todo: expect/actual this for all supported targets.
 internal interface KeyboardShortcutDetector {
   fun detect(event: KeyEvent): KeyboardShortcut?
+
+  companion object {
+    // todo: expect/actual this for all supported targets.
+    val Platform: KeyboardShortcutDetector get() = AndroidKeyboardShortcutDetector
+  }
 }
 
 internal sealed interface KeyboardShortcut {

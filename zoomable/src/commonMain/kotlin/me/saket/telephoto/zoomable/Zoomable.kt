@@ -51,7 +51,6 @@ fun Modifier.zoomable(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-  enableKeyboardEvents: Boolean = false,  // todo: replace this with KeyboardShortcutsSpec
 ): Modifier {
   check(state is RealZoomableState)
   return this
@@ -67,8 +66,7 @@ fun Modifier.zoomable(
         onLongClick = onLongClick,
       )
     )
-    .thenIf(enableKeyboardEvents) {
-      // todo: maybe listen to keyboard events only if this is enabled?
+    .thenIf(state.hotkeysSpec.enabled) {
       Modifier.focusable()
     }
     .thenIf(state.autoApplyTransformations) {
@@ -181,6 +179,7 @@ private class ZoomableNode(
 
   // todo: why not pass state.transformableState instead?
   private val keyboardActionsNode = KeyboardActionsElement(
+    spec = state.hotkeysSpec,
     canPan = state::canConsumeKeyboardPan,
     onZoom = onKeyboardZoom,
     onPan = onKeyboardPan,
@@ -190,6 +189,8 @@ private class ZoomableNode(
     // Note to self: the order in which these nodes are delegated is important.
     delegate(tappableAndQuickZoomableNode)
     delegate(transformableNode)
+
+    // todo: listen to keyboard events only if it is enabled.
     delegate(keyboardActionsNode)
   }
 
@@ -201,7 +202,7 @@ private class ZoomableNode(
   ) {
     if (this.state != state) {
       // Note to self: when the state is updated, the delegated
-      // nodes are implicitly reset in the following lines.
+      // nodes are implicitly reset in the following update() calls.
       this.state = state
     }
     transformableNode.update(
@@ -224,6 +225,7 @@ private class ZoomableNode(
       canPan = state::canConsumeKeyboardPan,
       onZoom = onKeyboardZoom,
       onPan = onKeyboardPan,
+      spec = state.hotkeysSpec,
     )
   }
 }
