@@ -7,13 +7,10 @@ import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.input.pointer.PointerEvent
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.util.fastForEach
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanType
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
-import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomType
 
 internal interface HardwareShortcutDetector {
   fun detect(event: KeyEvent): KeyboardShortcut?
@@ -28,8 +25,7 @@ internal interface HardwareShortcutDetector {
 internal sealed interface KeyboardShortcut {
   @Poko class Zoom(
     val direction: ZoomDirection,
-    val type: ZoomType,
-    val centroid: Offset,
+    val centroid: Offset = Offset.Unspecified,
   ) : KeyboardShortcut
 
   @Poko class Pan(
@@ -40,10 +36,6 @@ internal sealed interface KeyboardShortcut {
   enum class ZoomDirection {
     In,
     Out,
-  }
-
-  enum class ZoomType {
-    ShortZoom,
   }
 
   enum class PanDirection {
@@ -64,17 +56,9 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
     // Note for self: Some devices/peripherals have dedicated zoom buttons that map to Key.ZoomIn
     // and Key.ZoomOut. Examples: Samsung Galaxy Camera, a motorcycle handlebar controller.
     if (event.key == Key.ZoomIn || (event.utf16CodePoint == '+'.code)) {
-      return KeyboardShortcut.Zoom(
-        direction = ZoomDirection.In,
-        type = ZoomType.ShortZoom,
-        centroid = Offset.Unspecified,
-      )
+      return KeyboardShortcut.Zoom(ZoomDirection.In)
     } else if (event.key == Key.ZoomOut || (event.utf16CodePoint == '-'.code)) {
-      return KeyboardShortcut.Zoom(
-        direction = ZoomDirection.Out,
-        type = ZoomType.ShortZoom,
-        centroid = Offset.Unspecified,
-      )
+      return KeyboardShortcut.Zoom(ZoomDirection.Out)
     }
 
     val panDirection = when (event.key) {
@@ -97,20 +81,11 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
     return null
   }
 
-  override fun detect(event: PointerEvent): KeyboardShortcut? {
-    if (event.type == PointerEventType.Scroll) {
-      event.changes.fastForEach {
-        it.consume()
-      }
-
-      val pointerChange = event.changes.first()
-      val isZoomingIn = pointerChange.scrollDelta.y < 0f
-      return KeyboardShortcut.Zoom(
-        direction = if (isZoomingIn) ZoomDirection.In else ZoomDirection.Out,
-        type = ZoomType.ShortZoom,
-        centroid = pointerChange.position,
-      )
-    }
-    return null
+  override fun detect(event: PointerEvent): KeyboardShortcut {
+    val isZoomingIn = event.changes[0].scrollDelta.y < 0f
+    return KeyboardShortcut.Zoom(
+      direction = if (isZoomingIn) ZoomDirection.In else ZoomDirection.Out,
+      centroid = event.changes[0].position,
+    )
   }
 }

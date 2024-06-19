@@ -8,12 +8,14 @@ import androidx.compose.ui.input.key.KeyInputModifierNode
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
 import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.RealZoomableState
 
@@ -55,22 +57,28 @@ internal class HardwareShortcutsNode(
   }
 
   override fun onKeyEvent(event: KeyEvent): Boolean {
-    return if (event.type == KeyEventType.KeyDown) {
-      handleShortcut(
-        state.hardwareShortcutsSpec.detector.detect(event)
-      )
+    if (event.type == KeyEventType.KeyDown) {
+      val shortcut = state.hardwareShortcutsSpec.detector.detect(event)
+      shortcut?.let(::handleShortcut)
+      return shortcut != null
     } else {
-      false
+      return false
     }
   }
 
   override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
-    handleShortcut(
-      state.hardwareShortcutsSpec.detector.detect(pointerEvent)
-    )
+    if (pointerEvent.type == PointerEventType.Scroll) {
+      val shortcut = state.hardwareShortcutsSpec.detector.detect(pointerEvent)
+      if (shortcut != null) {
+        pointerEvent.changes.fastForEach {
+          it.consume()
+        }
+        handleShortcut(shortcut)
+      }
+    }
   }
 
-  private fun handleShortcut(shortcut: KeyboardShortcut?): Boolean {
+  private fun handleShortcut(shortcut: KeyboardShortcut) {
     // macOS keyboard shortcuts:
     // meta + plus: zoom in
     // meta + minus: zoom out
@@ -91,10 +99,9 @@ internal class HardwareShortcutsNode(
     when (shortcut) {
       is KeyboardShortcut.Zoom -> {
         when (shortcut.direction) {
-          KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep, Offset.Unspecified)
-          KeyboardShortcut.ZoomDirection.Out -> onZoom(1f / zoomStep, Offset.Unspecified)
+          KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep, shortcut.centroid)
+          KeyboardShortcut.ZoomDirection.Out -> onZoom(1f / zoomStep, shortcut.centroid)
         }
-        return true
       }
       is KeyboardShortcut.Pan -> {
         if (canPan()) {
@@ -111,10 +118,6 @@ internal class HardwareShortcutsNode(
           }
           onPan(offset)
         }
-        return true
-      }
-      null -> {
-        return false
       }
     }
   }
