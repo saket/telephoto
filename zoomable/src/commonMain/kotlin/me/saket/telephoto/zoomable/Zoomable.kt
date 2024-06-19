@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
-import me.saket.telephoto.zoomable.internal.KeyboardActionsElement
+import me.saket.telephoto.zoomable.internal.HardwareShortcutsElement
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
 import me.saket.telephoto.zoomable.internal.TransformableElement
@@ -64,10 +64,10 @@ fun Modifier.zoomable(
         onLongClick = onLongClick,
       )
     )
-    .thenIf(state.hotkeysSpec.enabled) {
+    .thenIf(state.hardwareShortcutsSpec.enabled) {
       Modifier
         .focusable()
-        .then(KeyboardActionsElement(state))
+        .then(HardwareShortcutsElement(state))
     }
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation(state.contentTransformation)

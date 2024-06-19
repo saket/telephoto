@@ -16,23 +16,22 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.RealZoomableState
-import me.saket.telephoto.zoomable.ZoomableState
 
-/** Responds to keyboard events to zoom and pan. */
-internal data class KeyboardActionsElement(
+/** Responds to keyboard and mouse events to zoom and pan. */
+internal data class HardwareShortcutsElement(
   private val state: RealZoomableState,
-) : ModifierNodeElement<KeyboardActionsNode>() {
+) : ModifierNodeElement<HardwareShortcutsNode>() {
 
-  override fun create(): KeyboardActionsNode {
-    return KeyboardActionsNode(state)
+  override fun create(): HardwareShortcutsNode {
+    return HardwareShortcutsNode(state)
   }
 
-  override fun update(node: KeyboardActionsNode) {
+  override fun update(node: HardwareShortcutsNode) {
     node.update(state)
   }
 }
 
-internal class KeyboardActionsNode(
+internal class HardwareShortcutsNode(
   private var state: RealZoomableState,
 ) : Modifier.Node(), KeyInputModifierNode, PointerInputModifierNode {
 
@@ -81,7 +80,7 @@ internal class KeyboardActionsNode(
     val zoomStep = 1.2f
     val panStep = 50.dp
 
-    when (val it = (state as RealZoomableState).hotkeysSpec.detector.detect(event)) {
+    when (val it = state.hardwareShortcutsSpec.detector.detect(event)) {
       is KeyboardShortcut.Zoom -> {
         when (it.direction) {
           KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep)

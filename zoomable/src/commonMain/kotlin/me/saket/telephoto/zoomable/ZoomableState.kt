@@ -35,7 +35,7 @@ fun rememberZoomableState(
     )
   }.also {
     it.zoomSpec = zoomSpec
-    it.hotkeysSpec = HotkeysSpec()
+    it.hardwareShortcutsSpec = HardwareShortcutsSpec()
     it.layoutDirection = LocalLayoutDirection.current
   }
 

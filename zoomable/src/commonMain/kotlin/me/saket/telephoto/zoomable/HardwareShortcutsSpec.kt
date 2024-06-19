@@ -6,12 +6,12 @@ import me.saket.telephoto.zoomable.internal.KeyboardShortcutDetector
 
 @Poko
 @Immutable
-internal class HotkeysSpec(
+internal class HardwareShortcutsSpec(
   val enabled: Boolean = true,
   val detector: KeyboardShortcutDetector = KeyboardShortcutDetector.Platform,
 ) {
 
   companion object {
-    val Disabled = HotkeysSpec(enabled = false)
+    val Disabled = HardwareShortcutsSpec(enabled = false)
   }
 }

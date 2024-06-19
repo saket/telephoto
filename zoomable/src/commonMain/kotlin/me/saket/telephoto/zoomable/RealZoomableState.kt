@@ -128,7 +128,7 @@ internal class RealZoomableState internal constructor(
   internal var gestureState: GestureState? by mutableStateOf(initialGestureState)
 
   internal var zoomSpec by mutableStateOf(ZoomSpec())
-  internal var hotkeysSpec by mutableStateOf(HotkeysSpec())
+  internal var hardwareShortcutsSpec by mutableStateOf(HardwareShortcutsSpec())
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
 
   private val zoomAnimationSpec: SpringSpec<Float> = spring(stiffness = StiffnessMediumLow)
