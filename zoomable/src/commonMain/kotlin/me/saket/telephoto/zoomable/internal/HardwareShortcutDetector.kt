@@ -8,7 +8,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.util.fastFold
 import androidx.compose.ui.util.fastForEach
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
@@ -30,6 +29,7 @@ internal sealed interface KeyboardShortcut {
   @Poko class Zoom(
     val direction: ZoomDirection,
     val type: ZoomType,
+    val centroid: Offset,
   ) : KeyboardShortcut
 
   @Poko class Pan(
@@ -64,9 +64,17 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
     // Note for self: Some devices/peripherals have dedicated zoom buttons that map to Key.ZoomIn
     // and Key.ZoomOut. Examples: Samsung Galaxy Camera, a motorcycle handlebar controller.
     if (event.key == Key.ZoomIn || (event.utf16CodePoint == '+'.code)) {
-      return KeyboardShortcut.Zoom(ZoomDirection.In, ZoomType.ShortZoom)
+      return KeyboardShortcut.Zoom(
+        direction = ZoomDirection.In,
+        type = ZoomType.ShortZoom,
+        centroid = Offset.Unspecified,
+      )
     } else if (event.key == Key.ZoomOut || (event.utf16CodePoint == '-'.code)) {
-      return KeyboardShortcut.Zoom(ZoomDirection.Out, ZoomType.ShortZoom)
+      return KeyboardShortcut.Zoom(
+        direction = ZoomDirection.Out,
+        type = ZoomType.ShortZoom,
+        centroid = Offset.Unspecified,
+      )
     }
 
     val panDirection = when (event.key) {
@@ -91,21 +99,18 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
 
   override fun detect(event: PointerEvent): KeyboardShortcut? {
     if (event.type == PointerEventType.Scroll) {
-      val scrollDelta = event.calculateScrollDelta()
-      val isZoomingIn = scrollDelta.y < 0f
       event.changes.fastForEach {
         it.consume()
       }
+
+      val pointerChange = event.changes.first()
+      val isZoomingIn = pointerChange.scrollDelta.y < 0f
       return KeyboardShortcut.Zoom(
         direction = if (isZoomingIn) ZoomDirection.In else ZoomDirection.Out,
         type = ZoomType.ShortZoom,
+        centroid = pointerChange.position,
       )
     }
-
     return null
-  }
-
-  private fun PointerEvent.calculateScrollDelta(): Offset {
-    return changes.fastFold(Offset.Zero) { acc, c -> acc + c.scrollDelta }
   }
 }
