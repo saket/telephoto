@@ -1,6 +1,7 @@
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.KeyInputModifierNode
@@ -9,56 +10,53 @@ import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
+import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import me.saket.telephoto.zoomable.HotkeysSpec
+import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.RealZoomableState
+import me.saket.telephoto.zoomable.ZoomableState
 
 /** Responds to keyboard events to zoom and pan. */
 internal data class KeyboardActionsElement(
-  private val spec: HotkeysSpec,
-  private val canPan: () -> Boolean,
-  private val onZoom: (Float) -> Unit,
-  private val onPan: (DpOffset) -> Unit,
+  private val state: RealZoomableState,
 ) : ModifierNodeElement<KeyboardActionsNode>() {
 
   override fun create(): KeyboardActionsNode {
-    return KeyboardActionsNode(
-      spec = spec,
-      canPan = canPan,
-      onZoom = onZoom,
-      onPan = onPan,
-    )
+    return KeyboardActionsNode(state)
   }
 
   override fun update(node: KeyboardActionsNode) {
-    node.update(
-      spec = spec,
-      canPan = canPan,
-      onZoom = onZoom,
-      onPan = onPan,
-    )
+    node.update(state)
   }
 }
 
 internal class KeyboardActionsNode(
-  private var spec: HotkeysSpec,
-  private var canPan: () -> Boolean,
-  private var onZoom: (Float) -> Unit,
-  private var onPan: (DpOffset) -> Unit,
+  private var state: RealZoomableState,
 ) : Modifier.Node(), KeyInputModifierNode, PointerInputModifierNode {
 
-  fun update(
-    canPan: () -> Boolean,
-    onZoom: (Float) -> Unit,
-    onPan: (DpOffset) -> Unit,
-    spec: HotkeysSpec,
-  ) {
+  val canPan: () -> Boolean = {
+    state.canConsumeKeyboardPan()
+  }
+  val onZoom: (Float) -> Unit = { factor ->
+    coroutineScope.launch {
+      state.animateZoomBy(factor)
+    }
+  }
+  val onPan: (DpOffset) -> Unit = { delta ->
+    coroutineScope.launch {
+      // todo: accept an animation spec for pans. some apps may not want to pan with animation?
+      state.animatePanBy(
+        with(requireDensity()) {
+          Offset(x = delta.x.toPx(), y = delta.y.toPx())
+        }
+      )
+    }
+  }
 
-    this.spec = spec
-    this.canPan = canPan
-    this.onZoom = onZoom
-    this.onPan = onPan
+  fun update(state: RealZoomableState) {
+    this.state = state
   }
 
   override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -83,7 +81,7 @@ internal class KeyboardActionsNode(
     val zoomStep = 1.2f
     val panStep = 50.dp
 
-    when (val it = spec.detector.detect(event)) {
+    when (val it = (state as RealZoomableState).hotkeysSpec.detector.detect(event)) {
       is KeyboardShortcut.Zoom -> {
         when (it.direction) {
           KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep)

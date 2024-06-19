@@ -13,9 +13,7 @@ import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.platform.InspectorInfo
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.internal.KeyboardActionsElement
@@ -67,7 +65,9 @@ fun Modifier.zoomable(
       )
     )
     .thenIf(state.hotkeysSpec.enabled) {
-      Modifier.focusable()
+      Modifier
+        .focusable()
+        .then(KeyboardActionsElement(state))
     }
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation(state.contentTransformation)
@@ -144,20 +144,6 @@ private class ZoomableNode(
       }
     }
   }
-  val onKeyboardZoom: (Float) -> Unit = { factor ->
-    coroutineScope.launch {
-      state.animateZoomBy(factor)
-    }
-  }
-  val onKeyboardPan: (DpOffset) -> Unit = { delta ->
-    coroutineScope.launch {
-      // todo: accept an animation spec for pans. some apps may not want to pan with animation?
-      state.animatePanBy(
-        with(requireDensity()) {
-          Offset(x = delta.x.toPx(), y = delta.y.toPx())
-        })
-    }
-  }
 
   private val tappableAndQuickZoomableNode = TappableAndQuickZoomableElement(
     gesturesEnabled = enabled,
@@ -177,21 +163,10 @@ private class ZoomableNode(
     lockRotationOnZoomPan = false,
   ).create()
 
-  // todo: why not pass state.transformableState instead?
-  private val keyboardActionsNode = KeyboardActionsElement(
-    spec = state.hotkeysSpec,
-    canPan = state::canConsumeKeyboardPan,
-    onZoom = onKeyboardZoom,
-    onPan = onKeyboardPan,
-  ).create()
-
   init {
     // Note to self: the order in which these nodes are delegated is important.
     delegate(tappableAndQuickZoomableNode)
     delegate(transformableNode)
-
-    // todo: listen to keyboard events only if it is enabled.
-    delegate(keyboardActionsNode)
   }
 
   fun update(
@@ -220,12 +195,6 @@ private class ZoomableNode(
       onQuickZoomStopped = onQuickZoomStopped,
       transformableState = state.transformableState,
       gesturesEnabled = enabled,
-    )
-    keyboardActionsNode.update(
-      canPan = state::canConsumeKeyboardPan,
-      onZoom = onKeyboardZoom,
-      onPan = onKeyboardPan,
-      spec = state.hotkeysSpec,
     )
   }
 }

@@ -140,7 +140,7 @@ fun ZoomableImage(
               zoomSpec = ZoomSpec(maxZoomFactor = 1f, preventOverOrUnderZoom = false),
               autoApplyTransformations = false,
             ).also {
-              it.realZoomableState.hotkeysSpec = HotkeysSpec.Disabled
+              (it as RealZoomableState).hotkeysSpec = HotkeysSpec.Disabled
             },
             onClick = onClick,
             onLongClick = onLongClick,
