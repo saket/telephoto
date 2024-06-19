@@ -93,28 +93,21 @@ internal class HardwareShortcutsNode(
     // todo: long pans are platform and app dependent.
     //  on macOS, chrome scrolls ~32x. macOS's preview app scrolls 10x.
     //  on android, chrome scrolls 17x.
-    val zoomStep = 1.2f
-    val panStep = 50.dp
 
     when (shortcut) {
       is KeyboardShortcut.Zoom -> {
         when (shortcut.direction) {
-          KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep, shortcut.centroid)
-          KeyboardShortcut.ZoomDirection.Out -> onZoom(1f / zoomStep, shortcut.centroid)
+          KeyboardShortcut.ZoomDirection.In -> onZoom(shortcut.zoomFactor, shortcut.centroid)
+          KeyboardShortcut.ZoomDirection.Out -> onZoom(1f / shortcut.zoomFactor, shortcut.centroid)
         }
       }
       is KeyboardShortcut.Pan -> {
         if (canPan()) {
-          val multiplier = when (shortcut.type) {
-            KeyboardShortcut.PanType.ShortPan -> 1f
-            KeyboardShortcut.PanType.LongPan -> 17f // Copied from Chrome.
-          }
-          val multipliedStep = panStep * multiplier
           val offset = when (shortcut.direction) {
-            KeyboardShortcut.PanDirection.Up -> DpOffset(x = 0.dp, y = -multipliedStep)
-            KeyboardShortcut.PanDirection.Down -> DpOffset(x = 0.dp, y = multipliedStep)
-            KeyboardShortcut.PanDirection.Left -> DpOffset(x = -multipliedStep, y = 0.dp)
-            KeyboardShortcut.PanDirection.Right -> DpOffset(x = multipliedStep, y = 0.dp)
+            KeyboardShortcut.PanDirection.Up -> DpOffset(x = 0.dp, y = -shortcut.panOffset)
+            KeyboardShortcut.PanDirection.Down -> DpOffset(x = 0.dp, y = shortcut.panOffset)
+            KeyboardShortcut.PanDirection.Left -> DpOffset(x = -shortcut.panOffset, y = 0.dp)
+            KeyboardShortcut.PanDirection.Right -> DpOffset(x = shortcut.panOffset, y = 0.dp)
           }
           onPan(offset)
         }

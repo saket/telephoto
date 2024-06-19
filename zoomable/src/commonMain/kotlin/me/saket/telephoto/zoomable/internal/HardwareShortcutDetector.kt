@@ -7,9 +7,10 @@ import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
-import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanType
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
 
 internal interface HardwareShortcutDetector {
@@ -18,6 +19,7 @@ internal interface HardwareShortcutDetector {
 
   companion object {
     // todo: expect/actual this for all supported targets.
+    //  - will it be easier to do all detection in one place and expect/actual the modifier keys?
     val Platform: HardwareShortcutDetector get() = AndroidHardwareShortcutDetector
   }
 }
@@ -26,11 +28,12 @@ internal sealed interface KeyboardShortcut {
   @Poko class Zoom(
     val direction: ZoomDirection,
     val centroid: Offset = Offset.Unspecified,
+    val zoomFactor: Float = DefaultZoomFactor,
   ) : KeyboardShortcut
 
   @Poko class Pan(
     val direction: PanDirection,
-    val type: PanType,
+    val panOffset: Dp = DefaultPanOffset,
   ) : KeyboardShortcut
 
   enum class ZoomDirection {
@@ -45,9 +48,9 @@ internal sealed interface KeyboardShortcut {
     Right,
   }
 
-  enum class PanType {
-    ShortPan,
-    LongPan,
+  companion object {
+    val DefaultZoomFactor = 1.2f
+    val DefaultPanOffset = 50.dp
   }
 }
 
@@ -71,10 +74,7 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
     if (panDirection != null) {
       return KeyboardShortcut.Pan(
         direction = panDirection,
-        type = when {
-          event.isAltPressed -> PanType.LongPan
-          else -> PanType.ShortPan
-        },
+        panOffset = KeyboardShortcut.DefaultPanOffset * if (event.isAltPressed) 17f else 1f,
       )
     }
 
