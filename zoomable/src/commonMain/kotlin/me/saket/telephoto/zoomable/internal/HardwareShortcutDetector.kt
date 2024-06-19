@@ -16,13 +16,13 @@ import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanType
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomType
 
-internal interface KeyboardShortcutDetector {
+internal interface HardwareShortcutDetector {
   fun detect(event: KeyEvent): KeyboardShortcut?
   fun detect(event: PointerEvent): KeyboardShortcut?
 
   companion object {
     // todo: expect/actual this for all supported targets.
-    val Platform: KeyboardShortcutDetector get() = AndroidKeyboardShortcutDetector
+    val Platform: HardwareShortcutDetector get() = AndroidHardwareShortcutDetector
   }
 }
 
@@ -59,7 +59,7 @@ internal sealed interface KeyboardShortcut {
   }
 }
 
-internal object AndroidKeyboardShortcutDetector : KeyboardShortcutDetector {
+internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
   override fun detect(event: KeyEvent): KeyboardShortcut? {
     // Note for self: Some devices/peripherals have dedicated zoom buttons that map to Key.ZoomIn
     // and Key.ZoomOut. Examples: Samsung Galaxy Camera, a motorcycle handlebar controller.
