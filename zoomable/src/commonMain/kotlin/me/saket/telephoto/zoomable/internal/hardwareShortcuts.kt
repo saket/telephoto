@@ -27,23 +27,23 @@ internal data class HardwareShortcutsElement(
   }
 
   override fun update(node: HardwareShortcutsNode) {
-    node.update(state)
+    node.state = state
   }
 }
 
 internal class HardwareShortcutsNode(
-  private var state: RealZoomableState,
+  var state: RealZoomableState,
 ) : Modifier.Node(), KeyInputModifierNode, PointerInputModifierNode {
 
   val canPan: () -> Boolean = {
     state.canConsumeKeyboardPan()
   }
-  val onZoom: (Float) -> Unit = { factor ->
+  val onZoom: (factor: Float, centroid: Offset) -> Unit = { factor, centroid ->
     coroutineScope.launch {
-      state.animateZoomBy(factor)
+      state.animateZoomBy(factor, centroid)
     }
   }
-  val onPan: (DpOffset) -> Unit = { delta ->
+  val onPan: (delta: DpOffset) -> Unit = { delta ->
     coroutineScope.launch {
       // todo: accept an animation spec for pans. some apps may not want to pan with animation?
       state.animatePanBy(
@@ -54,15 +54,23 @@ internal class HardwareShortcutsNode(
     }
   }
 
-  fun update(state: RealZoomableState) {
-    this.state = state
+  override fun onKeyEvent(event: KeyEvent): Boolean {
+    return if (event.type == KeyEventType.KeyDown) {
+      handleShortcut(
+        state.hardwareShortcutsSpec.detector.detect(event)
+      )
+    } else {
+      false
+    }
   }
 
-  override fun onKeyEvent(event: KeyEvent): Boolean {
-    if (event.type != KeyEventType.KeyDown) {
-      return false
-    }
+  override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
+    handleShortcut(
+      state.hardwareShortcutsSpec.detector.detect(pointerEvent)
+    )
+  }
 
+  private fun handleShortcut(shortcut: KeyboardShortcut?): Boolean {
     // macOS keyboard shortcuts:
     // meta + plus: zoom in
     // meta + minus: zoom out
@@ -80,22 +88,22 @@ internal class HardwareShortcutsNode(
     val zoomStep = 1.2f
     val panStep = 50.dp
 
-    when (val it = state.hardwareShortcutsSpec.detector.detect(event)) {
+    when (shortcut) {
       is KeyboardShortcut.Zoom -> {
-        when (it.direction) {
-          KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep)
-          KeyboardShortcut.ZoomDirection.Out -> onZoom(1 / zoomStep)
+        when (shortcut.direction) {
+          KeyboardShortcut.ZoomDirection.In -> onZoom(zoomStep, Offset.Unspecified)
+          KeyboardShortcut.ZoomDirection.Out -> onZoom(1f / zoomStep, Offset.Unspecified)
         }
         return true
       }
       is KeyboardShortcut.Pan -> {
         if (canPan()) {
-          val multiplier = when (it.type) {
+          val multiplier = when (shortcut.type) {
             KeyboardShortcut.PanType.ShortPan -> 1f
             KeyboardShortcut.PanType.LongPan -> 17f // Copied from Chrome.
           }
           val multipliedStep = panStep * multiplier
-          val offset = when (it.direction) {
+          val offset = when (shortcut.direction) {
             KeyboardShortcut.PanDirection.Up -> DpOffset(x = 0.dp, y = -multipliedStep)
             KeyboardShortcut.PanDirection.Down -> DpOffset(x = 0.dp, y = multipliedStep)
             KeyboardShortcut.PanDirection.Left -> DpOffset(x = -multipliedStep, y = 0.dp)
@@ -111,13 +119,6 @@ internal class HardwareShortcutsNode(
     }
   }
 
-  override fun onPreKeyEvent(event: KeyEvent): Boolean {
-    return false
-  }
-
+  override fun onPreKeyEvent(event: KeyEvent): Boolean = false
   override fun onCancelPointerInput() = Unit
-
-  override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
-    // todo: detect mouse scroll events.
-  }
 }

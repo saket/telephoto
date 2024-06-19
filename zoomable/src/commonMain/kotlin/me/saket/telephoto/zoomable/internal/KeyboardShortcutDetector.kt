@@ -1,10 +1,15 @@
 package me.saket.telephoto.zoomable.internal
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.utf16CodePoint
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.util.fastFold
+import androidx.compose.ui.util.fastForEach
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanType
@@ -13,6 +18,7 @@ import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomType
 
 internal interface KeyboardShortcutDetector {
   fun detect(event: KeyEvent): KeyboardShortcut?
+  fun detect(event: PointerEvent): KeyboardShortcut?
 
   companion object {
     // todo: expect/actual this for all supported targets.
@@ -81,5 +87,25 @@ internal object AndroidKeyboardShortcutDetector : KeyboardShortcutDetector {
     }
 
     return null
+  }
+
+  override fun detect(event: PointerEvent): KeyboardShortcut? {
+    if (event.type == PointerEventType.Scroll) {
+      val scrollDelta = event.calculateScrollDelta()
+      val isZoomingIn = scrollDelta.y < 0f
+      event.changes.fastForEach {
+        it.consume()
+      }
+      return KeyboardShortcut.Zoom(
+        direction = if (isZoomingIn) ZoomDirection.In else ZoomDirection.Out,
+        type = ZoomType.ShortZoom,
+      )
+    }
+
+    return null
+  }
+
+  private fun PointerEvent.calculateScrollDelta(): Offset {
+    return changes.fastFold(Offset.Zero) { acc, c -> acc + c.scrollDelta }
   }
 }
