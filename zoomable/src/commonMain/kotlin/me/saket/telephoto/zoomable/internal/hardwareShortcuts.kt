@@ -85,22 +85,6 @@ internal class HardwareShortcutsNode(
   }
 
   private fun handleShortcut(shortcut: KeyboardShortcut) {
-    // macOS keyboard shortcuts:
-    // meta + plus: zoom in
-    // meta + minus: zoom out
-    // arrow keys: pan
-    // alt + arrow keys: super pan
-    // cmd + arrow keys: pan to end
-
-    // Android shortcuts:
-    // mouse wheel: zoom in/out
-    // alt + arrow keys: super pan
-    // ctrl + plus/minus: zoom in/out (google chrome)
-
-    // todo: long pans are platform and app dependent.
-    //  on macOS, chrome scrolls ~32x. macOS's preview app scrolls 10x.
-    //  on android, chrome scrolls 17x.
-
     when (shortcut) {
       is KeyboardShortcut.Zoom -> {
         when (shortcut.direction) {
