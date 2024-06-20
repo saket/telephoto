@@ -3,6 +3,8 @@ package me.saket.telephoto.zoomable.internal
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isFinite
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -36,6 +38,10 @@ internal val ScaleFactor.Companion.Zero
 
 internal fun ScaleFactor.isPositiveAndFinite(): Boolean {
   return scaleX.isPositiveAndFinite() && scaleY.isPositiveAndFinite()
+}
+
+internal fun Offset.isSpecifiedAndFinite(): Boolean {
+  return isSpecified && isFinite
 }
 
 internal fun Float.isPositiveAndFinite(): Boolean {

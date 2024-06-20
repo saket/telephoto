@@ -50,6 +50,7 @@ import me.saket.telephoto.zoomable.internal.coerceIn
 import me.saket.telephoto.zoomable.internal.copy
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
+import me.saket.telephoto.zoomable.internal.isSpecifiedAndFinite
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.minScale
 import me.saket.telephoto.zoomable.internal.minus
@@ -200,7 +201,7 @@ internal class RealZoomableState internal constructor(
 
   @Suppress("NAME_SHADOWING")
   internal val transformableState = TransformableState { zoomDelta, panDelta, _, centroid ->
-    check(panDelta.isFinite && zoomDelta.isFinite() && centroid.isFinite) {
+    check(panDelta.isSpecifiedAndFinite() && zoomDelta.isFinite() && centroid.isSpecifiedAndFinite()) {
       "Can't transform with zoomDelta=$zoomDelta, panDelta=$panDelta, centroid=$centroid. ${collectDebugInfoForIssue41()}"
     }
 
