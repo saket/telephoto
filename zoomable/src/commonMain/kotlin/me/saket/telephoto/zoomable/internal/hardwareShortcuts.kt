@@ -42,13 +42,12 @@ internal class HardwareShortcutsNode(
   }
   val onZoom: (factor: Float, centroid: Offset) -> Unit = { factor, centroid ->
     coroutineScope.launch {
-      state.animateZoomBy(factor, centroid)
+      state.zoomBy(factor, centroid)
     }
   }
   val onPan: (delta: DpOffset) -> Unit = { delta ->
     coroutineScope.launch {
-      // todo: accept an animation spec for pans. some apps may not want to pan with animation?
-      state.animatePanBy(
+      state.panBy(
         with(requireDensity()) {
           Offset(x = delta.x.toPx(), y = delta.y.toPx())
         }

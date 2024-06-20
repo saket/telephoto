@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable.internal
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -15,6 +16,7 @@ import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
 
+@Immutable
 internal interface HardwareShortcutDetector {
   fun detectKey(event: KeyEvent): KeyboardShortcut?
   fun detectScroll(event: PointerEvent): KeyboardShortcut?

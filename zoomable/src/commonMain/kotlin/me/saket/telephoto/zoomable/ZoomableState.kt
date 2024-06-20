@@ -115,6 +115,10 @@ sealed interface ZoomableState {
   /** Reset content to its minimum zoom and zero offset. */
   suspend fun resetZoom(withAnimation: Boolean = true)
 
+
+  // todo: doc.
+  suspend fun zoomBy(zoomFactor: Float, centroid: Offset = Offset.Unspecified)
+
   // todo: should these two APIs accept an animation spec?
   //  if they do, should the double-tap-to-zoom animation spec also be customizable?
   /**
@@ -128,6 +132,9 @@ sealed interface ZoomableState {
    * of the content.
    */
   suspend fun animateZoomBy(zoomFactor: Float, centroid: Offset = Offset.Unspecified)
+
+  // todo: doc.
+  suspend fun panBy(offset: Offset)
 
   /**
    * Animate pan by [offset] Offset in pixels and suspend until its finished.

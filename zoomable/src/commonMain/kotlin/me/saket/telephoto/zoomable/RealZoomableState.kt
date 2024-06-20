@@ -424,6 +424,24 @@ internal class RealZoomableState internal constructor(
     )
   }
 
+  override suspend fun zoomBy(zoomFactor: Float, centroid: Offset) {
+    transformableState.transform(MutatePriority.Default) {
+      transformBy(
+        zoomChange = zoomFactor,
+        centroid = centroid.takeOrElse {
+          contentLayoutSize.center
+        },
+      )
+    }
+
+    // Reset the zoom if needed. An advantage of doing after accepting the requested zoom
+    // this versus limiting the requested zoom above is that repeated zoom events from, say,
+    // the keyboard will result in a nice rubber banding effect.
+    if (zoomSpec.preventOverOrUnderZoom && isZoomOutsideRange()) {
+      smoothlySettleZoomOnGestureEnd()
+    }
+  }
+
   override suspend fun animateZoomBy(zoomFactor: Float, centroid: Offset) {
     val startTransformation = gestureState ?: return
     val baseZoomFactor = baseZoomFactor ?: return
@@ -431,11 +449,18 @@ internal class RealZoomableState internal constructor(
       baseZoom = baseZoomFactor,
       userZoom = startTransformation.userZoomFactor * zoomFactor
     ).coerceUserZoomIn(zoomSpec.range)
+
     smoothlyZoomTo(
       targetZoom = targetZoom,
       centroid = centroid.takeOrElse { contentLayoutSize.center },
       mutatePriority = MutatePriority.Default,
     )
+  }
+
+  override suspend fun panBy(offset: Offset) {
+    transformableState.transform(MutatePriority.Default) {
+      transformBy(panChange = offset)
+    }
   }
 
   override suspend fun animatePanBy(offset: Offset) {
