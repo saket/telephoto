@@ -67,7 +67,7 @@ fun Modifier.zoomable(
     .thenIf(state.hardwareShortcutsSpec.enabled) {
       Modifier
         .focusable()
-        .then(HardwareShortcutsElement(state))
+        .then(HardwareShortcutsElement(state, state.hardwareShortcutsSpec))
     }
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation(state.contentTransformation)

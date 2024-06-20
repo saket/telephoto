@@ -17,28 +17,33 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.HardwareShortcutsSpec
 import me.saket.telephoto.zoomable.RealZoomableState
+import me.saket.telephoto.zoomable.ZoomableState
 
 /** Responds to keyboard and mouse events to zoom and pan. */
 internal data class HardwareShortcutsElement(
-  private val state: RealZoomableState,
+  private val state: ZoomableState,
+  private val spec: HardwareShortcutsSpec,
 ) : ModifierNodeElement<HardwareShortcutsNode>() {
 
   override fun create(): HardwareShortcutsNode {
-    return HardwareShortcutsNode(state)
+    return HardwareShortcutsNode(state, spec)
   }
 
   override fun update(node: HardwareShortcutsNode) {
     node.state = state
+    node.spec = spec
   }
 }
 
 internal class HardwareShortcutsNode(
-  var state: RealZoomableState,
+  var state: ZoomableState,
+  var spec: HardwareShortcutsSpec,
 ) : Modifier.Node(), KeyInputModifierNode, PointerInputModifierNode {
 
   val canPan: () -> Boolean = {
-    state.canConsumeKeyboardPan()
+    state.contentTransformation.scaleMetadata.userZoom > 1f
   }
   val onZoom: (factor: Float, centroid: Offset) -> Unit = { factor, centroid ->
     coroutineScope.launch {
@@ -57,7 +62,7 @@ internal class HardwareShortcutsNode(
 
   override fun onKeyEvent(event: KeyEvent): Boolean {
     if (event.type == KeyEventType.KeyDown) {
-      val shortcut = state.hardwareShortcutsSpec.detector.detectKey(event)
+      val shortcut = spec.detector.detectKey(event)
       shortcut?.let(::handleShortcut)
       return shortcut != null
     } else {
@@ -67,7 +72,7 @@ internal class HardwareShortcutsNode(
 
   override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
     if (pointerEvent.type == PointerEventType.Scroll && pass == PointerEventPass.Main) {
-      val shortcut = state.hardwareShortcutsSpec.detector.detectScroll(pointerEvent)
+      val shortcut = spec.detector.detectScroll(pointerEvent)
       if (shortcut != null) {
         handleShortcut(shortcut)
       }
