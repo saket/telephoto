@@ -692,7 +692,7 @@ internal data class ContentZoomFactor(
 
   companion object {
     /** Differences below this value are ignored when comparing two zoom values. */
-    const val ZoomDeltaEpsilon = 0.01f
+    const val ZoomDeltaEpsilon = 0.001f
 
     fun minimum(baseZoom: BaseZoomFactor, range: ZoomRange): ContentZoomFactor {
       return ContentZoomFactor(
