@@ -104,10 +104,10 @@ internal class HardwareShortcutsNode(
       is KeyboardShortcut.Pan -> {
         if (canPan()) {
           val offset = when (shortcut.direction) {
-            KeyboardShortcut.PanDirection.Up -> DpOffset(x = 0.dp, y = -shortcut.panOffset)
-            KeyboardShortcut.PanDirection.Down -> DpOffset(x = 0.dp, y = shortcut.panOffset)
-            KeyboardShortcut.PanDirection.Left -> DpOffset(x = -shortcut.panOffset, y = 0.dp)
-            KeyboardShortcut.PanDirection.Right -> DpOffset(x = shortcut.panOffset, y = 0.dp)
+            KeyboardShortcut.PanDirection.Up -> DpOffset(x = 0.dp, y = shortcut.panOffset)
+            KeyboardShortcut.PanDirection.Down -> DpOffset(x = 0.dp, y = -shortcut.panOffset)
+            KeyboardShortcut.PanDirection.Left -> DpOffset(x = shortcut.panOffset, y = 0.dp)
+            KeyboardShortcut.PanDirection.Right -> DpOffset(x = -shortcut.panOffset, y = 0.dp)
           }
           onPan(offset)
         }
