@@ -67,12 +67,9 @@ internal class HardwareShortcutsNode(
   }
 
   override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
-    if (pointerEvent.type == PointerEventType.Scroll) {
+    if (pointerEvent.type == PointerEventType.Scroll && pass == PointerEventPass.Main) {
       val shortcut = state.hardwareShortcutsSpec.detector.detectScroll(pointerEvent)
       if (shortcut != null) {
-        pointerEvent.changes.fastForEach {
-          it.consume()
-        }
         handleShortcut(shortcut)
       }
     }

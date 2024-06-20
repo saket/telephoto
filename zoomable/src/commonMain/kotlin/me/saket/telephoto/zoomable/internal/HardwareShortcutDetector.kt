@@ -9,6 +9,8 @@ import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFold
+import androidx.compose.ui.util.fastForEach
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
@@ -82,11 +84,21 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
     return null
   }
 
-  override fun detectScroll(event: PointerEvent): KeyboardShortcut {
-    val isZoomingIn = event.changes[0].scrollDelta.y < 0f
-    return KeyboardShortcut.Zoom(
-      direction = if (isZoomingIn) ZoomDirection.In else ZoomDirection.Out,
-      centroid = event.changes[0].position,
-    )
+  override fun detectScroll(event: PointerEvent): KeyboardShortcut? {
+    val scrollDeltaY = event.changes.fastFold(0f) { acc, c ->
+      acc + (if (c.isConsumed) 0f else c.scrollDelta.y)
+    }
+    return when (scrollDeltaY) {
+      0f -> null
+      else -> {
+        event.changes.fastForEach {
+          it.consume()
+        }
+        KeyboardShortcut.Zoom(
+          direction = if (scrollDeltaY < 0f) ZoomDirection.In else ZoomDirection.Out,
+          centroid = event.changes[0].position,
+        )
+      }
+    }
   }
 }
