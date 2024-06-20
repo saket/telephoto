@@ -15,6 +15,7 @@ import androidx.compose.ui.util.fastForEach
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
+import kotlin.math.absoluteValue
 
 @Immutable
 internal interface HardwareShortcutDetector {
@@ -99,6 +100,10 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
         KeyboardShortcut.Zoom(
           direction = if (scrollDeltaY < 0f) ZoomDirection.In else ZoomDirection.Out,
           centroid = event.changes[0].position,
+          // Scroll delta always seems to be either 1f or -1f depending on the direction.
+          // Although some mice are capable of sending precise scrolls, I'm assuming
+          // Android coerces them to be at least (+/-)1f.
+          zoomFactor = KeyboardShortcut.DefaultZoomFactor * scrollDeltaY.absoluteValue,
         )
       }
     }

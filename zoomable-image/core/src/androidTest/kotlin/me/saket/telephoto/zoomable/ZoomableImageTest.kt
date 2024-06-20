@@ -32,6 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -41,11 +43,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
@@ -54,13 +58,17 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeWithVelocity
+import androidx.compose.ui.test.withKeyDown
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.center
@@ -1036,48 +1044,134 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun pan_and_zoom_from_code() {
+  @OptIn(ExperimentalTestApi::class)
+  @Test fun pan_and_zoom_using_hardware_shortcuts() {
     lateinit var state: ZoomableImageState
-    var animateZoom by mutableStateOf(false)
-    var animatePan by mutableStateOf(false)
+    val maxZoomFactor = 5f
 
     rule.setContent {
+      val focusRequester = remember { FocusRequester() }
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
+          .focusRequester(focusRequester)
           .testTag("image"),
         image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
         contentDescription = null,
         state = rememberZoomableImageState(
-          rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+          rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor))
         ).also {
           state = it
         },
       )
-
-      if (animateZoom) {
+      if (state.isImageDisplayed) {
         LaunchedEffect(Unit) {
-          state.zoomableState.animateZoomBy(1.3f)
-        }
-      }
-      if (animatePan) {
-        LaunchedEffect(Unit) {
-          state.zoomableState.animatePanBy(Offset(x = 100f, y = 150f))
+          focusRequester.requestFocus()
         }
       }
     }
 
     rule.waitUntil(5.seconds) { state.isImageDisplayed }
-    dropshots.assertSnapshot(rule.activity, name = testName.methodName)
 
-    animateZoom = true
+    // Zoom in.
+    repeat(8) {
+      rule.onNodeWithTag("image").performKeyInput {
+        withKeyDown(Key.CtrlLeft) {
+          pressKey(Key.Equals)
+        }
+      }
+    }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_after_zoom")
+      state.zoomableState.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(4.3f, 4.3f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-1781.9f, -3958.5f).toString())
+      }
+    }
+    // Zoom out.
+    repeat(2) {
+      rule.onNodeWithTag("image").performKeyInput {
+        withKeyDown(Key.CtrlRight) {
+          pressKey(Key.Minus)
+        }
+      }
+    }
+    rule.runOnIdle {
+      state.zoomableState.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2382.3f).toString())
+      }
     }
 
-    animatePan = true
+    // Pan towards up.
+    repeat(2) {
+      rule.onNodeWithTag("image").performKeyInput {
+        pressKey(Key.DirectionUp)
+      }
+    }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_after_zoom_and_pan")
+      state.zoomableState.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2119.8f).toString())
+      }
+    }
+    // Pan towards down.
+    repeat(2) {
+      rule.onNodeWithTag("image").performKeyInput {
+        pressKey(Key.DirectionDown)
+      }
+    }
+    rule.runOnIdle {
+      state.zoomableState.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2382.3f).toString())
+      }
+    }
+
+    // Pan towards right.
+    repeat(2) {
+      rule.onNodeWithTag("image").performKeyInput {
+        pressKey(Key.DirectionRight)
+      }
+    }
+    rule.runOnIdle {
+      state.zoomableState.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-1334.9f, -2382.3f).toString())
+      }
+    }
+    // Pan towards left.
+    repeat(2) {
+      rule.onNodeWithTag("image").performKeyInput {
+        pressKey(Key.DirectionLeft)
+      }
+    }
+    rule.runOnIdle {
+      state.zoomableState.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2382.3f).toString())
+      }
+    }
+
+    // Zoom in using mouse.
+    repeat(10) {
+      rule.onNodeWithTag("image").performMouseInput {
+        scroll(-1f)
+      }
+    }
+    rule.runOnIdle {
+      // Should not over-zoom.
+      assertThat(state.zoomableState.contentTransformation.scale.toString()).isEqualTo(
+        ScaleFactor(maxZoomFactor, maxZoomFactor).toString()
+      )
+    }
+    // Zoom out using mouse.
+    rule.onNodeWithTag("image").performMouseInput {
+      scroll(3f)
+    }
+    rule.runOnIdle {
+      assertThat(state.zoomableState.contentTransformation.scale.toString()).isEqualTo(
+        ScaleFactor(1.4f, 1.4f).toString()
+      )
     }
   }
 

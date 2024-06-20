@@ -10,10 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -29,14 +33,20 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
 import com.dropbox.dropshots.Dropshots
+import com.google.testing.junit.testparameterinjector.TestParameter
+import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import leakcanary.LeakAssertions
 import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.waitUntil
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import kotlin.time.Duration.Companion.seconds
 
 // TODO: move these tests to :zoomable
+@RunWith(TestParameterInjector::class)
 class ZoomableTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
   @get:Rule val dropshots = Dropshots(
@@ -185,6 +195,59 @@ class ZoomableTest {
         "page_a" to 1f,
         "page_b" to 0f,
       )
+    }
+  }
+
+  @Test fun pan_and_zoom_from_code(
+    @TestParameter animate: Boolean,
+  ) {
+    lateinit var state: ZoomableState
+    var startZoom by mutableStateOf(false)
+    var startPan by mutableStateOf(false)
+
+    rule.setContent {
+      Box(
+        Modifier
+          .fillMaxSize()
+          .zoomable(rememberZoomableState().also { state = it })
+      )
+
+      if (startZoom) {
+        LaunchedEffect(Unit) {
+          if (animate) {
+            state.animateZoomBy(1.3f)
+          } else {
+            state.zoomBy(1.3f)
+          }
+        }
+      }
+      if (startPan) {
+        LaunchedEffect(Unit) {
+          if (animate) {
+            state.animatePanBy(Offset(x = 100f, y = 150f))
+          } else {
+            state.panBy(Offset(x = 100f, y = 150f))
+          }
+        }
+      }
+    }
+
+    rule.runOnIdle {
+      startZoom = true
+    }
+    rule.runOnIdle {
+      state.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(1.3f, 1.3f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-161.9f, -359.9f).toString())
+      }
+    }
+
+    startPan = true
+    rule.runOnIdle {
+      state.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(1.3f, 1.3f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset(-61.9f, -209.9f).toString())
+      }
     }
   }
 }

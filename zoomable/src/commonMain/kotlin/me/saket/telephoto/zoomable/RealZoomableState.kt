@@ -474,8 +474,8 @@ internal class RealZoomableState internal constructor(
         targetValue = offset,
         animationSpec = panAnimationSpec,
       ) {
-        transformBy(panChange = previous - value)
-        previous = value
+        transformBy(panChange = this.value - previous)
+        previous = this.value
       }
     }
   }
