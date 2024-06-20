@@ -559,6 +559,8 @@ internal class RealZoomableState internal constructor(
 
   internal suspend fun smoothlySettleZoomOnGestureEnd() {
     check(isReadyToInteract) { "shouldn't have gotten called" }
+    check(!transformableState.isTransformInProgress) { "another transformation is already in progress" }
+
     val start = gestureState!!
     val userZoomWithinBounds = ContentZoomFactor(baseZoomFactor!!, start.userZoomFactor)
       .coerceUserZoomIn(zoomSpec.range)
