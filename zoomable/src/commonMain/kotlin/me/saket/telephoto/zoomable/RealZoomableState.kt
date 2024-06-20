@@ -435,9 +435,9 @@ internal class RealZoomableState internal constructor(
       )
     }
 
-    // Reset the zoom if needed. An advantage of doing after accepting the requested zoom
-    // this versus limiting the requested zoom above is that repeated zoom events from, say,
-    // the keyboard will result in a nice rubber banding effect.
+    // Reset the zoom if needed. An advantage of doing *after* accepting the requested zoom
+    // versus limiting the requested zoom above is that repeated over-zoom events (from
+    // the keyboard for example) will result in a nice rubber banding effect.
     if (zoomSpec.preventOverOrUnderZoom && isZoomOutsideRange()) {
       smoothlySettleZoomOnGestureEnd()
     }

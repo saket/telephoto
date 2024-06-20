@@ -5,8 +5,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -63,9 +63,9 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
   override fun detectKey(event: KeyEvent): KeyboardShortcut? {
     // Note for self: Some devices/peripherals have dedicated zoom buttons that map to Key.ZoomIn
     // and Key.ZoomOut. Examples: Samsung Galaxy Camera, a motorcycle handlebar controller.
-    if (event.key == Key.ZoomIn || (event.utf16CodePoint == '+'.code)) {
+    if (event.key == Key.ZoomIn || (event.key == Key.Equals && event.isCtrlPressed)) {
       return KeyboardShortcut.Zoom(ZoomDirection.In)
-    } else if (event.key == Key.ZoomOut || (event.utf16CodePoint == '-'.code)) {
+    } else if (event.key == Key.ZoomOut || (event.key == Key.Minus && event.isCtrlPressed)) {
       return KeyboardShortcut.Zoom(ZoomDirection.Out)
     }
 

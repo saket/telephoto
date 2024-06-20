@@ -85,6 +85,7 @@ internal class HardwareShortcutsNode(
     // Android shortcuts:
     // mouse wheel: zoom in/out
     // alt + arrow keys: super pan
+    // ctrl + plus/minus: zoom in/out (google chrome)
 
     // todo: long pans are platform and app dependent.
     //  on macOS, chrome scrolls ~32x. macOS's preview app scrolls 10x.
