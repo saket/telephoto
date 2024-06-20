@@ -60,6 +60,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.performMultiModalInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.pressKey
@@ -1154,8 +1155,12 @@ class ZoomableImageTest {
 
     // Zoom in using mouse.
     repeat(10) {
-      rule.onNodeWithTag("image").performMouseInput {
-        scroll(-1f)
+      rule.onNodeWithTag("image").performMultiModalInput {
+        key {
+          withKeyDown(Key.AltLeft) {
+            mouse { scroll(-1f) }
+          }
+        }
       }
     }
     rule.runOnIdle {
@@ -1165,8 +1170,12 @@ class ZoomableImageTest {
       )
     }
     // Zoom out using mouse.
-    rule.onNodeWithTag("image").performMouseInput {
-      scroll(3f)
+    rule.onNodeWithTag("image").performMultiModalInput {
+      key {
+        withKeyDown(Key.AltLeft) {
+          mouse { scroll(3f) }
+        }
+      }
     }
     rule.runOnIdle {
       assertThat(state.zoomableState.contentTransformation.scale.toString()).isEqualTo(

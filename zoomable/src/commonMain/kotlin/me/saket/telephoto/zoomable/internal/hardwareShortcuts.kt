@@ -15,10 +15,10 @@ import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.HardwareShortcutsSpec
-import me.saket.telephoto.zoomable.RealZoomableState
 import me.saket.telephoto.zoomable.ZoomableState
 
 /** Responds to keyboard and mouse events to zoom and pan. */
@@ -71,9 +71,14 @@ internal class HardwareShortcutsNode(
   }
 
   override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
-    if (pointerEvent.type == PointerEventType.Scroll && pass == PointerEventPass.Main) {
+    if (
+      pointerEvent.type == PointerEventType.Scroll
+      && pass == PointerEventPass.Main
+      && pointerEvent.changes.fastAny { !it.isConsumed }
+    ) {
       val shortcut = spec.detector.detectScroll(pointerEvent)
       if (shortcut != null) {
+        pointerEvent.changes.fastForEach { it.consume() }
         handleShortcut(shortcut)
       }
     }

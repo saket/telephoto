@@ -8,10 +8,10 @@ import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.isAltPressed
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFold
-import androidx.compose.ui.util.fastForEach
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.PanDirection
 import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
@@ -88,24 +88,29 @@ internal object AndroidHardwareShortcutDetector : HardwareShortcutDetector {
   }
 
   override fun detectScroll(event: PointerEvent): KeyboardShortcut? {
-    val scrollDeltaY = event.changes.fastFold(0f) { acc, c ->
-      acc + (if (c.isConsumed) 0f else c.scrollDelta.y)
+    if (!event.keyboardModifiers.isAltPressed) {
+      // Google Photos does not require any modifier key to be pressed for zooming into
+      // images using mouse scroll. Telephoto does not follow the same pattern because
+      // it might migrate to 2D scrolling in the future for panning content once Compose
+      // UI supports it.
+      return null
     }
-    return when (scrollDeltaY) {
+    return when (val scrollY = event.calculateScrollY()) {
       0f -> null
-      else -> {
-        event.changes.fastForEach {
-          it.consume()
-        }
-        KeyboardShortcut.Zoom(
-          direction = if (scrollDeltaY < 0f) ZoomDirection.In else ZoomDirection.Out,
-          centroid = event.changes[0].position,
-          // Scroll delta always seems to be either 1f or -1f depending on the direction.
-          // Although some mice are capable of sending precise scrolls, I'm assuming
-          // Android coerces them to be at least (+/-)1f.
-          zoomFactor = KeyboardShortcut.DefaultZoomFactor * scrollDeltaY.absoluteValue,
-        )
-      }
+      else -> KeyboardShortcut.Zoom(
+        direction = if (scrollY < 0f) ZoomDirection.In else ZoomDirection.Out,
+        centroid = event.changes[0].position,
+        // Scroll delta always seems to be either 1f or -1f depending on the direction.
+        // Although some mice are capable of sending precise scrolls, I'm assuming
+        // Android coerces them to be at least (+/-)1f.
+        zoomFactor = KeyboardShortcut.DefaultZoomFactor * scrollY.absoluteValue,
+      )
+    }
+  }
+
+  private fun PointerEvent.calculateScrollY(): Float {
+    return changes.fastFold(0f) { acc, c ->
+      acc + c.scrollDelta.y
     }
   }
 }
