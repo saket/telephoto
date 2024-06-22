@@ -20,6 +20,7 @@ import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.HardwareShortcutsSpec
 import me.saket.telephoto.zoomable.ZoomableState
+import me.saket.telephoto.zoomable.internal.HardwareShortcutDetector.ShortcutEvent
 
 /** Responds to keyboard and mouse events to zoom and pan. */
 internal data class HardwareShortcutsElement(
@@ -89,21 +90,21 @@ internal class HardwareShortcutsNode(
     }
   }
 
-  private fun handleShortcut(shortcut: KeyboardShortcut) {
+  private fun handleShortcut(shortcut: ShortcutEvent) {
     when (shortcut) {
-      is KeyboardShortcut.Zoom -> {
+      is ShortcutEvent.Zoom -> {
         when (shortcut.direction) {
-          KeyboardShortcut.ZoomDirection.In -> onZoom(shortcut.zoomFactor, shortcut.centroid)
-          KeyboardShortcut.ZoomDirection.Out -> onZoom(1f / shortcut.zoomFactor, shortcut.centroid)
+          ShortcutEvent.ZoomDirection.In -> onZoom(shortcut.zoomFactor, shortcut.centroid)
+          ShortcutEvent.ZoomDirection.Out -> onZoom(1f / shortcut.zoomFactor, shortcut.centroid)
         }
       }
-      is KeyboardShortcut.Pan -> {
+      is ShortcutEvent.Pan -> {
         if (canPan()) {
           val offset = when (shortcut.direction) {
-            KeyboardShortcut.PanDirection.Up -> DpOffset(x = 0.dp, y = shortcut.panOffset)
-            KeyboardShortcut.PanDirection.Down -> DpOffset(x = 0.dp, y = -shortcut.panOffset)
-            KeyboardShortcut.PanDirection.Left -> DpOffset(x = shortcut.panOffset, y = 0.dp)
-            KeyboardShortcut.PanDirection.Right -> DpOffset(x = -shortcut.panOffset, y = 0.dp)
+            ShortcutEvent.PanDirection.Up -> DpOffset(x = 0.dp, y = shortcut.panOffset)
+            ShortcutEvent.PanDirection.Down -> DpOffset(x = 0.dp, y = -shortcut.panOffset)
+            ShortcutEvent.PanDirection.Left -> DpOffset(x = shortcut.panOffset, y = 0.dp)
+            ShortcutEvent.PanDirection.Right -> DpOffset(x = -shortcut.panOffset, y = 0.dp)
           }
           onPan(offset)
         }
