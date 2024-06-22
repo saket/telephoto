@@ -21,37 +21,16 @@ import me.saket.telephoto.zoomable.internal.KeyboardShortcut.ZoomDirection
 import kotlin.math.absoluteValue
 
 @Immutable
-internal abstract class HardwareShortcutDetector {
+internal interface HardwareShortcutDetector {
   companion object {
     val Platform: HardwareShortcutDetector get() = DefaultHardwareShortcutDetector
   }
 
   /** Detect a keyboard shortcut or return `null` to ignore. */
-  abstract fun detectKey(event: KeyEvent): KeyboardShortcut?
+  fun detectKey(event: KeyEvent): KeyboardShortcut?
 
   /** Detect a mouse scroll shortcut or return `null` to ignore. */
-  abstract fun detectScroll(event: PointerEvent): KeyboardShortcut?
-
-  protected fun PointerEvent.calculateScroll(): Offset {
-    return changes.fastFold(Offset.Zero) { acc, c ->
-      acc + c.scrollDelta
-    }
-  }
-
-  protected fun PointerEvent.calculateScrollCentroid(): Offset {
-    check(type == PointerEventType.Scroll)
-    var centroid = Offset.Zero
-    var centroidWeight = 0f
-    changes.fastForEach { change ->
-      val position = change.position
-      centroid += position
-      centroidWeight++
-    }
-    return when (centroidWeight) {
-      0f -> Offset.Unspecified
-      else -> centroid / centroidWeight
-    }
-  }
+  fun detectScroll(event: PointerEvent): KeyboardShortcut?
 }
 
 internal sealed interface KeyboardShortcut {
@@ -85,7 +64,7 @@ internal sealed interface KeyboardShortcut {
   }
 }
 
-internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector() {
+internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
   override fun detectKey(event: KeyEvent): KeyboardShortcut? {
     // Note for self: Some devices/peripherals have dedicated zoom buttons that map to Key.ZoomIn
     // and Key.ZoomOut. Examples include: Samsung Galaxy Camera, a motorcycle handlebar controller.
@@ -143,6 +122,27 @@ internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector() {
         // Android coerces them to be at least (+/-)1f.
         zoomFactor = KeyboardShortcut.DefaultZoomFactor * scrollY.absoluteValue,
       )
+    }
+  }
+
+  private fun PointerEvent.calculateScroll(): Offset {
+    return changes.fastFold(Offset.Zero) { acc, c ->
+      acc + c.scrollDelta
+    }
+  }
+
+  private fun PointerEvent.calculateScrollCentroid(): Offset {
+    check(type == PointerEventType.Scroll)
+    var centroid = Offset.Zero
+    var centroidWeight = 0f
+    changes.fastForEach { change ->
+      val position = change.position
+      centroid += position
+      centroidWeight++
+    }
+    return when (centroidWeight) {
+      0f -> Offset.Unspecified
+      else -> centroid / centroidWeight
     }
   }
 }
