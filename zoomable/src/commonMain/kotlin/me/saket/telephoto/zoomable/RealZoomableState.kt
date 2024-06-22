@@ -385,7 +385,7 @@ internal class RealZoomableState internal constructor(
 
   override suspend fun resetZoom(withAnimation: Boolean) {
     if (withAnimation) {
-      smoothlyToggleZoom(
+      animateToggleOfZoom(
         shouldZoomIn = false,
         centroid = Offset.Zero,
         mutatePriority = MutatePriority.Default,
@@ -413,75 +413,76 @@ internal class RealZoomableState internal constructor(
     val gestureState = gestureState ?: return
     val currentZoom = ContentZoomFactor(baseZoomFactor, gestureState.userZoomFactor)
 
-    smoothlyToggleZoom(
+    animateToggleOfZoom(
       shouldZoomIn = !currentZoom.isAtMaxZoom(zoomSpec.range),
       centroid = centroid,
       mutatePriority = MutatePriority.UserInput,
     )
   }
 
-  override suspend fun zoomBy(zoomFactor: Float, centroid: Offset) {
-    transformableState.transform(MutatePriority.Default) {
-      transformBy(
-        zoomChange = zoomFactor,
-        centroid = centroid.takeOrElse {
-          contentLayoutSize.center
-        },
+  override suspend fun zoomBy(zoomFactor: Float, centroid: Offset, withAnimation: Boolean) {
+    if (withAnimation) {
+      val startTransformation = gestureState ?: return
+      val baseZoomFactor = baseZoomFactor ?: return
+      val targetZoom = ContentZoomFactor(
+        baseZoom = baseZoomFactor,
+        userZoom = startTransformation.userZoomFactor * zoomFactor
       )
+
+      animateZoomTo(
+        targetZoom = targetZoom,
+        centroid = centroid.takeOrElse { contentLayoutSize.center },
+        mutatePriority = MutatePriority.Default,
+      )
+
+    } else {
+      transformableState.transform(MutatePriority.Default) {
+        transformBy(
+          zoomChange = zoomFactor,
+          centroid = centroid.takeOrElse {
+            contentLayoutSize.center
+          },
+        )
+      }
     }
 
     // Reset the zoom if needed. An advantage of doing *after* accepting the requested zoom
     // versus limiting the requested zoom above is that repeated over-zoom events (from
     // the keyboard for example) will result in a nice rubber banding effect.
     if (zoomSpec.preventOverOrUnderZoom && isZoomOutsideRange()) {
-      smoothlySettleZoomOnGestureEnd()
+      animateSettlingOfZoomOnGestureEnd()
     }
   }
 
-  override suspend fun animateZoomBy(zoomFactor: Float, centroid: Offset) {
-    val startTransformation = gestureState ?: return
-    val baseZoomFactor = baseZoomFactor ?: return
-    val targetZoom = ContentZoomFactor(
-      baseZoom = baseZoomFactor,
-      userZoom = startTransformation.userZoomFactor * zoomFactor
-    ).coerceUserZoomIn(zoomSpec.range)
-
-    smoothlyZoomTo(
-      targetZoom = targetZoom,
-      centroid = centroid.takeOrElse { contentLayoutSize.center },
-      mutatePriority = MutatePriority.Default,
-    )
-  }
-
-  override suspend fun panBy(offset: Offset) {
-    transformableState.transform(MutatePriority.Default) {
-      transformBy(panChange = offset)
-    }
-  }
-
-  override suspend fun animatePanBy(offset: Offset) {
-    transformableState.transform(MutatePriority.Default) {
-      var previous = Offset.Zero
-      AnimationState(
-        typeConverter = Offset.VectorConverter,
-        initialValue = Offset.Zero,
-      ).animateTo(
-        targetValue = offset,
-        animationSpec = panAnimationSpec,
-      ) {
-        transformBy(panChange = this.value - previous)
-        previous = this.value
+  override suspend fun panBy(offset: Offset, withAnimation: Boolean) {
+    if (withAnimation) {
+      transformableState.transform(MutatePriority.Default) {
+        var previous = Offset.Zero
+        AnimationState(
+          typeConverter = Offset.VectorConverter,
+          initialValue = Offset.Zero,
+        ).animateTo(
+          targetValue = offset,
+          animationSpec = panAnimationSpec,
+        ) {
+          transformBy(panChange = this.value - previous)
+          previous = this.value
+        }
+      }
+    } else {
+      transformableState.transform(MutatePriority.Default) {
+        transformBy(panChange = offset)
       }
     }
   }
 
-  private suspend fun smoothlyToggleZoom(
+  private suspend fun animateToggleOfZoom(
     shouldZoomIn: Boolean,
     centroid: Offset,
     mutatePriority: MutatePriority,
   ) {
     val baseZoomFactor = baseZoomFactor ?: return
-    smoothlyZoomTo(
+    animateZoomTo(
       targetZoom = if (shouldZoomIn) {
         ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range)
       } else {
@@ -492,7 +493,7 @@ internal class RealZoomableState internal constructor(
     )
   }
 
-  private suspend fun smoothlyZoomTo(
+  private suspend fun animateZoomTo(
     targetZoom: ContentZoomFactor,
     centroid: Offset,
     mutatePriority: MutatePriority,
@@ -552,7 +553,7 @@ internal class RealZoomableState internal constructor(
     return abs(currentZoom.userZoom.value - zoomWithinBounds.userZoom.value) > ZoomDeltaEpsilon
   }
 
-  internal suspend fun smoothlySettleZoomOnGestureEnd() {
+  internal suspend fun animateSettlingOfZoomOnGestureEnd() {
     check(isReadyToInteract) { "shouldn't have gotten called" }
     check(!transformableState.isTransformInProgress) { "another transformation is already in progress" }
 

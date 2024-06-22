@@ -130,7 +130,7 @@ private class ZoomableNode(
     if (state.isZoomOutsideRange()) {
       coroutineScope.launch {
         hapticFeedback.performHapticFeedback()
-        state.smoothlySettleZoomOnGestureEnd()
+        state.animateSettlingOfZoomOnGestureEnd()
       }
     }
   }
@@ -138,7 +138,7 @@ private class ZoomableNode(
     coroutineScope.launch {
       if (state.isZoomOutsideRange()) {
         hapticFeedback.performHapticFeedback()
-        state.smoothlySettleZoomOnGestureEnd()
+        state.animateSettlingOfZoomOnGestureEnd()
       } else {
         state.fling(velocity = velocity, density = requireDensity())
       }

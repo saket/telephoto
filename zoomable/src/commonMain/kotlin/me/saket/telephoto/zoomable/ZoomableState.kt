@@ -111,18 +111,11 @@ sealed interface ZoomableState {
   /** See [ZoomableContentLocation]. */
   suspend fun setContentLocation(location: ZoomableContentLocation)
 
-  // todo: should this be renamed to animateResetZooom()?
   /** Reset content to its minimum zoom and zero offset. */
   suspend fun resetZoom(withAnimation: Boolean = true)
 
-
-  // todo: doc.
-  suspend fun zoomBy(zoomFactor: Float, centroid: Offset = Offset.Unspecified)
-
-  // todo: should these two APIs accept an animation spec?
-  //  if they do, should the double-tap-to-zoom animation spec also be customizable?
   /**
-   * Animate zoom around [centroid] by a ratio of [zoomFactor] over the current size and suspend until
+   * Zoom around [centroid] by a ratio of [zoomFactor] over the current size and suspend until
    * its finished.
    *
    * @param zoomFactor Ratio over the current size by which to zoom. For example, if [zoomFactor]
@@ -131,13 +124,17 @@ sealed interface ZoomableState {
    * @param centroid the focal point for this zoom within the content's size. Defaults to the center
    * of the content.
    */
-  suspend fun animateZoomBy(zoomFactor: Float, centroid: Offset = Offset.Unspecified)
-
-  // todo: doc.
-  suspend fun panBy(offset: Offset)
+  suspend fun zoomBy(
+    zoomFactor: Float,
+    centroid: Offset = Offset.Unspecified,
+    withAnimation: Boolean = true,
+  )
 
   /**
    * Animate pan by [offset] Offset in pixels and suspend until its finished.
    */
-  suspend fun animatePanBy(offset: Offset)
+  suspend fun panBy(
+    offset: Offset,
+    withAnimation: Boolean = true,
+  )
 }

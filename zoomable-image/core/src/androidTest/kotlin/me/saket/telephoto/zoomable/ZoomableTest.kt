@@ -37,13 +37,11 @@ import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import leakcanary.LeakAssertions
 import me.saket.telephoto.util.prepareForScreenshotTest
-import me.saket.telephoto.util.waitUntil
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.time.Duration.Companion.seconds
 
 // TODO: move these tests to :zoomable
 @RunWith(TestParameterInjector::class)
@@ -214,20 +212,12 @@ class ZoomableTest {
 
       if (startZoom) {
         LaunchedEffect(Unit) {
-          if (animate) {
-            state.animateZoomBy(1.3f)
-          } else {
-            state.zoomBy(1.3f)
-          }
+          state.zoomBy(1.3f, withAnimation = animate)
         }
       }
       if (startPan) {
         LaunchedEffect(Unit) {
-          if (animate) {
-            state.animatePanBy(Offset(x = 100f, y = 150f))
-          } else {
-            state.panBy(Offset(x = 100f, y = 150f))
-          }
+          state.panBy(Offset(x = 100f, y = 150f), withAnimation = animate)
         }
       }
     }

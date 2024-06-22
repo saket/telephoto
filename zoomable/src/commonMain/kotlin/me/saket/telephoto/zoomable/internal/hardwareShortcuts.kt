@@ -47,15 +47,20 @@ internal class HardwareShortcutsNode(
   }
   val onZoom: (factor: Float, centroid: Offset) -> Unit = { factor, centroid ->
     coroutineScope.launch {
-      state.zoomBy(factor, centroid)
+      state.zoomBy(
+        zoomFactor = factor,
+        centroid = centroid,
+        withAnimation = false,
+      )
     }
   }
   val onPan: (delta: DpOffset) -> Unit = { delta ->
     coroutineScope.launch {
       state.panBy(
-        with(requireDensity()) {
+        offset = with(requireDensity()) {
           Offset(x = delta.x.toPx(), y = delta.y.toPx())
-        }
+        },
+        withAnimation = false,
       )
     }
   }
