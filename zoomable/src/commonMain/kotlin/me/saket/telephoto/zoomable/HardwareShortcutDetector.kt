@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable.internal
+package me.saket.telephoto.zoomable
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
@@ -16,9 +16,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFold
 import androidx.compose.ui.util.fastForEach
 import dev.drewhamilton.poko.Poko
-import me.saket.telephoto.zoomable.internal.HardwareShortcutDetector.ShortcutEvent
-import me.saket.telephoto.zoomable.internal.HardwareShortcutDetector.ShortcutEvent.PanDirection
-import me.saket.telephoto.zoomable.internal.HardwareShortcutDetector.ShortcutEvent.ZoomDirection
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection
+import me.saket.telephoto.zoomable.internal.HostPlatform
+import me.saket.telephoto.zoomable.internal.current
 import kotlin.math.absoluteValue
 
 @Immutable

@@ -20,7 +20,7 @@ import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.HardwareShortcutsSpec
 import me.saket.telephoto.zoomable.ZoomableState
-import me.saket.telephoto.zoomable.internal.HardwareShortcutDetector.ShortcutEvent
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent
 
 /** Responds to keyboard and mouse events to zoom and pan. */
 internal data class HardwareShortcutsElement(
