@@ -142,3 +142,14 @@ sealed interface ZoomableState {
     withAnimation: Boolean = true,
   )
 }
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@Composable
+fun rememberZoomableState(
+  zoomSpec: ZoomSpec = ZoomSpec(),
+  autoApplyTransformations: Boolean = true,
+): ZoomableState = rememberZoomableState(
+  zoomSpec = zoomSpec,
+  autoApplyTransformations = autoApplyTransformations,
+  hardwareShortcutsSpec = HardwareShortcutsSpec(),
+)

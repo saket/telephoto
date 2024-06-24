@@ -1,6 +1,76 @@
 // Signature format: 4.0
 package me.saket.telephoto.zoomable {
 
+  @androidx.compose.runtime.Immutable public interface HardwareShortcutDetector {
+    method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent? detectKey(android.view.KeyEvent event);
+    method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent? detectScroll(androidx.compose.ui.input.pointer.PointerEvent event);
+    field public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.Companion Companion;
+  }
+
+  public static final class HardwareShortcutDetector.Companion {
+    method public me.saket.telephoto.zoomable.HardwareShortcutDetector getDefault();
+    property public final me.saket.telephoto.zoomable.HardwareShortcutDetector Default;
+  }
+
+  public static sealed interface HardwareShortcutDetector.ShortcutEvent {
+    field public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.Companion Companion;
+    field public static final float DefaultZoomFactor = 1.2f;
+  }
+
+  public static final class HardwareShortcutDetector.ShortcutEvent.Companion {
+    method public float getDefaultPanOffset();
+    property public final float DefaultPanOffset;
+    field public static final float DefaultZoomFactor = 1.2f;
+  }
+
+  @dev.drewhamilton.poko.Poko public static final class HardwareShortcutDetector.ShortcutEvent.Pan implements me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent {
+    ctor public HardwareShortcutDetector.ShortcutEvent.Pan(me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection direction, optional float panOffset);
+    method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection getDirection();
+    method public float getPanOffset();
+    property public final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection direction;
+    property public final float panOffset;
+  }
+
+  public enum HardwareShortcutDetector.ShortcutEvent.PanDirection {
+    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection valueOf(String value) throws java.lang.IllegalArgumentException, java.lang.NullPointerException;
+    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection[] values();
+    enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection Down;
+    enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection Left;
+    enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection Right;
+    enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection Up;
+  }
+
+  @dev.drewhamilton.poko.Poko public static final class HardwareShortcutDetector.ShortcutEvent.Zoom implements me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent {
+    ctor public HardwareShortcutDetector.ShortcutEvent.Zoom(me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection direction, optional float zoomFactor, optional long centroid);
+    method public long getCentroid();
+    method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection getDirection();
+    method public float getZoomFactor();
+    property public final long centroid;
+    property public final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection direction;
+    property public final float zoomFactor;
+  }
+
+  public enum HardwareShortcutDetector.ShortcutEvent.ZoomDirection {
+    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection valueOf(String value) throws java.lang.IllegalArgumentException, java.lang.NullPointerException;
+    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection[] values();
+    enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection In;
+    enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection Out;
+  }
+
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class HardwareShortcutsSpec {
+    ctor public HardwareShortcutsSpec(optional boolean enabled, optional me.saket.telephoto.zoomable.HardwareShortcutDetector shortcutDetector);
+    method public boolean getEnabled();
+    method public me.saket.telephoto.zoomable.HardwareShortcutDetector getShortcutDetector();
+    property public final boolean enabled;
+    property public final me.saket.telephoto.zoomable.HardwareShortcutDetector shortcutDetector;
+    field public static final me.saket.telephoto.zoomable.HardwareShortcutsSpec.Companion Companion;
+  }
+
+  public static final class HardwareShortcutsSpec.Companion {
+    method public me.saket.telephoto.zoomable.HardwareShortcutsSpec getDisabled();
+    property public final me.saket.telephoto.zoomable.HardwareShortcutsSpec Disabled;
+  }
+
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ZoomSpec {
     ctor public ZoomSpec(optional float maxZoomFactor, optional boolean preventOverOrUnderZoom);
     method public float getMaxZoomFactor();
@@ -73,11 +143,13 @@ package me.saket.telephoto.zoomable {
     method public me.saket.telephoto.zoomable.ZoomableContentTransformation getContentTransformation();
     method public androidx.compose.ui.geometry.Rect getTransformedContentBounds();
     method @FloatRange(from=0.0, to=1.0) public Float? getZoomFraction();
+    method public suspend Object? panBy(long offset, optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public suspend Object? resetZoom(optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setAutoApplyTransformations(boolean);
     method public void setContentAlignment(androidx.compose.ui.Alignment);
     method public suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
+    method public suspend Object? zoomBy(float zoomFactor, optional long centroid, optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
     property public abstract boolean autoApplyTransformations;
     property public abstract androidx.compose.ui.Alignment contentAlignment;
     property public abstract androidx.compose.ui.layout.ContentScale contentScale;
@@ -87,7 +159,8 @@ package me.saket.telephoto.zoomable {
   }
 
   public final class ZoomableStateKt {
-    method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations);
+    method @Deprecated @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations);
+    method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations, optional me.saket.telephoto.zoomable.HardwareShortcutsSpec hardwareShortcutsSpec);
   }
 
 }

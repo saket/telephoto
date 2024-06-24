@@ -38,8 +38,8 @@ interface HardwareShortcutDetector {
   sealed interface ShortcutEvent {
     @Poko class Zoom(
       val direction: ZoomDirection,
-      val centroid: Offset = Offset.Unspecified,
       val zoomFactor: Float = DefaultZoomFactor,
+      val centroid: Offset = Offset.Unspecified,
     ) : ShortcutEvent
 
     @Poko class Pan(
