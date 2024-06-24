@@ -22,9 +22,9 @@ import me.saket.telephoto.zoomable.internal.HardwareShortcutDetector.ShortcutEve
 import kotlin.math.absoluteValue
 
 @Immutable
-internal interface HardwareShortcutDetector {
+interface HardwareShortcutDetector {
   companion object {
-    val Platform: HardwareShortcutDetector get() = DefaultHardwareShortcutDetector
+    val Default: HardwareShortcutDetector get() = DefaultHardwareShortcutDetector
   }
 
   /** Detect a keyboard shortcut or return `null` to ignore. */
@@ -63,7 +63,6 @@ internal interface HardwareShortcutDetector {
       val DefaultPanOffset = 50.dp
     }
   }
-
 }
 
 internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {

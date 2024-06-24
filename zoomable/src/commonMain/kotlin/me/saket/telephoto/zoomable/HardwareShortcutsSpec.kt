@@ -6,9 +6,9 @@ import me.saket.telephoto.zoomable.internal.HardwareShortcutDetector
 
 @Poko
 @Immutable
-internal class HardwareShortcutsSpec(
+class HardwareShortcutsSpec(
   val enabled: Boolean = true,
-  val detector: HardwareShortcutDetector = HardwareShortcutDetector.Platform,
+  val shortcutDetector: HardwareShortcutDetector = HardwareShortcutDetector.Default,
 ) {
 
   companion object {

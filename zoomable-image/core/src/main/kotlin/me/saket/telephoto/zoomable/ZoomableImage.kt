@@ -138,10 +138,9 @@ fun ZoomableImage(
             // this image when a quick-zoom gesture is made before the image is fully loaded.
             state = rememberZoomableState(
               zoomSpec = ZoomSpec(maxZoomFactor = 1f, preventOverOrUnderZoom = false),
+              hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
               autoApplyTransformations = false,
-            ).also {
-              (it as RealZoomableState).hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled
-            },
+            ),
             onClick = onClick,
             onLongClick = onLongClick,
             clipToBounds = clipToBounds,

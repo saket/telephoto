@@ -21,11 +21,15 @@ import androidx.compose.ui.platform.LocalLayoutDirection
  * @param autoApplyTransformations Determines whether the resulting scale and translation of pan and zoom
  * gestures should be automatically applied by [Modifier.zoomable] to its content. This can be disabled
  * if your content prefers applying the transformations in a bespoke manner.
+ *
+ * @param hardwareShortcutsSpec Spec used for handling keyboard and mouse shortcuts, or
+ * [HardwareShortcutsSpec.Disabled] for disabling them.
  */
 @Composable
 fun rememberZoomableState(
   zoomSpec: ZoomSpec = ZoomSpec(),
   autoApplyTransformations: Boolean = true,
+  hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
 ): ZoomableState {
   val isLayoutPreview = LocalInspectionMode.current
   val state = rememberSaveable(saver = RealZoomableState.Saver) {
@@ -35,7 +39,7 @@ fun rememberZoomableState(
     )
   }.also {
     it.zoomSpec = zoomSpec
-    it.hardwareShortcutsSpec = HardwareShortcutsSpec()
+    it.hardwareShortcutsSpec = hardwareShortcutsSpec
     it.layoutDirection = LocalLayoutDirection.current
   }
 

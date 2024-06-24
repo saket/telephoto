@@ -68,7 +68,7 @@ internal class HardwareShortcutsNode(
 
   override fun onKeyEvent(event: KeyEvent): Boolean {
     if (event.type == KeyEventType.KeyDown) {
-      val shortcut = spec.detector.detectKey(event)
+      val shortcut = spec.shortcutDetector.detectKey(event)
       shortcut?.let(::handleShortcut)
       return shortcut != null
     } else {
@@ -82,7 +82,7 @@ internal class HardwareShortcutsNode(
       && pass == PointerEventPass.Main
       && pointerEvent.changes.fastAny { !it.isConsumed }
     ) {
-      val shortcut = spec.detector.detectScroll(pointerEvent)
+      val shortcut = spec.shortcutDetector.detectScroll(pointerEvent)
       if (shortcut != null) {
         pointerEvent.changes.fastForEach { it.consume() }
         handleShortcut(shortcut)
