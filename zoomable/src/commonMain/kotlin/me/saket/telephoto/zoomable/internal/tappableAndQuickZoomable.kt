@@ -210,7 +210,10 @@ private suspend fun PointerInputScope.detectTapAndQuickZoomGestures(
         onTap?.invoke(firstUp.position)
 
       } else if (areWithinTouchTargetSize(firstUp, secondDown)) {
-        val dragStart = awaitVerticalTouchSlopOrCancellation(secondDown.id) { change, over ->
+        val dragStart = awaitVerticalTouchSlopOrCancellation(
+          pointerId = secondDown.id,
+          //pointerType = secondDown.type,  // https://issuetracker.google.com/u/0/issues/348970843
+        ) { change, over ->
           onQuickZoom(Zooming(secondDown.position, over.calculateQuickZoomDelta()))
           change.consume()
         }
