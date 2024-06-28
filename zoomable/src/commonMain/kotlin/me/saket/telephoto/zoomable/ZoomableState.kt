@@ -190,8 +190,8 @@ sealed interface ZoomableState {
   )
 
   companion object {
-    val DefaultZoomAnimationSpec get() = spring<Float>(stiffness = Spring.StiffnessMediumLow)
-    val DefaultPanAnimationSpec get() = spring<Offset>(stiffness = Spring.StiffnessMediumLow)
+    val DefaultZoomAnimationSpec: AnimationSpec<Float> get() = spring(stiffness = Spring.StiffnessMediumLow)
+    val DefaultPanAnimationSpec: AnimationSpec<Offset> get() = spring(stiffness = Spring.StiffnessMediumLow)
   }
 }
 

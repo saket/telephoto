@@ -76,6 +76,24 @@ fun Modifier.zoomable(
     }
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun Modifier.zoomable(
+  state: ZoomableState,
+  enabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+): Modifier {
+  return this.zoomable(
+    state = state,
+    enabled = enabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+  )
+}
+
 private data class ZoomableElement(
   private val state: RealZoomableState,
   private val enabled: Boolean,

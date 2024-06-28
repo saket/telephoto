@@ -1,6 +1,15 @@
 // Signature format: 4.0
 package me.saket.telephoto.zoomable {
 
+  @androidx.compose.runtime.Immutable public fun interface DoubleClickToZoomListener {
+    method public suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableState state, long centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  }
+
+  public static final class DoubleClickToZoomListener.ToggleBetweenMinAndMax implements me.saket.telephoto.zoomable.DoubleClickToZoomListener {
+    method public suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableState state, long centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    field public static final me.saket.telephoto.zoomable.DoubleClickToZoomListener.ToggleBetweenMinAndMax INSTANCE;
+  }
+
   @androidx.compose.runtime.Immutable public interface HardwareShortcutDetector {
     method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent? detectKey(android.view.KeyEvent event);
     method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent? detectScroll(androidx.compose.ui.input.pointer.PointerEvent event);
@@ -133,7 +142,8 @@ package me.saket.telephoto.zoomable {
   }
 
   public final class ZoomableKt {
-    method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
+    method @Deprecated public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,? extends kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,? extends kotlin.Unit>? onLongClick, optional boolean clipToBounds);
+    method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds, optional me.saket.telephoto.zoomable.DoubleClickToZoomListener onDoubleClick);
   }
 
   @androidx.compose.runtime.Stable public sealed interface ZoomableState {
@@ -143,19 +153,31 @@ package me.saket.telephoto.zoomable {
     method public me.saket.telephoto.zoomable.ZoomableContentTransformation getContentTransformation();
     method public androidx.compose.ui.geometry.Rect getTransformedContentBounds();
     method @FloatRange(from=0.0, to=1.0) public Float? getZoomFraction();
-    method public suspend Object? panBy(long offset, optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method public suspend Object? resetZoom(optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public me.saket.telephoto.zoomable.ZoomSpec getZoomSpec();
+    method public suspend Object? panBy(long offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public suspend Object? resetZoom(optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @Deprecated public default suspend Object? resetZoom(boolean withAnimation, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setAutoApplyTransformations(boolean);
     method public void setContentAlignment(androidx.compose.ui.Alignment);
     method public suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
-    method public suspend Object? zoomBy(float zoomFactor, optional long centroid, optional boolean withAnimation, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public suspend Object? zoomBy(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public suspend Object? zoomTo(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
     property public abstract boolean autoApplyTransformations;
     property public abstract androidx.compose.ui.Alignment contentAlignment;
     property public abstract androidx.compose.ui.layout.ContentScale contentScale;
     property public abstract me.saket.telephoto.zoomable.ZoomableContentTransformation contentTransformation;
     property public abstract androidx.compose.ui.geometry.Rect transformedContentBounds;
     property @FloatRange(from=0.0, to=1.0) public abstract Float? zoomFraction;
+    property public abstract me.saket.telephoto.zoomable.ZoomSpec zoomSpec;
+    field public static final me.saket.telephoto.zoomable.ZoomableState.Companion Companion;
+  }
+
+  public static final class ZoomableState.Companion {
+    method public androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> getDefaultPanAnimationSpec();
+    method public androidx.compose.animation.core.AnimationSpec<java.lang.Float> getDefaultZoomAnimationSpec();
+    property public final androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> DefaultPanAnimationSpec;
+    property public final androidx.compose.animation.core.AnimationSpec<java.lang.Float> DefaultZoomAnimationSpec;
   }
 
   public final class ZoomableStateKt {
