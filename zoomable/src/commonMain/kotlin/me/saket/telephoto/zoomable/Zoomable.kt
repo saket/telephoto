@@ -49,7 +49,7 @@ fun Modifier.zoomable(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-  onDoubleClick: DoubleClickListener = DoubleClickListener.ToggleBetweenMinAndMax,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
 ): Modifier {
   check(state is RealZoomableState)
   return this
@@ -81,7 +81,7 @@ private data class ZoomableElement(
   private val enabled: Boolean,
   private val onClick: ((Offset) -> Unit)?,
   private val onLongClick: ((Offset) -> Unit)?,
-  private val onDoubleClick: DoubleClickListener,
+  private val onDoubleClick: DoubleClickToZoomListener,
 ) : ModifierNodeElement<ZoomableNode>() {
 
   override fun create(): ZoomableNode = ZoomableNode(
@@ -114,7 +114,7 @@ private data class ZoomableElement(
 @OptIn(ExperimentalFoundationApi::class)
 private class ZoomableNode(
   private var state: RealZoomableState,
-  private var suspendableOnDoubleClick: DoubleClickListener,
+  private var suspendableOnDoubleClick: DoubleClickToZoomListener,
   enabled: Boolean,
   onClick: ((Offset) -> Unit)?,
   onLongClick: ((Offset) -> Unit)?,
@@ -180,7 +180,7 @@ private class ZoomableNode(
     enabled: Boolean,
     onClick: ((Offset) -> Unit)?,
     onLongClick: ((Offset) -> Unit)?,
-    onDoubleClick: DoubleClickListener,
+    onDoubleClick: DoubleClickToZoomListener,
   ) {
     if (this.state != state) {
       // Note to self: when the state is updated, the delegated

@@ -2,7 +2,7 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
-import me.saket.telephoto.zoomable.DoubleClickListener.ToggleBetweenMinAndMax
+import me.saket.telephoto.zoomable.DoubleClickToZoomListener.ToggleBetweenMinAndMax
 import me.saket.telephoto.zoomable.internal.maxScale
 
 /**
@@ -10,7 +10,7 @@ import me.saket.telephoto.zoomable.internal.maxScale
  * By default, [ToggleBetweenMinAndMax] is used.
  */
 @Immutable
-fun interface DoubleClickListener {
+fun interface DoubleClickToZoomListener {
   suspend fun onDoubleClick(
     state: ZoomableState,
     centroid: Offset,
@@ -19,7 +19,7 @@ fun interface DoubleClickListener {
   /**
    * Toggles between [ZoomSpec.maxZoomFactor] and the minimum zoom factor on double clicks.
    */
-  data object ToggleBetweenMinAndMax : DoubleClickListener {
+  data object ToggleBetweenMinAndMax : DoubleClickToZoomListener {
     override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
       val zoomFraction = state.zoomFraction ?: return // Content isn't ready yet.
       state.zoomTo(
