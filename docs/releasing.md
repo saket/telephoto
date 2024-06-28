@@ -3,7 +3,7 @@
 - [ ] Check that tests have passed on CI.
 - [ ] Run manual test cases that are difficult to automate:
   - [ ] Fling animations can be interrupted by pressing anywhere.
-  - [ ] Double-tap-to-zoom animations can be interrupted **only** by starting another swipe gesture.
+  - [ ] Double-click-to-zoom animations can be interrupted **only** by starting another swipe gesture.
   - [ ] Images that use a placeholder play a cross-fade animation when the image is loaded.
 - [ ] Change version name from SNAPSHOT to an actual name.
 - [ ] Update project website with:

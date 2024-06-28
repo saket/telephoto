@@ -126,9 +126,9 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  internal var gestureState: GestureState? by mutableStateOf(initialGestureState)
+  override var zoomSpec by mutableStateOf(ZoomSpec())
 
-  internal var zoomSpec by mutableStateOf(ZoomSpec())
+  internal var gestureState: GestureState? by mutableStateOf(initialGestureState)
   internal var hardwareShortcutsSpec by mutableStateOf(HardwareShortcutsSpec())
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
 
@@ -385,6 +385,8 @@ internal class RealZoomableState internal constructor(
 
   override suspend fun resetZoom(withAnimation: Boolean) {
     if (withAnimation) {
+      // todo: zoomTo() could be used here.
+
       animateToggleOfZoom(
         shouldZoomIn = false,
         centroid = Offset.Zero,
@@ -408,40 +410,34 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  internal suspend fun handleDoubleTapZoomTo(centroid: Offset) {
-    val baseZoomFactor = baseZoomFactor ?: return
+  override suspend fun zoomBy(zoomFactor: Float, centroid: Offset, withAnimation: Boolean) {
     val gestureState = gestureState ?: return
-    val currentZoom = ContentZoomFactor(baseZoomFactor, gestureState.userZoomFactor)
-
-    animateToggleOfZoom(
-      shouldZoomIn = !currentZoom.isAtMaxZoom(zoomSpec.range),
+    zoomTo(
+      zoomFactor = gestureState.userZoomFactor.value * zoomFactor,
       centroid = centroid,
-      mutatePriority = MutatePriority.UserInput,
+      withAnimation = withAnimation,
     )
   }
 
-  override suspend fun zoomBy(zoomFactor: Float, centroid: Offset, withAnimation: Boolean) {
-    if (withAnimation) {
-      val startTransformation = gestureState ?: return
-      val baseZoomFactor = baseZoomFactor ?: return
-      val targetZoom = ContentZoomFactor(
-        baseZoom = baseZoomFactor,
-        userZoom = startTransformation.userZoomFactor * zoomFactor
-      )
+  override suspend fun zoomTo(zoomFactor: Float, centroid: Offset, withAnimation: Boolean) {
+    val baseZoomFactor = baseZoomFactor ?: return
+    val gestureState = gestureState ?: return
 
+    val targetZoom = ContentZoomFactor.forFinalZoom(
+      baseZoom = baseZoomFactor,
+      finalZoom = zoomFactor,
+    )
+    if (withAnimation) {
       animateZoomTo(
         targetZoom = targetZoom,
         centroid = centroid.takeOrElse { contentLayoutSize.center },
-        mutatePriority = MutatePriority.Default,
+        mutatePriority = MutatePriority.UserInput,
       )
-
     } else {
-      transformableState.transform(MutatePriority.Default) {
+      transformableState.transform(MutatePriority.UserInput) {
         transformBy(
-          zoomChange = zoomFactor,
-          centroid = centroid.takeOrElse {
-            contentLayoutSize.center
-          },
+          zoomChange = (targetZoom.userZoom / gestureState.userZoomFactor).value,
+          centroid = centroid.takeOrElse { contentLayoutSize.center },
         )
       }
     }
@@ -456,7 +452,7 @@ internal class RealZoomableState internal constructor(
 
   override suspend fun panBy(offset: Offset, withAnimation: Boolean) {
     if (withAnimation) {
-      transformableState.transform(MutatePriority.Default) {
+      transformableState.transform(MutatePriority.UserInput) {
         var previous = Offset.Zero
         AnimationState(
           typeConverter = Offset.VectorConverter,
@@ -470,7 +466,7 @@ internal class RealZoomableState internal constructor(
         }
       }
     } else {
-      transformableState.transform(MutatePriority.Default) {
+      transformableState.transform(MutatePriority.UserInput) {
         transformBy(panChange = offset)
       }
     }
@@ -637,7 +633,7 @@ internal class RealZoomableState internal constructor(
 /** An intermediate, non-normalized model used for generating [ZoomableContentTransformation]. */
 internal data class GestureState(
   val offset: Offset,
-  val userZoomFactor: UserZoomFactor,
+  val userZoomFactor: UserZoomFactor, // todo: rename to userZoom for consistency with ContentZoomFactor
   val lastCentroid: Offset,
   val contentSize: Size,
 )
@@ -704,6 +700,13 @@ internal data class ContentZoomFactor(
       return ContentZoomFactor(
         baseZoom = baseZoom,
         userZoom = UserZoomFactor(range.maxZoomFactor(baseZoom) / baseZoom.maxScale),
+      )
+    }
+
+    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: Float): ContentZoomFactor {
+      return ContentZoomFactor(
+        baseZoom = baseZoom,
+        userZoom = UserZoomFactor(finalZoom / baseZoom.maxScale),
       )
     }
   }

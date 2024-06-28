@@ -8,8 +8,8 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 
 - [Sub-sampling](sub-sampling.md) of bitmaps
 - Pinch to zoom and flings
-- Double tap to zoom
-- Single finger zoom (double tap and hold)
+- Double click to zoom
+- Single finger zoom (double click and hold)
 - Haptic feedback for over/under zoom
 - Compatibility with nested scrolling
 - Click listeners
@@ -175,7 +175,7 @@ Unlike `Image()`, `ZoomableImage` can pan images even when they're cropped. This
     Placeholders are visually incompatible with `ContentScale.Inside`.
 
 ### Click listeners
-For detecting double taps, `ZoomableImage` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
+For detecting double clicks, `ZoomableImage` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
 
 === "Coil"
     ```kotlin

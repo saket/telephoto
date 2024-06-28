@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.zoomable.internal.DefaultHardwareShortcutDetector
 
+/** Detects zoom and pan events made using keyboard and mouse shortcuts. */
 @Immutable
 interface HardwareShortcutDetector {
   companion object {

@@ -112,20 +112,25 @@ sealed interface ZoomableState {
   @get:FloatRange(from = 0.0, to = 1.0)
   val zoomFraction: Float?
 
+  /** The zoom spec passed to [rememberZoomableState]. */
+  val zoomSpec: ZoomSpec
+
   /** See [ZoomableContentLocation]. */
   suspend fun setContentLocation(location: ZoomableContentLocation)
 
-  /** Reset content to its minimum zoom and zero offset. */
+  /**
+   * Reset content to its minimum zoom and zero offset and suspend until it's finished.
+   */
   suspend fun resetZoom(withAnimation: Boolean = true)
 
   /**
-   * Zoom around [centroid] by a ratio of [zoomFactor] over the current size and suspend until
-   * its finished.
+   * Zooms in or out around [centroid] by a ratio of [zoomFactor] relative to the current size,
+   * and suspends until it's finished.
    *
-   * @param zoomFactor Ratio over the current size by which to zoom. For example, if [zoomFactor]
-   * is `3f`, zoom will be increased 3 fold from the current value.
+   * @param zoomFactor Ratio by which to zoom relative to the current size. For example, a [zoomFactor]
+   * of `3f` will triple the *current* zoom level.
    *
-   * @param centroid the focal point for this zoom within the content's size. Defaults to the center
+   * @param centroid Focal point for this zoom within the content's size. Defaults to the center
    * of the content.
    */
   suspend fun zoomBy(
@@ -135,7 +140,23 @@ sealed interface ZoomableState {
   )
 
   /**
-   * Animate pan by [offset] Offset in pixels and suspend until its finished.
+   * Zooms in or out around [centroid] to achieve a final zoom level specified by [zoomFactor],
+   * and suspends until it's finished.
+   *
+   * @param zoomFactor Target zoom level for the content. For example, a [zoomFactor] of `3f` will
+   * set the content's zoom level to three times its *original* size.
+   *
+   * @param centroid Focal point for this zoom within the content's size. Defaults to the center
+   * of the content.
+   */
+  suspend fun zoomTo(
+    zoomFactor: Float,
+    centroid: Offset = Offset.Unspecified,
+    withAnimation: Boolean = true,
+  )
+
+  /**
+   * Animate pan by [offset] Offset in pixels and suspend until it's finished.
    */
   suspend fun panBy(
     offset: Offset,

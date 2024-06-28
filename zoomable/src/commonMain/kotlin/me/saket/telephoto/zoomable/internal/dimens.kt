@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ScaleFactor
-import androidx.compose.ui.layout.div
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.zoomable.BaseZoomFactor

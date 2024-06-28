@@ -28,8 +28,8 @@ import me.saket.telephoto.zoomable.internal.stopTransformation
  * composables so that your users can use the same familiar gestures throughout your app. It offers,
  *
  * - Pinch to zoom and flings
- * - Double tap to zoom
- * - Single finger zoom (double tap and hold)
+ * - Double click to zoom
+ * - Single finger zoom (double click and hold)
  * - Haptic feedback for over/under zoom
  * - Compatibility with nested scrolling
  * - Click listeners
@@ -49,6 +49,7 @@ fun Modifier.zoomable(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickListener = DoubleClickListener.ToggleBetweenMinAndMax,
 ): Modifier {
   check(state is RealZoomableState)
   return this
@@ -62,6 +63,7 @@ fun Modifier.zoomable(
         enabled = enabled,
         onClick = onClick,
         onLongClick = onLongClick,
+        onDoubleClick = onDoubleClick,
       )
     )
     .thenIf(state.hardwareShortcutsSpec.enabled) {
@@ -79,6 +81,7 @@ private data class ZoomableElement(
   private val enabled: Boolean,
   private val onClick: ((Offset) -> Unit)?,
   private val onLongClick: ((Offset) -> Unit)?,
+  private val onDoubleClick: DoubleClickListener,
 ) : ModifierNodeElement<ZoomableNode>() {
 
   override fun create(): ZoomableNode = ZoomableNode(
@@ -86,6 +89,7 @@ private data class ZoomableElement(
     enabled = enabled,
     onClick = onClick,
     onLongClick = onLongClick,
+    suspendableOnDoubleClick = onDoubleClick,
   )
 
   override fun update(node: ZoomableNode) {
@@ -94,6 +98,7 @@ private data class ZoomableElement(
       enabled = enabled,
       onClick = onClick,
       onLongClick = onLongClick,
+      onDoubleClick = onDoubleClick,
     )
   }
 
@@ -109,6 +114,7 @@ private data class ZoomableElement(
 @OptIn(ExperimentalFoundationApi::class)
 private class ZoomableNode(
   private var state: RealZoomableState,
+  private var suspendableOnDoubleClick: DoubleClickListener,
   enabled: Boolean,
   onClick: ((Offset) -> Unit)?,
   onLongClick: ((Offset) -> Unit)?,
@@ -121,9 +127,9 @@ private class ZoomableNode(
       state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
     }
   }
-  val onDoubleTap: (centroid: Offset) -> Unit = { centroid ->
+  val onDoubleClick: (centroid: Offset) -> Unit = { centroid ->
     coroutineScope.launch {
-      state.handleDoubleTapZoomTo(centroid = centroid)
+      suspendableOnDoubleClick.onDoubleClick(state, centroid)
     }
   }
   val onQuickZoomStopped = {
@@ -151,7 +157,7 @@ private class ZoomableNode(
     onPress = onPress,
     onTap = onClick,
     onLongPress = onLongClick,
-    onDoubleTap = onDoubleTap,
+    onDoubleTap = onDoubleClick,
     onQuickZoomStopped = onQuickZoomStopped,
   ).create()
 
@@ -174,12 +180,14 @@ private class ZoomableNode(
     enabled: Boolean,
     onClick: ((Offset) -> Unit)?,
     onLongClick: ((Offset) -> Unit)?,
+    onDoubleClick: DoubleClickListener,
   ) {
     if (this.state != state) {
       // Note to self: when the state is updated, the delegated
       // nodes are implicitly reset in the following update() calls.
       this.state = state
     }
+    this.suspendableOnDoubleClick = onDoubleClick
     transformableNode.update(
       state = state.transformableState,
       canPan = state::canConsumePanChange,
@@ -191,7 +199,7 @@ private class ZoomableNode(
       onPress = onPress,
       onTap = onClick,
       onLongPress = onLongClick,
-      onDoubleTap = onDoubleTap,
+      onDoubleTap = this.onDoubleClick,
       onQuickZoomStopped = onQuickZoomStopped,
       transformableState = state.transformableState,
       gesturesEnabled = enabled,
