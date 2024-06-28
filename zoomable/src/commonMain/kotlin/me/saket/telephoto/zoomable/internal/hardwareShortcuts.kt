@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable.internal
 
+import androidx.compose.animation.core.SnapSpec
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.KeyEvent
@@ -51,7 +52,7 @@ internal class HardwareShortcutsNode(
       state.zoomBy(
         zoomFactor = factor,
         centroid = centroid,
-        withAnimation = false,
+        animationSpec = SnapSpec(),
       )
     }
   }
@@ -61,7 +62,7 @@ internal class HardwareShortcutsNode(
         offset = with(requireDensity()) {
           Offset(x = delta.x.toPx(), y = delta.y.toPx())
         },
-        withAnimation = false,
+        animationSpec = SnapSpec(),
       )
     }
   }

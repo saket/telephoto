@@ -1,6 +1,12 @@
+@file:Suppress("DeprecatedCallableAddReplaceWith")
+
 package me.saket.telephoto.zoomable
 
 import androidx.annotation.FloatRange
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.SnapSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -121,7 +127,21 @@ sealed interface ZoomableState {
   /**
    * Reset content to its minimum zoom and zero offset and suspend until it's finished.
    */
-  suspend fun resetZoom(withAnimation: Boolean = true)
+  @Deprecated(message = "Use resetZoom(AnimationSpec) instead")
+  suspend fun resetZoom(withAnimation: Boolean) {
+    if (withAnimation) {
+      resetZoom()
+    } else {
+      resetZoom(animationSpec = SnapSpec())
+    }
+  }
+
+  /**
+   * Reset content to its minimum zoom and zero offset and suspend until it's finished.
+   *
+   * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
+   */
+  suspend fun resetZoom(animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec)
 
   /**
    * Zooms in or out around [centroid] by a ratio of [zoomFactor] relative to the current size,
@@ -132,11 +152,13 @@ sealed interface ZoomableState {
    *
    * @param centroid Focal point for this zoom within the content's size. Defaults to the center
    * of the content.
+   *
+   * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
   suspend fun zoomBy(
     zoomFactor: Float,
     centroid: Offset = Offset.Unspecified,
-    withAnimation: Boolean = true,
+    animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
   )
 
   /**
@@ -148,20 +170,29 @@ sealed interface ZoomableState {
    *
    * @param centroid Focal point for this zoom within the content's size. Defaults to the center
    * of the content.
+   *
+   * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
   suspend fun zoomTo(
     zoomFactor: Float,
     centroid: Offset = Offset.Unspecified,
-    withAnimation: Boolean = true,
+    animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
   )
 
   /**
    * Animate pan by [offset] Offset in pixels and suspend until it's finished.
+   *
+   * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
   suspend fun panBy(
     offset: Offset,
-    withAnimation: Boolean = true,
+    animationSpec: AnimationSpec<Offset> = DefaultPanAnimationSpec,
   )
+
+  companion object {
+    val DefaultZoomAnimationSpec get() = spring<Float>(stiffness = Spring.StiffnessMediumLow)
+    val DefaultPanAnimationSpec get() = spring<Offset>(stiffness = Spring.StiffnessMediumLow)
+  }
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

@@ -28,7 +28,6 @@ fun interface DoubleClickListener {
           else -> state.contentTransformation.scaleMetadata.initialScale.maxScale
         },
         centroid = centroid,
-        withAnimation = true,
       )
     }
   }
