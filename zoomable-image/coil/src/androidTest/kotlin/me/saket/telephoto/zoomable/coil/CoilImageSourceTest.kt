@@ -462,7 +462,7 @@ class CoilImageSourceTest {
     }
 
     rule.waitUntil(5.seconds) { imageState.isImageDisplayed }
-    assertThat(imageState.subSamplingState).isNull()
+    assertThat(imageState.subSamplingState).isNotNull()
 
     // Bug description: the image loads from the network on the first load and the memory cache
     // on the second load. The second load crashes the app because telephoto incorrectly tries
@@ -471,7 +471,7 @@ class CoilImageSourceTest {
     stateRestorer.emulateSavedInstanceStateRestore()
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
-      assertThat(imageState.subSamplingState).isNull()
+      assertThat(imageState.subSamplingState).isNotNull()
     }
   }
 

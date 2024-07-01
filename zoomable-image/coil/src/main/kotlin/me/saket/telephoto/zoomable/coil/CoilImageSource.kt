@@ -59,7 +59,12 @@ internal class CoilImageSource(
           ?: ImageRequest.Builder(context)
             .data(model)
             .build(),
-        imageLoader = imageLoader,
+        imageLoader = imageLoader
+          .newBuilder()
+          // Ignore "no-cache" http headers if they're present and always cache images to disk. Otherwise,
+          // telephoto will be unable to sub-sample large images directly from coil's memory cache.
+          .respectCacheHeaders(false)
+          .build(),
         sizeResolver = { canvasSize.first().toCoilSize() }
       )
     }
