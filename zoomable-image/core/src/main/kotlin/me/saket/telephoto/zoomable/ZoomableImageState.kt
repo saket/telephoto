@@ -26,9 +26,15 @@ class ZoomableImageState internal constructor(
    * Whether the full quality image is loaded. This be false for
    * placeholders/thumbnails, where [isPlaceholderDisplayed] can be used instead.
    */
-  var isImageDisplayed by mutableStateOf(false)
+  var isImageDisplayed: Boolean by mutableStateOf(false)
+    internal set
 
-  var isPlaceholderDisplayed by mutableStateOf(false)
+  var isPlaceholderDisplayed: Boolean by mutableStateOf(false)
+    internal set
 
+  /**
+   * Available when the image was lazy-loaded using
+   * [SubSamplingImage()][me.saket.telephoto.subsamplingimage.SubSamplingImage].
+   */
   internal var subSamplingState: SubSamplingImageState? by mutableStateOf(null)
 }
