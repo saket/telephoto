@@ -2,6 +2,7 @@ package me.saket.telephoto.sample.viewer
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -141,12 +142,12 @@ private fun MediaPage(
 
   if (flickState.gestureState is FlickToDismissState.GestureState.Dragging) {
     LaunchedEffect(Unit) {
-      zoomableState.resetZoom(withAnimation = true)
+      zoomableState.resetZoom()
     }
   }
   if (!isActivePage) {
     LaunchedEffect(Unit) {
-      zoomableState.resetZoom(withAnimation = false)
+      zoomableState.resetZoom(animationSpec = SnapSpec())
     }
   }
 }

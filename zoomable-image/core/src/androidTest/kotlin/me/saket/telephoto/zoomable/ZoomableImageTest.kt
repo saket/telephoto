@@ -5,6 +5,7 @@ package me.saket.telephoto.zoomable
 import android.graphics.BitmapFactory
 import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.DraggableState
@@ -606,7 +607,7 @@ class ZoomableImageTest {
       }
       LaunchedEffect(resetTriggers) {
         resetTriggers.receive()
-        zoomableState.resetZoom(withAnimation = false)
+        zoomableState.resetZoom(animationSpec = SnapSpec())
       }
     }
 
