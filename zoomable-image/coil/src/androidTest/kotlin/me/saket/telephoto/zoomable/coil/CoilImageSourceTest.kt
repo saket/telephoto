@@ -1,3 +1,5 @@
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+
 package me.saket.telephoto.zoomable.coil
 
 import android.content.Context
@@ -26,6 +28,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotInstanceOf
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -126,6 +129,9 @@ class CoilImageSourceTest {
   @After
   fun tearDown() {
     LeakAssertions.assertNoLeaks()
+
+    Coil.imageLoader(rule.activity).diskCache?.clear()
+    Coil.reset()
   }
 
   @Test fun images_should_always_be_written_to_disk(
@@ -284,10 +290,10 @@ class CoilImageSourceTest {
   @Test fun correctly_resolve_local_images(
     @TestParameter requestData: LocalFileRequestDataParam
   ) = runTest {
-    var isImageDisplayed = false
+    lateinit var imageState: ZoomableImageState
     rule.setContent {
       ZoomableAsyncImage(
-        state = rememberZoomableImageState().also { isImageDisplayed = it.isImageDisplayed },
+        state = rememberZoomableImageState().also { imageState = it },
         modifier = Modifier.fillMaxSize(),
         model = ImageRequest.Builder(LocalContext.current)
           .data(requestData.data(LocalContext.current))
@@ -297,10 +303,12 @@ class CoilImageSourceTest {
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
+
+    assertThat(imageState.subSamplingState).isNotNull()
   }
 
   @Test fun correctly_resolve_svgs(

@@ -22,6 +22,7 @@ import coil.decode.DataSource
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.ImageResult
+import coil.request.Options
 import coil.request.SuccessResult
 import coil.size.Dimension
 import coil.size.Precision
@@ -43,6 +44,7 @@ import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceFactory
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import me.saket.telephoto.zoomable.internal.copy
 import okio.Path.Companion.toPath
+import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -63,7 +65,7 @@ internal class CoilImageSource(
             .data(model)
             .build(),
         imageLoader = imageLoader,
-        sizeResolver = { canvasSize.first().toCoilSize() }
+        sizeResolver = { canvasSize.first().toCoilSize() },
       )
     }
     return resolver.resolved
@@ -182,16 +184,19 @@ internal class Resolver(
               else -> error("Coil returned an image that is missing from its disk cache")
             }
           }
-          ImageSourceFactory { SubSamplingImageSource.file(snapshot.data, preview = it, onClose = snapshot::close) }
+          ImageSourceFactory {
+            SubSamplingImageSource.file(snapshot.data, preview = it, onClose = snapshot::close)
+          }
         }
-
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
+          // Possible reasons for reaching this code path:
+          // - Locally stored images such as assets, resource, etc.
+          // - Remote image that wasn't saved to disk because of a "no-cache" HTTP header.
           val requestData = result.request.data
-          requestData.asUriOrNull()?.toSourceFactory()
-            ?: requestData.asResourceIdOrNull()?.toSourceFactory()
+          requestData.asResourceIdOrNull()?.toSourceFactory()
+            ?: requestData.mapRequestDataToUriOrNull()?.toSourceFactory()
             ?: return null
         }
-
         else -> return null
       }
     } else {
@@ -219,11 +224,12 @@ internal class Resolver(
     }
   }
 
-  private fun Any.asUriOrNull(): Uri? {
-    when (this) {
-      is String -> return Uri.parse(this)
-      is Uri -> return this
-      else -> return null
+  private fun Any.mapRequestDataToUriOrNull(): Uri? {
+    val dummyOptions = Options(request.context) // Good enough for mappers that only use the context.
+    return when (val mapped = imageLoader.components.map(this, dummyOptions)) {
+      is Uri -> mapped
+      is File -> Uri.parse(mapped.path)
+      else -> null
     }
   }
 
