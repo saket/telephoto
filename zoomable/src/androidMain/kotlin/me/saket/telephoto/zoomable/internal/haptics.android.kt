@@ -11,10 +11,14 @@ internal actual fun CompositionLocalConsumerModifierNode.hapticFeedbackPerformer
     currentValueOf(LocalView).performHapticFeedback(
       if (Build.VERSION.SDK_INT >= 30) {
         HapticFeedbackConstants.GESTURE_END
-      } else {
+      } else if (Build.VERSION.SDK_INT >= 23) {
         // PhoneWindowManager#getVibrationEffect() maps
         // GESTURE_END and CONTEXT_CLICK to the same effect.
         HapticFeedbackConstants.CONTEXT_CLICK
+      } else {
+        // PhoneWindowManager#getVibrationEffect() maps
+        // GESTURE_END and CLOCK_TICK to the same effect.
+        HapticFeedbackConstants.CLOCK_TICK
       }
     )
   }
