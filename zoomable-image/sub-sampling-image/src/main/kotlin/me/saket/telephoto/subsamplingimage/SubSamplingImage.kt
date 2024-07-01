@@ -1,5 +1,6 @@
 package me.saket.telephoto.subsamplingimage
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -81,6 +82,25 @@ fun SubSamplingImage(
       .onSizeChanged { state.canvasSize = it }
       .drawBehind(onDraw)
       .wrapContentSizeIfNeeded(state.imageSize)
+  )
+}
+
+@SuppressLint("ComposeParameterOrder")
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)  // For binary compatibility.
+@Composable
+fun SubSamplingImage(
+  state: SubSamplingImageState,
+  modifier: Modifier = Modifier,
+  contentDescription: String?,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+) {
+  SubSamplingImage(
+    state,
+    contentDescription,
+    modifier,
+    alpha,
+    colorFilter
   )
 }
 
