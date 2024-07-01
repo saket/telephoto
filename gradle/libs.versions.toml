@@ -42,6 +42,7 @@ assertk = "0.28.0"
 circuit = "0.13.0-beta01"
 espresso-core = "3.5.1"
 uiautomator = "2.3.0"
+robolectric = "4.12.2"
 benchmark-macro-junit4 = "1.2.3"
 metalava = "0.3.5"  # https://github.com/tylerbwong/metalava-gradle/releases
 poko = "0.15.2" # https://github.com/drewhamilton/Poko/blob/main/CHANGELOG.md
@@ -90,6 +91,7 @@ espresso-core = { group = "androidx.test.espresso", name = "espresso-core", vers
 uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark-macro-junit4" }
 androidx-compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "androidx-compose-compiler" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 # TODO remove compose libs in favor of declaring via jetbrains compose plugin
 compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "androidx-compose-runtime" }

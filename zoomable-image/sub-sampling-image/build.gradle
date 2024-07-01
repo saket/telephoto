@@ -30,6 +30,7 @@ dependencies {
   testImplementation(libs.testParamInjector)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.turbine)
+  testImplementation(libs.robolectric)
 
   androidTestImplementation(projects.testUtil)
 }
