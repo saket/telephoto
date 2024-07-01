@@ -2,7 +2,6 @@
 
 package me.saket.telephoto.zoomable.coil
 
-import android.content.ContentResolver
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -12,7 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
@@ -35,15 +33,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
-import me.saket.telephoto.subsamplingimage.asAssetPathOrNull
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceCreationResult.EligibleForSubSampling
 import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceCreationResult.ImageDeletedOnlyFromDiskCache
-import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceFactory
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import me.saket.telephoto.zoomable.internal.copy
-import okio.Path.Companion.toPath
 import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -65,7 +60,7 @@ internal class CoilImageSource(
             .data(model)
             .build(),
         imageLoader = imageLoader,
-        sizeResolver = { canvasSize.first().toCoilSize() },
+        sizeResolver = { canvasSize.first().toCoilSize() }
       )
     }
     return resolver.resolved
@@ -169,7 +164,8 @@ internal class Resolver(
   @OptIn(ExperimentalCoilApi::class)
   private suspend fun ImageResult.toSubSamplingImageSource(): ImageSourceCreationResult? {
     val result = this
-    val sourceFactory = if (result is SuccessResult && result.drawable is BitmapDrawable) {
+    val source = if (result is SuccessResult && result.drawable is BitmapDrawable) {
+      val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
       when {
         // Prefer reading of images directly from files whenever possible because
         // it is significantly faster than reading from their input streams.
@@ -184,32 +180,28 @@ internal class Resolver(
               else -> error("Coil returned an image that is missing from its disk cache")
             }
           }
-          ImageSourceFactory {
-            SubSamplingImageSource.file(snapshot.data, preview = it, onClose = snapshot::close)
-          }
+          SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)
         }
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
           // Possible reasons for reaching this code path:
           // - Locally stored images such as assets, resource, etc.
           // - Remote image that wasn't saved to disk because of a "no-cache" HTTP header.
-          val requestData = result.request.data
-          requestData.asResourceIdOrNull()?.toSourceFactory()
-            ?: requestData.mapRequestDataToUriOrNull()?.toSourceFactory()
-            ?: return null
+          result.request.mapRequestDataToUriOrNull()?.let { uri ->
+            SubSamplingImageSource.contentUriOrNull(uri, preview)
+          }
         }
-        else -> return null
+
+        else -> {
+          // Image wasn't saved to the disk. Telephoto won't be able to load this image in its full
+          // quality. It'll attempt to display the bitmap directly as a fallback, but that can
+          // potentially cause an OutOfMemoryError when the bitmap is drawn.
+          return null
+        }
       }
     } else {
       return null
     }
-
-    val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
-    val source = sourceFactory.create(preview)
     return if (source?.canBeSubSampled() == true) EligibleForSubSampling(source) else null
-  }
-
-  fun interface ImageSourceFactory {
-    suspend fun create(preview: ImageBitmap?): SubSamplingImageSource?
   }
 
   private fun ImageResult.crossfadeDuration(): Duration {
@@ -224,52 +216,14 @@ internal class Resolver(
     }
   }
 
-  private fun Any.mapRequestDataToUriOrNull(): Uri? {
+  private fun ImageRequest.mapRequestDataToUriOrNull(): Uri? {
     val dummyOptions = Options(request.context) // Good enough for mappers that only use the context.
-    return when (val mapped = imageLoader.components.map(this, dummyOptions)) {
+    return when (val mapped = imageLoader.components.map(data, dummyOptions)) {
       is Uri -> mapped
       is File -> Uri.parse(mapped.path)
       else -> null
     }
   }
-
-  private fun Uri.toSourceFactory(): ImageSourceFactory {
-    // Assets must be evaluated before files because they share the same scheme.
-    this.asAssetPathOrNull()?.let { assetPath ->
-      return ImageSourceFactory { SubSamplingImageSource.asset(assetPath.path, preview = it) }
-    }
-
-    val filePath = when {
-      // File URIs without a scheme are invalid but have had historic support
-      // from many image loaders, including Coil. Telephoto is forced to support
-      // them because it promises to be a drop-in replacement for AsyncImage().
-      // https://github.com/saket/telephoto/issues/19
-      scheme == null && path?.startsWith('/') == true && pathSegments.isNotEmpty() -> toString().toPath()
-      scheme == ContentResolver.SCHEME_FILE -> path?.toPath()
-      else -> null
-    }
-    if (filePath != null) {
-      return ImageSourceFactory { SubSamplingImageSource.file(filePath, preview = it) }
-    }
-
-    return ImageSourceFactory { SubSamplingImageSource.contentUri(this, preview = it) }
-  }
-
-  @JvmInline
-  value class ResourceId(val id: Int)
-
-  private fun Any.asResourceIdOrNull(): ResourceId? {
-    if (this is Int) {
-      runCatching {
-        request.context.resources.getResourceEntryName(this)
-        return ResourceId(this)
-      }
-    }
-    return null
-  }
-
-  private fun ResourceId.toSourceFactory() =
-    ImageSourceFactory { SubSamplingImageSource.resource(id, preview = it) }
 
   private fun Drawable.asPainter(): Painter {
     return DrawablePainter(mutate())

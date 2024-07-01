@@ -431,7 +431,7 @@ class CoilImageSourceTest {
     }
   }
 
-  @Test fun image_url_that_cannot_be_cached() = runTest {
+  @Test fun image_url_with_nocache_http_header() = runTest {
     serverRule.server.dispatcher = object : Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse {
         return assetAsResponse("full_image.png")
@@ -465,8 +465,9 @@ class CoilImageSourceTest {
     assertThat(imageState.subSamplingState).isNull()
 
     // Bug description: the image loads from the network on the first load and the memory cache
-    // on the second load. The second load was crashing the app because telephoto was incorrectly
-    // trying to load it as a content URI.
+    // on the second load. The second load crashes the app because telephoto incorrectly tries
+    // to load it as a content URI.
+    // Reproduction steps taken from https://github.com/saket/telephoto/issues/50.
     stateRestorer.emulateSavedInstanceStateRestore()
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
