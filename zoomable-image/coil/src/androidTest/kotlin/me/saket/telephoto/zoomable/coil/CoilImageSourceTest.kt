@@ -18,6 +18,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import app.cash.molecule.RecompositionMode
@@ -64,6 +65,7 @@ import me.saket.telephoto.zoomable.coil.CoilImageSourceTest.SvgDecodingState.Svg
 import me.saket.telephoto.zoomable.coil.CoilImageSourceTest.SvgDecodingState.SvgDecodingEnabled
 import me.saket.telephoto.zoomable.image.coil.test.R
 import me.saket.telephoto.zoomable.rememberZoomableImageState
+import okhttp3.HttpUrl
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -426,6 +428,49 @@ class CoilImageSourceTest {
     resolve { imageUrl }.test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
+    }
+  }
+
+  @Test fun image_url_that_cannot_be_cached() = runTest {
+    serverRule.server.dispatcher = object : Dispatcher() {
+      override fun dispatch(request: RecordedRequest): MockResponse {
+        return assetAsResponse("full_image.png")
+          .addHeader("Cache-Control", "private, no-cache, no-store, must-revalidate")
+      }
+    }
+
+    lateinit var imageState: ZoomableImageState
+    val fullImageUrl: HttpUrl = withContext(Dispatchers.IO) {
+      serverRule.server.url("full_image.png")
+    }
+
+    val stateRestorer = StateRestorationTester(rule)
+    stateRestorer.setContent {
+      ZoomableAsyncImage(
+        state = rememberZoomableImageState().also { imageState = it },
+        modifier = Modifier
+          .fillMaxSize()
+          .wrapContentSize()
+          .size(300.dp),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(fullImageUrl)
+          .allowHardware(false) // Unsupported by Screenshot.capture()
+          .error(R.drawable.error_image)
+          .build(),
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayed }
+    assertThat(imageState.subSamplingState).isNull()
+
+    // Bug description: the image loads from the network on the first load and the memory cache
+    // on the second load. The second load was crashing the app because telephoto was incorrectly
+    // trying to load it as a content URI.
+    stateRestorer.emulateSavedInstanceStateRestore()
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
+      assertThat(imageState.subSamplingState).isNull()
     }
   }
 
