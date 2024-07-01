@@ -1,5 +1,5 @@
 [versions]
-minSdk = "23"
+minSdk = "21"
 compileSdk = "34"
 kotlin = "1.9.24"
 agp = "8.4.0"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
