@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable
 
 import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -212,12 +213,18 @@ class ZoomableTest {
 
       if (startZoom) {
         LaunchedEffect(Unit) {
-          state.zoomBy(1.3f, withAnimation = animate)
+          state.zoomBy(
+            zoomFactor = 1.3f,
+            animationSpec = if (animate) ZoomableState.DefaultZoomAnimationSpec else SnapSpec(),
+          )
         }
       }
       if (startPan) {
         LaunchedEffect(Unit) {
-          state.panBy(Offset(x = 100f, y = 150f), withAnimation = animate)
+          state.panBy(
+            offset = Offset(x = 100f, y = 150f),
+            animationSpec = if (animate) ZoomableState.DefaultPanAnimationSpec else SnapSpec(),
+          )
         }
       }
     }
