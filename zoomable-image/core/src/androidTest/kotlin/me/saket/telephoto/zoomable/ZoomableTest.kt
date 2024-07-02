@@ -1,3 +1,5 @@
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package me.saket.telephoto.zoomable
 
 import android.view.ViewConfiguration
@@ -27,10 +29,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
 import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
 import com.dropbox.dropshots.Dropshots
@@ -90,10 +94,11 @@ class ZoomableTest {
 
   @Test fun start_listening_to_gestures_even_if_content_is_not_ready_for_interaction() {
     var clickCount = 0
+    lateinit var zoomableState: ZoomableState
 
     rule.setContent {
-      val zoomableState = rememberZoomableState(
-        autoApplyTransformations = false,
+      zoomableState = rememberZoomableState(
+        autoApplyTransformations = false
       )
       LaunchedEffect(zoomableState) {
         zoomableState.setContentLocation(ZoomableContentLocation.Unspecified)
@@ -112,7 +117,16 @@ class ZoomableTest {
     rule.onNodeWithTag("content").performClick()
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
+      check(zoomableState.real().isReadyToInteract)
       assertThat(clickCount).isEqualTo(1)
+    }
+
+    // Regression test for https://github.com/saket/telephoto/issues/93
+    // Transformation gestures (for zooming and panning) made before the
+    // content was ready was causing a crash.
+    check(zoomableState.real().isReadyToInteract)
+    rule.onNodeWithTag("content").performTouchInput {
+      pinchToZoomBy(visibleSize.center / 2f)
     }
   }
 
@@ -247,4 +261,8 @@ class ZoomableTest {
       }
     }
   }
+}
+
+private fun ZoomableState.real(): RealZoomableState {
+  return this as RealZoomableState  // Safe because ZoomableState is a sealed type.
 }

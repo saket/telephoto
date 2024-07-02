@@ -159,12 +159,14 @@ private class ZoomableNode(
     }
   }
   val onTransformStopped: (velocity: Velocity) -> Unit = { velocity ->
-    coroutineScope.launch {
-      if (state.isZoomOutsideRange()) {
-        hapticFeedback.performHapticFeedback()
-        state.animateSettlingOfZoomOnGestureEnd()
-      } else {
-        state.fling(velocity = velocity, density = requireDensity())
+    if (state.isReadyToInteract) {
+      coroutineScope.launch {
+        if (state.isZoomOutsideRange()) {
+          hapticFeedback.performHapticFeedback()
+          state.animateSettlingOfZoomOnGestureEnd()
+        } else {
+          state.fling(velocity = velocity, density = requireDensity())
+        }
       }
     }
   }

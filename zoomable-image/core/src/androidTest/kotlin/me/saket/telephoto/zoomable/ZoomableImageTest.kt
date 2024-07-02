@@ -1463,7 +1463,7 @@ private fun TouchInjectionScope.swipe(
   }
 }
 
-private fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
+internal fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
   pinch(
     start0 = center,
     start1 = center,
