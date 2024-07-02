@@ -41,11 +41,12 @@ package me.saket.telephoto.zoomable {
   }
 
   @androidx.compose.runtime.Stable public final class ZoomableImageState {
+    method public boolean getDetectTooManyReloads();
     method public me.saket.telephoto.zoomable.ZoomableState getZoomableState();
     method public boolean isImageDisplayed();
     method public boolean isPlaceholderDisplayed();
-    method public void setImageDisplayed(boolean);
-    method public void setPlaceholderDisplayed(boolean);
+    method public void setDetectTooManyReloads(boolean);
+    property public final boolean detectTooManyReloads;
     property public final boolean isImageDisplayed;
     property public final boolean isPlaceholderDisplayed;
     property public final me.saket.telephoto.zoomable.ZoomableState zoomableState;
