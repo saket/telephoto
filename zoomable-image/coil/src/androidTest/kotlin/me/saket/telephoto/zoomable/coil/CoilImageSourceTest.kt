@@ -29,7 +29,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotInstanceOf
 import assertk.assertions.isNotNull
-import assertk.assertions.isNull
 import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -472,6 +471,38 @@ class CoilImageSourceTest {
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
       assertThat(imageState.subSamplingState).isNotNull()
+    }
+  }
+
+  @Test(expected = TooManyReloadsException::class)
+  fun throw_an_error_if_an_unstable_image_model_is_used() = runTest {
+    lateinit var imageState: ZoomableImageState
+    val fullImageUrl: HttpUrl = withContext(Dispatchers.IO) {
+      serverRule.server.url("full_image.png")
+    }
+
+    var loadCount = 0
+
+    rule.setContent {
+      ZoomableAsyncImage(
+        state = rememberZoomableImageState().also { imageState = it },
+        modifier = Modifier
+          .fillMaxSize()
+          .wrapContentSize()
+          .size(300.dp),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(fullImageUrl)
+          .listener(onStart = { loadCount++ }) // <- Causes instability by creating a new listener every composition.
+          .build(),
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayed }
+    assertThat(loadCount).isEqualTo(1)
+
+    rule.runOnIdle {
+      assertThat(loadCount).isEqualTo(1)
     }
   }
 
