@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
  * @param requestBuilderTransform Used for applying image options to this composable's [RequestBuilder].
  */
 @Composable
+@NonRestartableComposable
 fun ZoomableGlideImage(
   model: Any?,
   contentDescription: String?,

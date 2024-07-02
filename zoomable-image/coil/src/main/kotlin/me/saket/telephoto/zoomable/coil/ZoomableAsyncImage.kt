@@ -3,6 +3,7 @@
 package me.saket.telephoto.zoomable.coil
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,6 +46,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
  * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage] for full documentation of parameters.
  */
 @Composable
+@NonRestartableComposable
 fun ZoomableAsyncImage(
   model: Any?,
   contentDescription: String?,
