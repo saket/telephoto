@@ -131,10 +131,10 @@ private fun DetectTooManyReloadsEffect(imageModel: Any?) {
   }
   LaunchedEffect(Unit) {
     snapshotFlow { modelChangeCount }
-      .sample(2.seconds)
+      .sample(3.seconds)
       .scan(initial = 0) { acc, current -> current - acc }
       .collect { changesWithinDuration ->
-        if (changesWithinDuration > 30 && recompositionCount >= 25) {
+        if (changesWithinDuration > 40 && recompositionCount >= 35) {
           throw TooManyReloadsException()
         }
       }
