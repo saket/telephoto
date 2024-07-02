@@ -37,10 +37,4 @@ class ZoomableImageState internal constructor(
    * [SubSamplingImage()][me.saket.telephoto.subsamplingimage.SubSamplingImage].
    */
   internal var subSamplingState: SubSamplingImageState? by mutableStateOf(null)
-
-  /**
-   * A kill-switch for disabling
-   * [TooManyReloadsException][me.saket.telephoto.zoomable.coil.TooManyReloadsException] exceptions.
-   * */
-  var detectTooManyReloads: Boolean by mutableStateOf(true)
 }

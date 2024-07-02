@@ -4,14 +4,18 @@ package me.saket.telephoto.zoomable.coil
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -45,6 +49,7 @@ import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -474,16 +479,28 @@ class CoilImageSourceTest {
     }
   }
 
-  @Test(expected = TooManyReloadsException::class)
-  fun throw_an_error_if_an_unstable_image_model_is_used() = runTest {
+  @Test fun image_is_not_reloaded_on_every_composition_when_image_request_contains_unstable_params() = runTest {
     lateinit var imageState: ZoomableImageState
     val fullImageUrl: HttpUrl = withContext(Dispatchers.IO) {
       serverRule.server.url("full_image.png")
     }
 
     var loadCount = 0
+    var compositionCount = 0
 
     rule.setContent {
+      val counter by produceState(initialValue = 0) {
+        while(true) {
+          this.value++
+          delay(50.milliseconds)
+        }
+      }
+      BasicText(text = counter.toString())
+
+      SideEffect {
+        compositionCount++
+      }
+
       ZoomableAsyncImage(
         state = rememberZoomableImageState().also { imageState = it },
         modifier = Modifier
@@ -492,18 +509,17 @@ class CoilImageSourceTest {
           .size(300.dp),
         model = ImageRequest.Builder(LocalContext.current)
           .data(fullImageUrl)
-          .listener(onStart = { loadCount++ }) // <- Causes instability by creating a new listener every composition.
+          .listener(onStart = { loadCount++ }) // <- Causes instability by creating a new listener on every composition.
+          .placeholder(ColorDrawable(0xDEADBEEF.toInt())) // <- Creates a new drawable on every composition.
           .build(),
         contentDescription = null,
       )
     }
 
-    rule.waitUntil(5.seconds) { imageState.isImageDisplayed }
-    assertThat(loadCount).isEqualTo(1)
-
-    rule.runOnIdle {
-      assertThat(loadCount).isEqualTo(1)
+    rule.waitUntil {
+      imageState.isImageDisplayed && compositionCount >= 10
     }
+    assertThat(loadCount).isEqualTo(1)
   }
 
   context(TestScope)
