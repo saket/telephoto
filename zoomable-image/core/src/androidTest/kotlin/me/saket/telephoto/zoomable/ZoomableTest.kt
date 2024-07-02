@@ -117,14 +117,14 @@ class ZoomableTest {
     rule.onNodeWithTag("content").performClick()
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
-      check(zoomableState.real().isReadyToInteract)
+      check(!zoomableState.real().isReadyToInteract)
       assertThat(clickCount).isEqualTo(1)
     }
 
     // Regression test for https://github.com/saket/telephoto/issues/93
     // Transformation gestures (for zooming and panning) made before the
     // content was ready was causing a crash.
-    check(zoomableState.real().isReadyToInteract)
+    check(!zoomableState.real().isReadyToInteract)
     rule.onNodeWithTag("content").performTouchInput {
       pinchToZoomBy(visibleSize.center / 2f)
     }
