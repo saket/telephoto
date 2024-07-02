@@ -59,12 +59,7 @@ internal class CoilImageSource(
           ?: ImageRequest.Builder(context)
             .data(model)
             .build(),
-        imageLoader = imageLoader
-          .newBuilder()
-          // Ignore "no-cache" http headers if they're present and always cache images to disk. Otherwise,
-          // telephoto will be unable to sub-sample large images directly from coil's memory cache.
-          .respectCacheHeaders(false)
-          .build(),
+        imageLoader = imageLoader,
         sizeResolver = { canvasSize.first().toCoilSize() }
       )
     }
@@ -92,6 +87,13 @@ internal class Resolver(
   }
 
   private suspend fun work(skipMemoryCache: Boolean) {
+    val imageLoader = imageLoader
+      .newBuilder()
+      // Ignore "no-store" http headers if they're present and always cache images to disk. Otherwise,
+      // telephoto will be unable to sub-sample large images directly from coil's memory cache.
+      .respectCacheHeaders(false)
+      .build()
+
     val result = imageLoader.execute(
       request.newBuilder()
         .size(request.defined.sizeResolver ?: sizeResolver)
@@ -190,7 +192,7 @@ internal class Resolver(
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
           // Possible reasons for reaching this code path:
           // - Locally stored images such as assets, resource, etc.
-          // - Remote image that wasn't saved to disk because of a "no-cache" HTTP header.
+          // - Remote image that wasn't saved to disk because of a "no-store" HTTP header.
           result.request.mapRequestDataToUriOrNull()?.let { uri ->
             SubSamplingImageSource.contentUriOrNull(uri, preview)
           }
