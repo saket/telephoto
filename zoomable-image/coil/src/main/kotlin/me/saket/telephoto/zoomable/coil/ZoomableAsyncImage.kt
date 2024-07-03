@@ -17,6 +17,7 @@ import coil.ImageLoader
 import coil.compose.DefaultModelEqualityDelegate
 import coil.compose.EqualityDelegate
 import coil.imageLoader
+import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
@@ -61,6 +62,7 @@ fun ZoomableAsyncImage(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
 ) {
   ZoomableImage(
     image = ZoomableImageSource.coil(model, imageLoader),
@@ -74,7 +76,44 @@ fun ZoomableAsyncImage(
     gesturesEnabled = gesturesEnabled,
     onClick = onClick,
     onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
+  )
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+@NonRestartableComposable
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+) {
+  ZoomableAsyncImage(
+    model = model,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    imageLoader = imageLoader,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    gesturesEnabled = gesturesEnabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
   )
 }
 

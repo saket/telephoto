@@ -67,6 +67,7 @@ fun ZoomableImage(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
 ) {
   state.zoomableState.also {
     it.contentAlignment = alignment
@@ -143,6 +144,7 @@ fun ZoomableImage(
             ),
             onClick = onClick,
             onLongClick = onLongClick,
+            onDoubleClick = onDoubleClick,
             clipToBounds = clipToBounds,
           ),
         painter = painter,
@@ -159,6 +161,7 @@ fun ZoomableImage(
       enabled = gesturesEnabled && !state.isPlaceholderDisplayed,
       onClick = onClick,
       onLongClick = onLongClick,
+      onDoubleClick = onDoubleClick,
       clipToBounds = clipToBounds,
     )
     when (val delegate = resolved.delegate) {
@@ -206,6 +209,39 @@ fun ZoomableImage(
       }
     }
   }
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableImage(
+  image: ZoomableImageSource,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+) {
+  ZoomableImage(
+    image = image,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    gesturesEnabled = gesturesEnabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+  )
 }
 
 private fun Modifier.onMeasure(action: (Size) -> Unit): Modifier {
