@@ -2,6 +2,10 @@ package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusEventModifierNode
+import androidx.compose.ui.focus.FocusRequesterModifierNode
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.requestFocus
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -19,9 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent
 import me.saket.telephoto.zoomable.HardwareShortcutsSpec
 import me.saket.telephoto.zoomable.ZoomableState
-import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent
 
 /** Responds to keyboard and mouse events to zoom and pan. */
 internal data class HardwareShortcutsElement(
@@ -34,15 +38,29 @@ internal data class HardwareShortcutsElement(
   }
 
   override fun update(node: HardwareShortcutsNode) {
+    val foo = node.state != state
     node.state = state
     node.spec = spec
+
+    if (foo && node.isFocused) {
+      node.requestFocus()
+    }
   }
 }
 
 internal class HardwareShortcutsNode(
   var state: ZoomableState,
   var spec: HardwareShortcutsSpec,
-) : Modifier.Node(), KeyInputModifierNode, PointerInputModifierNode {
+) : Modifier.Node(), KeyInputModifierNode, PointerInputModifierNode, FocusEventModifierNode, FocusRequesterModifierNode {
+
+  var isFocused = false
+
+  override fun onFocusEvent(focusState: FocusState) {
+    if (spec.enabled) {
+      isFocused = focusState.isFocused
+      println("$this -> onFocusEvent($focusState)")
+    }
+  }
 
   val canPan: () -> Boolean = {
     state.contentTransformation.scaleMetadata.userZoom > 1f

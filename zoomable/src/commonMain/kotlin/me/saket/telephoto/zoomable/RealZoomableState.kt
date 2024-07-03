@@ -124,6 +124,7 @@ internal class RealZoomableState internal constructor(
     } else {
       null
     }
+      .also { println("zoom fraction = $it (this=$this)") }
   }
 
   override var zoomSpec by mutableStateOf(ZoomSpec())

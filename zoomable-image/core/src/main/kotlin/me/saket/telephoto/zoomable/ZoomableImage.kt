@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.RememberObserver
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -131,22 +132,7 @@ fun ZoomableImage(
         }
       }
       Image(
-        modifier = Modifier
-          .onSizeChanged { boundsProvider.layoutSize = it }
-          .zoomable(
-            // Handle gestures, but do ignore their transformations. This will prevent
-            // FlickToDismiss() (and other gesture containers) from accidentally dismissing
-            // this image when a quick-zoom gesture is made before the image is fully loaded.
-            state = rememberZoomableState(
-              zoomSpec = ZoomSpec(maxZoomFactor = 1f, preventOverOrUnderZoom = false),
-              hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
-              autoApplyTransformations = false,
-            ),
-            onClick = onClick,
-            onLongClick = onLongClick,
-            onDoubleClick = onDoubleClick,
-            clipToBounds = clipToBounds,
-          ),
+        modifier = Modifier.onSizeChanged { boundsProvider.layoutSize = it },
         painter = painter,
         contentDescription = contentDescription,
         alignment = alignment,
@@ -156,11 +142,27 @@ fun ZoomableImage(
       )
     }
 
+    // todo: add a test that updating of ZoomableState works.
     val zoomable = Modifier.zoomable(
-      state = state.zoomableState,
-      enabled = gesturesEnabled
-        && !state.isPlaceholderDisplayed
-        && resolved.delegate != null,
+      state = if (resolved.delegate != null) {
+        state.zoomableState
+          .also { LaunchedEffect(it) {
+            println("Using real zoomable state = $it")
+          } }
+      } else {
+        // Handle gestures, but do ignore their transformations. This will prevent
+        // FlickToDismiss() (and other gesture containers) from accidentally dismissing
+        // this image when a quick-zoom gesture is made before the image is fully loaded.
+        rememberZoomableState(
+          zoomSpec = ZoomSpec(maxZoomFactor = 1f, preventOverOrUnderZoom = false),
+          autoApplyTransformations = false,
+          hardwareShortcutsSpec = state.realZoomableState.hardwareShortcutsSpec,
+        )
+          .also { LaunchedEffect(it) {
+            println("Using fake zoomable state = $it")
+          } }
+      },
+      enabled = gesturesEnabled,
       onClick = onClick,
       onLongClick = onLongClick,
       onDoubleClick = onDoubleClick,

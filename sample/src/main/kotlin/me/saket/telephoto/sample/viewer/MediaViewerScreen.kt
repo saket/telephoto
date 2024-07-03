@@ -61,7 +61,7 @@ internal fun MediaViewerScreen(key: MediaViewerScreenKey) {
         .padding(contentPadding)
         .fillMaxSize(),
       state = pagerState,
-      beyondBoundsPageCount = 1,
+      beyondBoundsPageCount = 0,  // todo: undo!
     ) { pageNum ->
       MediaPage(
         modifier = Modifier.fillMaxSize(),

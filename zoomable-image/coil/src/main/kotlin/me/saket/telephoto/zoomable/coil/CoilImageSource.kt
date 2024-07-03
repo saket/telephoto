@@ -28,6 +28,7 @@ import coil.size.SizeResolver
 import coil.transition.CrossfadeTransition
 import com.google.accompanist.drawablepainter.DrawablePainter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -87,6 +88,8 @@ internal class Resolver(
   }
 
   private suspend fun work(skipMemoryCache: Boolean) {
+    delay(2_000)
+
     val imageLoader = imageLoader
       .newBuilder()
       // Ignore "no-store" http headers if they're present and always cache images to disk. Otherwise,

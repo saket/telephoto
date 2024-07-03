@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -66,11 +67,13 @@ fun Modifier.zoomable(
         onDoubleClick = onDoubleClick,
       )
     )
-    .thenIf(state.hardwareShortcutsSpec.enabled) {
+    .then(HardwareShortcutsElement(state, state.hardwareShortcutsSpec))
+    .focusable(enabled = state.hardwareShortcutsSpec.enabled)
+    /*.thenIf(state.hardwareShortcutsSpec.enabled) {
       Modifier
         .then(HardwareShortcutsElement(state, state.hardwareShortcutsSpec))
         .focusable()
-    }
+    }*/
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation(state.contentTransformation)
     }
@@ -193,6 +196,8 @@ private class ZoomableNode(
     // Note to self: the order in which these nodes are delegated is important.
     delegate(tappableAndQuickZoomableNode)
     delegate(transformableNode)
+
+    println("State initialized with $state")
   }
 
   fun update(
@@ -203,6 +208,7 @@ private class ZoomableNode(
     onDoubleClick: DoubleClickToZoomListener,
   ) {
     if (this.state != state) {
+      println("State updated to $state")
       // Note to self: when the state is updated, the delegated
       // nodes are implicitly reset in the following update() calls.
       this.state = state

@@ -28,6 +28,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -87,6 +88,7 @@ import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -109,6 +111,8 @@ import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import java.io.InputStream
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1059,7 +1063,9 @@ class ZoomableImageTest {
           .fillMaxSize()
           .focusRequester(focusRequester)
           .testTag("image"),
-        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
+        image = ZoomableImageSource
+          .asset("cat_1920.jpg", subSample = false)
+          .withDelay(500.milliseconds),
         contentDescription = null,
         state = rememberZoomableImageState(
           rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor))
@@ -1075,6 +1081,7 @@ class ZoomableImageTest {
     rule.waitUntil(5.seconds) { state.isImageDisplayed }
 
     // Zoom in.
+    println("Sending keyboard events")
     repeat(8) {
       rule.onNodeWithTag("image").performKeyInput {
         withKeyDown(Key.CtrlLeft) {
@@ -1349,8 +1356,7 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun gestures_dont_work_if_nothing_is_displayed() {
-    var doubleClicked = false
+  @Test fun gestures_dont_have_any_effect_if_placeholder_or_image_is_not_displayed_yet() {
     lateinit var imageState: ZoomableImageState
 
     rule.setContent {
@@ -1366,7 +1372,6 @@ class ZoomableImageTest {
           }
         },
         contentDescription = null,
-        onDoubleClick = { _, _ -> doubleClicked = true },
       )
     }
 
@@ -1377,8 +1382,7 @@ class ZoomableImageTest {
     }
 
     rule.runOnIdle {
-      assertThat(doubleClicked).isFalse()
-      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(0f)
+      assertThat(imageState.zoomableState.zoomFraction ?: 0f).isEqualTo(0f)
     }
   }
 
@@ -1549,6 +1553,23 @@ internal fun ZoomableImageSource.Companion.asset(assetName: String, subSample: B
             ZoomableImageSource.PainterDelegate(assetPainter(assetName))
           }
         )
+      }
+    }
+  }
+}
+
+@Composable
+internal fun ZoomableImageSource.withDelay(duration: Duration): ZoomableImageSource {
+  val delegate = this
+  return remember(duration) {
+    object : ZoomableImageSource {
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        val resolved = delegate.resolve(canvasSize)
+        return produceState(initialValue = ResolveResult(delegate = null)) {
+          delay(duration)
+          this.value = resolved
+        }.value
       }
     }
   }
