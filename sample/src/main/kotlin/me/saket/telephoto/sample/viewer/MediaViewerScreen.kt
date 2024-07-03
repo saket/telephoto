@@ -122,9 +122,8 @@ private fun MediaPage(
           contentDescription = model.caption,
         )
 
-        // todo: it's unfortunate that the image can only be focused when it is fully loaded.
-        //  - can ZoomableImage() take focus and forward all events to Modifier.zoomable()?
-        if (isActivePage && imageState.isImageDisplayed) {
+        // Focus the image so that it can receive keyboard and mouse shortcut events.
+        if (isActivePage) {
           LaunchedEffect(Unit) {
             focusRequester.requestFocus()
           }

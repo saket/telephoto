@@ -158,7 +158,9 @@ fun ZoomableImage(
 
     val zoomable = Modifier.zoomable(
       state = state.zoomableState,
-      enabled = gesturesEnabled && !state.isPlaceholderDisplayed,
+      enabled = gesturesEnabled
+        && !state.isPlaceholderDisplayed
+        && resolved.delegate != null,
       onClick = onClick,
       onLongClick = onLongClick,
       onDoubleClick = onDoubleClick,
@@ -166,7 +168,7 @@ fun ZoomableImage(
     )
     when (val delegate = resolved.delegate) {
       null -> {
-        Box(Modifier)
+        Box(zoomable)
       }
 
       is ZoomableImageSource.PainterDelegate -> {

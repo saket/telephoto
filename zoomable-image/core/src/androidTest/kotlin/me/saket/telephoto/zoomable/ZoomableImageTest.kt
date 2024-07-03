@@ -81,6 +81,7 @@ import assertk.assertThat
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
@@ -1066,10 +1067,8 @@ class ZoomableImageTest {
           state = it
         },
       )
-      if (state.isImageDisplayed) {
-        LaunchedEffect(Unit) {
-          focusRequester.requestFocus()
-        }
+      LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
       }
     }
 
@@ -1347,6 +1346,39 @@ class ZoomableImageTest {
     rule.waitUntil(5.seconds) { asyncPlaceholderPainter.loaded }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_placeholder")
+    }
+  }
+
+  @Test fun gestures_dont_work_if_nothing_is_displayed() {
+    var doubleClicked = false
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        state = rememberZoomableImageState().also { imageState = it },
+        image = remember {
+          object : ZoomableImageSource {
+            @Composable
+            override fun resolve(canvasSize: Flow<Size>) = ResolveResult(delegate = null)
+          }
+        },
+        contentDescription = null,
+        onDoubleClick = { _, _ -> doubleClicked = true },
+      )
+    }
+
+    rule.waitForIdle()
+    rule.onNodeWithTag("image").run {
+      performTouchInput { doubleClick() }
+      performTouchInput { pinchToZoomBy(visibleSize.center / 2f) }
+    }
+
+    rule.runOnIdle {
+      assertThat(doubleClicked).isFalse()
+      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(0f)
     }
   }
 
