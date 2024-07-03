@@ -263,6 +263,6 @@ class ZoomableTest {
   }
 }
 
-private fun ZoomableState.real(): RealZoomableState {
+internal fun ZoomableState.real(): RealZoomableState {
   return this as RealZoomableState  // Safe because ZoomableState is a sealed type.
 }

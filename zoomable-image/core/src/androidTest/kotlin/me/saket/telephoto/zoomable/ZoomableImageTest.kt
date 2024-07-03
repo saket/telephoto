@@ -817,7 +817,7 @@ class ZoomableImageTest {
     rule.setContent {
       state = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
-      ) as RealZoomableState
+      ).real()
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -1076,7 +1076,7 @@ class ZoomableImageTest {
           .testTag("image"),
         image = ZoomableImageSource
           .asset("cat_1920.jpg", subSample = false)
-          .withDelay(500.milliseconds),
+          .withDelay(500.milliseconds), // Ensures that the focus is received before the content is ready.
         contentDescription = null,
         state = rememberZoomableImageState(
           rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor))
@@ -1085,6 +1085,9 @@ class ZoomableImageTest {
         },
       )
       LaunchedEffect(Unit) {
+        // If the focus was received before the image was ready,
+        // it should retain focus after the image becomes visible.
+        assertThat(state.zoomableState.real().isReadyToInteract).isFalse()
         focusRequester.requestFocus()
       }
     }
