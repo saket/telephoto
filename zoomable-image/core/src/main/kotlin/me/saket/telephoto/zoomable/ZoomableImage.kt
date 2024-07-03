@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -22,6 +23,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
@@ -33,6 +37,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
@@ -83,8 +88,18 @@ fun ZoomableImage(
     )
   }
 
+  val focusTriggers = remember {
+    MutableSharedFlow<Unit>(replay = 1)
+  }
   Box(
-    modifier = modifier.onMeasure { canvasSize = it },
+    modifier = modifier
+      .onMeasure { canvasSize = it }
+      .onFocusChanged {
+        if (it.isFocused) {
+          focusTriggers.tryEmit(Unit)
+        }
+      }
+      .focusable(enabled = state.realZoomableState.hardwareShortcutsSpec.enabled),
     propagateMinConstraints = true,
   ) {
     val animatedAlpha by if (LocalInspectionMode.current) {
@@ -134,7 +149,7 @@ fun ZoomableImage(
         modifier = Modifier
           .onSizeChanged { boundsProvider.layoutSize = it }
           .zoomable(
-            // Handle gestures, but do ignore their transformations. This will prevent
+            // Handle gestures, but ignore their transformations. This will prevent
             // FlickToDismiss() (and other gesture containers) from accidentally dismissing
             // this image when a quick-zoom gesture is made before the image is fully loaded.
             state = rememberZoomableState(
@@ -156,19 +171,21 @@ fun ZoomableImage(
       )
     }
 
-    val zoomable = Modifier.zoomable(
-      state = state.zoomableState,
-      enabled = gesturesEnabled
-        && !state.isPlaceholderDisplayed
-        && resolved.delegate != null,
-      onClick = onClick,
-      onLongClick = onLongClick,
-      onDoubleClick = onDoubleClick,
-      clipToBounds = clipToBounds,
-    )
+    val resolvedImageFocusRequester = remember { FocusRequester() }
+    val zoomable = Modifier
+      .focusRequester(resolvedImageFocusRequester)
+      .zoomable(
+        state = state.zoomableState,
+        enabled = gesturesEnabled && !state.isPlaceholderDisplayed,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        onDoubleClick = onDoubleClick,
+        clipToBounds = clipToBounds,
+      )
+
     when (val delegate = resolved.delegate) {
       null -> {
-        Box(zoomable)
+        Box(Modifier)
       }
 
       is ZoomableImageSource.PainterDelegate -> {
@@ -208,6 +225,17 @@ fun ZoomableImage(
           alpha = alpha * animatedAlpha,
           colorFilter = colorFilter,
         )
+      }
+    }
+
+    // When ZoomableImage() is focused, the actual image underneath may not be
+    // displayed yet. Wait until that happens and then forward the focus so that
+    // keyboard and mouse shortcuts can work.
+    if (resolved.delegate != null) {
+      LaunchedEffect(Unit) {
+        focusTriggers.collect {
+          resolvedImageFocusRequester.requestFocus()
+        }
       }
     }
   }

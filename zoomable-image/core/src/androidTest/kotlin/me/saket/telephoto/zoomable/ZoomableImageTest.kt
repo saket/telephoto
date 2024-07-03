@@ -28,6 +28,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,7 +61,6 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
-import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performMultiModalInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
@@ -87,6 +87,7 @@ import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -109,6 +110,8 @@ import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import java.io.InputStream
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -763,6 +766,7 @@ class ZoomableImageTest {
   @Test fun click_listeners_work_on_a_placeholder_image() {
     var clicksCount = 0
     var longClicksCount = 0
+    var doubleClicksCount = 0
     lateinit var imageState: ZoomableImageState
 
     rule.setContent {
@@ -776,6 +780,7 @@ class ZoomableImageTest {
         state = rememberZoomableImageState(zoomableState).also { imageState = it },
         onClick = { clicksCount++ },
         onLongClick = { longClicksCount++ },
+        onDoubleClick = { _, _ -> doubleClicksCount++ }
       )
     }
     rule.waitUntil { imageState.isPlaceholderDisplayed }
@@ -784,12 +789,22 @@ class ZoomableImageTest {
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
       assertThat(clicksCount).isEqualTo(1)
+      assertThat(longClicksCount).isEqualTo(0)
+      assertThat(doubleClicksCount).isEqualTo(0)
     }
 
     rule.onNodeWithTag("image").performTouchInput { longClick() }
     rule.runOnIdle {
       assertThat(clicksCount).isEqualTo(1)
       assertThat(longClicksCount).isEqualTo(1)
+      assertThat(doubleClicksCount).isEqualTo(0)
+    }
+
+    rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      assertThat(clicksCount).isEqualTo(1)
+      assertThat(longClicksCount).isEqualTo(1)
+      assertThat(doubleClicksCount).isEqualTo(1)
     }
   }
 
@@ -1059,7 +1074,9 @@ class ZoomableImageTest {
           .fillMaxSize()
           .focusRequester(focusRequester)
           .testTag("image"),
-        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
+        image = ZoomableImageSource
+          .asset("cat_1920.jpg", subSample = false)
+          .withDelay(500.milliseconds),
         contentDescription = null,
         state = rememberZoomableImageState(
           rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor))
@@ -1378,7 +1395,7 @@ class ZoomableImageTest {
 
     rule.runOnIdle {
       assertThat(doubleClicked).isFalse()
-      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(0f)
+      assertThat(imageState.zoomableState.zoomFraction ?: 0f).isEqualTo(0f)
     }
   }
 
@@ -1549,6 +1566,23 @@ internal fun ZoomableImageSource.Companion.asset(assetName: String, subSample: B
             ZoomableImageSource.PainterDelegate(assetPainter(assetName))
           }
         )
+      }
+    }
+  }
+}
+
+@Composable
+internal fun ZoomableImageSource.withDelay(duration: Duration): ZoomableImageSource {
+  val delegate = this
+  return remember(duration) {
+    object : ZoomableImageSource {
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        val resolved = delegate.resolve(canvasSize)
+        return produceState(initialValue = ResolveResult(delegate = null)) {
+          delay(duration)
+          this.value = resolved
+        }.value
       }
     }
   }
