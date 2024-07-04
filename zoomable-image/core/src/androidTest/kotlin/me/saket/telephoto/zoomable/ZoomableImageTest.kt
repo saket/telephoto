@@ -53,8 +53,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.isNotFocusable
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -1201,6 +1203,61 @@ class ZoomableImageTest {
       assertThat(state.zoomableState.contentTransformation.scale.toString()).isEqualTo(
         ScaleFactor(1.4f, 1.4f).toString()
       )
+    }
+  }
+
+  @OptIn(ExperimentalTestApi::class)
+  @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
+    lateinit var state: ZoomableImageState
+    val focusRequester = FocusRequester()
+
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .focusRequester(focusRequester)
+          .testTag("image"),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
+        contentDescription = null,
+        state = rememberZoomableImageState(
+          rememberZoomableState(
+            hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
+          )
+        ).also {
+          state = it
+        },
+      )
+    }
+
+    val node = rule.onNodeWithTag("image").also {
+      rule.waitUntil { state.isImageDisplayed }
+    }
+
+    // The image should not be focusable if it can't respond to keyboard and mouse events.
+    focusRequester.requestFocus()
+    node.assert(isNotFocusable())
+
+    node.performKeyInput {
+      withKeyDown(Key.CtrlLeft) {
+        pressKey(Key.Equals)
+      }
+    }
+    node.performKeyInput {
+      pressKey(Key.DirectionLeft)
+    }
+    node.performMultiModalInput {
+      key {
+        withKeyDown(Key.AltLeft) {
+          mouse { scroll(3f) }
+        }
+      }
+    }
+
+    rule.runOnIdle {
+      state.zoomableState.contentTransformation.run {
+        assertThat(scale.toString()).isEqualTo(ScaleFactor(1f, 1f).toString())
+        assertThat(offset.toString()).isEqualTo(Offset.Zero.toString())
+      }
     }
   }
 
