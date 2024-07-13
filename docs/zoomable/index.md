@@ -8,7 +8,7 @@ A `Modifier` for handling pan & zoom gestures, designed to be shared across all 
 - Haptic feedback for over/under zoom
 - Compatibility with nested scrolling
 - Click listeners
-- [Keyboard and mouse shortcuts](#keyboard-and-mouse-shortcuts)
+- [Keyboard and mouse shortcuts](#keyboard-shortcuts)
 
 ### Installation
 
@@ -66,7 +66,7 @@ Image(
 ### Click listeners
 For detecting double clicks, `Modifier.zoomable()` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
 
-```kotlin
+```kotlin hl_lines="3-4"
 Modifier.zoomable(
   state = rememberZoomableState(),
   onClick = { … },
@@ -109,7 +109,7 @@ Text(
 )
 ```
 
-### Keyboard and Mouse shortcuts
+### Keyboard shortcuts
 
 `ZoomableImage()` can observe keyboard and mouse shortcuts for panning and zooming when it is focused, either by the
 user or using a `FocusRequester`:
