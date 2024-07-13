@@ -165,8 +165,9 @@ sealed interface ZoomableState {
    * Zooms in or out around [centroid] to achieve a final zoom level specified by [zoomFactor],
    * and suspends until it's finished.
    *
-   * @param zoomFactor Target zoom level for the content. For example, a [zoomFactor] of `3f` will
-   * set the content's zoom level to three times its *original* size.
+   * @param zoomFactor Target zoom level for the content. For example, a [zoomFactor] of `2f` will
+   * set the content's zoom level to two times its *original* size. This value is internally coerced
+   * to at most [ZoomSpec.maxZoomFactor].
    *
    * @param centroid Focal point for this zoom within the content's size. Defaults to the center
    * of the content.

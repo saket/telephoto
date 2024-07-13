@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,11 +89,13 @@ import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -883,9 +886,12 @@ class ZoomableImageTest {
 
   @Test fun double_click_should_toggle_zoom() {
     var zoomFraction: Float? = null
+    lateinit var state: ZoomableState
+    lateinit var composeScope: CoroutineScope
 
     rule.setContent {
-      val state = rememberZoomableState(
+      composeScope = rememberCoroutineScope()
+      state = rememberZoomableState(
         zoomSpec = ZoomSpec()
       )
       ZoomableImage(
@@ -912,6 +918,19 @@ class ZoomableImageTest {
     rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
     rule.runOnIdle {
       assertThat(zoomFraction).isEqualTo(0f)
+    }
+
+    // When the image is partially zoomed out, double clicking on it should zoom-in again.
+    // This matches the original behavior before DoubleClickToZoomListener was introduced.
+    composeScope.launch {
+      state.zoomTo(zoomFactor = 1.8f)
+    }
+    rule.runOnIdle {
+      assertThat(zoomFraction!!).isCloseTo(0.8f, delta = 0.01f)
+    }
+    rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      assertThat(zoomFraction).isEqualTo(1f)
     }
   }
 

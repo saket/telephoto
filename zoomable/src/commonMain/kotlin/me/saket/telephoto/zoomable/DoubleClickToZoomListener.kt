@@ -23,9 +23,10 @@ fun interface DoubleClickToZoomListener {
     override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
       val zoomFraction = state.zoomFraction ?: return // Content isn't ready yet.
       state.zoomTo(
-        zoomFactor = when {
-          zoomFraction <= 0.05f -> state.zoomSpec.maxZoomFactor
-          else -> state.contentTransformation.scaleMetadata.initialScale.maxScale
+        zoomFactor = if (zoomFraction < 0.95f) {
+          state.zoomSpec.maxZoomFactor
+        } else {
+          state.contentTransformation.scaleMetadata.initialScale.maxScale
         },
         centroid = centroid,
       )
