@@ -19,6 +19,7 @@ import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDi
 import kotlin.math.absoluteValue
 
 internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
+
   override fun detectKey(event: KeyEvent): ShortcutEvent? {
     // Note for self: Some devices/peripherals have dedicated zoom buttons that map to Key.ZoomIn
     // and Key.ZoomOut. Examples include: Samsung Galaxy Camera, a motorcycle handlebar controller.

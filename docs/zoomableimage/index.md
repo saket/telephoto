@@ -13,6 +13,7 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 - Haptic feedback for over/under zoom
 - Compatibility with nested scrolling
 - Click listeners
+- [Keyboard and mouse shortcuts](#keyboard-and-mouse-shortcuts)
 
 ### Installation
 
@@ -52,12 +53,8 @@ For complex scenarios, `ZoomableImage` can also take full image requests:
       model = ImageRequest.Builder(LocalContext.current)
         .data("https://example.com/image.jpg")
         .listener(
-          remember {
-            object : ImageRequest.Listener {
-              override fun onSuccess(…) {}
-              override fun onError(…) {}
-            }
-          }    
+          onSuccess = { … },
+          onError = { … },
         )
         .crossfade(1_000)
         .memoryCachePolicy(CachePolicy.DISABLED)
@@ -178,7 +175,7 @@ Unlike `Image()`, `ZoomableImage` can pan images even when they're cropped. This
 For detecting double clicks, `ZoomableImage` consumes all tap gestures making it incompatible with `Modifier.clickable()` and `Modifier.combinedClickable()`. As an alternative, its `onClick` and `onLongClick` parameters can be used.
 
 === "Coil"
-    ```kotlin
+    ```kotlin hl_lines="4-5"
     ZoomableAsyncImage(
       modifier = Modifier.clickable { error("This will not work") },
       model = "https://example.com/image.jpg",
@@ -187,7 +184,7 @@ For detecting double clicks, `ZoomableImage` consumes all tap gestures making it
     )
     ```
 === "Glide"
-    ```kotlin
+    ```kotlin hl_lines="4-5"
     ZoomableGlideImage(
       modifier = Modifier.clickable { error("This will not work") },
       model = "https://example.com/image.jpg",
@@ -196,6 +193,65 @@ For detecting double clicks, `ZoomableImage` consumes all tap gestures making it
     )
     ```
 
+The default behavior of toggling between minimum and maximum zoom levels on double-clicks can be overridden by using the `onDoubleClick` parameter:
+
+=== "Coil"
+    ```kotlin
+    ZoomableAsyncImage(
+      model = "https://example.com/image.jpg",
+      onDoubleClick = { state, centroid -> … },
+    )
+    ```
+=== "Glide"
+    ```kotlin
+    ZoomableGlideImage(
+      model = "https://example.com/image.jpg",
+      onDoubleClick = { state, centroid -> … },
+    )
+    ```
+
+```kotlin
+Modifier.zoomable(
+  onDoubleClick = { state, centroid -> … }
+)
+```
+
+# Keyboard and Mouse shortcuts
+
+`ZoomableImage()` can observe keyboard and mouse shortcuts for panning and zooming when it is focused, either by the user or using a `FocusRequester`:
+
+```kotlin hl_lines="6"
+val focusRequester = remember { FocusRequester() }
+LaunchedEffect(Unit) {
+  // Automatically request focus when the image is displayed. This assumes there 
+  // is only one zoomable image present in the hierarchy. If you're displaying 
+  // multiple images in a pager, apply this only for the active page.  
+  focusRequester.requestFocus()
+}
+```
+
+=== "Coil"
+    ```kotlin hl_lines="2"
+    ZoomableAsyncImage(
+      modifier = Modifier.focusRequester(focusRequester),
+      model = "https://example.com/image.jpg",
+    )
+    ```
+=== "Glide"
+    ```kotlin hl_lines="2"
+    ZoomableGlideImage(
+      modifier = Modifier.focusRequester(focusRequester),
+      model = "https://example.com/image.jpg",
+    )
+    ```
+
+By default, the following shortcuts are recognized. These can be customized (or disabled) by passing a custom `HardwareShortcutsSpec` to `rememberZoomableState()`.
+
+|-----------|--------------------|
+| Zoom in   | `Control` + `=`    |
+| Zoom out  | `Control` + `-`    |
+| Pan       | Arrow keys         |
+| Extra pan | `Alt` + arrow keys |
 
 ### Sharing hoisted state
 

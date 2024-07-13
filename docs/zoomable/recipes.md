@@ -20,6 +20,28 @@ LaunchedEffect(isZoomedOut) {
 }
 ```
 
+### Controlling pan & zoom
+
+```kotlin
+val state = rememberZoomableState()
+Box(
+  Modifier.zoomable(state)
+)
+
+Button(onClick = { state.zoomBy(zoomFactor = 1.2f) }) {
+  Text("+")
+}
+Button(onClick = { state.zoomBy(zoomFactor = 1 / 1.2f) }) {
+  Text("-")
+}
+Button(onClick = { state.panBy(offset = 50.dp) }) {
+  Text(">")
+}
+Button(onClick = { state.panBy(offset = -50.dp) }) {
+  Text("<")
+}
+```
+
 ### Resetting zoom
 `Modifier.zoomable()` will automatically retain its pan & zoom across state restorations. You may want to prevent this in lazy layouts such as a `Pager()`, where each page is restored every time it becomes visible. 
 

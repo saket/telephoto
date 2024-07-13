@@ -2,6 +2,7 @@
 
 ### Modifier.zoomable()
 - [Observing pan & zoom](../zoomable/recipes.md#observing-pan-zoom)
+- [Controlling pan & zoom](../zoomable/recipes.md#controlling-pan-zoom)
 - [Resetting zoom](../zoomable/recipes.md#resetting-zoom)
 
 ### Setting zoom limits

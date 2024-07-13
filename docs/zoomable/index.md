@@ -8,6 +8,7 @@ A `Modifier` for handling pan & zoom gestures, designed to be shared across all 
 - Haptic feedback for over/under zoom
 - Compatibility with nested scrolling
 - Click listeners
+- [Keyboard and mouse shortcuts](#keyboard-and-mouse-shortcuts)
 
 ### Installation
 
@@ -73,6 +74,15 @@ Modifier.zoomable(
 )
 ```
 
+The default behavior of toggling between minimum and maximum zoom levels on double-clicks can be overridden by using
+the `onDoubleClick` parameter:
+
+```kotlin
+Modifier.zoomable(
+  onDoubleClick = { state, centroid -> … },
+)
+```
+
 ### Applying gesture transformations
 
 When pan & zoom gestures are received, `Modifier.zoomable()` automatically applies their resulting `scale` and `translation` onto your content using `Modifier.graphicsLayer()`. 
@@ -98,3 +108,35 @@ Text(
   }
 )
 ```
+
+# Keyboard and Mouse shortcuts
+
+`ZoomableImage()` can observe keyboard and mouse shortcuts for panning and zooming when it is focused, either by the
+user or using a `FocusRequester`:
+
+```kotlin hl_lines="6 11"
+val focusRequester = remember { FocusRequester() }
+LaunchedEffect(Unit) {
+  // Automatically request focus when the image is displayed. This assumes there 
+  // is only one zoomable image present in the hierarchy. If you're displaying 
+  // multiple images in a pager, apply this only for the active page.  
+  focusRequester.requestFocus()
+}
+
+Box(
+  Modifier
+    .focusRequester(focusRequester)
+    .zoomable(),
+)
+```
+
+By default, the following shortcuts are recognized. These can be customized (or disabled) by passing a
+custom `HardwareShortcutsSpec` to `rememberZoomableState()`.
+
+|           | Android            | Desktop               |
+|-----------|--------------------|-----------------------|
+| Zoom in   | `Control` + `=`    | `Meta` + `=`          |
+| Zoom out  | `Control` + `-`    | `Meta` + `-`          |
+| Pan       | Arrow keys         | Arrow keys            |
+| Extra pan | `Alt` + arrow keys | `Option` + arrow keys |
+

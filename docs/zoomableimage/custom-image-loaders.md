@@ -1,6 +1,6 @@
 # Custom image loaders
 
-In its essence, `ZoomableImage` is simply an abstraction over an image loading library. If your preferred library isn't supported by `telephoto` out of the box, you can create your own by extending `ZoomableImageSource`.
+In its essence, `ZoomableImage` is simply an abstraction over an image loading library. If your preferred library isn't supported by `telephoto` out of the box, you can create your own by implementing `ZoomableImageSource`.
 
 ```kotlin
 @Composable

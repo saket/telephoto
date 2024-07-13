@@ -38,8 +38,8 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.internal.FocusForwarder
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
-import me.saket.telephoto.zoomable.internal.focusable
 import me.saket.telephoto.zoomable.internal.focusForwarder
+import me.saket.telephoto.zoomable.internal.focusable
 import me.saket.telephoto.zoomable.internal.scaledToMatch
 
 /**
