@@ -216,7 +216,7 @@ Modifier.zoomable(
 )
 ```
 
-# Keyboard and Mouse shortcuts
+### Keyboard and Mouse shortcuts
 
 `ZoomableImage()` can observe keyboard and mouse shortcuts for panning and zooming when it is focused, either by the user or using a `FocusRequester`:
 
