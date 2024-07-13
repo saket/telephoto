@@ -2,7 +2,7 @@
 minSdk = "21"
 compileSdk = "34"
 kotlin = "1.9.24"
-agp = "8.4.2"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
+agp = "8.5.1"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
 androidx-compose-compiler = "1.5.14"
 compose-multiplatform = "1.6.11" # https://github.com/JetBrains/compose-multiplatform/releases
 androidx-compose-runtime = "1.6.7" # https://developer.android.com/jetpack/androidx/releases/compose-runtime
