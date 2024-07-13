@@ -13,30 +13,33 @@ import androidx.compose.ui.input.pointer.isAltPressed
 import androidx.compose.ui.util.fastFold
 import androidx.compose.ui.util.fastForEach
 import me.saket.telephoto.zoomable.HardwareShortcutDetector
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection
 import kotlin.math.absoluteValue
 
 internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
-  override fun detectKey(event: KeyEvent): HardwareShortcutDetector.ShortcutEvent? {
+  override fun detectKey(event: KeyEvent): ShortcutEvent? {
     // Note for self: Some devices/peripherals have dedicated zoom buttons that map to Key.ZoomIn
     // and Key.ZoomOut. Examples include: Samsung Galaxy Camera, a motorcycle handlebar controller.
     if (event.key == Key.ZoomIn || event.isZoomInEvent()) {
-      return HardwareShortcutDetector.ShortcutEvent.Zoom(HardwareShortcutDetector.ShortcutEvent.ZoomDirection.In)
+      return ShortcutEvent.Zoom(ZoomDirection.In)
     } else if (event.key == Key.ZoomOut || (event.isZoomOutEvent())) {
-      return HardwareShortcutDetector.ShortcutEvent.Zoom(HardwareShortcutDetector.ShortcutEvent.ZoomDirection.Out)
+      return ShortcutEvent.Zoom(ZoomDirection.Out)
     }
 
     val panDirection = when (event.key) {
-      Key.DirectionUp -> HardwareShortcutDetector.ShortcutEvent.PanDirection.Up
-      Key.DirectionDown -> HardwareShortcutDetector.ShortcutEvent.PanDirection.Down
-      Key.DirectionLeft -> HardwareShortcutDetector.ShortcutEvent.PanDirection.Left
-      Key.DirectionRight -> HardwareShortcutDetector.ShortcutEvent.PanDirection.Right
+      Key.DirectionUp -> PanDirection.Up
+      Key.DirectionDown -> PanDirection.Down
+      Key.DirectionLeft -> PanDirection.Left
+      Key.DirectionRight -> PanDirection.Right
       else -> null
     }
     return when (panDirection) {
       null -> null
-      else -> HardwareShortcutDetector.ShortcutEvent.Pan(
+      else -> ShortcutEvent.Pan(
         direction = panDirection,
-        panOffset = HardwareShortcutDetector.ShortcutEvent.DefaultPanOffset * if (event.isAltPressed) 10f else 1f,
+        panOffset = ShortcutEvent.DefaultPanOffset * if (event.isAltPressed) 10f else 1f,
       )
     }
   }
@@ -55,7 +58,7 @@ internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
     }
   }
 
-  override fun detectScroll(event: PointerEvent): HardwareShortcutDetector.ShortcutEvent? {
+  override fun detectScroll(event: PointerEvent): ShortcutEvent? {
     if (!event.keyboardModifiers.isAltPressed) {
       // Google Photos does not require any modifier key to be pressed for zooming into
       // images using mouse scroll. Telephoto does not follow the same pattern because
@@ -65,13 +68,13 @@ internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
     }
     return when (val scrollY = event.calculateScroll().y) {
       0f -> null
-      else -> HardwareShortcutDetector.ShortcutEvent.Zoom(
-        direction = if (scrollY < 0f) HardwareShortcutDetector.ShortcutEvent.ZoomDirection.In else HardwareShortcutDetector.ShortcutEvent.ZoomDirection.Out,
+      else -> ShortcutEvent.Zoom(
+        direction = if (scrollY < 0f) ZoomDirection.In else ZoomDirection.Out,
         centroid = event.calculateScrollCentroid(),
         // Scroll delta always seems to be either 1f or -1f depending on the direction.
         // Although some mice are capable of sending precise scrolls, I'm assuming
         // Android coerces them to be at least (+/-)1f.
-        zoomFactor = HardwareShortcutDetector.ShortcutEvent.DefaultZoomFactor * scrollY.absoluteValue,
+        zoomFactor = ShortcutEvent.DefaultZoomFactor * scrollY.absoluteValue,
       )
     }
   }
