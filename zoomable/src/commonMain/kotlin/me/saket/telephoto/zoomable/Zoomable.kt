@@ -126,6 +126,7 @@ private data class ZoomableElement(
     properties["enabled"] = enabled
     properties["onClick"] = onClick
     properties["onLongClick"] = onLongClick
+    properties["onDoubleClick"] = onDoubleClick
   }
 }
 

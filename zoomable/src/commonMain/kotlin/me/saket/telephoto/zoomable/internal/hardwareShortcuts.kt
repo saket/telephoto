@@ -13,6 +13,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
 import androidx.compose.ui.node.requireDensity
+import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,11 @@ internal data class HardwareShortcutsElement(
   override fun update(node: HardwareShortcutsNode) {
     node.state = state
     node.spec = spec
+  }
+
+  override fun InspectorInfo.inspectableProperties() {
+    name = "hardwareShortcuts"
+    properties["spec"] = spec
   }
 }
 
