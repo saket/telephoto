@@ -3,14 +3,16 @@ package me.saket.telephoto.zoomable.internal
 import android.annotation.SuppressLint
 import androidx.compose.foundation.focusable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.node.ModifierNodeElement
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -18,15 +20,12 @@ import kotlinx.coroutines.launch
  */
 @Stable
 internal class FocusForwarder {
-  private val isParentFocused = MutableStateFlow(false)
+  var isParentFocused by mutableStateOf(false)
+  var isChildFocused by mutableStateOf(false)
   val childFocusRequester = FocusRequester()
 
-  fun onParentFocusChanged(focusState: FocusState) {
-    check(isParentFocused.tryEmit(focusState.isFocused))
-  }
-
   suspend fun startForwardingFocus() {
-    isParentFocused.collect { isParentFocused ->
+    snapshotFlow { isParentFocused }.collect {
       if (isParentFocused) {
         childFocusRequester.requestFocus()
       }
@@ -38,8 +37,10 @@ internal class FocusForwarder {
 internal fun Modifier.focusForwarder(forwarder: FocusForwarder, enabled: Boolean): Modifier {
   return if (enabled) {
     this
-      .onFocusChanged(forwarder::onParentFocusChanged)
-      .focusable()
+      .onFocusChanged { forwarder.isParentFocused = it.isFocused }
+      // The back button stops working if the parent
+      // remains focusable after the child receives focus
+      .focusable(enabled = !forwarder.isChildFocused)
   } else {
     this
   }
@@ -49,6 +50,7 @@ internal fun Modifier.focusForwarder(forwarder: FocusForwarder, enabled: Boolean
 internal fun Modifier.focusable(forwarder: FocusForwarder): Modifier {
   return this
     .focusRequester(forwarder.childFocusRequester)
+    .onFocusChanged { forwarder.isChildFocused = it.isFocused }
     .then(OnAttachedNodeElement { forwarder.startForwardingFocus() })
 }
 

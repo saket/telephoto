@@ -88,7 +88,7 @@ fun ZoomableImage(
 
   // When ZoomableImage() is focused, the actual image underneath might not be displayed yet or
   // might change if the image source updates. Forward focus events to the active image so that
-  // it can receive keyboard and mouse shortcuts.
+  // it can receive key events for detecting keyboard shortcuts.
   val focusForwarder = remember { FocusForwarder() }
 
   Box(

@@ -3,6 +3,7 @@
 package me.saket.telephoto.zoomable
 
 import android.graphics.BitmapFactory
+import android.view.KeyEvent
 import android.view.ViewConfiguration
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.SnapSpec
@@ -62,6 +63,7 @@ import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMultiModalInput
@@ -1278,6 +1280,31 @@ class ZoomableImageTest {
         assertThat(offset.toString()).isEqualTo(Offset.Zero.toString())
       }
     }
+  }
+
+  @Test fun hardware_shortcuts_do_not_break_the_back_button() {
+    rule.setContent {
+      val focusRequester = remember { FocusRequester() }
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .focusRequester(focusRequester)
+          .testTag("image"),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = false),
+        contentDescription = null,
+      )
+      LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+      }
+    }
+
+    rule.waitForIdle()
+    rule.runOnUiThread {
+      rule.activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
+      rule.activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
+    }
+
+    rule.onRoot().assertDoesNotExist()
   }
 
   @Test fun calculate_content_bounds_for_full_quality_images(
