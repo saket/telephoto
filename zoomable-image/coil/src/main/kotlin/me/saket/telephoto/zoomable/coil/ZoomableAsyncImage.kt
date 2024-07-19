@@ -62,7 +62,7 @@ fun ZoomableAsyncImage(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
 ) {
   ZoomableImage(
     image = ZoomableImageSource.coil(model, imageLoader),
@@ -113,7 +113,7 @@ fun ZoomableAsyncImage(
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
-    onDoubleClick = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+    onDoubleClick = DoubleClickToZoomListener.cycle(),
   )
 }
 

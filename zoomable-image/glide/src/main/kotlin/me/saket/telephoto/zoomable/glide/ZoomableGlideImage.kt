@@ -64,7 +64,7 @@ fun ZoomableGlideImage(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
 ) {
   ZoomableImage(
@@ -114,7 +114,7 @@ fun ZoomableGlideImage(
     gesturesEnabled = gesturesEnabled,
     onClick = onClick,
     onLongClick = onLongClick,
-    onDoubleClick = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+    onDoubleClick = DoubleClickToZoomListener.cycle(),
     clipToBounds = clipToBounds,
     requestBuilderTransform = requestBuilderTransform,
   )

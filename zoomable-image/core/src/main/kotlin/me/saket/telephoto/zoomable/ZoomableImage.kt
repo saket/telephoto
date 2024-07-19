@@ -70,7 +70,7 @@ fun ZoomableImage(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
 ) {
   state.zoomableState.also {
     it.contentAlignment = alignment
@@ -253,7 +253,7 @@ fun ZoomableImage(
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
-    onDoubleClick = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+    onDoubleClick = DoubleClickToZoomListener.cycle(),
   )
 }
 

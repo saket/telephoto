@@ -49,7 +49,7 @@ fun Modifier.zoomable(
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
-  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
 ): Modifier {
   check(state is RealZoomableState)
   return this
@@ -90,7 +90,7 @@ fun Modifier.zoomable(
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
-    onDoubleClick = DoubleClickToZoomListener.ToggleBetweenMinAndMax,
+    onDoubleClick = DoubleClickToZoomListener.cycle(),
   )
 }
 

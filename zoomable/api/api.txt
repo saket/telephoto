@@ -3,11 +3,16 @@ package me.saket.telephoto.zoomable {
 
   @androidx.compose.runtime.Immutable public fun interface DoubleClickToZoomListener {
     method public suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableState state, long centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    field public static final me.saket.telephoto.zoomable.DoubleClickToZoomListener.Companion Companion;
   }
 
-  public static final class DoubleClickToZoomListener.ToggleBetweenMinAndMax implements me.saket.telephoto.zoomable.DoubleClickToZoomListener {
-    method public suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableState state, long centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    field public static final me.saket.telephoto.zoomable.DoubleClickToZoomListener.ToggleBetweenMinAndMax INSTANCE;
+  public static final class DoubleClickToZoomListener.Companion {
+    method @androidx.compose.runtime.Stable public me.saket.telephoto.zoomable.DoubleClickToZoomListener cycle(optional Float? maxZoomFactor);
+  }
+
+  @Deprecated public static final class DoubleClickToZoomListener.ToggleBetweenMinAndMax implements me.saket.telephoto.zoomable.DoubleClickToZoomListener {
+    method @Deprecated public suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableState state, long centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    field @Deprecated public static final me.saket.telephoto.zoomable.DoubleClickToZoomListener.ToggleBetweenMinAndMax INSTANCE;
   }
 
   @androidx.compose.runtime.Immutable public interface HardwareShortcutDetector {
