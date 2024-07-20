@@ -39,7 +39,7 @@ import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.internal.FocusForwarder
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.focusForwarder
-import me.saket.telephoto.zoomable.internal.focusable
+import me.saket.telephoto.zoomable.internal.receiveFocusFrom
 import me.saket.telephoto.zoomable.internal.scaledToMatch
 
 /**
@@ -167,7 +167,7 @@ fun ZoomableImage(
     }
 
     val zoomable = Modifier
-      .focusable(focusForwarder)
+      .receiveFocusFrom(focusForwarder)
       .zoomable(
         state = state.zoomableState,
         enabled = gesturesEnabled && !state.isPlaceholderDisplayed,

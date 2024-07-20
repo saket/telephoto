@@ -47,7 +47,7 @@ internal fun Modifier.focusForwarder(forwarder: FocusForwarder, enabled: Boolean
 }
 
 /** Intended for the composable that will receive forwarded focus. */
-internal fun Modifier.focusable(forwarder: FocusForwarder): Modifier {
+internal fun Modifier.receiveFocusFrom(forwarder: FocusForwarder): Modifier {
   return this
     .focusRequester(forwarder.childFocusRequester)
     .onFocusChanged { forwarder.isChildFocused = it.isFocused }
