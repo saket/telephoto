@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import me.saket.telephoto.zoomable.ZoomableImage
 
 /** Makes a composable focusable and forwards its focus events to another composable. */
 @Stable
@@ -33,8 +32,9 @@ internal fun Modifier.focusForwarder(forwarder: FocusForwarder, enabled: Boolean
   return if (enabled) {
     this
       .onFocusChanged { forwarder.isParentFocused = it.isFocused }
-      // The back button stops working if the parent
-      // remains focusable after the child receives focus
+      // Bug workaround: the parent layout cannot remain focusable after the child receives
+      // focus. Otherwise, propagation of key event breaks in a weird way where returning
+      // false from onKeyEvent() has no effect, causing the back button to stop working.
       .focusable(enabled = !forwarder.isChildFocused)
   } else {
     this
