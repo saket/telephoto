@@ -35,6 +35,7 @@ internal fun Modifier.focusForwarder(forwarder: FocusForwarder, enabled: Boolean
       // Bug workaround: the parent layout cannot remain focusable after the child receives
       // focus. Otherwise, propagation of key event breaks in a weird way where returning
       // false from onKeyEvent() has no effect, causing the back button to stop working.
+      // https://issuetracker.google.com/issues/354162583
       .focusable(enabled = !forwarder.isChildFocused)
   } else {
     this
