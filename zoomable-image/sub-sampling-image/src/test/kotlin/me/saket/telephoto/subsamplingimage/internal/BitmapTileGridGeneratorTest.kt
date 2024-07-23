@@ -150,12 +150,5 @@ class BitmapTileGridGeneratorTest {
   }
 }
 
-internal fun BitmapRegionTileGrid.Companion.generate(canvasSize: IntSize, unscaledImageSize: IntSize) =
-  BitmapRegionTileGrid.generate(
-    canvasSize = canvasSize,
-    unscaledImageSize = unscaledImageSize,
-    minTileSize = canvasSize / 2
-  )
-
 private val IntSize.area: Int get() = width * height
 private val IntRect.area: Int get() = size.area

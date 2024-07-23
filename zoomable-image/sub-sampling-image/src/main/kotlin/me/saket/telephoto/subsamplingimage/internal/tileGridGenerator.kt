@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.toSize
 internal fun BitmapRegionTileGrid.Companion.generate(
   canvasSize: IntSize,
   unscaledImageSize: IntSize,
-  minTileSize: IntSize,
+  minTileSize: IntSize = canvasSize / 2,
 ): BitmapRegionTileGrid {
   val baseSampleSize = BitmapSampleSize.calculateFor(
     canvasSize = canvasSize,

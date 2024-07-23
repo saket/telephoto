@@ -144,7 +144,6 @@ internal fun rememberSubSamplingImageState(
         val tileGrid = BitmapRegionTileGrid.generate(
           canvasSize = canvasSize,
           unscaledImageSize = decoder.imageSize,
-          minTileSize = canvasSize / 2,
         )
 
         combine(
