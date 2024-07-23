@@ -34,8 +34,8 @@ internal fun BitmapRegionTileGrid.Companion.generate(
     // Number of tiles can be fractional. To avoid this, the fractional
     // part is discarded and the last tiles on each axis are stretched
     // to cover any remaining space of the image.
-    val xTileCount: Int = unscaledImageSize.width / tileSize.width
-    val yTileCount: Int = unscaledImageSize.height / tileSize.height
+    val xTileCount: Int = (unscaledImageSize.width / tileSize.width).coerceAtLeast(1)
+    val yTileCount: Int = (unscaledImageSize.height / tileSize.height).coerceAtLeast(1)
 
     val tileGrid = ArrayList<BitmapRegionTile>(xTileCount * yTileCount)
     for (x in 0 until xTileCount) {

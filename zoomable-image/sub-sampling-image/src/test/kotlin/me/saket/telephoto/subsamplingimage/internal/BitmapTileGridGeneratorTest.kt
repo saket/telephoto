@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.IntSize
 import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isLessThan
@@ -147,6 +148,37 @@ class BitmapTileGridGeneratorTest {
       )
     }
     assertThat(generateResult.exceptionOrNull()).isNull()
+  }
+
+  // Regression test for https://github.com/saket/telephoto/issues/94
+  @Test fun `image height smaller than the minimum tile height`() {
+    val grid = BitmapRegionTileGrid.generate(
+      canvasSize = IntSize(1080, 2400),
+      unscaledImageSize = IntSize(30_000, 926),
+      minTileSize = IntSize(540, 1200),
+    )
+
+    assertThat(grid.foreground.mapValues { (_, tiles) -> tiles.size }).containsOnly(
+      BitmapSampleSize(8) to 2,
+      BitmapSampleSize(4) to 4,
+      BitmapSampleSize(2) to 8,
+      BitmapSampleSize(1) to 16,
+    )
+  }
+
+  // Regression test for https://github.com/saket/telephoto/issues/94
+  @Test fun `image width smaller than the minimum tile size`() {
+    val grid = BitmapRegionTileGrid.generate(
+      canvasSize = IntSize(1080, 2400),
+      unscaledImageSize = IntSize(926, 30_000),
+      minTileSize = IntSize(1080, 1200),
+    )
+
+    assertThat(grid.foreground.mapValues { (_, tiles) -> tiles.size }).containsOnly(
+      BitmapSampleSize(4) to 2,
+      BitmapSampleSize(2) to 4,
+      BitmapSampleSize(1) to 8,
+    )
   }
 }
 
