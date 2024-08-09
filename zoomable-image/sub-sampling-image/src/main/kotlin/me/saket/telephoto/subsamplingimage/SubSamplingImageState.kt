@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -111,7 +112,7 @@ internal fun rememberSubSamplingImageState(
 ): SubSamplingImageState {
   val errorReporter by rememberUpdatedState(errorReporter)
   val transformation by rememberUpdatedState(transformation)
-  val decoder: ImageRegionDecoder? by createRegionDecoder(imageSource, imageOptions, errorReporter)
+  val decoder: ImageRegionDecoder? = createRegionDecoder(imageSource, imageOptions, errorReporter)
 
   val state = remember(imageSource) {
     RealSubSamplingImageState(imageSource)
@@ -130,7 +131,7 @@ internal fun rememberSubSamplingImageState(
     }
   }
 
-  decoder?.let { decoder ->
+  if (decoder != null) {
     val transformations = remember { snapshotFlow { transformation } }
 
     val scope = rememberCoroutineScope()
@@ -213,17 +214,17 @@ private fun createRegionDecoder(
   imageSource: SubSamplingImageSource,
   imageOptions: ImageBitmapOptions,
   errorReporter: SubSamplingImageErrorReporter
-): State<ImageRegionDecoder?> {
+): ImageRegionDecoder? {
   val context = LocalContext.current
   val errorReporter by rememberUpdatedState(errorReporter)
-  val decoder = remember(imageSource) { mutableStateOf<ImageRegionDecoder?>(null) }
+  var decoder by remember(imageSource) { mutableStateOf<ImageRegionDecoder?>(null) }
 
   if (!LocalInspectionMode.current) {
     val factory = PooledImageRegionDecoder.Factory(LocalImageRegionDecoderFactory.current)
     LaunchedEffect(imageSource) {
       try {
         val exif = ExifMetadata.read(context, imageSource)
-        decoder.value = factory.create(
+        decoder = factory.create(
           ImageRegionDecoder.FactoryParams(
             context = context,
             imageSource = imageSource,
@@ -237,7 +238,7 @@ private fun createRegionDecoder(
     }
     DisposableEffect(imageSource) {
       onDispose {
-        decoder.value?.recycle()
+        decoder?.recycle()
       }
     }
   }
