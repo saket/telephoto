@@ -239,6 +239,7 @@ private fun createRegionDecoder(
     DisposableEffect(imageSource) {
       onDispose {
         decoder?.recycle()
+        decoder = null
       }
     }
   }
