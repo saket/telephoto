@@ -181,7 +181,7 @@ private class FakeImageRegionDecoder : ImageRegionDecoder {
     return decodedBitmaps.receive()
   }
 
-  override fun recycle() = Unit
+  override fun close() = Unit
 }
 
 private class FakeImageBitmap : ImageBitmap {

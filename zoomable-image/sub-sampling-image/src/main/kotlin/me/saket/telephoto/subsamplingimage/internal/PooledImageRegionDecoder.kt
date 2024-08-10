@@ -26,8 +26,8 @@ internal class PooledImageRegionDecoder private constructor(
     }
   }
 
-  override fun recycle() {
-    decoders.resources.forEach { it.recycle() }
+  override fun close() {
+    decoders.resources.forEach { it.close() }
   }
 
   companion object {

@@ -60,7 +60,7 @@ internal class AndroidImageRegionDecoder private constructor(
     }
   }
 
-  override fun recycle() {
+  override fun close() {
     // FYI BitmapRegionDecoder's documentation says explicit recycling is not needed,
     // but that is a lie. Instrumentation tests for SubSamplingImage() on API 31 run into
     // low memory because the native state of decoders aren't cleared after each test,

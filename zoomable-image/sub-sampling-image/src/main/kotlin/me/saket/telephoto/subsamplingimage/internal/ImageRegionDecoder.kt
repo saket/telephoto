@@ -19,7 +19,7 @@ internal interface ImageRegionDecoder {
 
   suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap
 
-  fun recycle()
+  fun close()
 
   fun interface Factory {
     suspend fun create(params: FactoryParams): ImageRegionDecoder
