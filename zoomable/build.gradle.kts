@@ -2,7 +2,7 @@ import org.jetbrains.compose.compose
 
 plugins {
   id("me.saket.android.library")
-  id("me.saket.android.library.publishing")
+  id("me.saket.library.publishing")
   id("me.saket.kotlin.multiplatform")
 }
 apply(plugin = "kotlin-parcelize")

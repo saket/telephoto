@@ -33,7 +33,7 @@ gradlePlugin {
       implementationClass = "AndroidLibraryConventionPlugin"
     }
     register("androidLibraryPublishing") {
-      id = "me.saket.android.library.publishing"  // todo: rename to me.saket.library.publishing
+      id = "me.saket.library.publishing"
       implementationClass = "AndroidLibraryPublishingConventionPlugin"
     }
     register("androidTest") {
