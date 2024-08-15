@@ -2,13 +2,6 @@ plugins {
   `kotlin-dsl`
 }
 
-java {
-  toolchain {
-    // Jdk version for compiling :build-logic:convention.
-    languageVersion.set(JavaLanguageVersion.of(17))
-  }
-}
-
 dependencies {
   compileOnly(libs.plugin.agp)
   compileOnly(libs.plugin.kotlin)
