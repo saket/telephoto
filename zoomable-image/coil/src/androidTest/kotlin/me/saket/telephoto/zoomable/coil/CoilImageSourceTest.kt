@@ -6,6 +6,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -46,6 +48,8 @@ import coil.request.SuccessResult
 import coil.size.Dimension
 import coil.test.FakeImageLoaderEngine
 import com.dropbox.dropshots.Dropshots
+import com.google.modernstorage.storage.AndroidFileSystem
+import com.google.modernstorage.storage.toOkioPath
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.Dispatchers
@@ -383,8 +387,36 @@ class CoilImageSourceTest {
     }
   }
 
-  // todo
-  @Test fun show_error_drawable_if_request_fails() {
+  // Regression test for https://github.com/saket/telephoto/issues/99.
+  @Test fun show_error_drawable_if_a_local_image_cached_in_memory_no_longer_exists() = runTest {
+    val imageInExternalStorage: Uri = context.copyImageToExternalStorage(
+      context.createFileFromAsset("full_image.png")
+    )
+
+    lateinit var imageState: ZoomableImageState
+    val stateRestorer = StateRestorationTester(rule)
+    stateRestorer.setContent {
+      ZoomableAsyncImage(
+        state = rememberZoomableImageState().also { imageState = it },
+        modifier = Modifier.fillMaxSize(),
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(imageInExternalStorage)
+          .error(R.drawable.error_image)
+          .allowHardware(false) // Unsupported by Screenshot.capture()
+          .build(),
+        contentDescription = null
+      )
+    }
+
+    rule.waitUntil { imageState.isImageDisplayed }
+    AndroidFileSystem(context).delete(imageInExternalStorage.toOkioPath())
+
+    stateRestorer.emulateSavedInstanceStateRestore()
+
+    rule.waitUntil { imageState.isImageDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
+    }
   }
 
   @Test fun gifs_should_not_be_sub_sampled(
@@ -608,4 +640,20 @@ private fun Context.createFileFromAsset(assetName: String): Path {
       write(path) { writeAll(assets.open(assetName).source()) }
     }
   }
+}
+
+private suspend fun Context.copyImageToExternalStorage(imageFile: Path): Uri {
+  val fs = AndroidFileSystem(this)
+  val uri = fs.createMediaStoreUri(
+    filename = imageFile.name,
+    collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
+    directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath,
+  )!!
+  fs.write(uri.toOkioPath()) {
+    fs.read(imageFile) {
+      writeAll(this)
+    }
+  }
+  fs.scanUri(uri, mimeType = "image/png")
+  return uri
 }

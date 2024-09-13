@@ -25,4 +25,5 @@ dependencies {
   androidTestImplementation(libs.coil.svg)
   androidTestImplementation(libs.coil.test)
   androidTestImplementation(libs.okio.fakeFileSystem)
+  androidTestImplementation(libs.modernstorage)
 }

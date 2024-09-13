@@ -47,6 +47,7 @@ benchmark-macro-junit4 = "1.2.4"
 metalava = "0.3.5"  # https://github.com/tylerbwong/metalava-gradle/releases
 poko = "0.15.2" # https://github.com/drewhamilton/Poko/blob/main/CHANGELOG.md
 composeLintChecks = "1.2.0" # https://slackhq.github.io/compose-lints/changelog/
+modernstorage = "1.0.0-alpha08" # https://github.com/saket/modernstorage/releases
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -63,7 +64,6 @@ metalava = { id = "me.tylerbwong.gradle.metalava", version.ref = "metalava" }
 poko = { id = "dev.drewhamilton.poko", version.ref = "poko" }
 
 [libraries]
-# Build logic dependencies
 plugin-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 plugin-jetbrains-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose-multiplatform" }
@@ -128,6 +128,7 @@ testParamInjector = { module = "com.google.testparameterinjector:test-parameter-
 dropshots = { module = "com.dropbox.dropshots:dropshots", version.ref = "dropshots" }
 dropboxDiffer = { module = "com.dropbox.differ:differ", version.ref = "dropboxDiffer" }
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
+modernstorage = { module = "me.saket.modernstorage:modernstorage-storage", version.ref = "modernstorage" }
 
 circuit-runtime = { module = "com.slack.circuit:circuit-foundation", version.ref = "circuit" }
 circuit-backstack = { module = "com.slack.circuit:circuit-backstack", version.ref = "circuit" }

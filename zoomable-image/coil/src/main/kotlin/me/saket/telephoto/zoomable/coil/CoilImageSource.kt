@@ -189,13 +189,18 @@ internal class Resolver(
           }
           SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)
         }
+
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
           // Possible reasons for reaching this code path:
           // - Locally stored images such as assets, resource, etc.
           // - Remote image that wasn't saved to disk because of a "no-store" HTTP header.
-          result.request.mapRequestDataToUriOrNull()?.let { uri ->
-            SubSamplingImageSource.contentUriOrNull(uri, preview)
-          }
+          result.request.mapRequestDataToUriOrNull()
+            ?.let { uri -> SubSamplingImageSource.contentUriOrNull(uri, preview) }
+            ?.also {
+              if (result.dataSource == DataSource.MEMORY_CACHE && !it.exists()) {
+                return ImageDeletedOnlyFromDiskCache
+              }
+            }
         }
 
         else -> {
