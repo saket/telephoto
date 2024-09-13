@@ -33,7 +33,7 @@ jobs:
 
       - name: (Fail-only) Upload paparazzi test reports
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-failures
           path: |
@@ -53,7 +53,7 @@ jobs:
 
       - name: (Fail-only) Upload instrumented test reports
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: instrumentation-test-report
           path: instrumentation-test-build-reports.zip
