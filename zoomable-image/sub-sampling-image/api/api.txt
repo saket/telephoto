@@ -39,6 +39,7 @@ package me.saket.telephoto.subsamplingimage {
     method public default void close();
     method public suspend Object? decoder(android.content.Context context, kotlin.coroutines.Continuation<? super android.graphics.BitmapRegionDecoder>);
     method public androidx.compose.ui.graphics.ImageBitmap? getPreview();
+    method public okio.BufferedSource peek(android.content.Context context);
     property public abstract androidx.compose.ui.graphics.ImageBitmap? preview;
     field public static final me.saket.telephoto.subsamplingimage.SubSamplingImageSource.Companion Companion;
   }

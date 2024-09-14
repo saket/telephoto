@@ -4,14 +4,7 @@ import android.content.Context
 import androidx.exifinterface.media.ExifInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import me.saket.telephoto.subsamplingimage.AssetImageSource
-import me.saket.telephoto.subsamplingimage.FileImageSource
-import me.saket.telephoto.subsamplingimage.RawImageSource
-import me.saket.telephoto.subsamplingimage.ResourceImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
-import me.saket.telephoto.subsamplingimage.UriImageSource
-import okio.FileSystem
-import okio.buffer
 import java.io.InputStream
 
 /** Properties read from an image's EXIF header. */
@@ -28,14 +21,7 @@ internal data class ExifMetadata(
   companion object {
     suspend fun read(context: Context, source: SubSamplingImageSource): ExifMetadata {
       return withContext(Dispatchers.Default) {
-        val inputStream = when (source) {
-          is FileImageSource -> FileSystem.SYSTEM.source(source.path).buffer().inputStream()
-          is RawImageSource -> source.peek().inputStream()
-          is AssetImageSource -> source.peek(context)
-          is ResourceImageSource -> source.peek(context)
-          is UriImageSource -> source.peek(context)
-        }
-        inputStream.use {
+        source.peek(context).inputStream().use { inputStream ->
           val exif = ExifInterface(
             ExifInterfaceCompatibleInputStream(inputStream)
           )
@@ -55,8 +41,7 @@ internal data class ExifMetadata(
 }
 
 /**
- * Copied from Coil.
- * https://github.com/coil-kt/coil/blob/65be959aabdb8165b483106a35040a2ebca1a196/coil-base/src/main/java/coil/decode/ExifUtils.kt#L106
+ * Copied from [Coil](https://github.com/coil-kt/coil/blob/65be959aabdb8165b483106a35040a2ebca1a196/coil-base/src/main/java/coil/decode/ExifUtils.kt#L106).
  */
 private class ExifInterfaceCompatibleInputStream(private val delegate: InputStream) : InputStream() {
   /**
