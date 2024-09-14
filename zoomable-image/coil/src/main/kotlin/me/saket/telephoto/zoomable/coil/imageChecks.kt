@@ -19,7 +19,6 @@ internal suspend fun SubSamplingImageSource.canBeSubSampled(): Boolean {
       is ResourceImageSource -> !isVectorDrawable()
       else -> canBeSubSampled(peek(request.context))
     }
-    canBeSubSampled(peek(request.context))
   }
 }
 
