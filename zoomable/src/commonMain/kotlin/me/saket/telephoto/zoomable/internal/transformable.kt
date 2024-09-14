@@ -157,7 +157,7 @@ internal class TransformableNode(
           val maximumVelocity = currentValueOf(LocalViewConfiguration).let {
             Velocity(it.maximumFlingVelocity, it.maximumFlingVelocity)
           }
-          val velocity = if (wasCancelled) Velocity.Zero else velocityTracker.calculateVelocity(maximumVelocity)
+          val velocity = if (wasCancelled) Velocity.Zero else velocityTracker.calculateFiniteVelocity(maximumVelocity)
           channel.trySend(TransformStopped(velocity))
         }
       }
@@ -283,5 +283,16 @@ private fun ViewConfiguration.pointerSlop(pointerType: PointerType): Float {
       touchSlop * (mouseSlop / defaultTouchSlop)
     }
     else -> touchSlop
+  }
+}
+
+// Workaround for https://github.com/saket/telephoto/issues/97
+// (https://issuetracker.google.com/issues/309841148#comment7)
+private fun VelocityTracker.calculateFiniteVelocity(maximumVelocity: Velocity): Velocity {
+  val calculated = calculateVelocity(maximumVelocity = maximumVelocity)
+  return if (calculated.x.isNaN() || calculated.y.isNaN()) {
+    maximumVelocity
+  } else {
+    calculated
   }
 }
