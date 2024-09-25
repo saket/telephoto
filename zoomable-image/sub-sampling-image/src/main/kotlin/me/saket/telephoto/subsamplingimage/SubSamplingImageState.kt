@@ -107,7 +107,7 @@ internal fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   transformation: ZoomableContentTransformation,
   imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
-  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
+  errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease,
 ): SubSamplingImageState {
   val errorReporter by rememberUpdatedState(errorReporter)
   val transformation by rememberUpdatedState(transformation)
