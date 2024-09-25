@@ -29,7 +29,7 @@ internal class AndroidImageRegionDecoder private constructor(
   private val dispatcher: ExecutorCoroutineDispatcher,
 ) : ImageRegionDecoder {
 
-  override val imageSize: IntSize = decoder.size()
+  override val imageSize: IntSize get() = decoder.size()
   override val imageOrientation: ImageOrientation get() = exif.orientation
 
   override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
@@ -47,7 +47,7 @@ internal class AndroidImageRegionDecoder private constructor(
       // already in the correct orientation. To counter this, rotate the bounds in
       // anticlockwise direction to get the bounds in the original non-rotated image.
       degrees = -exif.orientation.degrees,
-      unRotatedParent = IntRect(offset = IntOffset.Zero, size = decoder.size())
+      unRotatedParent = IntRect(offset = IntOffset.Zero, size = imageSize)
     )
 
     val bitmap = withContext(dispatcher) {
@@ -61,11 +61,12 @@ internal class AndroidImageRegionDecoder private constructor(
   }
 
   override fun close() {
-    // FYI BitmapRegionDecoder's documentation says explicit recycling is not needed,
-    // but that is a lie. Instrumentation tests for SubSamplingImage() on API 31 run into
-    // low memory because the native state of decoders aren't cleared after each test,
-    // causing Android to panic and kill all processes (including the test).
-    decoder.recycle()
+    // Previous versions of telephoto recycled the dispatcher as well, but this was later removed
+    // after discovering that close() and decodeRegion() could be called from different threads,
+    // potentially causing a race condition. If a zoomable image is disposed while it was still
+    // decoding regions, the underlying decoder will remain in memory for a bit longer until GC
+    // kicks in. I think that is okay as its memory usage would be similar to displaying multiple
+    // _active_ images in a pager, each allocating a decoder.
     dispatcher.close()
   }
 
