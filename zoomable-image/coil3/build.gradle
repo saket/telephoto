@@ -1,0 +1,29 @@
+plugins {
+  id("me.saket.android.library")
+  id("me.saket.library.publishing")
+  id("me.saket.kotlin.android")
+  id("me.saket.compose")
+  id("me.saket.android.test")
+  id("app.cash.molecule") version libs.versions.molecule
+}
+
+android {
+  namespace "me.saket.telephoto.zoomable.image.coil3"
+}
+
+dependencies {
+  api(projects.zoomableImage.core)
+  api(libs.coil3.compose)
+
+  implementation(projects.zoomableImage.subSamplingImage)
+
+  androidTestImplementation(projects.testUtil)
+  androidTestImplementation(libs.turbine)
+  androidTestImplementation(libs.okhttp.mockWebServer)
+  androidTestImplementation(libs.coil3.gif)
+  androidTestImplementation(libs.coil3.svg)
+  androidTestImplementation(libs.coil3.test)
+  androidTestImplementation(libs.coil3.okhttp)
+  androidTestImplementation(libs.okio.fakeFileSystem)
+  androidTestImplementation(libs.modernstorage)
+}
