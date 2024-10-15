@@ -473,11 +473,8 @@ class Coil3ImageSourceTest {
     }
   }
 
+  // Regression test for https://github.com/saket/telephoto/issues/50
   @Test fun image_url_with_nocache_http_header() = runTest {
-    TODO(
-      "how does this work with coil3 which no longer supports respectCacheHeaders? what happens when CacheControlCacheStrategy is used?"
-    )
-
     serverRule.server.dispatcher = object : Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse {
         return assetAsResponse("full_image.png")

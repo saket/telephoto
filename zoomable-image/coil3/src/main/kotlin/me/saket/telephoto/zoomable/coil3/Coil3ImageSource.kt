@@ -129,6 +129,7 @@ internal class Resolver(
         )
         // todo: should coil spend any time doing this?
         //  counter-arg: i might want to enable sub-sampling only if the bitmap size exceeds the display size.
+        //  counter-counter-arg: if CacheControlCacheStrategy is used and the image isn't saved to disk, it's better to display a smaller image without sub-sampling.
         .maxBitmapSize(CoilSize.ORIGINAL)
         .build()
     )
@@ -238,9 +239,4 @@ internal class Resolver(
       else -> null
     }
   }
-
-  // todo: do i not need to mutate anymore?
-//  private fun Drawable.asPainter(): Painter {
-//    return DrawablePainter(mutate())
-//  }
 }
