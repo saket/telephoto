@@ -49,6 +49,7 @@ fun rememberZoomableState(
     it.layoutDirection = LocalLayoutDirection.current
   }
 
+  // todo: make all these an input to gestureState
   if (state.isReadyToInteract) {
     LaunchedEffect(
       state.contentLayoutSize,
@@ -121,6 +122,7 @@ sealed interface ZoomableState {
   /** The zoom spec passed to [rememberZoomableState]. */
   val zoomSpec: ZoomSpec
 
+  // todo: should this now be a param in rememberZoomableState?
   /** See [ZoomableContentLocation]. */
   fun setContentLocation(location: ZoomableContentLocation)
 

@@ -32,6 +32,7 @@ internal data class ZoomableSavedState(
       // is stored as part of the "gesture state", but I should be able to remove this once
       // Modifier.zoomable() is able to calculate its content size synchronously.
       contentSize = Size.Zero,
+      isPlaceholder = false,  // todo: is this correct?
     )
   }
 }

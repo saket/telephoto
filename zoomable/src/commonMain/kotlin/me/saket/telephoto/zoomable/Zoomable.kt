@@ -72,7 +72,7 @@ fun Modifier.zoomable(
         .focusable()
     }
     .thenIf(state.autoApplyTransformations) {
-      Modifier.applyTransformation(state.contentTransformation)
+      Modifier.applyTransformation { state.contentTransformation }
     }
 }
 
@@ -160,16 +160,16 @@ private class ZoomableNode(
     }
   }
   val onTransformStopped: (velocity: Velocity) -> Unit = { velocity ->
-    if (state.isReadyToInteract) {
-      coroutineScope.launch {
-        if (state.isZoomOutsideRange()) {
-          hapticFeedback.performHapticFeedback()
-          state.animateSettlingOfZoomOnGestureEnd()
-        } else {
-          state.fling(velocity = velocity, density = requireDensity())
-        }
+//    if (state.isReadyToInteract) {
+    coroutineScope.launch {
+      if (state.isZoomOutsideRange()) {
+        hapticFeedback.performHapticFeedback()
+        state.animateSettlingOfZoomOnGestureEnd()
+      } else {
+        state.fling(velocity = velocity, density = requireDensity())
       }
     }
+//    }
   }
 
   private val tappableAndQuickZoomableNode = TappableAndQuickZoomableElement(

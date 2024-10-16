@@ -65,12 +65,14 @@ import kotlin.math.abs
 internal class RealZoomableState internal constructor(
   initialGestureState: GestureState? = null,
   autoApplyTransformations: Boolean = true,
-  private val isLayoutPreview: Boolean = false,
+  private val isLayoutPreview: Boolean = false, // todo: still needed?
 ) : ZoomableState {
 
   override val contentTransformation: ZoomableContentTransformation by derivedStateOf {
-    val baseZoomFactor = baseZoomFactor
-    val gestureState = gestureState
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize)
+    val gestureState = gestureState2.provide(contentLayoutSize)
+
+    println("creating contentTransformation. base-zoom = $baseZoomFactor, gesture state = $gestureState")
 
     if (gestureState != null && baseZoomFactor != null) {
       val contentZoom = ContentZoomFactor(baseZoomFactor, gestureState.userZoomFactor)
@@ -111,8 +113,8 @@ internal class RealZoomableState internal constructor(
 
   @get:FloatRange(from = 0.0, to = 1.0)
   override val zoomFraction: Float? by derivedStateOf {
-    val gestureState = gestureState
-    val baseZoomFactor = baseZoomFactor
+    val gestureState = gestureState2.provide(contentLayoutSize)
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize)
     if (gestureState != null && baseZoomFactor != null) {
       val min = ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom
       val max = ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom
@@ -128,7 +130,18 @@ internal class RealZoomableState internal constructor(
 
   override var zoomSpec by mutableStateOf(ZoomSpec())
 
-  internal var gestureState: GestureState? by mutableStateOf(initialGestureState)
+  private var gestureState2: GestureStateProvider by mutableStateOf(
+    GestureStateProvider { contentLayoutSize ->
+      initialGestureState ?: GestureState(
+        offset = Offset.Zero,
+        userZoomFactor = UserZoomFactor(1f),
+        lastCentroid = contentLayoutSize.takeOrElse { Size.Zero }.center,
+        contentSize = contentLayoutSize.takeOrElse { Size.Zero },
+        isPlaceholder = true,
+      )
+    }
+  )
+
   internal var hardwareShortcutsSpec by mutableStateOf(HardwareShortcutsSpec())
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
 
@@ -141,34 +154,39 @@ internal class RealZoomableState internal constructor(
   /**
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
    */
-  internal var contentLayoutSize: Size by mutableStateOf(Size.Zero)
+  internal var contentLayoutSize: Size by mutableStateOf(Size.Unspecified)
 
-  private val unscaledContentBounds: Rect by derivedStateOf {
-    if (isReadyToInteract) {
-      unscaledContentLocation.location(
-        layoutSize = contentLayoutSize,
-        direction = layoutDirection
-      )
-    } else Rect.Zero
+  private val unscaledContentBounds2: UnscaledContentBoundsProvider by derivedStateOf {
+    UnscaledContentBoundsProvider { contentLayoutSize ->
+      if (contentLayoutSize.isSpecified) {
+        unscaledContentLocation.location(
+          layoutSize = contentLayoutSize,
+          direction = layoutDirection
+        )
+      } else {
+        Rect.Zero
+      }
+    }
   }
 
-  /**
-   * See [BaseZoomFactor].
-   */
-  private val baseZoomFactor: BaseZoomFactor? by derivedStateOf {
-    if (isReadyToInteract) {
-      BaseZoomFactor(
-        contentScale.computeScaleFactor(
-          srcSize = unscaledContentBounds.size,
-          dstSize = contentLayoutSize,
-        )
-      ).also {
-        check(it.value != ScaleFactor.Zero) {
-          "Base zoom shouldn't be zero. content bounds = $unscaledContentBounds, layout size = $contentLayoutSize"
+  /** See [BaseZoomFactor]. */
+  private val baseZoomFactor2: BaseZoomFactorProvider by derivedStateOf {
+    BaseZoomFactorProvider { contentLayoutSize ->
+      if (isReadyToInteract) {
+        val unscaledContentBounds = unscaledContentBounds2.provide(contentLayoutSize)
+        BaseZoomFactor(
+          contentScale.computeScaleFactor(
+            srcSize = unscaledContentBounds.size,
+            dstSize = contentLayoutSize,
+          )
+        ).also {
+          check(it.value != ScaleFactor.Zero) {
+            "Base zoom shouldn't be zero. content bounds = $unscaledContentBounds, layout size = $contentLayoutSize"
+          }
         }
+      } else {
+        null
       }
-    } else {
-      null
     }
   }
 
@@ -178,7 +196,7 @@ internal class RealZoomableState internal constructor(
   override val transformedContentBounds: Rect by derivedStateOf {
     with(contentTransformation) {
       if (isSpecified) {
-        unscaledContentBounds.withOrigin(transformOrigin) {
+        unscaledContentBounds2.provide(contentLayoutSize).withOrigin(transformOrigin) {
           times(scale).translate(offset)
         }
       } else {
@@ -192,7 +210,7 @@ internal class RealZoomableState internal constructor(
    * listening to pan & zoom gestures.
    */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    contentLayoutSize.minDimension > 0f // Prevent division by zero errors.
+    contentLayoutSize.isSpecified && contentLayoutSize.minDimension > 0f // Prevent division by zero errors.
       && unscaledContentLocation.size(contentLayoutSize).let { it.isSpecified && it.minDimension > 0f }
   }
 
@@ -202,77 +220,87 @@ internal class RealZoomableState internal constructor(
       "Can't transform with zoomDelta=$zoomDelta, panDelta=$panDelta, centroid=$centroid. ${collectDebugInfoForIssue41()}"
     }
 
-    val baseZoomFactor = baseZoomFactor ?: return@TransformableState
-    val oldZoom = ContentZoomFactor(
-      baseZoom = baseZoomFactor,
-      userZoom = gestureState?.userZoomFactor ?: UserZoomFactor(1f),
-    )
-    check(oldZoom.finalZoom().isPositiveAndFinite()) {
-      "Old zoom is invalid/infinite. ${collectDebugInfoForIssue41()}"
+    if (!isReadyToInteract) {
+      return@TransformableState
     }
+    val lastGestureState: GestureState? = gestureState2.provide(contentLayoutSize)
 
-    val isZoomingOut = zoomDelta < 1f
-    val isZoomingIn = zoomDelta > 1f
+    gestureState2 = GestureStateProvider { contentLayoutSize -> // todo: could this also react to content alignment and scale changes?
+      val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize)!!
+      val unscaledContentBounds = unscaledContentBounds2.provide(contentLayoutSize)
 
-    // Apply elasticity if content is being over/under-zoomed.
-    val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomSpec.range)
-    val isAtMinZoom = oldZoom.isAtMinZoom(zoomSpec.range)
-    val zoomDelta = when {
-      !zoomSpec.preventOverOrUnderZoom -> zoomDelta
-      isZoomingIn && isAtMaxZoom -> 1f + zoomDelta / 250
-      isZoomingOut && isAtMinZoom -> 1f - zoomDelta / 250
-      else -> zoomDelta
-    }
-    val newZoom = ContentZoomFactor(
-      baseZoom = baseZoomFactor,
-      userZoom = oldZoom.userZoom * zoomDelta,
-    ).let {
-      if (zoomSpec.preventOverOrUnderZoom && (isAtMinZoom || isAtMaxZoom)) {
-        it.coerceUserZoomIn(
-          range = zoomSpec.range,
-          leewayPercentForMinZoom = 0.1f,
-          leewayPercentForMaxZoom = 0.4f
-        )
-      } else {
-        it
+      val oldZoom = ContentZoomFactor(
+        baseZoom = baseZoomFactor,
+        userZoom = lastGestureState?.userZoomFactor ?: UserZoomFactor(1f),
+      )
+      check(oldZoom.finalZoom().isPositiveAndFinite()) {
+        "Old zoom is invalid/infinite. ${collectDebugInfoForIssue41()}"
       }
-    }
-    check(newZoom.finalZoom().let { it.isPositiveAndFinite() && it.minScale > 0f }) {
-      "New zoom is invalid/infinite = $newZoom. ${collectDebugInfoForIssue41("zoomDelta" to zoomDelta)}"
-    }
 
-    val oldOffset = gestureState.let {
-      if (it != null) {
-        it.offset
-      } else {
-        val defaultAlignmentOffset = contentAlignment.align(
-          size = (unscaledContentBounds.size * baseZoomFactor.value).roundToIntSize(),
-          space = contentLayoutSize.roundToIntSize(),
-          layoutDirection = layoutDirection
-        )
-        // Take the content's top-left into account because it may not start at 0,0.
-        unscaledContentBounds.topLeft + (-defaultAlignmentOffset.toOffset() / oldZoom)
+      val isZoomingOut = zoomDelta < 1f
+      val isZoomingIn = zoomDelta > 1f
+
+      // Apply elasticity if content is being over/under-zoomed.
+      val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomSpec.range)
+      val isAtMinZoom = oldZoom.isAtMinZoom(zoomSpec.range)
+      val zoomDelta = when {
+        !zoomSpec.preventOverOrUnderZoom -> zoomDelta
+        isZoomingIn && isAtMaxZoom -> 1f + zoomDelta / 250
+        isZoomingOut && isAtMinZoom -> 1f - zoomDelta / 250
+        else -> zoomDelta
       }
-    }
+      val newZoom = ContentZoomFactor(
+        baseZoom = baseZoomFactor,
+        userZoom = oldZoom.userZoom * zoomDelta,
+      ).let {
+        if (zoomSpec.preventOverOrUnderZoom && (isAtMinZoom || isAtMaxZoom)) {
+          it.coerceUserZoomIn(
+            range = zoomSpec.range,
+            leewayPercentForMinZoom = 0.1f,
+            leewayPercentForMaxZoom = 0.4f
+          )
+        } else {
+          it
+        }
+      }
+      check(newZoom.finalZoom().let { it.isPositiveAndFinite() && it.minScale > 0f }) {
+        "New zoom is invalid/infinite = $newZoom. ${collectDebugInfoForIssue41("zoomDelta" to zoomDelta)}"
+      }
 
-    gestureState = GestureState(
-      offset = oldOffset
-        .retainCentroidPositionAfterZoom(
-          centroid = centroid,
-          panDelta = panDelta,
-          oldZoom = oldZoom,
-          newZoom = newZoom,
-        )
-        .coerceWithinBounds(proposedZoom = newZoom),
-      userZoomFactor = newZoom.userZoom,
-      lastCentroid = centroid,
-      contentSize = unscaledContentLocation.size(contentLayoutSize),
-    )
+      val oldOffset = lastGestureState.let {
+        if (it != null && !it.isPlaceholder) {
+          it.offset
+        } else {
+          val defaultAlignmentOffset = contentAlignment.align(
+            size = (unscaledContentBounds.size * baseZoomFactor.value).roundToIntSize(),
+            space = contentLayoutSize.roundToIntSize(),
+            layoutDirection = layoutDirection
+          )
+          // Take the content's top-left into account because it may not start at 0,0.
+          unscaledContentBounds.topLeft + (-defaultAlignmentOffset.toOffset() / oldZoom)
+        }
+      }
+
+      GestureState(
+        offset = oldOffset
+          .retainCentroidPositionAfterZoom(
+            centroid = centroid,
+            panDelta = panDelta,
+            oldZoom = oldZoom,
+            newZoom = newZoom,
+          )
+          .coerceWithinBounds(proposedZoom = newZoom, unscaledContentBounds = unscaledContentBounds),
+        userZoomFactor = newZoom.userZoom,
+        lastCentroid = centroid,
+        contentSize = unscaledContentLocation.size(contentLayoutSize),
+        isPlaceholder = false,
+      )
+    }
   }
 
   internal fun canConsumePanChange(panDelta: Offset): Boolean {
-    val baseZoomFactor = baseZoomFactor ?: return false // Content is probably not ready yet. Ignore this gesture.
-    val current = gestureState ?: return false
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize) ?: return false // Content is probably not ready yet. Ignore this gesture.
+    val current = gestureState2.provide(contentLayoutSize) ?: return false
 
     val currentZoom = ContentZoomFactor(baseZoomFactor, current.userZoomFactor)
     val panDeltaWithZoom = panDelta / currentZoom
@@ -281,7 +309,10 @@ internal class RealZoomableState internal constructor(
       "Offset can't be infinite ${collectDebugInfoForIssue41("panDelta" to panDelta)}"
     }
 
-    val newOffsetWithinBounds = newOffset.coerceWithinBounds(proposedZoom = currentZoom)
+    val newOffsetWithinBounds = newOffset.coerceWithinBounds(
+      proposedZoom = currentZoom,
+      unscaledContentBounds = unscaledContentBounds2.provide(contentLayoutSize),
+    )
     val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
     val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
 
@@ -346,7 +377,7 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  private fun Offset.coerceWithinBounds(proposedZoom: ContentZoomFactor): Offset {
+  private fun Offset.coerceWithinBounds(proposedZoom: ContentZoomFactor, unscaledContentBounds: Rect): Offset {
     check(this.isFinite) {
       "Can't coerce an infinite offset ${collectDebugInfoForIssue41("proposedZoom" to proposedZoom)}"
     }
@@ -371,11 +402,11 @@ internal class RealZoomableState internal constructor(
   }
 
   override fun setContentLocation(location: ZoomableContentLocation) {
-      unscaledContentLocation = location
+    unscaledContentLocation = location
   }
 
   override suspend fun resetZoom(animationSpec: AnimationSpec<Float>) {
-    val baseZoomFactor = baseZoomFactor ?: return
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize) ?: return
     zoomTo(
       zoomFactor = baseZoomFactor.maxScale,
       animationSpec = animationSpec,
@@ -399,7 +430,9 @@ internal class RealZoomableState internal constructor(
     centroid: Offset,
     animationSpec: AnimationSpec<Float>,
   ) {
-    val gestureState = gestureState ?: return
+    // todo: it'd be nice if contentLayoutSize was a channel so that I could subscribe to its value here.
+    // todo: this is possibly wrong. gestureState2 currently has a non-null initial value.
+    val gestureState = gestureState2.provide(contentLayoutSize) ?: return
     zoomTo(
       zoomFactor = gestureState.userZoomFactor.value * zoomFactor,
       centroid = centroid,
@@ -412,7 +445,7 @@ internal class RealZoomableState internal constructor(
     centroid: Offset,
     animationSpec: AnimationSpec<Float>,
   ) {
-    val baseZoomFactor = baseZoomFactor ?: return
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize) ?: return
     val targetZoom = ContentZoomFactor.forFinalZoom(
       baseZoom = baseZoomFactor,
       finalZoom = zoomFactor,
@@ -454,17 +487,20 @@ internal class RealZoomableState internal constructor(
     mutatePriority: MutatePriority,
     animationSpec: AnimationSpec<Float>,
   ) {
-    val startTransformation = gestureState ?: return
-    val baseZoomFactor = baseZoomFactor ?: return
+    val startGestureState = gestureState2.provide(contentLayoutSize) ?: return
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize) ?: return
 
-    val startZoom = ContentZoomFactor(baseZoomFactor, startTransformation.userZoomFactor)
-    val targetOffset = startTransformation.offset
+    val startZoom = ContentZoomFactor(baseZoomFactor, startGestureState.userZoomFactor)
+    val targetOffset = startGestureState.offset
       .retainCentroidPositionAfterZoom(
         centroid = centroid,
         oldZoom = startZoom,
         newZoom = targetZoom,
       )
-      .coerceWithinBounds(proposedZoom = targetZoom)
+      .coerceWithinBounds(
+        proposedZoom = targetZoom,
+        unscaledContentBounds = unscaledContentBounds2.provide(contentLayoutSize),
+      )
 
     transformableState.transform(mutatePriority) {
       AnimationState(initialValue = 0f).animateTo(
@@ -490,23 +526,25 @@ internal class RealZoomableState internal constructor(
         // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
         // offset is used because the zoom and the offset values animate at different scales.
         val animatedOffsetForUi: Offset = lerp(
-          start = (-startTransformation.offset * startZoom),
+          start = (-startGestureState.offset * startZoom),
           stop = (-targetOffset * targetZoom),
           fraction = value
         )
 
-        gestureState = gestureState!!.copy(
-          offset = (-animatedOffsetForUi) / animatedZoom,
-          userZoomFactor = animatedZoom.userZoom,
-          lastCentroid = centroid,
-        )
+        gestureState2 = GestureStateProvider {
+          startGestureState.copy(
+            offset = (-animatedOffsetForUi) / animatedZoom,
+            userZoomFactor = animatedZoom.userZoom,
+            lastCentroid = centroid,
+          )
+        }
       }
     }
   }
 
   internal fun isZoomOutsideRange(): Boolean {
-    val baseZoomFactor = baseZoomFactor ?: return false
-    val userZoomFactor = gestureState?.userZoomFactor ?: return false
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize) ?: return false
+    val userZoomFactor = gestureState2.provide(contentLayoutSize)?.userZoomFactor ?: return false
 
     val currentZoom = ContentZoomFactor(baseZoomFactor, userZoomFactor)
     val zoomWithinBounds = currentZoom.coerceUserZoomIn(zoomSpec.range)
@@ -515,19 +553,20 @@ internal class RealZoomableState internal constructor(
 
   internal suspend fun animateSettlingOfZoomOnGestureEnd() {
     check(isReadyToInteract) { "shouldn't have gotten called" }
-    val start = gestureState!!
-    val userZoomWithinBounds = ContentZoomFactor(baseZoomFactor!!, start.userZoomFactor)
+    val gestureState = gestureState2.provide(contentLayoutSize)!!
+    val baseZoomFactor = baseZoomFactor2.provide(contentLayoutSize)!!
+    val userZoomWithinBounds = ContentZoomFactor(baseZoomFactor, gestureState.userZoomFactor)
       .coerceUserZoomIn(zoomSpec.range)
       .userZoom
 
     transformableState.transform(MutatePriority.Default) {
-      var previous = start.userZoomFactor.value
+      var previous = gestureState.userZoomFactor.value
       AnimationState(initialValue = previous).animateTo(
         targetValue = userZoomWithinBounds.value,
         animationSpec = spring()
       ) {
         transformBy(
-          centroid = start.lastCentroid,
+          centroid = gestureState.lastCentroid,
           zoomChange = if (previous == 0f) 1f else value / previous,
         )
         previous = this.value
@@ -538,16 +577,16 @@ internal class RealZoomableState internal constructor(
   internal suspend fun fling(velocity: Velocity, density: Density) {
     check(velocity.x.isFinite() && velocity.y.isFinite()) { "Invalid velocity = $velocity" }
 
-    val start = gestureState!!
+    val gestureState = gestureState2.provide(contentLayoutSize)!!
     transformableState.transform(MutatePriorities.FlingAnimation) {
-      var previous = start.offset
+      var previous = gestureState.offset
       AnimationState(
         typeConverter = Offset.VectorConverter,
         initialValue = previous,
         initialVelocityVector = AnimationVector(velocity.x, velocity.y)
       ).animateDecay(splineBasedDecay(density)) {
         transformBy(
-          centroid = start.lastCentroid,
+          centroid = gestureState.lastCentroid,
           panChange = (value - previous).also {
             check(it.isFinite) {
               val debugInfo = collectDebugInfoForIssue41(
@@ -571,13 +610,13 @@ internal class RealZoomableState internal constructor(
       extras.forEach { (key, value) ->
         appendLine("$key = $value")
       }
-      appendLine("gestureState = $gestureState")
+      appendLine("gestureState = ${gestureState2.provide(contentLayoutSize)}")
       appendLine("contentTransformation = $contentTransformation")
       appendLine("contentScale = $contentScale")
       appendLine("contentAlignment = $contentAlignment")
       appendLine("isReadyToInteract = $isReadyToInteract")
       appendLine("unscaledContentLocation = $unscaledContentLocation")
-      appendLine("unscaledContentBounds = $unscaledContentBounds")
+      appendLine("unscaledContentBounds = ${unscaledContentBounds2.provide(contentLayoutSize)}")
       appendLine("contentLayoutSize = $contentLayoutSize")
       appendLine("zoomSpec = $zoomSpec")
       appendLine("Please share this error message to https://github.com/saket/telephoto/issues/41?")
@@ -586,7 +625,15 @@ internal class RealZoomableState internal constructor(
 
   companion object {
     internal val Saver = Saver<RealZoomableState, ZoomableSavedState>(
-      save = { ZoomableSavedState(it.gestureState) },
+      save = {
+        // todo: good enough?
+        val gestureState = if (it.isReadyToInteract) {
+          it.gestureState2.provide(it.contentLayoutSize)
+        } else {
+          null
+        }
+        ZoomableSavedState(gestureState)
+      },
       restore = { RealZoomableState(initialGestureState = it.asGestureState()) }
     )
   }
@@ -597,7 +644,8 @@ internal data class GestureState(
   val offset: Offset,
   val userZoomFactor: UserZoomFactor, // todo: rename to userZoom for consistency with ContentZoomFactor
   val lastCentroid: Offset,
-  val contentSize: Size,
+  val contentSize: Size,  // todo: why should this be a part of GestureState?
+  val isPlaceholder: Boolean, // todo: can this be avoided?
 )
 
 /**
@@ -608,6 +656,21 @@ internal data class GestureState(
 @Immutable
 internal value class BaseZoomFactor(val value: ScaleFactor) {
   val maxScale: Float get() = value.maxScale
+}
+
+@Immutable
+private fun interface BaseZoomFactorProvider {
+  fun provide(contentLayoutSize: Size): BaseZoomFactor?
+}
+
+@Immutable
+private fun interface GestureStateProvider {
+  fun provide(contentLayoutSize: Size): GestureState? // todo: should this be nullable? if not, then how will consumers (e.g., zoomBy) know that the content is ready?
+}
+
+@Immutable
+private fun interface UnscaledContentBoundsProvider {
+  fun provide(contentLayoutSize: Size): Rect  // todo: should this be nullable?
 }
 
 /** Zoom applied by the user on top of [BaseZoomFactor]. */

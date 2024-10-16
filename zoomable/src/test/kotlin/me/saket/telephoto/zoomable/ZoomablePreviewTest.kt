@@ -50,6 +50,7 @@ class ZoomablePreviewTest {
     }
   }
 
+  // todo: this should also account for content alignment and scale.
   @Test fun `content should be rendered on the first frame`() {
     paparazzi.snapshot {
       Box(

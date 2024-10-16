@@ -96,8 +96,10 @@ interface ZoomableContentTransformation {
 }
 
 @Stable
-internal fun Modifier.applyTransformation(transformation: ZoomableContentTransformation): Modifier {
+internal fun Modifier.applyTransformation(transformation: () -> ZoomableContentTransformation): Modifier {
   return graphicsLayer {
+    @Suppress("NAME_SHADOWING")
+    val transformation = transformation()
     scaleX = transformation.scale.scaleX
     scaleY = transformation.scale.scaleY
     rotationZ = transformation.rotationZ

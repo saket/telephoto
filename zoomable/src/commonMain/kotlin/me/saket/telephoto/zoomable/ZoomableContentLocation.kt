@@ -106,8 +106,8 @@ interface ZoomableContentLocation {
    * isn't calculated yet. The content will stay hidden until this is replaced.
    */
   data object Unspecified : ZoomableContentLocation {
-    override fun size(layoutSize: Size) = Size.Unspecified
-    override fun location(layoutSize: Size, direction: LayoutDirection) = throw UnsupportedOperationException()
+    override fun size(layoutSize: Size): Size = Size.Unspecified
+    override fun location(layoutSize: Size, direction: LayoutDirection): Rect = throw UnsupportedOperationException()
   }
 
   /**
