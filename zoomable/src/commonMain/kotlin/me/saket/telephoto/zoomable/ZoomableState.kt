@@ -122,7 +122,7 @@ sealed interface ZoomableState {
   val zoomSpec: ZoomSpec
 
   /** See [ZoomableContentLocation]. */
-  suspend fun setContentLocation(location: ZoomableContentLocation)
+  fun setContentLocation(location: ZoomableContentLocation)
 
   /**
    * Reset content to its minimum zoom and zero offset and suspend until it's finished.

@@ -370,14 +370,8 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  override suspend fun setContentLocation(location: ZoomableContentLocation) {
-    if (unscaledContentLocation != location) {
+  override fun setContentLocation(location: ZoomableContentLocation) {
       unscaledContentLocation = location
-
-      // Refresh synchronously so that the result is available immediately.
-      // Otherwise, the old position will be used with this new size and cause a flicker.
-      refreshContentTransformation()
-    }
   }
 
   override suspend fun resetZoom(animationSpec: AnimationSpec<Float>) {

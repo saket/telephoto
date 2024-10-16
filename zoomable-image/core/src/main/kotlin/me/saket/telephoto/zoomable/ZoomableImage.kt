@@ -184,11 +184,9 @@ fun ZoomableImage(
 
       is ZoomableImageSource.PainterDelegate -> {
         val painter = delegate.painter ?: EmptyPainter
-        LaunchedEffect(painter.intrinsicSize) {
-          state.zoomableState.setContentLocation(
-            ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
-          )
-        }
+        state.zoomableState.setContentLocation(
+          ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
+        )
         Image(
           modifier = zoomable,
           painter = animatedPainter(painter),

@@ -93,12 +93,9 @@ fun rememberSubSamplingImageState(
     }
   }
 
-  LaunchedEffect(state.imageSize) {
-    zoomableState.setContentLocation(
-      ZoomableContentLocation.unscaledAndTopLeftAligned(state.imageSize?.toSize())
-    )
-  }
-
+  zoomableState.setContentLocation(
+    ZoomableContentLocation.unscaledAndTopLeftAligned(state.imageSize?.toSize())
+  )
   return state
 }
 
