@@ -49,4 +49,25 @@ class ZoomablePreviewTest {
       }
     }
   }
+
+  @Test fun `content should be rendered on the first frame`() {
+    paparazzi.snapshot {
+      Box(
+        Modifier
+          .padding(16.dp)
+          .fillMaxSize()
+          .zoomable(rememberZoomableState())
+          .background(
+            Brush.linearGradient(
+              colors = listOf(
+                Color(0xFF504E9A),
+                Color(0xFF772E6A),
+                Color(0xFF79192C),
+                Color(0xFF560D1A),
+              ),
+            )
+          )
+      )
+    }
+  }
 }
