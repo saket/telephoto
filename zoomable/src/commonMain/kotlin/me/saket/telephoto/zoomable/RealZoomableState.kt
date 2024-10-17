@@ -643,7 +643,7 @@ private fun interface BaseZoomFactorCalculator {
 
 @Immutable
 private fun interface GestureStateCalculator {
-  fun calculate(contentLayoutSize: Size): GestureState? // todo: should this be nullable? if not, then how will consumers (e.g., zoomBy) know that the content is ready?
+  fun calculate(contentLayoutSize: Size): GestureState?
 }
 
 @Immutable
