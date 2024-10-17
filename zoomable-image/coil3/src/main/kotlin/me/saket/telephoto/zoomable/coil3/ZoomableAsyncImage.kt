@@ -1,6 +1,6 @@
 @file:Suppress("NAME_SHADOWING")
 
-package me.saket.telephoto.zoomable.coil
+package me.saket.telephoto.zoomable.coil3
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
@@ -13,10 +13,10 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import coil.ImageLoader
-import coil.compose.DefaultModelEqualityDelegate
-import coil.compose.EqualityDelegate
-import coil.imageLoader
+import coil3.ImageLoader
+import coil3.compose.DefaultModelEqualityDelegate
+import coil3.compose.EqualityDelegate
+import coil3.imageLoader
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
@@ -25,7 +25,7 @@ import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 
 /**
- * A zoomable image that can be loaded by Coil.
+ * A zoomable image that can be loaded by Coil 3.
  *
  * Example usages:
  *
@@ -80,42 +80,6 @@ fun ZoomableAsyncImage(
   )
 }
 
-@Composable
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-@NonRestartableComposable
-fun ZoomableAsyncImage(
-  model: Any?,
-  contentDescription: String?,
-  modifier: Modifier = Modifier,
-  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
-  imageLoader: ImageLoader = LocalContext.current.imageLoader,
-  alpha: Float = DefaultAlpha,
-  colorFilter: ColorFilter? = null,
-  alignment: Alignment = Alignment.Center,
-  contentScale: ContentScale = ContentScale.Fit,
-  gesturesEnabled: Boolean = true,
-  onClick: ((Offset) -> Unit)? = null,
-  onLongClick: ((Offset) -> Unit)? = null,
-  clipToBounds: Boolean = true,
-) {
-  ZoomableAsyncImage(
-    model = model,
-    contentDescription = contentDescription,
-    modifier = modifier,
-    state = state,
-    imageLoader = imageLoader,
-    alpha = alpha,
-    colorFilter = colorFilter,
-    alignment = alignment,
-    contentScale = contentScale,
-    gesturesEnabled = gesturesEnabled,
-    onClick = onClick,
-    onLongClick = onLongClick,
-    clipToBounds = clipToBounds,
-    onDoubleClick = DoubleClickToZoomListener.cycle(),
-  )
-}
-
 /**
  * A zoomable image that can be loaded by Coil and displayed using
  * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
@@ -145,7 +109,7 @@ fun ZoomableImageSource.Companion.coil(
 ): ZoomableImageSource {
   val model = StableModel(model, equalityDelegate = DefaultModelEqualityDelegate)
   return remember(model, imageLoader) {
-    CoilImageSource(model.model, imageLoader)
+    Coil3ImageSource(model.model, imageLoader)
   }
 }
 
