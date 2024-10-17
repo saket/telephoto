@@ -72,7 +72,7 @@ fun Modifier.zoomable(
         .focusable()
     }
     .thenIf(state.autoApplyTransformations) {
-      Modifier.applyTransformation(state.contentTransformation)
+      Modifier.applyTransformation { state.contentTransformation }
     }
 }
 

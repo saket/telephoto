@@ -37,11 +37,9 @@ fun rememberZoomableState(
   autoApplyTransformations: Boolean = true,
   hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
 ): ZoomableState {
-  val isLayoutPreview = LocalInspectionMode.current
   val state = rememberSaveable(saver = RealZoomableState.Saver) {
     RealZoomableState(
       autoApplyTransformations = autoApplyTransformations,
-      isLayoutPreview = isLayoutPreview,
     )
   }.also {
     it.zoomSpec = zoomSpec
@@ -101,9 +99,6 @@ sealed interface ZoomableState {
    * The visual bounds of the content, calculated by applying the scale and translation of pan and zoom
    * gestures to the value given to [ZoomableState.setContentLocation]. Useful for drawing decorations
    * around the content or performing hit tests.
-   *
-   * Because [ZoomableState.setContentLocation] can only be called asynchronously, this may be one frame
-   * behind the UI.
    */
   val transformedContentBounds: Rect
 

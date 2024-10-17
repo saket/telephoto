@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
@@ -27,25 +25,23 @@ class ZoomablePreviewTest {
 
   @Test fun `layout preview`() {
     paparazzi.snapshot {
-      CompositionLocalProvider(LocalInspectionMode provides true) {
+      Box(
+        Modifier
+          .fillMaxSize()
+          .background(Color(0xFF333333))
+      ) {
         Box(
           Modifier
-            .fillMaxSize()
-            .background(Color(0xFF333333))
-        ) {
-          Box(
-            Modifier
-              .align(Alignment.Center)
-              .fillMaxWidth()
-              .fillMaxHeight(fraction = 0.4f)
-              .padding(16.dp)
-              .zoomable(rememberZoomableState())
-              .background(
-                Brush.linearGradient(listOf(Color.Cyan, Color.Blue)),
-                shape = RoundedCornerShape(8.dp)
-              )
-          )
-        }
+            .align(Alignment.Center)
+            .fillMaxWidth()
+            .fillMaxHeight(fraction = 0.4f)
+            .padding(16.dp)
+            .zoomable(rememberZoomableState())
+            .background(
+              Brush.linearGradient(listOf(Color.Cyan, Color.Blue)),
+              shape = RoundedCornerShape(8.dp)
+            )
+        )
       }
     }
   }

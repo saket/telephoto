@@ -97,6 +97,12 @@ fun ZoomableImage(
       .focusForwarder(focusForwarder, enabled = state.hardwareShortcutsEnabled()),
     propagateMinConstraints = true,
   ) {
+    state.isImageDisplayed = when (resolved.delegate) {
+      is ZoomableImageSource.PainterDelegate -> resolved.delegate.painter != null
+      is ZoomableImageSource.SubSamplingDelegate -> state.subSamplingState?.isImageLoaded ?: false
+      else -> false
+    }
+
     val animatedAlpha by if (LocalInspectionMode.current) {
       remember { mutableFloatStateOf(1f) }
     } else {
@@ -106,6 +112,8 @@ fun ZoomableImage(
         label = "Crossfade animation",
       )
     }
+
+    state.isPlaceholderDisplayed = resolved.placeholder != null && animatedAlpha < 1f
 
     // If a state restoration happened and the image was previously zoomed in, the placeholder will
     // no longer be aligned correctly and can't be displayed anymore. It'd be nice if the placeholder
@@ -119,13 +127,6 @@ fun ZoomableImage(
         wasImageZoomedIn = state.zoomableState.zoomFraction.let { it != null && it > 0f }
       }
     }
-
-    state.isImageDisplayed = when (resolved.delegate) {
-      is ZoomableImageSource.PainterDelegate -> resolved.delegate.painter != null
-      is ZoomableImageSource.SubSamplingDelegate -> state.subSamplingState?.isImageLoaded ?: false
-      else -> false
-    }
-    state.isPlaceholderDisplayed = resolved.placeholder != null && animatedAlpha < 1f
 
     if (state.isPlaceholderDisplayed && !wasImageZoomedIn) {
       val painter = animatedPainter(resolved.placeholder!!).scaledToMatch(

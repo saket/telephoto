@@ -31,8 +31,8 @@ interface ZoomableContentTransformation {
 
   /**
    * The size of the zoomable content that is currently known to [Modifier.zoomable].
-   * This is calculated using the value given to [ZoomableState.setContentLocation] and may be
-   * one frame behind the UI. Useful for synchronizing other elements with the zoomable content.
+   * This is calculated using the value given to [ZoomableState.setContentLocation].
+   * Useful for synchronizing other elements with the zoomable content.
    */
   val contentSize: Size
 
@@ -96,8 +96,10 @@ interface ZoomableContentTransformation {
 }
 
 @Stable
-internal fun Modifier.applyTransformation(transformation: ZoomableContentTransformation): Modifier {
+internal fun Modifier.applyTransformation(transformation: () -> ZoomableContentTransformation): Modifier {
   return graphicsLayer {
+    @Suppress("NAME_SHADOWING")
+    val transformation = transformation()
     scaleX = transformation.scale.scaleX
     scaleY = transformation.scale.scaleY
     rotationZ = transformation.rotationZ

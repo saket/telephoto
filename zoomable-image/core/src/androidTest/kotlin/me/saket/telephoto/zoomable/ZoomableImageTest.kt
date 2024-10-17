@@ -181,6 +181,9 @@ class ZoomableImageTest {
       }
     }
 
+    rule.runOnIdle {
+      assertThat(finalScale.scaleX).isEqualTo(1f)
+    }
     rule.onNodeWithTag("image").performTouchInput {
       pinchToZoomBy(visibleSize.center / 2f)
     }
