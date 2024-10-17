@@ -51,6 +51,7 @@ import me.saket.telephoto.zoomable.internal.copy
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
 import me.saket.telephoto.zoomable.internal.isSpecifiedAndFinite
+import me.saket.telephoto.zoomable.internal.isSpecifiedAndNonZero
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.minScale
 import me.saket.telephoto.zoomable.internal.minus
@@ -196,8 +197,9 @@ internal class RealZoomableState internal constructor(
    * listening to pan & zoom gestures.
    */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    contentLayoutSize.isSpecified && contentLayoutSize.minDimension > 0f // Prevent division by zero errors.
-      && unscaledContentLocation.size(contentLayoutSize).let { it.isSpecified && it.minDimension > 0f }
+    contentLayoutSize.isSpecifiedAndNonZero
+      && unscaledContentLocation != ZoomableContentLocation.Unspecified
+      && unscaledContentLocation.location(contentLayoutSize, layoutDirection).size.isSpecifiedAndNonZero
   }
 
   @Suppress("NAME_SHADOWING")

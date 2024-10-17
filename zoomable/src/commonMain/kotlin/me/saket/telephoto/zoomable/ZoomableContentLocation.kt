@@ -106,7 +106,6 @@ interface ZoomableContentLocation {
    * isn't calculated yet. The content will stay hidden until this is replaced.
    */
   data object Unspecified : ZoomableContentLocation {
-    override fun size(layoutSize: Size): Size = Size.Unspecified
     override fun location(layoutSize: Size, direction: LayoutDirection): Rect = throw UnsupportedOperationException()
   }
 
@@ -118,11 +117,12 @@ interface ZoomableContentLocation {
    * size, you should provide a different value using [ZoomableState.setContentLocation].
    */
   data object SameAsLayoutBounds : ZoomableContentLocation {
-    override fun size(layoutSize: Size): Size = layoutSize
     override fun location(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
   }
 
-  fun size(layoutSize: Size): Size
+  @Deprecated("No longer used")
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  fun size(layoutSize: Size): Size = error("unused")
 
   fun location(layoutSize: Size, direction: LayoutDirection): Rect
 }
@@ -137,7 +137,6 @@ internal data class RelativeContentLocation(
   private val scale: ContentScale,
   private val alignment: Alignment,
 ) : ZoomableContentLocation {
-  override fun size(layoutSize: Size): Size = size
 
   override fun location(layoutSize: Size, direction: LayoutDirection): Rect {
     check(!layoutSize.isEmpty()) { "Layout size is empty" }
@@ -154,7 +153,7 @@ internal data class RelativeContentLocation(
     )
     return Rect(
       offset = alignedOffset.toOffset(),
-      size = scaledSize
+      size = scaledSize,
     )
   }
 }
