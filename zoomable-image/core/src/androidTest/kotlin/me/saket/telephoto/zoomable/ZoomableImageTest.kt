@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
+import androidx.lifecycle.Lifecycle
 import assertk.all
 import assertk.assertThat
 import assertk.assertions.isCloseTo
@@ -1307,6 +1308,7 @@ class ZoomableImageTest {
       rule.activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
     }
 
+    rule.waitUntil { rule.activity.lifecycle.currentState < Lifecycle.State.RESUMED }
     rule.onRoot().assertDoesNotExist()
   }
 
