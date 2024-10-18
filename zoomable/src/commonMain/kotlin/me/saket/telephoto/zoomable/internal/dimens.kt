@@ -23,8 +23,8 @@ internal fun Size.discardFractionalParts(): IntSize {
   return IntSize(width = width.toInt(), height = height.toInt())
 }
 
-internal val Size.isSpecifiedAndNonZero: Boolean
-  get() = isSpecified && minDimension > 0f
+internal val Size.isSpecifiedAndNonEmpty: Boolean
+  get() = isSpecified && !isEmpty()
 
 internal val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)
