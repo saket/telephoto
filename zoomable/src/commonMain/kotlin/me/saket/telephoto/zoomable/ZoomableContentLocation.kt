@@ -161,6 +161,7 @@ internal data class RelativeContentLocation(
   override fun location(layoutSize: Size, direction: LayoutDirection): Rect {
     check(!layoutSize.isEmpty()) { "Layout size is empty" }
 
+    @Suppress("DEPRECATION")
     val scaledSize = size(layoutSize)
     val alignedOffset = alignment.align(
       size = scaledSize.discardFractionalParts(),
