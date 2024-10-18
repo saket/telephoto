@@ -10,9 +10,11 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toOffset
+import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
 /**
@@ -141,10 +143,14 @@ internal data class RelativeContentLocation(
   override fun location(layoutSize: Size, direction: LayoutDirection): Rect {
     check(!layoutSize.isEmpty()) { "Layout size is empty" }
 
-    val scaleFactor = scale.computeScaleFactor(
-      srcSize = size,
-      dstSize = layoutSize,
-    )
+    val scaleFactor = if (size.isEmpty()) {
+      ScaleFactor.Zero
+    } else {
+      scale.computeScaleFactor(
+        srcSize = size,
+        dstSize = layoutSize,
+      )
+    }
     val scaledSize = size * scaleFactor
     val alignedOffset = alignment.align(
       size = scaledSize.discardFractionalParts(),

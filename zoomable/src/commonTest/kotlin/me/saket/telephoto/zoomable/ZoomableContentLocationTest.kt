@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable
 
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.unit.LayoutDirection
 import assertk.assertThat
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
@@ -30,6 +31,9 @@ class ZoomableContentLocationTest {
     assertThat(ZoomableContentLocation.scaledToFitAndCenterAligned(Size(42f, 99f)).isSpecified).isTrue()
   }
 
-  private val ZoomableContentLocation.isSpecified
-    get() = this.size(layoutSize = Size(width = Random.nextFloat(), height = Random.nextFloat())).isSpecified
+  private val ZoomableContentLocation.isSpecified: Boolean
+    get() {
+      val layoutSize = Size(width = Random.nextInt(0, 1000).toFloat(), height = Random.nextInt(0, 1000).toFloat())
+      return this != ZoomableContentLocation.Unspecified && location(layoutSize, LayoutDirection.Ltr).size.isSpecified
+    }
 }
