@@ -100,12 +100,6 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  override var autoApplyTransformations: Boolean by mutableStateOf(autoApplyTransformations)
-
-  override var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
-
-  override var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
-
   @get:FloatRange(from = 0.0, to = 1.0)
   override val zoomFraction: Float? by derivedStateOf {
     val gestureState = gestureState.calculate(contentLayoutSize)
@@ -123,11 +117,10 @@ internal class RealZoomableState internal constructor(
     }
   }
 
+  override var autoApplyTransformations: Boolean by mutableStateOf(autoApplyTransformations)
+  override var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
+  override var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
   override var zoomSpec by mutableStateOf(ZoomSpec())
-
-  private var gestureState: GestureStateCalculator by mutableStateOf(
-    GestureStateCalculator { initialGestureState }
-  )
 
   internal var hardwareShortcutsSpec by mutableStateOf(HardwareShortcutsSpec())
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
@@ -142,6 +135,10 @@ internal class RealZoomableState internal constructor(
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
    */
   internal var contentLayoutSize: Size by mutableStateOf(Size.Unspecified)
+
+  private var gestureState: GestureStateCalculator by mutableStateOf(
+    GestureStateCalculator { initialGestureState }
+  )
 
   private val unscaledContentBounds: UnscaledContentBoundsCalculator by derivedStateOf {
     UnscaledContentBoundsCalculator { contentLayoutSize ->

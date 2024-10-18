@@ -62,7 +62,6 @@ fun rememberZoomableState(
 
 @Stable
 sealed interface ZoomableState {
-
   /**
    * Transformations that should be applied to [Modifier.zoomable]'s content.
    *
