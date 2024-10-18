@@ -1,3 +1,5 @@
+@file:Suppress("DeprecatedCallableAddReplaceWith")
+
 package me.saket.telephoto.zoomable
 
 import androidx.compose.runtime.Immutable
@@ -108,6 +110,8 @@ interface ZoomableContentLocation {
    * isn't calculated yet. The content will stay hidden until this is replaced.
    */
   data object Unspecified : ZoomableContentLocation {
+    @Deprecated("No longer used")
+    override fun size(layoutSize: Size): Size = Size.Unspecified
     override fun location(layoutSize: Size, direction: LayoutDirection): Rect = throw UnsupportedOperationException()
   }
 
@@ -119,12 +123,13 @@ interface ZoomableContentLocation {
    * size, you should provide a different value using [ZoomableState.setContentLocation].
    */
   data object SameAsLayoutBounds : ZoomableContentLocation {
+    @Deprecated("No longer used")
+    override fun size(layoutSize: Size): Size = layoutSize
     override fun location(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
   }
 
   @Deprecated("No longer used")
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  fun size(layoutSize: Size): Size = error("unused")
+  fun size(layoutSize: Size): Size = Size.Unspecified
 
   fun location(layoutSize: Size, direction: LayoutDirection): Rect
 }
@@ -140,9 +145,8 @@ internal data class RelativeContentLocation(
   private val alignment: Alignment,
 ) : ZoomableContentLocation {
 
-  override fun location(layoutSize: Size, direction: LayoutDirection): Rect {
-    check(!layoutSize.isEmpty()) { "Layout size is empty" }
-
+  @Deprecated("No longer used")
+  override fun size(layoutSize: Size): Size {
     val scaleFactor = if (size.isEmpty()) {
       ScaleFactor.Zero
     } else {
@@ -151,7 +155,13 @@ internal data class RelativeContentLocation(
         dstSize = layoutSize,
       )
     }
-    val scaledSize = size * scaleFactor
+    return size * scaleFactor
+  }
+
+  override fun location(layoutSize: Size, direction: LayoutDirection): Rect {
+    check(!layoutSize.isEmpty()) { "Layout size is empty" }
+
+    val scaledSize = size(layoutSize)
     val alignedOffset = alignment.align(
       size = scaledSize.discardFractionalParts(),
       space = layoutSize.discardFractionalParts(),
