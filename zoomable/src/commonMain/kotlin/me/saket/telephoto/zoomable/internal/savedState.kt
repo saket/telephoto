@@ -15,7 +15,7 @@ internal data class ZoomableSavedState private constructor(
   constructor(gestureState: GestureState?) : this(
     offsetX = gestureState?.offset?.x,
     offsetY = gestureState?.offset?.y,
-    userZoom = gestureState?.userZoomFactor?.value
+    userZoom = gestureState?.userZoom?.value
   )
 
   fun asGestureState(): GestureState? {
@@ -24,7 +24,7 @@ internal data class ZoomableSavedState private constructor(
         x = offsetX ?: return null,
         y = offsetY ?: return null
       ),
-      userZoomFactor = UserZoomFactor(
+      userZoom = UserZoomFactor(
         value = userZoom ?: return null
       ),
       lastCentroid = Offset.Zero,

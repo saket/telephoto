@@ -72,7 +72,7 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = calculateGestureStateInputs()
     if (gestureStateInputs != null) {
       val gestureState = gestureState.calculate(gestureStateInputs)
-      val contentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoomFactor)
+      val contentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
       val contentSize = gestureStateInputs.unscaledContentBounds.size
       RealZoomableContentTransformation(
         isSpecified = true,
@@ -80,7 +80,7 @@ internal class RealZoomableState internal constructor(
         scale = contentZoom.finalZoom(),
         scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
           initialScale = gestureStateInputs.baseZoom.value,
-          userZoom = gestureState.userZoomFactor.value,
+          userZoom = gestureState.userZoom.value,
         ),
         offset = -gestureState.offset * contentZoom.finalZoom(),
         centroid = gestureState.lastCentroid,
@@ -108,7 +108,7 @@ internal class RealZoomableState internal constructor(
       val baseZoomFactor = gestureStateInputs.baseZoom
       val min = ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom
       val max = ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom
-      val current = gestureState.userZoomFactor.coerceIn(min, max)
+      val current = gestureState.userZoom.coerceIn(min, max)
       when {
         current == min && min == max -> 1f  // Content can't zoom.
         else -> ((current - min) / (max - min)).value.coerceIn(0f, 1f)
@@ -140,7 +140,7 @@ internal class RealZoomableState internal constructor(
   private var gestureState: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
       initialGestureState ?: GestureState(
-        userZoomFactor = UserZoomFactor(1f),
+        userZoom = UserZoomFactor(1f),
         lastCentroid = inputs.contentLayoutSize.center,
         offset = inputs.initialOffsetForContentAlignment(),
       )
@@ -212,7 +212,7 @@ internal class RealZoomableState internal constructor(
     gestureState = GestureStateCalculator { inputs ->
       val oldZoom = ContentZoomFactor(
         baseZoom = inputs.baseZoom,
-        userZoom = lastGestureState.userZoomFactor,
+        userZoom = lastGestureState.userZoom,
       )
       check(oldZoom.finalZoom().isPositiveAndFinite()) {
         "Old zoom is invalid/infinite. ${collectDebugInfoForIssue41()}"
@@ -257,7 +257,7 @@ internal class RealZoomableState internal constructor(
             newZoom = newZoom,
           )
           .coerceWithinContentBounds(proposedZoom = newZoom, inputs = inputs),
-        userZoomFactor = newZoom.userZoom,
+        userZoom = newZoom.userZoom,
         lastCentroid = centroid,
       )
     }
@@ -267,7 +267,7 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = calculateGestureStateInputs() ?: return false // Content isn't ready yet.
     val current = gestureState.calculate(gestureStateInputs)
 
-    val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, current.userZoomFactor)
+    val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, current.userZoom)
     val panDeltaWithZoom = panDelta / currentZoom
     val newOffset = current.offset - panDeltaWithZoom
     check(newOffset.isFinite) {
@@ -386,7 +386,7 @@ internal class RealZoomableState internal constructor(
   ) {
     val gestureState = calculateGestureState() ?: return
     zoomTo(
-      zoomFactor = gestureState.userZoomFactor.value * zoomFactor,
+      zoomFactor = gestureState.userZoom.value * zoomFactor,
       centroid = centroid,
       animationSpec = animationSpec,
     )
@@ -442,7 +442,7 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = calculateGestureStateInputs() ?: return
     val startGestureState = gestureState.calculate(gestureStateInputs)
 
-    val startZoom = ContentZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoomFactor)
+    val startZoom = ContentZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
     val targetOffset = startGestureState.offset
       .retainCentroidPositionAfterZoom(
         centroid = centroid,
@@ -486,7 +486,7 @@ internal class RealZoomableState internal constructor(
         gestureState = GestureStateCalculator {
           startGestureState.copy(
             offset = (-animatedOffsetForUi) / animatedZoom,
-            userZoomFactor = animatedZoom.userZoom,
+            userZoom = animatedZoom.userZoom,
             lastCentroid = centroid,
           )
         }
@@ -498,7 +498,7 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = calculateGestureStateInputs() ?: return false
     val gestureState = gestureState.calculate(gestureStateInputs)
 
-    val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoomFactor)
+    val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
     val zoomWithinBounds = currentZoom.coerceUserZoomIn(zoomSpec.range)
     return abs(currentZoom.userZoom.value - zoomWithinBounds.userZoom.value) > ZoomDeltaEpsilon
   }
@@ -507,12 +507,12 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = calculateGestureStateInputs() ?: error("shouldn't have gotten called")
     val gestureState = gestureState.calculate(gestureStateInputs)
 
-    val userZoomWithinBounds = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoomFactor)
+    val userZoomWithinBounds = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
       .coerceUserZoomIn(zoomSpec.range)
       .userZoom
 
     transformableState.transform(MutatePriority.Default) {
-      var previous = gestureState.userZoomFactor.value
+      var previous = gestureState.userZoom.value
       AnimationState(initialValue = previous).animateTo(
         targetValue = userZoomWithinBounds.value,
         animationSpec = spring()
@@ -600,7 +600,7 @@ internal class RealZoomableState internal constructor(
 /** An intermediate, non-normalized model used for generating [ZoomableContentTransformation]. */
 internal data class GestureState(
   val offset: Offset,
-  val userZoomFactor: UserZoomFactor, // todo: rename to userZoom for consistency with ContentZoomFactor
+  val userZoom: UserZoomFactor,
   val lastCentroid: Offset,
 )
 
