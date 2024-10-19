@@ -110,7 +110,7 @@ interface ZoomableContentLocation {
    * isn't calculated yet. The content will stay hidden until this is replaced.
    */
   data object Unspecified : ZoomableContentLocation {
-    @Deprecated("No longer used")
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun size(layoutSize: Size): Size = Size.Unspecified
     override fun location(layoutSize: Size, direction: LayoutDirection): Rect = throw UnsupportedOperationException()
   }
@@ -123,7 +123,7 @@ interface ZoomableContentLocation {
    * size, you should provide a different value using [ZoomableState.setContentLocation].
    */
   data object SameAsLayoutBounds : ZoomableContentLocation {
-    @Deprecated("No longer used")
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun size(layoutSize: Size): Size = layoutSize
     override fun location(layoutSize: Size, direction: LayoutDirection) = Rect(Offset.Zero, layoutSize)
   }

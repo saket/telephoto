@@ -95,7 +95,7 @@ package me.saket.telephoto.zoomable {
 
   public interface ZoomableContentLocation {
     method public androidx.compose.ui.geometry.Rect location(long layoutSize, androidx.compose.ui.unit.LayoutDirection direction);
-    method public long size(long layoutSize);
+    method @Deprecated public default long size(long layoutSize);
     field public static final me.saket.telephoto.zoomable.ZoomableContentLocation.Companion Companion;
   }
 
@@ -113,7 +113,7 @@ package me.saket.telephoto.zoomable {
   }
 
   public static final class ZoomableContentLocation.Unspecified implements me.saket.telephoto.zoomable.ZoomableContentLocation {
-    method public Void location(long layoutSize, androidx.compose.ui.unit.LayoutDirection direction);
+    method public androidx.compose.ui.geometry.Rect location(long layoutSize, androidx.compose.ui.unit.LayoutDirection direction);
     method public long size(long layoutSize);
     field public static final me.saket.telephoto.zoomable.ZoomableContentLocation.Unspecified INSTANCE;
   }
@@ -164,7 +164,7 @@ package me.saket.telephoto.zoomable {
     method @Deprecated public default suspend Object? resetZoom(boolean withAnimation, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setAutoApplyTransformations(boolean);
     method public void setContentAlignment(androidx.compose.ui.Alignment);
-    method public suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public void setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
     method public suspend Object? zoomBy(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public suspend Object? zoomTo(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
