@@ -8,7 +8,6 @@ import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -16,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
 
 /**
@@ -37,7 +35,7 @@ fun rememberZoomableState(
   autoApplyTransformations: Boolean = true,
   hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
 ): ZoomableState {
-  val state = rememberSaveable(saver = RealZoomableState.Saver) {
+  return rememberSaveable(saver = RealZoomableState.Saver) {
     RealZoomableState(
       autoApplyTransformations = autoApplyTransformations,
     )
@@ -46,18 +44,6 @@ fun rememberZoomableState(
     it.hardwareShortcutsSpec = hardwareShortcutsSpec
     it.layoutDirection = LocalLayoutDirection.current
   }
-
-  if (state.isReadyToInteract) {
-    LaunchedEffect(
-      state.contentLayoutSize,
-      state.contentAlignment,
-      state.contentScale,
-      state.layoutDirection,
-    ) {
-      state.refreshContentTransformation()
-    }
-  }
-  return state
 }
 
 @Stable
