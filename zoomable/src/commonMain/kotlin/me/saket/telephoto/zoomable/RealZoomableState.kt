@@ -322,13 +322,13 @@ internal class RealZoomableState internal constructor(
     // Note to self: these values are divided by zoom because that's how the final offset
     // for UI is calculated: -offset * zoom.
     //
-    //     Move the centroid to the center
-    //         of panned content(?)
-    //                  |                       Scale
-    //                  |                         |                Move back
-    //                  |                         |           (+ new translation)
-    //                  |                         |                    |
-    //     _____________|_____________    ________|_________   ________|_________
+    //      Move the centroid to the center
+    //          of panned content(?)
+    //                   |                       Scale
+    //                   |                         |                Move back
+    //                   |                         |           (+ new translation)
+    //                   |                         |                    |
+    //      _____________|_____________    ________|_________   ________|_________
     return ((this + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)).also {
       check(it.isFinite) {
         val debugInfo = collectDebugInfoForIssue41(
