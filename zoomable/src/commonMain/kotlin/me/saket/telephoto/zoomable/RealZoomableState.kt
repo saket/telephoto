@@ -600,6 +600,8 @@ internal class RealZoomableState internal constructor(
 /** An intermediate, non-normalized model used for generating [ZoomableContentTransformation]. */
 internal data class GestureState(
   val offset: Offset,
+  // Note to self: Having ContentZoomFactor here would be convenient, but it complicates
+  // state restoration. This class should not capture any layout-related values.
   val userZoom: UserZoomFactor,
   val lastCentroid: Offset,
 )
