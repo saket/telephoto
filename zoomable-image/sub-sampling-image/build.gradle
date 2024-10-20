@@ -4,9 +4,9 @@ plugins {
   id("me.saket.kotlin.android")
   id("me.saket.compose")
   id("me.saket.android.test")
+  alias(libs.plugins.kotlin.parcelize)
+  alias(libs.plugins.paparazzi)
 }
-
-apply plugin: 'app.cash.paparazzi'
 
 android {
   namespace "me.saket.telephoto.subsamplingimage"
