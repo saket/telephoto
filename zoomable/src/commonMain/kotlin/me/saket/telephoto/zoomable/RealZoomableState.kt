@@ -353,7 +353,11 @@ internal class RealZoomableState internal constructor(
     // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
     return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) { offset ->
       val expectedDrawRegion = Rect(offset, unscaledContentBounds.size * proposedZoom).throwIfDrawRegionIsTooLarge()
-      expectedDrawRegion.calculateTopLeftToOverlapWith(contentLayoutSize, contentAlignment, layoutDirection)
+      expectedDrawRegion.calculateTopLeftToOverlapWith(
+        destination = inputs.contentLayoutSize,
+        alignment = inputs.contentAlignment,
+        layoutDirection = inputs.layoutDirection,
+      )
     }
   }
 
@@ -397,14 +401,14 @@ internal class RealZoomableState internal constructor(
     centroid: Offset,
     animationSpec: AnimationSpec<Float>,
   ) {
-    val baseZoomFactor = calculateGestureStateInputs()?.baseZoom ?: return
+    val gestureStateInputs = calculateGestureStateInputs() ?: return
     val targetZoom = ContentZoomFactor.forFinalZoom(
-      baseZoom = baseZoomFactor,
+      baseZoom = gestureStateInputs.baseZoom,
       finalZoom = zoomFactor,
     )
     animateZoomTo(
       targetZoom = targetZoom,
-      centroid = centroid.takeOrElse { contentLayoutSize.center },
+      centroid = centroid.takeOrElse { gestureStateInputs.contentLayoutSize.center },
       mutatePriority = MutatePriority.UserInput,
       animationSpec = animationSpec,
     )
@@ -579,7 +583,6 @@ internal class RealZoomableState internal constructor(
       appendLine("isReadyToInteract = $isReadyToInteract")
       appendLine("unscaledContentLocation = $unscaledContentLocation")
       appendLine("unscaledContentBounds = ${gestureStateInputs?.unscaledContentBounds}")
-      appendLine("contentLayoutSize = $contentLayoutSize")
       appendLine("zoomSpec = $zoomSpec")
       appendLine("Please share this error message to https://github.com/saket/telephoto/issues/41?")
     }
