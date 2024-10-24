@@ -14,8 +14,12 @@ import kotlin.LazyThreadSafetyMode.NONE
  * after its parent is rotated clockwise by [degrees].
  */
 internal fun IntRect.rotateBy(degrees: Int, unRotatedParent: IntRect): IntRect {
-  // There is probably a better way to find the rectangle after rotation,
-  // but I'm brute forcing my way through this by manually mapping points.
+  if (degrees == 0) {
+    return this
+  }
+
+  // There is probably a better (and simpler) way to find the rectangle after
+  // rotation, but I'm brute forcing my way through this by manually mapping points.
   val newTopLeft = when (degrees) {
     -270, 90 -> {
       val offsetFromBottomLeft = unRotatedParent.bottomLeft - bottomLeft
