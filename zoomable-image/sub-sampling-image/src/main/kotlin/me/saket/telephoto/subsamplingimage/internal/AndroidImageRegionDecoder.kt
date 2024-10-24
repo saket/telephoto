@@ -16,6 +16,7 @@ import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
+import me.saket.telephoto.subsamplingimage.RotatedImageBitmap
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 import me.saket.telephoto.subsamplingimage.toAndroidConfig
@@ -32,7 +33,7 @@ internal class AndroidImageRegionDecoder private constructor(
   override val imageSize: IntSize get() = decoder.size()
   override val imageOrientation: ImageOrientation get() = exif.orientation
 
-  override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+  override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
     val options = BitmapFactory.Options().apply {
       inSampleSize = region.sampleSize.size
       inPreferredConfig = imageOptions.config.toAndroidConfig()
@@ -55,8 +56,13 @@ internal class AndroidImageRegionDecoder private constructor(
         decoder.decodeRegion(bounds.toAndroidRect(), options)?.asImageBitmap()
       }
     }
-    return checkNotNull(bitmap) {
-      "BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource."
+    if (bitmap != null) {
+      return RotatedImageBitmap(
+        delegate = bitmap,
+        orientation = exif.orientation,
+      )
+    } else {
+      error("BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource.")
     }
   }
 

@@ -19,11 +19,11 @@ import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
-class BitmapTileGridGeneratorTest {
+class ImageRegionTileGridGeneratorTest {
 
   @Test fun `empty canvas size`() {
     assertFailure {
-      BitmapRegionTileGrid.generate(
+      ImageRegionTileGrid.generate(
         canvasSize = IntSize(1080, 0),
         unscaledImageSize = IntSize(10, 10),
       )
@@ -31,7 +31,7 @@ class BitmapTileGridGeneratorTest {
   }
 
   @Test fun `image size smaller than layout bounds`() {
-    val tileGrid = BitmapRegionTileGrid.generate(
+    val tileGrid = ImageRegionTileGrid.generate(
       canvasSize = IntSize(
         width = 1080,
         height = 2214
@@ -51,7 +51,7 @@ class BitmapTileGridGeneratorTest {
       width = 1080,
       height = 1920
     )
-    val tileGrid = BitmapRegionTileGrid.generate(
+    val tileGrid = ImageRegionTileGrid.generate(
       canvasSize = canvasSize,
       unscaledImageSize = canvasSize * 2
     )
@@ -67,7 +67,7 @@ class BitmapTileGridGeneratorTest {
       width = 9734,
       height = 3265
     )
-    val tileGrid = BitmapRegionTileGrid.generate(
+    val tileGrid = ImageRegionTileGrid.generate(
       canvasSize = IntSize(
         width = 1080,
         height = 2214
@@ -102,7 +102,7 @@ class BitmapTileGridGeneratorTest {
       assertThat(tiles.sumOf { it.bounds.area }, name).isEqualTo(imageSize.area)
 
       // Verify that the tiles don't have any overlap.
-      val overlappingTiles: List<BitmapRegionTile> = tiles.flatMap { tile ->
+      val overlappingTiles: List<ImageRegionTile> = tiles.flatMap { tile ->
         tiles.minus(tile).filter { other ->
           tile.bounds.overlaps(other.bounds)
         }
@@ -115,7 +115,7 @@ class BitmapTileGridGeneratorTest {
   @Test fun `generation of tiles should be fast enough to be run on the main thread`() {
     val time = measureTime {
       repeat(1_000) {
-        BitmapRegionTileGrid.generate(
+        ImageRegionTileGrid.generate(
           canvasSize = IntSize(
             width = 1080 - (Random.nextInt(0..100)),
             height = 2214 - (Random.nextInt(0..100))
@@ -136,7 +136,7 @@ class BitmapTileGridGeneratorTest {
   // Regression test for https://github.com/saket/telephoto/issues/49.
   @Test fun `image size smaller than half of canvas in width`() {
     val generateResult = runCatching {
-      BitmapRegionTileGrid.generate(
+      ImageRegionTileGrid.generate(
         canvasSize = IntSize(
           width = 2204,
           height = 1080
@@ -152,7 +152,7 @@ class BitmapTileGridGeneratorTest {
 
   // Regression test for https://github.com/saket/telephoto/issues/94
   @Test fun `image height smaller than the minimum tile height`() {
-    val grid = BitmapRegionTileGrid.generate(
+    val grid = ImageRegionTileGrid.generate(
       canvasSize = IntSize(1080, 2400),
       unscaledImageSize = IntSize(30_000, 926),
       minTileSize = IntSize(540, 1200),
@@ -168,7 +168,7 @@ class BitmapTileGridGeneratorTest {
 
   // Regression test for https://github.com/saket/telephoto/issues/94
   @Test fun `image width smaller than the minimum tile size`() {
-    val grid = BitmapRegionTileGrid.generate(
+    val grid = ImageRegionTileGrid.generate(
       canvasSize = IntSize(1080, 2400),
       unscaledImageSize = IntSize(926, 30_000),
       minTileSize = IntSize(1080, 1200),

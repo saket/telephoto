@@ -20,7 +20,7 @@ internal class PooledImageRegionDecoder private constructor(
   private val decoders: ResourcePool<ImageRegionDecoder>,
 ) : ImageRegionDecoder {
 
-  override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+  override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
     return decoders.borrow { decoder ->
       decoder.decodeRegion(region)
     }

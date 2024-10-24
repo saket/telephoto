@@ -50,7 +50,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.BitmapRegionTile
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
 import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
@@ -271,13 +271,13 @@ class SubSamplingImageTest {
     PooledImageRegionDecoder.overriddenPoolCount = 3
 
     // This fake factory will ignore decoding of selected tiles.
-    val shouldIgnore: (BitmapRegionTile) -> Boolean = { region ->
+    val shouldIgnore: (ImageRegionTile) -> Boolean = { region ->
       region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
     }
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
           return if (shouldIgnore(region)) {
             delay(Long.MAX_VALUE)
             error("shouldn't reach here")
@@ -341,7 +341,7 @@ class SubSamplingImageTest {
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
           val isBaseTile = region.sampleSize.size == 8
           return if (isBaseTile || !firstNonBaseTileReceived.getAndSet(true)) {
             if (!isBaseTile) {
@@ -601,7 +601,7 @@ class SubSamplingImageTest {
     val gatedDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
           return previewBitmapMutex.withLock {
             real.decodeRegion(region)
           }

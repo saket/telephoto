@@ -17,7 +17,7 @@ internal interface ImageRegionDecoder {
   val imageSize: IntSize
   val imageOrientation: ExifMetadata.ImageOrientation
 
-  suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap
+  suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap
 
   fun close()
 

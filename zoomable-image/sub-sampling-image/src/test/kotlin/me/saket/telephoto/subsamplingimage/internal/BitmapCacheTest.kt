@@ -173,10 +173,10 @@ class BitmapCacheTest {
 private class FakeImageRegionDecoder : ImageRegionDecoder {
   override val imageSize: IntSize get() = error("unused")
   override val imageOrientation: ExifMetadata.ImageOrientation get() = error("unused")
-  val requestedRegions = MutableSharedFlow<BitmapRegionTile>()
+  val requestedRegions = MutableSharedFlow<ImageRegionTile>()
   val decodedBitmaps = Channel<ImageBitmap>()
 
-  override suspend fun decodeRegion(region: BitmapRegionTile): ImageBitmap {
+  override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
     requestedRegions.emit(region)
     return decodedBitmaps.receive()
   }

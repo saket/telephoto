@@ -5,17 +5,17 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 
-internal fun BitmapRegionTileGrid.Companion.generate(
+internal fun ImageRegionTileGrid.Companion.generate(
   canvasSize: IntSize,
   unscaledImageSize: IntSize,
   minTileSize: IntSize = canvasSize / 2,
-): BitmapRegionTileGrid {
+): ImageRegionTileGrid {
   val baseSampleSize = BitmapSampleSize.calculateFor(
     canvasSize = canvasSize,
     scaledImageSize = unscaledImageSize
   )
 
-  val baseTile = BitmapRegionTile(
+  val baseTile = ImageRegionTile(
     sampleSize = baseSampleSize,
     bounds = IntRect(IntOffset.Zero, unscaledImageSize)
   )
@@ -37,12 +37,12 @@ internal fun BitmapRegionTileGrid.Companion.generate(
     val xTileCount: Int = (unscaledImageSize.width / tileSize.width).coerceAtLeast(1)
     val yTileCount: Int = (unscaledImageSize.height / tileSize.height).coerceAtLeast(1)
 
-    val tileGrid = ArrayList<BitmapRegionTile>(xTileCount * yTileCount)
+    val tileGrid = ArrayList<ImageRegionTile>(xTileCount * yTileCount)
     for (x in 0 until xTileCount) {
       for (y in 0 until yTileCount) {
         val isLastXTile = x == xTileCount - 1
         val isLastYTile = y == yTileCount - 1
-        val tile = BitmapRegionTile(
+        val tile = ImageRegionTile(
           sampleSize = sampleSize,
           bounds = IntRect(
             left = x * tileSize.width,
@@ -58,7 +58,7 @@ internal fun BitmapRegionTileGrid.Companion.generate(
     return@associateWith tileGrid
   }
 
-  return BitmapRegionTileGrid(
+  return ImageRegionTileGrid(
     base = baseTile,
     foreground = foregroundTiles,
   )

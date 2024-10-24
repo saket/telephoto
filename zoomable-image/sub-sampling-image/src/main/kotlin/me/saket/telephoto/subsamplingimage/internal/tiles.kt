@@ -1,35 +1,31 @@
+@file:Suppress("DataClassPrivateConstructor")
+
 package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntRect
 
-/** Represents a region in an image that whose bitmap needs to be loaded. */
-internal data class BitmapRegionTile(
+/** Represents a region in the source image that will be drawn in a [ViewportTile]. */
+@Immutable
+internal data class ImageRegionTile(
   val sampleSize: BitmapSampleSize,
   val bounds: IntRect,
 )
 
-/** Represents a region on a Canvas where [bitmap] can be drawn. */
-@Immutable
-internal data class CanvasRegionTile(
-  val bitmap: ImageBitmap?,
-  val bitmapRegion: BitmapRegionTile,
+/** Represents a region on the Canvas where a [ImageRegionTile] image can be drawn. */
+internal data class ViewportTile private constructor(
+  val region: ImageRegionTile,
   val bounds: IntRect,
-  val isBaseTile: Boolean,
-  val orientation: ExifMetadata.ImageOrientation,
+  val isVisible: Boolean,
 ) {
   constructor(
-    bitmap: ImageBitmap?,
-    bitmapRegion: BitmapRegionTile,
+    region: ImageRegionTile,
     bounds: Rect,
-    isBaseTile: Boolean,
-    orientation: ExifMetadata.ImageOrientation,
+    isVisible: Boolean,
   ) : this(
-    bitmap = bitmap,
-    bitmapRegion = bitmapRegion,
+    region = region,
     // Because the Canvas APIs only accept integer values, any fractional values
     // that arise during tiling must be discarded. However this isn't a problem,
     // since discarding a fractional value will cause the next tile to be shifted
@@ -39,8 +35,7 @@ internal data class CanvasRegionTile(
     // noticeable to the naked eye, and the benefits of tiling large images outweigh
     // this minor loss of precision.
     bounds = bounds.discardFractionalValues(),
-    isBaseTile = isBaseTile,
-    orientation = orientation,
+    isVisible = isVisible,
   )
 }
 
@@ -56,10 +51,10 @@ internal value class BitmapSampleSize(val size: Int) {
   }
 }
 
-/** Collection of [BitmapRegionTile] needed for drawing an image at a certain zoom level. */
-internal data class BitmapRegionTileGrid(
-  val base: BitmapRegionTile,
-  val foreground: Map<BitmapSampleSize, List<BitmapRegionTile>>
+/** Collection of [ImageRegionTile] needed for drawing an image at a certain zoom level. */
+internal data class ImageRegionTileGrid(
+  val base: ImageRegionTile,
+  val foreground: Map<BitmapSampleSize, List<ImageRegionTile>>
 ) {
   companion object; // For extensions.
 }
