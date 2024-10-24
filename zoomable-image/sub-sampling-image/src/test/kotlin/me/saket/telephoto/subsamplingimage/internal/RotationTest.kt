@@ -44,20 +44,18 @@ class RotationTest {
         )
       )
     }
-  }
 
-  @Test fun rotate_entire_image_2() {
-    val original = IntRect(
+    IntRect(
       topLeft = IntOffset.Zero,
       bottomRight = IntOffset(x = 1600, y = 800)
-    )
-
-    assertThat(original.rotateBy(90, unRotatedParent = original)).isEqualTo(
-      IntRect(
-        topLeft = IntOffset.Zero,
-        bottomRight = IntOffset(x = 800, y = 1600)
+    ).let { original ->
+      assertThat(original.rotateBy(90, original)).isEqualTo(
+        IntRect(
+          topLeft = IntOffset.Zero,
+          bottomRight = IntOffset(x = 800, y = 1600)
+        )
       )
-    )
+    }
   }
 
   @Test fun rotate_parts_of_an_image() {
