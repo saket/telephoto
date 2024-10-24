@@ -3,11 +3,15 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.Matrix
+import android.graphics.RectF
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import androidx.core.graphics.toRect
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 import kotlin.LazyThreadSafetyMode.NONE
+import kotlin.math.roundToInt
 
 /**
  * Calculate the position of this rectangle inside [unRotatedParent]
@@ -61,106 +65,56 @@ private fun IntOffset.flip(): IntOffset = IntOffset(x = y, y = x)
 
 private fun IntSize.flip(): IntSize = IntSize(width = height, height = width)
 
-private val sourceCoordinates = FloatArray(8)
-private val destinationCoordinates = FloatArray(8)
+// The same instance is shared by all calls to createRotationMatrix()
+// because it's always called on the same (main) thread.
 private val matrix by lazy(NONE) { Matrix() }
 
 /**
  * Creates a [Matrix] that can be used for drawing this tile's rotated bitmap such that
  * it appears straight on the canvas.
  *
- * Voodoo code copied from https://github.com/davemorrissey/subsampling-scale-image-view.
- * I don't fully understand how the matrix is created, but it works.
+ * Code adapted from [subsampling-scale-image-view](https://github.com/davemorrissey/subsampling-scale-image-view).
  */
-internal inline fun CanvasRegionTile.createRotationMatrix(): Matrix {
-  val bitmap = checkNotNull(bitmap)
+internal inline fun createRotationMatrix(
+  bitmapSize: Size,
+  orientation: ImageOrientation,
+  bounds: Size,
+): Matrix {
   matrix.reset()
-  sourceCoordinates.set(
-    0,
-    0,
-    bitmap.width,
-    0,
-    bitmap.width,
-    bitmap.height,
-    0,
-    bitmap.height,
-  )
-  when (orientation) {
-    ImageOrientation.None -> {
-      destinationCoordinates.set(
-        bounds.left,
-        bounds.top,
-        bounds.right,
-        bounds.top,
-        bounds.right,
-        bounds.bottom,
-        bounds.left,
-        bounds.bottom,
-      )
-    }
-    ImageOrientation.Orientation90 -> {
-      destinationCoordinates.set(
-        bounds.right,
-        bounds.top,
-        bounds.right,
-        bounds.bottom,
-        bounds.left,
-        bounds.bottom,
-        bounds.left,
-        bounds.top,
-      )
-    }
-    ImageOrientation.Orientation180 -> {
-      destinationCoordinates.set(
-        bounds.right,
-        bounds.bottom,
-        bounds.left,
-        bounds.bottom,
-        bounds.left,
-        bounds.top,
-        bounds.right,
-        bounds.top,
-      )
-    }
-    ImageOrientation.Orientation270 -> {
-      destinationCoordinates.set(
-        bounds.left,
-        bounds.bottom,
-        bounds.left,
-        bounds.top,
-        bounds.right,
-        bounds.top,
-        bounds.right,
-        bounds.bottom,
-      )
-    }
+  if (orientation == ImageOrientation.None) {
+    return matrix
   }
-  matrix.setPolyToPoly(
-    /* src = */ sourceCoordinates,
-    /* srcIndex = */ 0,
-    /* dst = */ destinationCoordinates,
-    /* dstIndex = */ 0,
-    /* pointCount = */ 4
-  )
-  return matrix
-}
 
-private inline fun FloatArray.set(
-  f0: Int,
-  f1: Int,
-  f2: Int,
-  f3: Int,
-  f4: Int,
-  f5: Int,
-  f6: Int,
-  f7: Int,
-) {
-  this[0] = f0.toFloat()
-  this[1] = f1.toFloat()
-  this[2] = f2.toFloat()
-  this[3] = f3.toFloat()
-  this[4] = f4.toFloat()
-  this[5] = f5.toFloat()
-  this[6] = f6.toFloat()
-  this[7] = f7.toFloat()
+  // Translate to bitmap center.
+  val bitmapCenterX = (bitmapSize.width / 2f).roundToInt().toFloat()
+  val bitmapCenterY = (bitmapSize.height / 2f).roundToInt().toFloat()
+  matrix.postTranslate(-bitmapCenterX, -bitmapCenterY)
+
+  @Suppress("KotlinConstantConditions")
+  val rotationDegrees = when (orientation) {
+    ImageOrientation.None -> error("unreachable code")
+    ImageOrientation.Orientation90 -> 90f
+    ImageOrientation.Orientation180 -> 180f
+    ImageOrientation.Orientation270 -> 270f
+  }
+  matrix.postRotate(rotationDegrees)
+
+  val scale = if (rotationDegrees % 180 == 0f) {
+    minOf(
+      bounds.width / bitmapSize.width,
+      bounds.height / bitmapSize.height,
+    )
+  } else {
+    minOf(
+      bounds.width / bitmapSize.height,
+      bounds.height / bitmapSize.width,
+    )
+  }
+  matrix.postScale(scale, scale)
+
+  // Translate to final position, ensuring pixel alignment.
+  val centerX = (bounds.width / 2f).roundToInt().toFloat()
+  val centerY = (bounds.height / 2f).roundToInt().toFloat()
+  matrix.postTranslate(centerX, centerY)
+  return matrix
 }
