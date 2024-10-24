@@ -4,15 +4,17 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
@@ -56,7 +58,8 @@ fun Modifier.zoomable(
     .thenIf(clipToBounds) {
       Modifier.clipToBounds()
     }
-    .onSizeChanged { state.contentLayoutSize = it.toSize() }
+    // todo: add a test for this over onSizeChanged()
+    .onPreSizeChanged { state.contentLayoutSize = it.toSize() }
     .then(
       ZoomableElement(
         state = state,
@@ -74,6 +77,22 @@ fun Modifier.zoomable(
     .thenIf(state.autoApplyTransformations) {
       Modifier.applyTransformation { state.contentTransformation }
     }
+}
+
+private fun Modifier.onPreSizeChanged(block: (IntSize) -> Unit): Modifier {
+  return this.layout { measurable, constraints ->
+    // todo: this is not correct. this will always fill all available size. check hasBoundedWidth/Height.
+    //   - add test.
+    //   - do i have tests for wrapContentSize()?, fillMaxSize()? fixed size?
+    // todo: add doc for this withMutableSnapshot.
+    // todo: will this withMutableSnapshot cause a 2nd frame?
+      block(IntSize(constraints.minWidth, constraints.minHeight))
+
+    val placeable = measurable.measure(constraints)
+    layout(placeable.width, placeable.height) {
+      placeable.place(0, 0)
+    }
+  }
 }
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

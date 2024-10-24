@@ -7,6 +7,7 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.toRect
 import kotlin.math.absoluteValue
 import kotlin.math.ceil
 import kotlin.math.min
@@ -23,6 +24,10 @@ internal fun IntSize.coerceAtLeast(min: IntSize): IntSize {
     width = width.coerceAtLeast(min.width),
     height = height.coerceAtLeast(min.height),
   )
+}
+
+internal fun IntSize.isNotEmpty(): Boolean {
+  return width > 0 && height > 0
 }
 
 internal fun Size.discardFractionalParts(): IntSize {
@@ -79,6 +84,17 @@ internal fun Rect.overlaps(other: IntSize): Boolean {
     return false
   return true
 }
+
+/**
+ * Equivalent to `Rect#overlaps(Rect(Offset.Zero, size))`.
+ *
+ * Copied from [Rect.overlaps]
+ */
+internal fun IntRect.overlaps(other: IntSize): Boolean {
+  // todo: make this more performant
+  return this.toRect().overlaps(other)
+}
+
 
 internal val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)

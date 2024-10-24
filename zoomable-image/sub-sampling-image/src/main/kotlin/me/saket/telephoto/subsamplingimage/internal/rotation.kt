@@ -3,12 +3,10 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.Matrix
-import android.graphics.RectF
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
-import androidx.core.graphics.toRect
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 import kotlin.LazyThreadSafetyMode.NONE
 import kotlin.math.roundToInt
@@ -61,10 +59,6 @@ internal fun IntRect.rotateBy(degrees: Int, unRotatedParent: IntRect): IntRect {
   )
 }
 
-private fun IntOffset.flip(): IntOffset = IntOffset(x = y, y = x)
-
-private fun IntSize.flip(): IntSize = IntSize(width = height, height = width)
-
 // The same instance is shared by all calls to createRotationMatrix()
 // because it's always called on the same (main) thread.
 private val matrix by lazy(NONE) { Matrix() }
@@ -81,40 +75,41 @@ internal inline fun createRotationMatrix(
   bounds: Size,
 ): Matrix {
   matrix.reset()
-  if (orientation == ImageOrientation.None) {
-    return matrix
-  }
 
-  // Translate to bitmap center.
+  // Center the bitmap for rotation.
   val bitmapCenterX = (bitmapSize.width / 2f).roundToInt().toFloat()
   val bitmapCenterY = (bitmapSize.height / 2f).roundToInt().toFloat()
   matrix.postTranslate(-bitmapCenterX, -bitmapCenterY)
 
-  @Suppress("KotlinConstantConditions")
   val rotationDegrees = when (orientation) {
-    ImageOrientation.None -> error("unreachable code")
+    ImageOrientation.None -> 0f
     ImageOrientation.Orientation90 -> 90f
     ImageOrientation.Orientation180 -> 180f
     ImageOrientation.Orientation270 -> 270f
   }
   matrix.postRotate(rotationDegrees)
 
-  val scale = if (rotationDegrees % 180 == 0f) {
-    minOf(
-      bounds.width / bitmapSize.width,
-      bounds.height / bitmapSize.height,
-    )
-  } else {
-    minOf(
-      bounds.width / bitmapSize.height,
-      bounds.height / bitmapSize.width,
-    )
-  }
-  matrix.postScale(scale, scale)
+  // Calculate scale based on rotated dimensions.
+  val rotatedSize = if (rotationDegrees % 180 == 0f) bitmapSize else bitmapSize.flip()
+  val scaleX = bounds.width.round() / rotatedSize.width
+  val scaleY = bounds.height.round() / rotatedSize.height
+  matrix.postScale(scaleX, scaleY)
 
-  // Translate to final position, ensuring pixel alignment.
-  val centerX = (bounds.width / 2f).roundToInt().toFloat()
-  val centerY = (bounds.height / 2f).roundToInt().toFloat()
-  matrix.postTranslate(centerX, centerY)
+  // Center in bounds.
+  matrix.postTranslate(
+    /* dx = */ (bounds.width / 2f).round(),
+    /* dy = */ (bounds.height / 2f).round(),
+  )
+
   return matrix
 }
+
+/**
+ * Used for matching the precise calculations of Bitmap.createBitmap()
+ * when it's used for creating rotated bitmaps.
+ */
+private inline fun Float.round(): Float = roundToInt().toFloat()
+
+private fun IntOffset.flip(): IntOffset = IntOffset(x = y, y = x)
+private fun IntSize.flip(): IntSize = IntSize(width = height, height = width)
+private fun Size.flip(): Size = Size(width = height, height = width)

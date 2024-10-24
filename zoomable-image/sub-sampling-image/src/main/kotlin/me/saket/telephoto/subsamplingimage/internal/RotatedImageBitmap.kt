@@ -1,31 +1,26 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import android.graphics.Matrix
-import android.graphics.Paint
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
-import me.saket.telephoto.subsamplingimage.internal.ExifMetadata
-import me.saket.telephoto.subsamplingimage.internal.createRotationMatrix
 
 // todo: should this be public so that anyone can create rotated bitmaps?
 @Immutable
-internal class RotatedImageBitmap(
+internal data class RotatedImageBitmap(
   val delegate: ImageBitmap,
+  // todo: what if decoders send a Matrix here?
   val orientation: ExifMetadata.ImageOrientation,
 ) : ImageBitmap by delegate
 
-internal class RotatedBitmapPainter(image: ImageBitmap) : Painter() {
-  private val image: ImageBitmap = when (image) {
-    is RotatedImageBitmap -> image.delegate
-    else -> image
-  }
-
+@Immutable
+internal data class RotatedBitmapPainter(private val image: ImageBitmap) : Painter() {
   private val orientation: ExifMetadata.ImageOrientation = when (image) {
     is RotatedImageBitmap -> image.orientation
     else -> ExifMetadata.ImageOrientation.None
@@ -34,36 +29,34 @@ internal class RotatedBitmapPainter(image: ImageBitmap) : Painter() {
   override val intrinsicSize: Size
     get() = Size(image.width.toFloat(), image.height.toFloat())
 
-  private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-  private val rotationMatrix = Cached<Size, Matrix>()
+  private val paint = Paint().also {
+    it.isAntiAlias = true
+  }
+
+  override fun applyAlpha(alpha: Float): Boolean {
+    this.paint.alpha = alpha
+    return true
+  }
+
+  override fun applyColorFilter(colorFilter: ColorFilter?): Boolean {
+    this.paint.colorFilter = colorFilter
+    return true
+  }
 
   override fun DrawScope.onDraw() {
-    val rotationMatrix = rotationMatrix.getOrCreate(size) {
-      createRotationMatrix(
-        bitmapSize = intrinsicSize,
-        orientation = orientation,
-        bounds = size,
-      )
-    }
+    val rotationMatrix = createRotationMatrix(
+      bitmapSize = intrinsicSize,
+      orientation = orientation,
+      bounds = size,
+    )
+
+    val actualImage = if (image is RotatedImageBitmap) image.delegate else image
     drawIntoCanvas {
       it.nativeCanvas.drawBitmap(
-        /* bitmap = */ image.asAndroidBitmap(),
+        /* bitmap = */ actualImage.asAndroidBitmap(),
         /* matrix = */ rotationMatrix,
-        /* paint = */ paint,
+        /* paint = */ paint.asFrameworkPaint(),
       )
-    }
-  }
-}
-
-private class Cached<K, V> {
-  private var cache: Pair<K, V>? = null
-
-  fun getOrCreate(key: K, create: (K) -> V): V {
-    val cached = cache?.let { (cachedKey, cachedValue) ->
-      cachedValue.takeIf { cachedKey == key }
-    }
-    return cached ?: create(key).also { value ->
-      this.cache = key to value
     }
   }
 }

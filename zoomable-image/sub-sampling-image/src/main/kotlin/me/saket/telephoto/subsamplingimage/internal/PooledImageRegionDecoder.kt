@@ -16,7 +16,6 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder.FactoryPa
  * */
 internal class PooledImageRegionDecoder private constructor(
   override val imageSize: IntSize,
-  override val imageOrientation: ExifMetadata.ImageOrientation,
   private val decoders: ResourcePool<ImageRegionDecoder>,
 ) : ImageRegionDecoder {
 
@@ -43,7 +42,6 @@ internal class PooledImageRegionDecoder private constructor(
       }
       PooledImageRegionDecoder(
         imageSize = decoders.first().imageSize,
-        imageOrientation = params.exif.orientation,
         decoders = ResourcePool(decoders),
       )
     }

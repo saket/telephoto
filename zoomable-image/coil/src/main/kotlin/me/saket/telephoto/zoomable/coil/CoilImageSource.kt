@@ -184,7 +184,7 @@ internal class Resolver(
           if (snapshot == null) {
             return when (result.dataSource) {
               DataSource.MEMORY_CACHE -> ImageDeletedOnlyFromDiskCache
-              else -> error("Coil returned an image that is missing from its disk cache")
+              else -> error("Coil returned an image that is missing from its disk cache for ${result.request.data}")
             }
           }
           SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)

@@ -15,7 +15,6 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
  */
 internal interface ImageRegionDecoder {
   val imageSize: IntSize
-  val imageOrientation: ExifMetadata.ImageOrientation
 
   suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap
 

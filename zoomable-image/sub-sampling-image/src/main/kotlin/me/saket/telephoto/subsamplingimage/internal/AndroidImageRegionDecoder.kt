@@ -16,7 +16,6 @@ import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
-import me.saket.telephoto.subsamplingimage.RotatedImageBitmap
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 import me.saket.telephoto.subsamplingimage.toAndroidConfig
@@ -31,7 +30,6 @@ internal class AndroidImageRegionDecoder private constructor(
 ) : ImageRegionDecoder {
 
   override val imageSize: IntSize get() = decoder.size()
-  override val imageOrientation: ImageOrientation get() = exif.orientation
 
   override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
     val options = BitmapFactory.Options().apply {

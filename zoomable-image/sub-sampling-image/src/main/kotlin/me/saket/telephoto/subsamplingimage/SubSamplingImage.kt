@@ -1,23 +1,27 @@
+@file:Suppress("NAME_SHADOWING")
+
 package me.saket.telephoto.subsamplingimage
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.layout.LazyLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -27,10 +31,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toOffset
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
-import me.saket.telephoto.subsamplingimage.internal.createRotationMatrix
+import androidx.compose.ui.util.fastMapIndexedNotNull
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
+import me.saket.telephoto.subsamplingimage.internal.SubSamplingLayoutItemProvider
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
 /**
@@ -40,6 +44,7 @@ import me.saket.telephoto.subsamplingimage.internal.toCeilInt
  *
  * [SubSamplingImage] is automatically used by [ZoomableImage][me.saket.telephoto.zoomable.ZoomableImage].
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SubSamplingImage(
   state: SubSamplingImageState,
@@ -49,40 +54,79 @@ fun SubSamplingImage(
   colorFilter: ColorFilter? = null,
 ) {
   check(state is RealSubSamplingImageState)
-  val paint = remember { Paint() }.also {
-    it.alpha = alpha
-    it.colorFilter = colorFilter
-  }
-  val onDraw: DrawScope.() -> Unit = {
-    state.tiles.fastForEach { tile ->
-      if (tile.bitmap != null && state.isImageLoaded) {
-        drawIntoCanvas {
-          it.nativeCanvas.drawBitmap(
-            tile.bitmap.asAndroidBitmap(),
-            tile.createRotationMatrix(),
-            paint.asFrameworkPaint(),
-          )
-        }
-      }
 
-      if (state.showTileBounds) {
-        drawRect(
-          color = Color.Black,
-          topLeft = tile.bounds.topLeft.toOffset(),
-          size = tile.bounds.size.toSize(),
-          style = Stroke(width = 2.dp.toPx())
+  // todo: remove
+  state.showTileBounds = true
+
+  val itemContent: @Composable (ImageRegionTile) -> Unit = { region ->
+    val isDarkTheme = isSystemInDarkTheme()
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .then(
+          if (state.showTileBounds) {
+            Modifier.border(1.dp, if (isDarkTheme) Color.White else Color.Black)
+          } else {
+            Modifier
+          }
+        ),
+      contentAlignment = Alignment.Center,
+    ) {
+      // todo:
+      //   TEST: do not draw foreground tiles until the bitmap for all tiles are loaded
+      val painter = state.loadImage(region)
+      val fadeInAlpha = if (region.sampleSize.size == 2) 1f else animateFloatAsState(
+        targetValue = if (painter == null) 0f else 1f,
+        label = "bitmap alpha",
+        animationSpec = tween(2_00), // todo: test
+      ).value
+      if (painter != null && state.isImageLoaded) {
+        Image(
+          painter = painter,
+          contentDescription = null,
+          modifier = Modifier.matchParentSize(),
+          alignment = Alignment.Center,
+          contentScale = ContentScale.FillBounds,
+          alpha = alpha * fadeInAlpha, // todo: can this be animated?
+          colorFilter = colorFilter,
         )
       }
     }
   }
 
-  Box(
-    modifier
+  // todo: get rid of LazyLayout().
+  LazyLayout(
+    modifier = modifier
+      .fillMaxSize()
       .contentDescription(contentDescription)
-      .onSizeChanged { state.canvasSize = it }
-      .drawBehind(onDraw)
-      .wrapContentSizeIfNeeded(state.imageSize)
-  )
+      // todo: fold this modifier into LazyLayout's measure policy.
+      .wrapContentSizeIfNeeded(state.imageSize),
+    itemProvider = {
+      SubSamplingLayoutItemProvider(state, itemContent)
+    },
+  ) { constraints ->
+    // todo: check for hasBoundedWidth and hasBoundedHeight.
+    val viewportSize = IntSize(constraints.maxWidth, constraints.maxHeight)
+    state.canvasSize = viewportSize
+
+    val placeables = state.viewportTiles.fastMapIndexedNotNull { index, tile ->
+      if (tile.isVisible) {
+        measure(
+          index = index,
+          constraints = Constraints(maxWidth = tile.bounds.width, maxHeight = tile.bounds.height),
+        ).single() to tile
+      } else {
+        null
+      }
+    }
+    layout(viewportSize.width, viewportSize.height) {
+      placeables.fastForEach { (placeable, tile) ->
+        placeable.place(
+          position = tile.bounds.topLeft,
+        )
+      }
+    }
+  }
 }
 
 @SuppressLint("ComposeParameterOrder")

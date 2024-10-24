@@ -28,7 +28,7 @@ import java.util.concurrent.Executor
 class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    enableStrictMode()
+    //enableStrictMode()
     enableEdgeToEdge()
     setupImmersiveMode()
     super.onCreate(savedInstanceState)
@@ -59,8 +59,8 @@ class SampleActivity : AppCompatActivity() {
           caption = "Flamingo",
         ),
         MediaItem.Image(
-          fullSizedUrl = "https://live.staticflickr.com/6024/5911366388_600e7e6734_o_d.jpg",
-          placeholderImageUrl = "https://i.imgur.com/bQtqkj6.jpg",
+          fullSizedUrl = "file:///android_asset/bellagio_rotated_by_90.jpg",
+          placeholderImageUrl = "file:///android_asset/bellagio_rotated_by_90.jpg",
           caption = "Sierra Sunset",
         ),
       )
@@ -77,7 +77,7 @@ class SampleActivity : AppCompatActivity() {
 
       TelephotoTheme {
         Navigation(
-          initialScreenKey = GalleryScreenKey(album)
+          initialScreenKey = MediaViewerScreenKey(album, 2)
         )
       }
     }
