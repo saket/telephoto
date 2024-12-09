@@ -284,6 +284,7 @@ class ZoomableImageTest {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before]")
     }
 
+    println("\n\n")
     assetName = "fox_1500.jpg"
     rule.waitUntil {
       val isTargetImage = state.zoomableState.contentTransformation.contentSize == Size(1500f, 1000f)

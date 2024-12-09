@@ -1,5 +1,4 @@
 @file:Suppress("NAME_SHADOWING")
-@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package me.saket.telephoto.subsamplingimage
 

@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -47,6 +48,7 @@ import me.saket.telephoto.zoomable.internal.ZoomableSavedState
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.coerceIn
 import me.saket.telephoto.zoomable.internal.copy
+import me.saket.telephoto.zoomable.internal.derivedStateOfWithDiff
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
 import me.saket.telephoto.zoomable.internal.isSpecifiedAndFinite
@@ -143,8 +145,10 @@ internal class RealZoomableState internal constructor(
   )
 
   private val gestureStateInputs: GestureStateInputsCalculator by derivedStateOf {
-    GestureStateInputsCalculator { viewportSize ->
+    GestureStateInputsCalculator { lastInputs, viewportSize ->
+      println("-----------------------")
       if (viewportSize.isUnspecifiedOrEmpty || unscaledContentLocation == ZoomableContentLocation.Unspecified) {
+        println("skipping because viewport size = $viewportSize, content location = $unscaledContentLocation")
         return@GestureStateInputsCalculator null
       }
       val unscaledContentBounds = unscaledContentLocation.location(
@@ -152,6 +156,7 @@ internal class RealZoomableState internal constructor(
         direction = layoutDirection,
       )
       if (unscaledContentBounds.size.isUnspecifiedOrEmpty) {
+        println("skipping because content location = ${unscaledContentBounds.size}")
         return@GestureStateInputsCalculator null
       }
 
@@ -176,14 +181,15 @@ internal class RealZoomableState internal constructor(
         baseZoom = BaseZoomFactor(baseZoomFactor),
         baseOffset = baseOffset,
         unscaledContentBounds = unscaledContentBounds,
+        previousUnscaledContentBounds = lastInputs?.unscaledContentBounds,
         contentAlignment = contentAlignment,
         layoutDirection = layoutDirection,
       )
     }
   }
 
-  private val currentGestureStateInputs: GestureStateInputs? by derivedStateOf {
-    gestureStateInputs.calculate(viewportSize)
+  private val currentGestureStateInputs: GestureStateInputs? by derivedStateOfWithDiff { lastValue ->
+    gestureStateInputs.calculate(lastValue, viewportSize)
   }
 
   /** See [PlaceholderBoundsProvider]. */
@@ -259,16 +265,18 @@ internal class RealZoomableState internal constructor(
         baseOffset = inputs.baseOffset,
         userOffset = lastGestureState.userOffset,
       )
+      val newOffset = oldOffset
+        .retainCentroidPositionAfterZoom(
+          centroid = centroid,
+          panDelta = panDelta,
+          oldZoom = oldZoom,
+          newZoom = newZoom,
+        )
+        .coerceWithinContentBounds(proposedZoom = newZoom, inputs = inputs)
+        .userOffset
+
       GestureState(
-        userOffset = oldOffset
-          .retainCentroidPositionAfterZoom(
-            centroid = centroid,
-            panDelta = panDelta,
-            oldZoom = oldZoom,
-            newZoom = newZoom,
-          )
-          .coerceWithinContentBounds(proposedZoom = newZoom, inputs = inputs)
-          .userOffset,
+        userOffset = newOffset,
         userZoom = newZoom.userZoom,
         lastCentroid = centroid,
       )
@@ -394,7 +402,12 @@ internal class RealZoomableState internal constructor(
   }
 
   override fun setContentLocation(location: ZoomableContentLocation) {
-    unscaledContentLocation = location
+    val currentSize = currentGestureStateInputs?.unscaledContentBounds?.size
+
+//    Snapshot.withMutableSnapshot {
+      unscaledContentLocation = location
+      println("new size = ${currentGestureStateInputs?.unscaledContentBounds?.size}, old = $currentSize")
+//    }
   }
 
   override suspend fun resetZoom(animationSpec: AnimationSpec<Float>) {
@@ -589,6 +602,7 @@ internal class RealZoomableState internal constructor(
     return currentGestureStateInputs?.let(gestureState::calculate)
   }
 
+  // todo: remove this
   // https://github.com/saket/telephoto/issues/41
   private fun collectDebugInfoForIssue41(vararg extras: Pair<String, Any>): String {
     return buildString {
@@ -640,6 +654,7 @@ internal data class GestureStateInputs(
   val baseZoom: BaseZoomFactor,
   val baseOffset: Offset,
   val unscaledContentBounds: Rect,
+  val previousUnscaledContentBounds: Rect?,
   val contentAlignment: Alignment,
   val layoutDirection: LayoutDirection,
 )
@@ -651,7 +666,7 @@ private fun interface GestureStateCalculator {
 
 @Immutable
 private fun interface GestureStateInputsCalculator {
-  fun calculate(viewportSize: Size): GestureStateInputs?
+  fun calculate(lastValue: GestureStateInputs?, viewportSize: Size): GestureStateInputs?
 }
 
 /**

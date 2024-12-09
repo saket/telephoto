@@ -7,29 +7,57 @@ import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALW
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.snap
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.Coil
 import coil.ImageLoader
 import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.delay
 import me.saket.telephoto.sample.gallery.MediaAlbum
 import me.saket.telephoto.sample.gallery.MediaItem
+import me.saket.telephoto.zoomable.DoubleClickToZoomListener
+import me.saket.telephoto.zoomable.ZoomSpec
+import me.saket.telephoto.zoomable.ZoomableImageState
+import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
+import me.saket.telephoto.zoomable.rememberZoomableImageState
+import me.saket.telephoto.zoomable.rememberZoomableState
 import java.util.concurrent.Executor
 
 class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     if (BuildConfig.DEBUG) {
-      enableStrictMode()
+      // enableStrictMode()
     }
     enableEdgeToEdge()
     setupImmersiveMode()
@@ -78,9 +106,49 @@ class SampleActivity : AppCompatActivity() {
       }
 
       TelephotoTheme {
-        Navigation(
-          initialScreenKey = GalleryScreenKey(album)
-        )
+//        Navigation(
+//          initialScreenKey = GalleryScreenKey(album)
+//        )
+
+        Box {
+          var imagePaths by rememberSaveable {
+            mutableStateOf(
+              // First = high-res, second = low-res
+              Pair<String, String?>(
+                "file:///android_asset/thumbnail.jpeg",
+                "file:///android_asset/thumbnail.jpeg",
+              )
+            )
+          }
+
+          LaunchedEffect(Unit) {
+            delay(2000)
+            imagePaths = Pair(
+              "file:///android_asset/smallSize.jpeg",
+              "file:///android_asset/thumbnail.jpeg"
+            )
+
+//            delay(500)
+//            zoomableState.zoomBy(2f, animationSpec = snap(0))
+
+            delay(2500)
+            imagePaths = Pair(
+              "file:///android_asset/fullSize.jpeg",
+              "file:///android_asset/smallSize.jpeg"
+            )
+
+            // delay(1000)
+            // zoomableState.panBy(Offset(-260.0f, -88.5f) - zoomableState.contentTransformation.offset, snap(0))
+          }
+
+          ImageViewer(imagePaths.first, imagePaths.second, onImageTap = {})
+
+          Icon(
+            Icons.Default.PushPin,
+            contentDescription = "Middle",
+            modifier = Modifier.align(Alignment.Center)
+          )
+        }
       }
     }
   }
@@ -125,4 +193,50 @@ internal fun TelephotoTheme(content: @Composable () -> Unit) {
     colorScheme = if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context),
     content = content
   )
+}
+
+@Composable
+private fun ImageViewer(
+  imagePath: String,
+  previousImagePath: String?,
+  onImageTap: () -> Unit,
+) {
+
+  val zoomableState = rememberZoomableState(
+    autoApplyTransformations = true,
+    zoomSpec = ZoomSpec(maxZoomFactor = 10f)
+  )
+  val zoomableImageState = rememberZoomableImageState(zoomableState)
+
+  val imageRequest = ImageRequest.Builder(LocalContext.current)
+    .data(imagePath)
+    .memoryCacheKey(imagePath)
+    .placeholderMemoryCacheKey(previousImagePath)
+    .crossfade(false)
+    .build()
+
+  Box {
+    ZoomableAsyncImage(
+      model = imageRequest,
+      contentDescription = "Image Preview",
+      //gesturesEnabled = !imagePath.contains("thumb"),
+      state = zoomableImageState,
+      modifier = Modifier
+        .fillMaxSize(),
+      onClick = {
+        onImageTap()
+      },
+      onDoubleClick = DoubleClickToZoomListener.cycle(3f)
+    )
+
+    Text(
+      text = imagePath,
+      color = Color.White,
+      modifier = Modifier
+        .align(Alignment.BottomCenter)
+        .padding(bottom = 40.dp)
+        .background(Color.Black.copy(alpha = .4f))
+        .padding(4.dp)
+    )
+  }
 }
