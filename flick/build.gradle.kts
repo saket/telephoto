@@ -1,18 +1,16 @@
-import org.jetbrains.compose.compose
-
 plugins {
   id("me.saket.android.library")
   id("me.saket.library.publishing")
   id("me.saket.kotlin.multiplatform")
+  alias(libs.plugins.paparazzi)
 }
-apply(plugin = "app.cash.paparazzi")
 
 kotlin {
   sourceSets {
     commonMain {
       dependencies {
-        implementation(compose("org.jetbrains.compose.ui:ui-util"))
         api(compose.foundation)
+        implementation(compose.uiUtil)
       }
     }
 
