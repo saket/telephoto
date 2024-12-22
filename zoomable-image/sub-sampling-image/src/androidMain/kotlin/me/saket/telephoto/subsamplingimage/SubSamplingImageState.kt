@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory

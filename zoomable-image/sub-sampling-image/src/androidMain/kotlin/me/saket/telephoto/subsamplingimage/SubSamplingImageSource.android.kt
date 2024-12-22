@@ -16,6 +16,7 @@ import okio.Closeable
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import okio.SYSTEM
 import okio.Source
 import okio.buffer
 import okio.source
@@ -23,129 +24,103 @@ import java.io.InputStream
 import kotlin.LazyThreadSafetyMode.NONE
 
 /**
- * Image to display with [SubSamplingImage]. Can be one of:
+ * An image stored on the device file system. This can be used with
+ * image loading libraries that store cached images on disk.
  *
- * * [SubSamplingImageSource.file]
- * * [SubSamplingImageSource.asset]
- * * [SubSamplingImageSource.resource]
- * * [SubSamplingImageSource.contentUri]
- * * [SubSamplingImageSource.rawSource]
+ * @param preview See [SubSamplingImageSource.preview].
+ * @param onClose Called when the image is no longer visible. This is useful for files
+ *                stored in, say, an LRU cache that is capable of locking open files to
+ *                prevent them from getting discarded.
+ *
+ * @return The returned value is stable and does not need to be remembered.
  */
-sealed interface SubSamplingImageSource : Closeable {
-  /**
-   * A preview that can be displayed immediately while the bitmap tiles
-   * are loaded, which can be slightly slow depending on the file size.
-   */
-  val preview: ImageBitmap?
+@Stable
+fun SubSamplingImageSource.Companion.file(
+  path: Path,
+  preview: ImageBitmap? = null,
+  onClose: Closeable? = null
+): SubSamplingImageSource = FileImageSource(path, preview, onClose)
 
-  companion object {
-    /**
-     * An image stored on the device file system. This can be used with
-     * image loading libraries that store cached images on disk.
-     *
-     * @param preview See [SubSamplingImageSource.preview].
-     * @param onClose Called when the image is no longer visible. This is useful for files
-     *                stored in, say, an LRU cache that is capable of locking open files to
-     *                prevent them from getting discarded.
-     *
-     * @return The returned value is stable and does not need to be remembered.
-     */
-    @Stable
-    fun file(
-      path: Path,
-      preview: ImageBitmap? = null,
-      onClose: Closeable? = null
-    ): SubSamplingImageSource = FileImageSource(path, preview, onClose)
+/**
+ * An image stored in `src/main/assets`.
+ *
+ * @param preview See [SubSamplingImageSource.preview].
+ *
+ * @return The returned value is stable and does not need to be remembered.
+ */
+@Stable
+fun SubSamplingImageSource.Companion.asset(
+  name: String,
+  preview: ImageBitmap? = null
+): SubSamplingImageSource = AssetImageSource(AssetPath(name), preview)
 
-    /**
-     * An image stored in `src/main/assets`.
-     *
-     * @param preview See [SubSamplingImageSource.preview].
-     *
-     * @return The returned value is stable and does not need to be remembered.
-     */
-    @Stable
-    fun asset(
-      name: String,
-      preview: ImageBitmap? = null
-    ): SubSamplingImageSource = AssetImageSource(AssetPath(name), preview)
+/**
+ * An image stored in `src/main/res/drawable*` directories.
+ *
+ * @param preview See [SubSamplingImageSource.preview].
+ *
+ * @return The returned value is stable and does not need to be remembered.
+ * */
+@Stable
+fun SubSamplingImageSource.Companion.resource(
+  @DrawableRes id: Int,
+  preview: ImageBitmap? = null
+): SubSamplingImageSource = ResourceImageSource(id, preview)
 
-    /**
-     * An image stored in `src/main/res/drawable*` directories.
-     *
-     * @param preview See [SubSamplingImageSource.preview].
-     *
-     * @return The returned value is stable and does not need to be remembered.
-     * */
-    @Stable
-    fun resource(
-      @DrawableRes id: Int,
-      preview: ImageBitmap? = null
-    ): SubSamplingImageSource = ResourceImageSource(id, preview)
-
-    /**
-     * Same as [SubSamplingImageSource.contentUriOrNull], but throws an error if
-     * the `uri` is unsupported by [ContentResolver.openInputStream].
-     */
-    @Stable
-    fun contentUri(
-      uri: Uri,
-      preview: ImageBitmap? = null
-    ): SubSamplingImageSource {
-      return contentUriOrNull(uri, preview)
-        ?: error("Uri unsupported by ContentResolver#openInputStream(): $uri")
-    }
-
-    /**
-     * An image exposed by a content provider. A common use-case for this
-     * would be to display images shared by other apps.
-     *
-     * @param preview See [SubSamplingImageSource.preview].
-     *
-     * @return A `SubSamplingImageSource` if the `uri` is supported by
-     * [ContentResolver.openInputStream] or null. The returned value is stable
-     * and does not need to be remembered.
-     */
-    @Stable
-    fun contentUriOrNull(
-      uri: Uri,
-      preview: ImageBitmap? = null
-    ): SubSamplingImageSource? {
-      // While ContentResolver can be used for reading assets, files, resources uris,
-      // reading them through their specialized APIs can be significantly faster.
-      return when (val type = UriType.parse(uri)) {
-        is UriType.AssetUri -> AssetImageSource(type.asset, preview)
-        is UriType.FileUri -> FileImageSource(type.path, preview, onClose = null)
-        is UriType.ResourceUri -> ResourceImageSource(type.resourceId, preview)
-        is UriType.ContentUri -> UriImageSource(type.uri, preview)
-        null -> null
-      }
-    }
-
-    /**
-     * An arbitrary stream that should only be used for images that can't be read directly
-     * from the disk. For all other purposes, prefer using [SubSamplingImageSource.file]
-     * instead as it is significantly faster.
-     *
-     * @param preview See [SubSamplingImageSource.preview].
-     * @param onClose Called when the image is no longer visible.
-     */
-    @Stable
-    fun rawSource(
-      source: () -> Source, // todo: should this be a BufferedSource?
-      preview: ImageBitmap? = null,
-      onClose: Closeable? = null,
-    ): SubSamplingImageSource = RawImageSource(source, preview, onClose)
-  }
-
-  /** Peeks into the source without consuming its bytes. */
-  fun peek(context: Context): BufferedSource
-
-  suspend fun decoder(context: Context): BitmapRegionDecoder
-
-  /** Called when the image is no longer visible. */
-  override fun close() = Unit
+/**
+ * Same as [SubSamplingImageSource.contentUriOrNull][SubSamplingImageSource.Companion.contentUriOrNull],
+ * but throws an error if the `uri` is unsupported by [ContentResolver.openInputStream].
+ */
+@Stable
+fun SubSamplingImageSource.Companion.contentUri(
+  uri: Uri,
+  preview: ImageBitmap? = null
+): SubSamplingImageSource {
+  return contentUriOrNull(uri, preview)
+    ?: error("Uri unsupported by ContentResolver#openInputStream(): $uri")
 }
+
+/**
+ * An image exposed by a content provider. A common use-case for this
+ * would be to display images shared by other apps.
+ *
+ * @param preview See [SubSamplingImageSource.preview].
+ *
+ * @return A `SubSamplingImageSource` if the `uri` is supported by
+ * [ContentResolver.openInputStream] or null. The returned value is stable
+ * and does not need to be remembered.
+ */
+@Stable
+fun SubSamplingImageSource.Companion.contentUriOrNull(
+  uri: Uri,
+  preview: ImageBitmap? = null
+): SubSamplingImageSource? {
+  // While ContentResolver can be used for reading assets, files, resources uris,
+  // reading them through their specialized APIs can be significantly faster.
+  return when (val type = UriType.parse(uri)) {
+    is UriType.AssetUri -> AssetImageSource(type.asset, preview)
+    is UriType.FileUri -> FileImageSource(type.path, preview, onClose = null)
+    is UriType.ResourceUri -> ResourceImageSource(type.resourceId, preview)
+    is UriType.ContentUri -> UriImageSource(type.uri, preview)
+    null -> null
+  }
+}
+
+/**
+ * An arbitrary stream that should only be used for images that can't be read directly
+ * from the disk. For all other purposes, prefer using
+ * [SubSamplingImageSource.file][SubSamplingImageSource.Companion.file] instead as it
+ * is significantly faster.
+ *
+ * @param preview See [SubSamplingImageSource.preview].
+ * @param onClose Called when the image is no longer visible.
+ */
+@Stable
+fun rawSource(
+  source: () -> Source, // todo: should this be a BufferedSource?
+  preview: ImageBitmap? = null,
+  onClose: Closeable? = null,
+): SubSamplingImageSource = RawImageSource(source, preview, onClose)
 
 @Immutable
 internal data class FileImageSource(
@@ -291,7 +266,7 @@ private sealed interface UriType {
           ContentUri(uri)
         }
         ContentResolver.SCHEME_ANDROID_RESOURCE -> {
-          uri.findResourceId()?.let(::ResourceUri) ?: ContentUri(uri)
+          uri.findResourceId()?.let(UriType::ResourceUri) ?: ContentUri(uri)
         }
         ContentResolver.SCHEME_FILE -> {
           when (uri.pathSegments.firstOrNull()) {

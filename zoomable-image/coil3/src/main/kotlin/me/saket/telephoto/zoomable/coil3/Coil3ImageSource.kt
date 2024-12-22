@@ -37,6 +37,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.contentUriOrNull
+import me.saket.telephoto.subsamplingimage.file
 import me.saket.telephoto.subsamplingimage.util.canBeSubSampled
 import me.saket.telephoto.subsamplingimage.util.exists
 import me.saket.telephoto.zoomable.ZoomableImageSource
