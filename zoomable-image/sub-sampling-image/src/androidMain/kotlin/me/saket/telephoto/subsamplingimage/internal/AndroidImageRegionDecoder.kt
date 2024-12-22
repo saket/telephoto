@@ -2,7 +2,6 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
-import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntOffset

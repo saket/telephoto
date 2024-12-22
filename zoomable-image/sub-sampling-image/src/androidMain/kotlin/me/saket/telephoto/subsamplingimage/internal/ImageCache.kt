@@ -1,6 +1,5 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.util.fastForEach
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableMap
