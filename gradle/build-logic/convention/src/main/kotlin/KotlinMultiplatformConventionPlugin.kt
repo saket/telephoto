@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.gradle.api.plugins.ExtensionAware as ExtensionAwarePlugin
 import org.jetbrains.compose.ComposePlugin as JetbrainsComposePlugin
 
-@OptIn(ExperimentalKotlinGradlePluginApi::class)
 class KotlinMultiplatformConventionPlugin : Plugin<Project> {
   override fun apply(target: Project) = with(target) {
     plugins.run {
