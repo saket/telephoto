@@ -4,7 +4,7 @@ internal enum class HostPlatform {
   Android,
   Desktop,
   iOS,
-  Wasm
+  Web,
   ;
 
   companion object;
