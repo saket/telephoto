@@ -1,13 +1,13 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
-import org.jetbrains.compose.ComposeExtension
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.gradle.api.plugins.ExtensionAware as ExtensionAwarePlugin
 import org.jetbrains.compose.ComposePlugin as JetbrainsComposePlugin
 
 class KotlinMultiplatformConventionPlugin : Plugin<Project> {
+  @OptIn(ExperimentalWasmDsl::class)
   override fun apply(target: Project) = with(target) {
     plugins.run {
       apply("org.jetbrains.kotlin.multiplatform")
@@ -21,6 +21,7 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
       iosArm64()
       iosX64()
       iosSimulatorArm64()
+      wasmJs()
       if (pluginManager.hasPlugin("com.android.library")) {
         androidTarget {
           publishLibraryVariants("release")
