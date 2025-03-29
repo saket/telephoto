@@ -673,13 +673,15 @@ class SubSamplingImageTest {
 
     rule.waitUntil {
       // Wait until all but the delayed tile are loaded.
-      imageState.asReal().viewportImageTiles.count { !it.isBase && it.painter != null } == 3
+      val tiles = imageState.asReal().viewportImageTiles
+      tiles.any { it.isBase } && tiles.count { !it.isBase && it.painter != null } == 3
     }
     rule.runOnIdle {
       // The base image should still be visible behind the foreground tiles.
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_loading_all_tiles]")
     }
 
+    // Load the remaining tile.
     mutexForDecodingLastTile.unlock()
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
