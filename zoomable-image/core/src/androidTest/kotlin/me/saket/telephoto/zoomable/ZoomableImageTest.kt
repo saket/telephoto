@@ -84,6 +84,7 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.lifecycle.Lifecycle
+import androidx.test.espresso.action.ViewActions.swipeLeft
 import androidx.test.espresso.device.action.ScreenOrientation
 import assertk.all
 import assertk.assertThat
@@ -299,8 +300,6 @@ class ZoomableImageTest {
 
   // Regression test for https://github.com/saket/telephoto/issues/128.
   @Test fun do_not_incorrectly_retain_pan_when_state_is_restored() {
-    lateinit var state: ZoomableImageState
-
     val recreationTester = ActivityRecreationTester(rule)
     recreationTester.setContent {
       ZoomableImage(
@@ -313,14 +312,14 @@ class ZoomableImageTest {
         ),
         state = rememberZoomableImageState(
           rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 5f))
-        ).also { state = it },
+        ),
         contentScale = ContentScale.Crop,
         contentDescription = null,
       )
     }
 
     rule.waitUntil(3.seconds) {
-      state.isImageDisplayedInFullQuality
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
     }
     rule.onNodeWithTag("image").performTouchInput {
       swipe(
@@ -335,7 +334,7 @@ class ZoomableImageTest {
     recreationTester.recreate()
 
     rule.waitUntil(3.seconds) {
-      state.isImageDisplayedInFullQuality
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after]")
@@ -394,8 +393,6 @@ class ZoomableImageTest {
   }
 
   @Test fun rtl_layout_direction() {
-    lateinit var state: ZoomableImageState
-
     rule.setContent {
       CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         ZoomableImage(
@@ -404,12 +401,13 @@ class ZoomableImageTest {
             .testTag("image"),
           image = ZoomableImageSource.asset("fox_1500.jpg", subSample = true),
           contentDescription = null,
-          state = rememberZoomableImageState().also { state = it },
+          state = rememberZoomableImageState(),
         )
       }
     }
 
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    val imageNode = rule.onNodeWithTag("image")
+    rule.waitUntil(5.seconds) { imageNode.isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -417,7 +415,7 @@ class ZoomableImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick()
     }
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    rule.waitUntil(5.seconds) { imageNode.isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -427,7 +425,7 @@ class ZoomableImageTest {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    rule.waitUntil(5.seconds) { imageNode.isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
@@ -1601,12 +1599,11 @@ class ZoomableImageTest {
       )
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
-    (rule.onNodeWithTag("image")).run {
-      performTouchInput { doubleClick(center - Offset(0f, 360f)) }
-    }
+    val imageNode = rule.onNodeWithTag("image")
+    rule.waitUntil { imageNode.isImageDisplayedInFullQuality() }
+    imageNode.performTouchInput { doubleClick(center - Offset(0f, 360f)) }
     rule.waitForIdle()
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil { imageNode.isImageDisplayedInFullQuality() }
 
     val zoomFractionBeforeRotation = imageState.zoomableState.zoomFraction
     rule.runOnIdle {
@@ -1618,7 +1615,7 @@ class ZoomableImageTest {
       rule.setScreenOrientation(ScreenOrientation.LANDSCAPE)
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil { imageNode.isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
     }
@@ -1627,7 +1624,7 @@ class ZoomableImageTest {
       rule.setScreenOrientation(ScreenOrientation.PORTRAIT)
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil { imageNode.isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       assertThat(imageState.zoomableState.zoomFraction).isEqualTo(zoomFractionBeforeRotation)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_another_rotation]")
@@ -1656,7 +1653,8 @@ class ZoomableImageTest {
       )
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    val imageNode = rule.onNodeWithTag("image")
+    rule.waitUntil { imageNode.isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_rotation]")
     }
@@ -1665,7 +1663,7 @@ class ZoomableImageTest {
       rule.setScreenOrientation(ScreenOrientation.LANDSCAPE)
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil { imageNode.isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       assertThat(imageState.zoomableState.zoomFraction).isEqualTo(0f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
@@ -1692,7 +1690,7 @@ class ZoomableImageTest {
       SideEffect { numOfRecompositions++ }
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil { rule.onNodeWithTag("image").isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       assertThat(imageState.zoomableState.transformedContentBounds.top).isEqualTo(390f)
     }
@@ -1779,19 +1777,19 @@ class ZoomableImageTest {
       )
     )
 
-    lateinit var imageState: ZoomableImageState
     rule.setContent {
       ZoomableImage(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
         image = object : ZoomableImageSource {
           @Composable override fun resolve(canvasSize: Flow<Size>): ResolveResult = resolvedZoomableImage
         },
-        state = rememberZoomableImageState().also { imageState = it },
         contentDescription = null,
       )
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil { rule.onNodeWithTag("image").isImageDisplayedInFullQuality() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_image_change]")
     }
