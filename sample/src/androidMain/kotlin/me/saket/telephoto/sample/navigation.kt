@@ -6,20 +6,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.slack.circuit.backstack.rememberSaveableBackStack
-import com.slack.circuit.foundation.push
 import com.slack.circuit.foundation.rememberCircuitNavigator
-import com.slack.circuit.foundation.screen
 import kotlinx.parcelize.Parcelize
 import me.saket.telephoto.sample.gallery.GalleryScreen
 import me.saket.telephoto.sample.gallery.MediaAlbum
 import me.saket.telephoto.sample.viewer.MediaViewerScreen
-import com.slack.circuit.runtime.Screen as CircuitScreenKey
+import com.slack.circuit.runtime.screen.Screen as CircuitScreenKey
 
 @Composable
 internal fun Navigation(
   initialScreenKey: ScreenKey,
 ) {
-  val backstack = rememberSaveableBackStack { push(initialScreenKey) }
+  val backstack = rememberSaveableBackStack(initialScreenKey)
   val navigator = rememberCircuitNavigator(backstack)
 
   Box(Modifier.fillMaxSize()) {
