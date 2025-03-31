@@ -62,9 +62,10 @@ sealed interface ZoomableState {
   var autoApplyTransformations: Boolean
 
   /**
-   * Single source of truth for your content's aspect ratio. If you're using `Modifier.zoomable()`
-   * with `Image()` or other composables that also accept [ContentScale], they should not be used
-   * to avoid any conflicts.
+   * Single source of truth for your content's aspect ratio. Defaults to [ContentScale.Fit].
+   *
+   * If you're using `Modifier.zoomable()` with `Image()` or other composables that also accept
+   * [ContentScale], they should not be used to avoid any conflicts.
    *
    * A visual guide of the various scale values can be found
    * [here](https://developer.android.com/jetpack/compose/graphics/images/customize#content-scale).
@@ -72,7 +73,7 @@ sealed interface ZoomableState {
   var contentScale: ContentScale
 
   /**
-   * Alignment of the content.
+   * Alignment of the content. Defaults to [Alignment.Center].
    *
    * When the content is zoomed, it is scaled with respect to this alignment until it
    * is large enough to fill all available space. After that, they're scaled uniformly.

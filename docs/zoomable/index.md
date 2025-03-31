@@ -45,7 +45,7 @@ For preventing your content from over-zooming or over-panning, `Modifier.zoomabl
 
 For richer content such as an `Image()` whose _visual_ size may not always match its layout size, `Modifier.zoomable()` will need your assistance.
 
-```kotlin hl_lines="5-7"
+```kotlin hl_lines="3-5"
 val painter = resourcePainter(R.drawable.example)
 val zoomableState = rememberZoomableState().apply {
   setContentLocation(
