@@ -40,6 +40,7 @@ kotlin {
     val desktopMain by getting
     desktopMain.dependencies {
       implementation(compose.desktop.currentOs)
+      implementation(compose.material3)
     }
   }
 }
