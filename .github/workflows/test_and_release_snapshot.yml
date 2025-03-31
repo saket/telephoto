@@ -73,8 +73,14 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Compile against iOS ARM64
+      - name: Compile the iOS sources
         run: ./gradlew compileKotlinIosArm64
+
+      - name: Compile the desktop sources
+        run: ./gradlew compileKotlinDesktop
+
+      - name: Compile the web sources
+        run: ./gradlew compileKotlinWasmJs compileKotlinJs
 
   deploy-snapshot:
     name: Deploy snapshot
