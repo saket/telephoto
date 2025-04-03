@@ -1,5 +1,6 @@
 package me.saket.telephoto.zoomable
 
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.internal.ContentCoordinateSpace
 import me.saket.telephoto.zoomable.internal.ViewportCoordinateSpace
 

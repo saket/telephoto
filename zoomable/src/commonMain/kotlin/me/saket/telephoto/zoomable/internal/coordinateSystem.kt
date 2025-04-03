@@ -6,7 +6,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import me.saket.telephoto.zoomable.CoordinateSpace
 import me.saket.telephoto.zoomable.CoordinateSystem
-import me.saket.telephoto.zoomable.ExperimentalTelephotoApi
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.RealZoomableState
 import me.saket.telephoto.zoomable.SpatialOffset
 import me.saket.telephoto.zoomable.Viewport

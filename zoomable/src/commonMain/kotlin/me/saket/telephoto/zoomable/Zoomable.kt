@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.internal.HardwareShortcutsElement
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement

@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.internal.ZoomableCoordinateSystem
 import kotlin.jvm.JvmName
 
@@ -110,7 +111,7 @@ sealed interface ZoomableState {
    * [CoordinateSpace.Viewport][CoordinateSpace.Companion.Viewport] and
    * [CoordinateSpace.ZoomableContent][CoordinateSpace.Companion.ZoomableContent].
    *
-   * Usage recipe:
+   * Usage example:
    *
    * ```kotlin
    * val state = rememberZoomableState()

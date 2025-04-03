@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import dev.drewhamilton.poko.Poko
+import me.saket.telephoto.ExperimentalTelephotoApi
 
 /**
  * Implement this interface for reacting to double clicks on `Modifier.zoomable`'s content.

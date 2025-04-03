@@ -1,6 +1,5 @@
 package me.saket.telephoto.sample
 
-import androidx.compose.animation.core.snap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -23,7 +22,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.singleWindowApplication
 import me.saket.telephoto.zoomable.CoordinateSpace
-import me.saket.telephoto.zoomable.ExperimentalTelephotoApi
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.SpatialOffset
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableContentLocation

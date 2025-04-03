@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.isUnspecified
 import dev.drewhamilton.poko.Poko
+import me.saket.telephoto.ExperimentalTelephotoApi
 
 /**
  * A 2D offset bound to a specific [CoordinateSpace] inside a [CoordinateSystem].
