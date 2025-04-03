@@ -3,6 +3,7 @@ package me.saket.telephoto.zoomable
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.internal.ContentCoordinateSpace
 import me.saket.telephoto.zoomable.internal.ViewportCoordinateSpace
+import kotlin.jvm.JvmSynthetic
 
 /**
  * Represents the coordinate space of the visible viewport — the bounds of
@@ -12,7 +13,7 @@ import me.saket.telephoto.zoomable.internal.ViewportCoordinateSpace
  */
 @ExperimentalTelephotoApi
 val CoordinateSpace.Companion.Viewport: CoordinateSpace
-  get() = ViewportCoordinateSpace
+  @JvmSynthetic get() = ViewportCoordinateSpace
 
 /**
  * Represents the coordinate space of the zoomable content (e.g., an image).
@@ -23,4 +24,4 @@ val CoordinateSpace.Companion.Viewport: CoordinateSpace
  */
 @ExperimentalTelephotoApi
 val CoordinateSpace.Companion.ZoomableContent: CoordinateSpace
-  get() = ContentCoordinateSpace
+  @JvmSynthetic get() = ContentCoordinateSpace
