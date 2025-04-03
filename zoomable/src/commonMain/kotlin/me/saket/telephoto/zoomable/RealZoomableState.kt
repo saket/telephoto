@@ -212,10 +212,10 @@ internal class RealZoomableState internal constructor(
   }
 
   /**
-   * Whether sufficient information is available about the content to start
-   * listening to pan & zoom gestures.
+   * Whether sufficient information is available about the content to start listening
+   * to pan & zoom gestures.
    */
-  internal val isReadyToInteract: Boolean
+  internal val isReadyForInteraction: Boolean
     get() = currentGestureStateInputs != null
 
   @Suppress("NAME_SHADOWING")

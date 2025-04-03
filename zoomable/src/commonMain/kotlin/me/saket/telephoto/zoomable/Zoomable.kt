@@ -209,7 +209,7 @@ private class ZoomableNode(
     }
   }
   val onTransformStopped: (velocity: Velocity) -> Unit = { velocity ->
-    if (state.isReadyToInteract) {
+    if (state.isReadyForInteraction) {
       coroutineScope.launch {
         if (state.isZoomOutsideRange()) {
           hapticFeedback.performHapticFeedback()

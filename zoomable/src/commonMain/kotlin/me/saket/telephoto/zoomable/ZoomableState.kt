@@ -104,6 +104,11 @@ sealed interface ZoomableState {
   /** Whether any zoom, pan (or both) animation is in progress. */
   val isAnimationRunning: Boolean
 
+  /**
+   * Whether sufficient information is available about the content to start listening
+   * to pan & zoom gestures.
+   */
+  val isReadyForInteraction: Boolean
   /** See [ZoomableContentLocation]. */
   fun setContentLocation(location: ZoomableContentLocation)
 

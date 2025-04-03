@@ -84,7 +84,6 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.lifecycle.Lifecycle
-import androidx.test.espresso.action.ViewActions.swipeLeft
 import androidx.test.espresso.device.action.ScreenOrientation
 import assertk.all
 import assertk.assertThat
@@ -1179,7 +1178,7 @@ class ZoomableImageTest {
       LaunchedEffect(Unit) {
         // If the focus was received before the image was ready,
         // it should retain focus after the image becomes visible.
-        assertThat(state.zoomableState.real().isReadyToInteract).isFalse()
+        assertThat(state.zoomableState.real().isReadyForInteraction).isFalse()
         focusRequester.requestFocus()
       }
     }
