@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
@@ -287,6 +288,12 @@ internal class RealZoomableState internal constructor(
     }
   }
 
+  private suspend fun awaitUntilIsReadyForInteraction() {
+    if (!isReadyForInteraction) {
+      snapshotFlow { isReadyForInteraction }.first { ready -> ready }
+    }
+  }
+
   internal fun canConsumePanChange(panDelta: Offset): Boolean {
     val gestureStateInputs = currentGestureStateInputs ?: return false // Content isn't ready yet.
     val current = gestureState.calculate(gestureStateInputs)
@@ -410,9 +417,9 @@ internal class RealZoomableState internal constructor(
   }
 
   override suspend fun resetZoom(animationSpec: AnimationSpec<Float>) {
-    val baseZoomFactor = currentGestureStateInputs?.baseZoom ?: return
+    awaitUntilIsReadyForInteraction()
     zoomTo(
-      zoomFactor = baseZoomFactor.maxScale,
+      zoomFactor = currentGestureStateInputs!!.baseZoom.maxScale,
       animationSpec = animationSpec,
     )
   }
@@ -422,7 +429,9 @@ internal class RealZoomableState internal constructor(
     centroid: Offset,
     animationSpec: AnimationSpec<Float>,
   ) {
-    val gestureState = calculateGestureState() ?: return
+    awaitUntilIsReadyForInteraction()
+
+    val gestureState = calculateGestureState()!!
     zoomTo(
       zoomFactor = gestureState.userZoom.value * zoomFactor,
       centroid = centroid,
@@ -435,7 +444,9 @@ internal class RealZoomableState internal constructor(
     centroid: Offset,
     animationSpec: AnimationSpec<Float>,
   ) {
-    val gestureStateInputs = currentGestureStateInputs ?: return
+    awaitUntilIsReadyForInteraction()
+
+    val gestureStateInputs = currentGestureStateInputs!!
     val targetZoom = ContentZoomFactor.forFinalZoom(
       baseZoom = gestureStateInputs.baseZoom,
       finalZoom = zoomFactor,
@@ -456,6 +467,8 @@ internal class RealZoomableState internal constructor(
   }
 
   override suspend fun panBy(offset: Offset, animationSpec: AnimationSpec<Offset>) {
+    awaitUntilIsReadyForInteraction()
+
     transformableState.transform(MutatePriority.UserInput) {
       var previous = Offset.Zero
       AnimationState(
@@ -477,7 +490,8 @@ internal class RealZoomableState internal constructor(
     mutatePriority: MutatePriority,
     animationSpec: AnimationSpec<Float>,
   ) {
-    val gestureStateInputs = currentGestureStateInputs ?: return
+    awaitUntilIsReadyForInteraction()
+    val gestureStateInputs = currentGestureStateInputs!!
     val startGestureState = gestureState.calculate(gestureStateInputs)
 
     val startZoom = ContentZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
