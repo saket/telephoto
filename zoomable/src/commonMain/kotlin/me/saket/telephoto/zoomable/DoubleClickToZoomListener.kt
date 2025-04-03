@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import dev.drewhamilton.poko.Poko
-import me.saket.telephoto.zoomable.internal.maxScale
 
 /**
  * Implement this interface for reacting to double clicks on `Modifier.zoomable`'s content.
@@ -50,15 +49,7 @@ fun interface DoubleClickToZoomListener {
   )
   data object ToggleBetweenMinAndMax : DoubleClickToZoomListener {
     override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
-      val zoomFraction = state.zoomFraction ?: return // Content isn't ready yet.
-      state.zoomTo(
-        zoomFactor = if (zoomFraction < 0.95f) {
-          state.zoomSpec.maximum.factor
-        } else {
-          state.contentTransformation.scaleMetadata.initialScale.maxScale
-        },
-        centroid = centroid,
-      )
+      cycle().onDoubleClick(state, centroid)
     }
   }
 }
