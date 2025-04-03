@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTelephotoApi::class)
+
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.foundation.MutatePriority
@@ -26,6 +28,10 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.QuickZoomStopped
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.Zooming
 import kotlin.math.abs
@@ -40,10 +46,10 @@ import kotlin.time.TimeSource
  * from consuming all events was proving to be messy and slightly difficult to follow.
  */
 internal data class TappableAndQuickZoomableElement(
-  private val onPress: (Offset) -> Unit,
-  private val onTap: ((Offset) -> Unit)?,
-  private val onLongPress: ((Offset) -> Unit)?,
-  private val onDoubleTap: ((centroid: Offset) -> Unit)?,
+  private val onPress: () -> Unit,
+  private val onTap: ((SpatialOffset) -> Unit)?,
+  private val onLongPress: ((SpatialOffset) -> Unit)?,
+  private val onDoubleTap: ((centroid: SpatialOffset) -> Unit)?,
   private val onQuickZoomStopped: () -> Unit,
   private val transformableState: TransformableState,
   private val quickZoomEnabled: Boolean,
@@ -75,10 +81,10 @@ internal data class TappableAndQuickZoomableElement(
 }
 
 internal class TappableAndQuickZoomableNode(
-  private var onPress: (Offset) -> Unit,
-  private var onTap: ((Offset) -> Unit)?,
-  private var onLongPress: ((Offset) -> Unit)?,
-  private var onDoubleTap: ((centroid: Offset) -> Unit)?,
+  private var onPress: () -> Unit,
+  private var onTap: ((SpatialOffset) -> Unit)?,
+  private var onLongPress: ((SpatialOffset) -> Unit)?,
+  private var onDoubleTap: ((centroid: SpatialOffset) -> Unit)?,
   private var onQuickZoomStopped: () -> Unit,
   private var transformableState: TransformableState,
   private var quickZoomEnabled: Boolean,
@@ -116,16 +122,16 @@ internal class TappableAndQuickZoomableNode(
         // Note to self: these lambdas should not pass a reference
         // to their delegated lambdas because they can change.
         onPress = {
-          onPress(it)
+          onPress()
         },
         onTap = if (onTap != null) {
-          { offset -> onTap?.invoke(offset) }
+          { offset -> onTap?.invoke(SpatialOffset(offset, CoordinateSpace.Viewport)) }
         } else null,
         onLongPress = if (onLongPress != null) {
-          { offset -> onLongPress?.invoke(offset) }
+          { offset -> onLongPress?.invoke(SpatialOffset(offset, CoordinateSpace.Viewport)) }
         } else null,
         onDoubleTap = if (onDoubleTap != null) {
-          { centroid -> onDoubleTap?.invoke(centroid) }
+          { centroid -> onDoubleTap?.invoke(SpatialOffset(centroid, CoordinateSpace.Viewport)) }
         } else null,
         onQuickZoom = if (quickZoomEnabled) {
           { event -> quickZoomEvents.trySend(event) }
@@ -135,10 +141,10 @@ internal class TappableAndQuickZoomableNode(
   })
 
   fun update(
-    onPress: (Offset) -> Unit,
-    onTap: ((Offset) -> Unit)?,
-    onLongPress: ((Offset) -> Unit)?,
-    onDoubleTap: ((centroid: Offset) -> Unit)?,
+    onPress: () -> Unit,
+    onTap: ((SpatialOffset) -> Unit)?,
+    onLongPress: ((SpatialOffset) -> Unit)?,
+    onDoubleTap: ((centroid: SpatialOffset) -> Unit)?,
     onQuickZoomStopped: () -> Unit,
     transformableState: TransformableState,
     quickZoomEnabled: Boolean,

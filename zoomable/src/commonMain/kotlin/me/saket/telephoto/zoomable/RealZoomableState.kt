@@ -29,7 +29,6 @@ import androidx.compose.ui.geometry.center
 import androidx.compose.ui.geometry.isFinite
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.lerp
-import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
@@ -72,6 +71,7 @@ import kotlin.jvm.JvmInline
 import kotlin.math.abs
 
 @Stable
+@OptIn(ExperimentalTelephotoApi::class)
 internal class RealZoomableState internal constructor(
   savedState: ZoomableSavedState? = null,
   autoApplyTransformations: Boolean = true,
@@ -192,7 +192,7 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  private val currentGestureStateInputs: GestureStateInputs? by derivedStateOf {
+  internal val currentGestureStateInputs: GestureStateInputs? by derivedStateOf {
     gestureStateInputsCalculator.calculate(viewportSize)
   }
 
@@ -426,7 +426,7 @@ internal class RealZoomableState internal constructor(
 
   override suspend fun zoomBy(
     zoomFactor: Float,
-    centroid: Offset,
+    centroid: SpatialOffset,
     animationSpec: AnimationSpec<Float>,
   ) {
     awaitUntilIsReadyForInteraction()
@@ -441,7 +441,7 @@ internal class RealZoomableState internal constructor(
 
   override suspend fun zoomTo(
     zoomFactor: Float,
-    centroid: Offset,
+    centroid: SpatialOffset,
     animationSpec: AnimationSpec<Float>,
   ) {
     awaitUntilIsReadyForInteraction()
@@ -451,9 +451,14 @@ internal class RealZoomableState internal constructor(
       baseZoom = gestureStateInputs.baseZoom,
       finalZoom = zoomFactor,
     )
+    val centroidInViewport = with(coordinateSystem) {
+      centroid
+        .takeOrElse { SpatialOffset(gestureStateInputs.viewportSize.center, CoordinateSpace.Viewport) }
+        .offsetIn(CoordinateSpace.Viewport)
+    }
     animateZoomTo(
       targetZoom = targetZoom,
-      centroid = centroid.takeOrElse { gestureStateInputs.viewportSize.center },
+      centroid = centroidInViewport,
       mutatePriority = MutatePriority.UserInput,
       animationSpec = animationSpec,
     )
@@ -466,7 +471,7 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  override suspend fun panBy(offset: Offset, animationSpec: AnimationSpec<Offset>) {
+  override suspend fun panBy(offset: SpatialOffset, animationSpec: AnimationSpec<Offset>) {
     awaitUntilIsReadyForInteraction()
 
     transformableState.transform(MutatePriority.UserInput) {
@@ -475,7 +480,9 @@ internal class RealZoomableState internal constructor(
         typeConverter = Offset.VectorConverter,
         initialValue = Offset.Zero,
       ).animateTo(
-        targetValue = offset,
+        targetValue = with(coordinateSystem) {
+          offset.offsetIn(CoordinateSpace.Viewport)
+        },
         animationSpec = animationSpec,
       ) {
         transformBy(panChange = this.value - previous)

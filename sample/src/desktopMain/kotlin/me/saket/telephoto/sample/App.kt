@@ -1,5 +1,6 @@
 package me.saket.telephoto.sample
 
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -9,9 +10,11 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
@@ -19,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.singleWindowApplication
+import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.rememberZoomableState
 import me.saket.telephoto.zoomable.zoomable
@@ -43,6 +50,7 @@ fun main() = singleWindowApplication(
 }
 
 @Composable
+@OptIn(ExperimentalTelephotoApi::class)
 private fun Map(modifier: Modifier = Modifier) {
   // Code adapted from https://github.com/JetBrains/kotlinconf-app
   val painter = rememberSvgPainter(
@@ -54,6 +62,21 @@ private fun Map(modifier: Modifier = Modifier) {
     it.setContentLocation(
       ZoomableContentLocation.unscaledAndTopLeftAligned(painter.intrinsicSize)
     )
+  }
+
+  if (painter.intrinsicSize.isSpecified) {
+    LaunchedEffect(Unit) {
+      zoomableState.zoomTo(
+        zoomFactor = zoomableState.zoomSpec.maximum.factor,
+        centroid = SpatialOffset(
+          offset = Offset(
+            x = painter.intrinsicSize.width * 0.30f,
+            y = painter.intrinsicSize.height * 0.84f,
+          ),
+          space = CoordinateSpace.ZoomableContent,
+        ),
+      )
+    }
   }
 
   Canvas(modifier.zoomable(zoomableState)) {

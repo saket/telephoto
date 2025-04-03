@@ -28,6 +28,19 @@ fun interface DoubleClickToZoomListener {
     centroid: Offset,
   )
 
+  @ExperimentalTelephotoApi
+  suspend fun CoordinateSystem.onDoubleClick(
+    state: ZoomableState,
+    centroid: SpatialOffset,
+  ) {
+    onDoubleClick(
+      state = state,
+      centroid = with(state.coordinateSystem) {
+        centroid.offsetIn(CoordinateSpace.Viewport)
+      }
+    )
+  }
+
   /**
    * Toggles between [ZoomSpec.maximum] and the [ZoomSpec.minimum] on double clicks.
    */
@@ -55,10 +68,11 @@ fun interface DoubleClickToZoomListener {
  */
 @Poko
 @Immutable
+@OptIn(ExperimentalTelephotoApi::class)
 private class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = null) : DoubleClickToZoomListener {
-  override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
+  override suspend fun CoordinateSystem.onDoubleClick(state: ZoomableState, centroid: SpatialOffset) {
     val transformation = state.contentTransformation.takeIf { it.isSpecified } ?: return // Content isn't ready yet
-    val maxZoomFactor = this.maxZoomFactor ?: state.zoomSpec.maximum.factor
+    val maxZoomFactor = maxZoomFactor ?: state.zoomSpec.maximum.factor
     val isAtMaxZoom = maxZoomFactor - transformation.scale.scaleX < 0.05f
 
     if (isAtMaxZoom) {
@@ -68,6 +82,12 @@ private class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = null) :
         zoomFactor = maxZoomFactor,
         centroid = centroid,
       )
+    }
+  }
+
+  override suspend fun onDoubleClick(state: ZoomableState, centroid: Offset) {
+    with(state.coordinateSystem) {
+      onDoubleClick(state, SpatialOffset(centroid, CoordinateSpace.Viewport))
     }
   }
 }

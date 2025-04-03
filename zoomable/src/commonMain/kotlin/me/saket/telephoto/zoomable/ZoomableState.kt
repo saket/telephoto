@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
+import me.saket.telephoto.zoomable.internal.ZoomableCoordinateSystem
 import kotlin.jvm.JvmName
 
 /**
@@ -105,10 +106,31 @@ sealed interface ZoomableState {
   val isAnimationRunning: Boolean
 
   /**
-   * Whether sufficient information is available about the content to start listening
-   * to pan & zoom gestures.
+   * `Modifier.zoomable()`'s coordinate system for representing spatial offsets in
+   * [CoordinateSpace.Viewport][CoordinateSpace.Companion.Viewport] and
+   * [CoordinateSpace.ZoomableContent][CoordinateSpace.Companion.ZoomableContent].
+   *
+   * Usage recipe:
+   *
+   * ```kotlin
+   * val state = rememberZoomableState()
+   *
+   * val viewportCenter = SpatialOffset(
+   *   offset = Offset(100f, 100f),
+   *   space = CoordinateSpace.Viewport,
+   * )
+   *
+   * // If a 200 x 200 viewport is showing a zoomed-out 500 x 500 image,
+   * // this will return (250f, 250f) in the image's coordinate space.
+   * val imageCenter: Offset = with(state.coordinateSystem) {
+   *   viewportCenter.offsetIn(CoordinateSpace.ZoomableContent)
+   * }
+   * ```
    */
-  val isReadyForInteraction: Boolean
+  @ExperimentalTelephotoApi
+  val coordinateSystem: CoordinateSystem
+    get() = ZoomableCoordinateSystem(this)
+
   /** See [ZoomableContentLocation]. */
   fun setContentLocation(location: ZoomableContentLocation)
 
@@ -131,9 +153,24 @@ sealed interface ZoomableState {
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
+  @OptIn(ExperimentalTelephotoApi::class)
   suspend fun zoomBy(
     zoomFactor: Float,
     centroid: Offset = Offset.Unspecified,
+    animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
+  ) {
+    zoomBy(
+      zoomFactor = zoomFactor,
+      centroid = SpatialOffset(centroid, CoordinateSpace.Viewport),
+      animationSpec = animationSpec,
+    )
+  }
+
+  /** See [zoomBy]. */
+  @ExperimentalTelephotoApi
+  suspend fun zoomBy(
+    zoomFactor: Float,
+    centroid: SpatialOffset,
     animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
   )
 
@@ -146,23 +183,51 @@ sealed interface ZoomableState {
    * between [ZoomSpec.maximum] and [ZoomSpec.minimum].
    *
    * @param centroid Focal point for this zoom within the content's size. Defaults to the center
-   * of the content.
+   * of the viewport.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
+  @OptIn(ExperimentalTelephotoApi::class)
   suspend fun zoomTo(
     zoomFactor: Float,
     centroid: Offset = Offset.Unspecified,
     animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
+  ) {
+    zoomTo(
+      zoomFactor = zoomFactor,
+      centroid = SpatialOffset(centroid, CoordinateSpace.Viewport),
+      animationSpec = animationSpec,
+    )
+  }
+
+  /** See [zoomTo]. */
+  @ExperimentalTelephotoApi
+  suspend fun zoomTo(
+    zoomFactor: Float,
+    centroid: SpatialOffset,
+    animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
   )
 
   /**
-   * Animate pan by [offset] Offset in pixels and suspend until it's finished.
+   * Animate pan by [offset] in pixels and suspend until it's finished.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
+  @OptIn(ExperimentalTelephotoApi::class)
   suspend fun panBy(
     offset: Offset,
+    animationSpec: AnimationSpec<Offset> = DefaultPanAnimationSpec,
+  ) {
+    panBy(
+      offset = SpatialOffset(offset, CoordinateSpace.Viewport),
+      animationSpec = animationSpec,
+    )
+  }
+
+  /** See [panBy]. */
+  @ExperimentalTelephotoApi
+  suspend fun panBy(
+    offset: SpatialOffset,
     animationSpec: AnimationSpec<Offset> = DefaultPanAnimationSpec,
   )
 
@@ -184,7 +249,7 @@ sealed interface ZoomableState {
     replaceWith = ReplaceWith("setContentLocation"),
     level = DeprecationLevel.HIDDEN,
   )
-  @Suppress("INAPPLICABLE_JVM_NAME")  // https://youtrack.jetbrains.com/issue/KT-31420
+  @Suppress("INAPPLICABLE_JVM_NAME", "unused")  // https://youtrack.jetbrains.com/issue/KT-31420
   @JvmName("setContentLocation")
   suspend fun setContentLocationSuspending(location: ZoomableContentLocation) {
     setContentLocation(location)

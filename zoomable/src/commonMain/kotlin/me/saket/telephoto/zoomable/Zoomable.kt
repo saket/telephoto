@@ -43,11 +43,48 @@ import me.saket.telephoto.zoomable.internal.stopTransformation
  * @param clipToBounds defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  * */
+@OptIn(ExperimentalTelephotoApi::class)
 fun Modifier.zoomable(
   state: ZoomableState,
   enabled: Boolean = true,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+): Modifier {
+  return this.zoomable(
+    state = state,
+    pinchToZoomEnabled = enabled,
+    quickZoomEnabled = enabled,
+    onClick = onClick?.let {
+      { clickedAt ->
+        val viewportOffset = with(state.coordinateSystem) {
+          clickedAt.offsetIn(CoordinateSpace.Viewport)
+        }
+        onClick(viewportOffset)
+      }
+    },
+    onLongClick = onLongClick?.let {
+      { clickedAt ->
+        val viewportOffset = with(state.coordinateSystem) {
+          clickedAt.offsetIn(CoordinateSpace.Viewport)
+        }
+        onLongClick(viewportOffset)
+      }
+    },
+    clipToBounds = clipToBounds,
+    onDoubleClick = onDoubleClick,
+  )
+}
+
+// todo: how do i make this public without causing an overload ambiguity?
+/** See [Modifier.zoomable]. */
+@ExperimentalTelephotoApi
+private fun Modifier.zoomable2(
+  state: ZoomableState,
+  enabled: Boolean = true,
+  onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
 ): Modifier {
@@ -63,12 +100,13 @@ fun Modifier.zoomable(
   )
 }
 
+@OptIn(ExperimentalTelephotoApi::class)
 private fun Modifier.zoomable(
   state: ZoomableState,
   pinchToZoomEnabled: Boolean = true,
   quickZoomEnabled: Boolean = true,
-  onClick: ((Offset) -> Unit)? = null,
-  onLongClick: ((Offset) -> Unit)? = null,
+  onClick: (CoordinateSystem.(SpatialOffset) -> Unit)? = null,
+  onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
 ): Modifier {
@@ -105,6 +143,7 @@ private fun Modifier.zoomable(
     }
 }
 
+@OptIn(ExperimentalTelephotoApi::class)
 internal fun Modifier.pinchToZoomable(
   state: ZoomableState,
   clipToBounds: Boolean = true,
@@ -138,12 +177,13 @@ fun Modifier.zoomable(
   )
 }
 
+@OptIn(ExperimentalTelephotoApi::class)
 private data class ZoomableElement(
   private val state: RealZoomableState,
   private val pinchToZoomEnabled: Boolean,
   private val quickZoomEnabled: Boolean,
-  private val onClick: ((Offset) -> Unit)?,
-  private val onLongClick: ((Offset) -> Unit)?,
+  private val onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  private val onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   private val onDoubleClick: DoubleClickToZoomListener?,
 ) : ModifierNodeElement<ZoomableNode>() {
 
@@ -153,7 +193,7 @@ private data class ZoomableElement(
     quickZoomEnabled = quickZoomEnabled,
     onClick = onClick,
     onLongClick = onLongClick,
-    suspendableOnDoubleClick = onDoubleClick,
+    onDoubleClick = onDoubleClick,
   )
 
   override fun update(node: ZoomableNode) {
@@ -178,26 +218,21 @@ private data class ZoomableElement(
   }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalTelephotoApi::class)
 private class ZoomableNode(
   private var state: RealZoomableState,
-  private var suspendableOnDoubleClick: DoubleClickToZoomListener?,
   pinchToZoomEnabled: Boolean,
   quickZoomEnabled: Boolean,
-  onClick: ((Offset) -> Unit)?,
-  onLongClick: ((Offset) -> Unit)?,
+  onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  onDoubleClick: DoubleClickToZoomListener?,
 ) : DelegatingNode(), CompositionLocalConsumerModifierNode {
 
   private val hapticFeedback = hapticFeedbackPerformer()
 
-  val onPress: (Offset) -> Unit = {
+  val onPress: () -> Unit = {
     coroutineScope.launch {
       state.transformableState.stopTransformation(MutatePriorities.FlingAnimation)
-    }
-  }
-  val onDoubleClick: (centroid: Offset) -> Unit = { centroid ->
-    coroutineScope.launch {
-      suspendableOnDoubleClick!!.onDoubleClick(state, centroid)
     }
   }
   val onQuickZoomStopped = {
@@ -225,9 +260,9 @@ private class ZoomableNode(
     quickZoomEnabled = quickZoomEnabled,
     transformableState = state.transformableState,
     onPress = onPress,
-    onTap = onClick,
-    onLongPress = onLongClick,
-    onDoubleTap = if (suspendableOnDoubleClick == null) null else onDoubleClick,
+    onTap = onClick?.withCoordinateSystem(),
+    onLongPress = onLongClick?.withCoordinateSystem(),
+    onDoubleTap = onDoubleClick?.withCoroutineScope(),
     onQuickZoomStopped = onQuickZoomStopped,
   ).create()
 
@@ -249,8 +284,8 @@ private class ZoomableNode(
     state: RealZoomableState,
     pinchToZoomEnabled: Boolean,
     quickZoomEnabled: Boolean,
-    onClick: ((Offset) -> Unit)?,
-    onLongClick: ((Offset) -> Unit)?,
+    onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+    onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
     onDoubleClick: DoubleClickToZoomListener?,
   ) {
     if (this.state != state) {
@@ -258,7 +293,6 @@ private class ZoomableNode(
       // nodes are implicitly reset in the following update() calls.
       this.state = state
     }
-    this.suspendableOnDoubleClick = onDoubleClick
     transformableNode.update(
       state = state.transformableState,
       canPan = state::canConsumePanChange,
@@ -268,13 +302,31 @@ private class ZoomableNode(
     )
     tappableAndQuickZoomableNode.update(
       onPress = onPress,
-      onTap = onClick,
-      onLongPress = onLongClick,
-      onDoubleTap = if (onDoubleClick == null) null else this.onDoubleClick,
+      onTap = onClick?.withCoordinateSystem(),
+      onLongPress = onLongClick?.withCoordinateSystem(),
+      onDoubleTap = onDoubleClick?.withCoroutineScope(),
       onQuickZoomStopped = onQuickZoomStopped,
       transformableState = state.transformableState,
       quickZoomEnabled = quickZoomEnabled,
     )
+  }
+
+  private fun (CoordinateSystem.(SpatialOffset) -> Unit).withCoordinateSystem(): (SpatialOffset) -> Unit {
+    val delegate = this
+    return { offset: SpatialOffset ->
+      state.coordinateSystem.delegate(offset)
+    }
+  }
+
+  private fun DoubleClickToZoomListener.withCoroutineScope(): (centroid: SpatialOffset) -> Unit {
+    val delegate = this
+    return { centroid: SpatialOffset ->
+      coroutineScope.launch {
+        with(delegate) {
+          state.coordinateSystem.onDoubleClick(state, centroid)
+        }
+      }
+    }
   }
 }
 
