@@ -4,16 +4,23 @@ package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
 import androidx.compose.ui.util.unpackFloat2
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.ContentOffset
 import me.saket.telephoto.zoomable.ContentZoomFactor
+import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.CoordinateSystem
 import me.saket.telephoto.zoomable.GestureState
 import me.saket.telephoto.zoomable.GestureStateInputs
+import me.saket.telephoto.zoomable.SpatialOffset
 import me.saket.telephoto.zoomable.UserOffset
 import me.saket.telephoto.zoomable.UserZoomFactor
+import me.saket.telephoto.zoomable.Viewport
+import me.saket.telephoto.zoomable.ZoomableContent
 
 @AndroidParcelize
 internal data class ZoomableSavedState private constructor(
@@ -30,10 +37,12 @@ internal data class ZoomableSavedState private constructor(
     val finalZoomFactor: Long,
   ) : AndroidParcelable
 
+  @OptIn(ExperimentalTelephotoApi::class)
   companion object {
     fun from(
       gestureState: GestureState,
       gestureStateInputs: GestureStateInputs,
+      coordinateSystem: CoordinateSystem,
     ) = ZoomableSavedState(
       userOffset = gestureState.userOffset.value.packToLong(),
       userZoom = gestureState.userZoom.value,
@@ -42,11 +51,13 @@ internal data class ZoomableSavedState private constructor(
         if (viewportSize.isSpecifiedAndNonEmpty) {
           StateRestorerInfo(
             viewportSize = viewportSize.packToLong(),
-            contentOffsetAtViewportCenter = GestureStateAdjuster.calculateContentOffsetAtViewportCenter(
-              gestureStateInputs = gestureStateInputs,
-              savedGestureState = gestureState,
-              viewportSize = viewportSize,
-            ).packToLong(),
+            contentOffsetAtViewportCenter = with(coordinateSystem) {
+              val viewportCenter = SpatialOffset(
+                offset = viewportSize.center,
+                space = CoordinateSpace.Viewport,
+              )
+              viewportCenter.offsetIn(CoordinateSpace.ZoomableContent)
+            }.packToLong(),
             finalZoomFactor = ContentZoomFactor(
               baseZoom = gestureStateInputs.baseZoom,
               userZoom = gestureState.userZoom,

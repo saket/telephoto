@@ -703,6 +703,7 @@ internal class RealZoomableState internal constructor(
           ZoomableSavedState.from(
             gestureState = gestureState,
             gestureStateInputs = inputs,
+            coordinateSystem = state.coordinateSystem,
           )
         }
       },

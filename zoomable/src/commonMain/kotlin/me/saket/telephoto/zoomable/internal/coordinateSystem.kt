@@ -55,7 +55,7 @@ internal value class ZoomableCoordinateSystem(
      * - The topLeft will be offset by 100px from the original position.
      */
     private val transformedContentBounds: Rect
-      get() = unscaledContentBounds.scaledAndOffsetBy(scale, transformation.offset)
+      get() = unscaledContentBounds.zoomedAndTranslatedBy(scale, transformation.offset)
 
     fun viewportToContent(offset: Offset): Offset {
       // To convert from viewport to content coordinates:

@@ -126,7 +126,7 @@ internal fun Rect.withOrigin(origin: TransformOrigin, action: Rect.() -> Rect): 
   return newRect.translate(pivot)
 }
 
-internal fun Rect.scaledAndOffsetBy(scale: ScaleFactor, offset: Offset): Rect {
+internal fun Rect.zoomedAndTranslatedBy(scale: ScaleFactor, offset: Offset): Rect {
   return Rect(
     left = (left * scale.scaleX) + offset.x,
     right = (right * scale.scaleX) + offset.x,
