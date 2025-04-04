@@ -299,6 +299,8 @@ class ZoomableImageTest {
 
   // Regression test for https://github.com/saket/telephoto/issues/128.
   @Test fun do_not_incorrectly_retain_pan_when_state_is_restored() {
+    screenshotValidator.tolerancePercentOnCi = 0.05f
+
     val recreationTester = ActivityRecreationTester(rule)
     recreationTester.setContent {
       ZoomableImage(

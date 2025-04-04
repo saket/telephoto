@@ -674,7 +674,7 @@ class SubSamplingImageTest {
     rule.waitUntil {
       // Wait until all but the delayed tile are loaded.
       val tiles = imageState.asReal().viewportImageTiles
-      tiles.any { it.isBase } && tiles.count { !it.isBase && it.painter != null } == 3
+      tiles.any { it.isBase && it.painter != null } && tiles.count { !it.isBase && it.painter != null } == 3
     }
     rule.runOnIdle {
       // The base image should still be visible behind the foreground tiles.
