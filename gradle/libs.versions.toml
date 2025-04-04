@@ -100,9 +100,7 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 # TODO remove compose libs in favor of declaring via jetbrains compose plugin
 compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "androidx-compose-runtime" }
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "androidx-compose-ui" }
-compose-ui-util = { module = "androidx.compose.ui:ui-util", version.ref = "androidx-compose-ui" }
 compose-ui-material3 = { module = "androidx.compose.material3:material3", version.ref = "androidx-compose-ui-material3" }
-compose-ui-materialIcons = { module = "androidx.compose.material:material-icons-extended", version.ref = "androidx-compose-ui" }
 compose-ui-test-junit = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "androidx-compose-ui" }
 compose-ui-test-activityManifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "androidx-compose-ui" }
 
