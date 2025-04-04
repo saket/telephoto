@@ -25,7 +25,14 @@ class AndroidLibraryPublishingConventionPlugin : Plugin<Project> {
     extensions.configure<MetalavaExtension> {
       filename.set("api/api.txt")
       enforceCheck.set(true)
-      sourcePaths.setFrom("src/main", "src/commonMain", "src/androidMain") // Exclude tests.
+      apiCompatAnnotations.set(
+        listOf(
+          "androidx.compose.runtime.Stable",
+          "androidx.compose.runtime.Immutable",
+          "androidx.compose.runtime.Composable",
+          "dev.drewhamilton.poko.Poko",
+        )
+      )
     }
   }
 }

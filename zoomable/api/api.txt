@@ -73,8 +73,6 @@ package me.saket.telephoto.zoomable {
   }
 
   public enum HardwareShortcutDetector.ShortcutEvent.PanDirection {
-    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection valueOf(String value) throws java.lang.IllegalArgumentException, java.lang.NullPointerException;
-    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection[] values();
     enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection Down;
     enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection Left;
     enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.PanDirection Right;
@@ -92,8 +90,6 @@ package me.saket.telephoto.zoomable {
   }
 
   public enum HardwareShortcutDetector.ShortcutEvent.ZoomDirection {
-    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection valueOf(String value) throws java.lang.IllegalArgumentException, java.lang.NullPointerException;
-    method public static me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection[] values();
     enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection In;
     enum_constant public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.ZoomDirection Out;
   }
@@ -220,7 +216,7 @@ package me.saket.telephoto.zoomable {
   }
 
   public final class ZoomableKt {
-    method @Deprecated public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,? extends kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,? extends kotlin.Unit>? onLongClick, optional boolean clipToBounds);
+    method @Deprecated public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
     method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds, optional me.saket.telephoto.zoomable.DoubleClickToZoomListener? onDoubleClick);
   }
 
@@ -234,19 +230,19 @@ package me.saket.telephoto.zoomable {
     method public Float? getZoomFraction();
     method public me.saket.telephoto.zoomable.ZoomSpec getZoomSpec();
     method public boolean isAnimationRunning();
-    method public default suspend Object? panBy(long offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? panBy(me.saket.telephoto.zoomable.SpatialOffset offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method public suspend Object? resetZoom(optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public default suspend Object? panBy(long offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? panBy(me.saket.telephoto.zoomable.SpatialOffset offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public suspend Object? resetZoom(optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method @Deprecated public default suspend Object? resetZoom(boolean withAnimation, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setAutoApplyTransformations(boolean);
     method public void setContentAlignment(androidx.compose.ui.Alignment);
     method public void setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location);
-    method @Deprecated public suspend void setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location);
+    method @Deprecated public suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
-    method public default suspend Object? zoomBy(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomBy(float zoomFactor, me.saket.telephoto.zoomable.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method public default suspend Object? zoomTo(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomTo(float zoomFactor, me.saket.telephoto.zoomable.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public default suspend Object? zoomBy(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomBy(float zoomFactor, me.saket.telephoto.zoomable.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public default suspend Object? zoomTo(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomTo(float zoomFactor, me.saket.telephoto.zoomable.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     property public abstract boolean autoApplyTransformations;
     property public abstract androidx.compose.ui.Alignment contentAlignment;
     property public abstract androidx.compose.ui.layout.ContentScale contentScale;
@@ -271,6 +267,19 @@ package me.saket.telephoto.zoomable {
   public final class ZoomableStateKt {
     method @Deprecated @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations);
     method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations, optional me.saket.telephoto.zoomable.HardwareShortcutsSpec hardwareShortcutsSpec);
+  }
+
+}
+
+package me.saket.telephoto.zoomable.internal {
+
+  public interface AndroidParcelable {
+  }
+
+  public interface AndroidParcelable {
+  }
+
+  public interface AndroidParcelable {
   }
 
 }
