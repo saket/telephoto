@@ -22,7 +22,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Run unit tests and friends
-        run: ./gradlew testDebugUnitTest desktopTest
+        run: ./gradlew testDebugUnitTest desktopTest metalavaCheckCompatibilityRelease
 
       - name: Run paparazzi screenshot tests
         run: ./gradlew verifyPaparazziDebug
