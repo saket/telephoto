@@ -49,7 +49,10 @@ internal class AndroidImageRegionDecoder private constructor(
 
     val bitmap = withContext(dispatcher) {
       trace("decodeRegion") {
-        decoder.decodeRegion(bounds.toAndroidRect(), options)
+        decoder.decodeRegion(bounds.toAndroidRect(), options).also {
+          // https://developer.android.com/develop/ui/compose/graphics/images/optimization#preparetodraw
+          it.prepareToDraw()
+        }
       }
     }
     if (bitmap != null) {
