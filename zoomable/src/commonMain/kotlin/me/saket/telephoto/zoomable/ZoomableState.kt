@@ -83,8 +83,8 @@ sealed interface ZoomableState {
   var contentAlignment: Alignment
 
   /**
-   * The visual bounds of the content, calculated by applying the scale and translation of pan and zoom
-   * gestures to the value given to [ZoomableState.setContentLocation]. Useful for drawing decorations
+   * The visual bounds of the content, calculated by applying [contentTransformation] to
+   * the value given to [ZoomableState.setContentLocation]. Intended for drawing decorations
    * around the content or performing hit tests.
    */
   val transformedContentBounds: Rect
