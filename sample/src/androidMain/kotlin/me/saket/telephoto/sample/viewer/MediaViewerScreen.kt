@@ -4,7 +4,6 @@ import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +12,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Crop
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,10 +34,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import coil.request.ImageRequest
+import com.slack.circuit.runtime.Navigator
 import kotlinx.coroutines.delay
 import me.saket.telephoto.flick.FlickToDismiss
 import me.saket.telephoto.flick.FlickToDismissState
 import me.saket.telephoto.flick.rememberFlickToDismissState
+import me.saket.telephoto.sample.CropImageScreenKey
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
@@ -45,8 +47,11 @@ import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-internal fun MediaViewerScreen(key: MediaViewerScreenKey) {
+@OptIn(ExperimentalMaterial3Api::class)
+internal fun MediaViewerScreen(
+  key: MediaViewerScreenKey,
+  navigator: Navigator,
+) {
   Scaffold(
     contentWindowInsets = WindowInsets.none,
     contentColor = Color.White,
@@ -73,7 +78,22 @@ internal fun MediaViewerScreen(key: MediaViewerScreenKey) {
     TopAppBar(
       title = {},
       navigationIcon = { CloseNavIconButton() },
-      colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+      colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+      actions = {
+        val activeMediaItem = key.album.items[pagerState.currentPage]
+        if (activeMediaItem is MediaItem.Image) {
+          IconButton(
+            onClick = {
+              navigator.goTo(CropImageScreenKey(activeMediaItem))
+            },
+          ) {
+            Icon(
+              imageVector = Icons.Rounded.Crop,
+              contentDescription = "Crop",
+            )
+          }
+        }
+      }
     )
   }
 }
@@ -186,5 +206,4 @@ private fun backgroundColorFor(flickGestureState: FlickToDismissState.GestureSta
 }
 
 private val WindowInsets.Companion.none: WindowInsets
-  @Stable
-  get() = WindowInsets(0, 0, 0, 0)
+  @Stable get() = WindowInsets(0)

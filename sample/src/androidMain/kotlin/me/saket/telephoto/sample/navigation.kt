@@ -8,8 +8,10 @@ import androidx.compose.ui.Modifier
 import com.slack.circuit.backstack.rememberSaveableBackStack
 import com.slack.circuit.foundation.rememberCircuitNavigator
 import kotlinx.parcelize.Parcelize
+import me.saket.telephoto.sample.crop.CropImageScreen
 import me.saket.telephoto.sample.gallery.GalleryScreen
 import me.saket.telephoto.sample.gallery.MediaAlbum
+import me.saket.telephoto.sample.gallery.MediaItem
 import me.saket.telephoto.sample.viewer.MediaViewerScreen
 import com.slack.circuit.runtime.screen.Screen as CircuitScreenKey
 
@@ -23,16 +25,22 @@ internal fun Navigation(
   Box(Modifier.fillMaxSize()) {
     val record = backstack.first()
     key(record.key) {
-      when (val screen = record.screen) {
+      when (val screen = record.screen as ScreenKey) {
         is GalleryScreenKey -> {
           GalleryScreen(
             key = screen,
-            navigator = navigator
+            navigator = navigator,
           )
         }
         is MediaViewerScreenKey -> {
           MediaViewerScreen(
-            key = screen
+            key = screen,
+            navigator = navigator,
+          )
+        }
+        is CropImageScreenKey -> {
+          CropImageScreen(
+            key = screen,
           )
         }
       }
@@ -51,4 +59,9 @@ data class GalleryScreenKey(
 data class MediaViewerScreenKey(
   val album: MediaAlbum,
   val initialIndex: Int,
+) : ScreenKey
+
+@Parcelize
+data class CropImageScreenKey(
+  val mediaItem: MediaItem.Image,
 ) : ScreenKey

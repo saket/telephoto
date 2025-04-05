@@ -31,6 +31,7 @@ kotlin {
       implementation(libs.androidx.ktx.palette)
       implementation(libs.androidx.activity)
       implementation(libs.compose.ui.material3)
+      implementation(libs.compose.ui.materialIcons)
       implementation(libs.coil.compose)
       implementation(libs.coil.gif)
     }
