@@ -83,9 +83,23 @@ sealed interface ZoomableState {
   var contentAlignment: Alignment
 
   /**
-   * The visual bounds of the content, calculated by applying [contentTransformation] to
-   * the value given to [ZoomableState.setContentLocation]. Intended for drawing decorations
-   * around the content or performing hit tests.
+   * The visual bounds of the content _without_ any user zoom or pan. This is calculated by applying
+   * [contentScale] and [contentAlignment] to the value passed to [ZoomableState.setContentLocation].
+   * This property is intended for drawing decorations around the content that remain unaffected by
+   * zoom and pan gestures.
+   *
+   * This value will be [Rect.Zero] if the content hasn't been measured yet, and it will never
+   * exceed the viewport bounds.
+   */
+  val contentBounds: Rect
+
+  /**
+   * The visual bounds of the content _with_ user zoom and pan. This is calculated by applying
+   * [contentScale] and [contentAlignment] to the value passed to [ZoomableState.setContentLocation].
+   * This property is intended for drawing decorations around the content or for performing hit tests.
+   *
+   * This value will be [Rect.Zero] if the content hasn't been measured yet, and it will never
+   * exceed the viewport bounds.
    */
   val transformedContentBounds: Rect
 

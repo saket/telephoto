@@ -56,6 +56,7 @@ import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.coerceIn
 import me.saket.telephoto.zoomable.internal.copy
 import me.saket.telephoto.zoomable.internal.div
+import me.saket.telephoto.zoomable.internal.intersect
 import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
 import me.saket.telephoto.zoomable.internal.isSpecifiedAndFinite
 import me.saket.telephoto.zoomable.internal.isUnspecifiedOrEmpty
@@ -68,6 +69,7 @@ import me.saket.telephoto.zoomable.internal.unaryMinus
 import me.saket.telephoto.zoomable.internal.withOrigin
 import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
 import me.saket.telephoto.zoomable.internal.zipWithPrevious
+import me.saket.telephoto.zoomable.internal.zoomedAndTranslatedBy
 import kotlin.jvm.JvmInline
 import kotlin.math.abs
 
@@ -200,16 +202,18 @@ internal class RealZoomableState internal constructor(
   /** See [PlaceholderBoundsProvider]. */
   internal var placeholderBoundsProvider: PlaceholderBoundsProvider? by mutableStateOf(null)
 
-  override val transformedContentBounds: Rect by derivedStateOf {
-    with(contentTransformation) {
-      val bounds = currentGestureStateInputs?.let {
-        it.unscaledContentBounds.withOrigin(transformOrigin) {
-          times(scale).translate(offset)
+  override val contentBounds: Rect by derivedStateOf {
+    transformUnscaledContentBoundsBy { inputs, _ ->
+      zoomedAndTranslatedBy(
+        scale = inputs.baseZoom.value,
+        offset = -(inputs.baseOffset * inputs.baseZoom.value),
+      )
         }
       }
-      bounds
-        ?: placeholderBoundsProvider?.calculate(state = this@RealZoomableState)
-        ?: Rect.Zero
+
+  override val transformedContentBounds: Rect by derivedStateOf {
+    transformUnscaledContentBoundsBy { _, transformation ->
+      zoomedAndTranslatedBy(transformation.scale, transformation.offset)
     }
   }
 
@@ -684,6 +688,21 @@ internal class RealZoomableState internal constructor(
       appendLine("unscaledContentLocation = $unscaledContentLocation")
       appendLine("zoomSpec = $zoomSpec")
       appendLine("Please share this error message on https://github.com/saket/telephoto/issues/new?")
+    }
+  }
+
+  private inline fun transformUnscaledContentBoundsBy(
+    transform: Rect.(GestureStateInputs, ZoomableContentTransformation) -> Rect
+  ): Rect {
+    return with(contentTransformation) {
+      val bounds = currentGestureStateInputs?.let { inputs ->
+        inputs.unscaledContentBounds.withOrigin(transformOrigin) {
+          transform(inputs, this@with).intersect(Offset.Zero, inputs.viewportSize)
+        }
+      }
+      bounds
+        ?: placeholderBoundsProvider?.calculate(state = this@RealZoomableState)
+        ?: Rect.Zero
     }
   }
 

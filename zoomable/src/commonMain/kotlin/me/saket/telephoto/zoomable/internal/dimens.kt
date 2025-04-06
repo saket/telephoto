@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.geometry.Offset
@@ -98,7 +100,7 @@ internal fun UserZoomFactor.coerceIn(minimumValue: UserZoomFactor, maximumValue:
  *
  * The name of this function was inspired from [DrawScope.withTransform].
  */
-internal fun Offset.withZoomAndTranslate(
+internal inline fun Offset.withZoomAndTranslate(
   zoom: ScaleFactor,
   translate: Offset,
   action: (Offset) -> Offset,
@@ -106,7 +108,7 @@ internal fun Offset.withZoomAndTranslate(
   return (action((this * zoom) + translate) - translate) / zoom
 }
 
-internal fun Offset.withZoom(
+internal inline fun Offset.withZoom(
   zoom: ScaleFactor,
   action: (Offset) -> Offset,
 ): Offset {
@@ -116,7 +118,7 @@ internal fun Offset.withZoom(
 internal fun Rect.times(scale: ScaleFactor): Rect =
   Rect(offset = topLeft * scale, size = size * scale)
 
-internal fun Rect.withOrigin(origin: TransformOrigin, action: Rect.() -> Rect): Rect {
+internal inline fun Rect.withOrigin(origin: TransformOrigin, action: Rect.() -> Rect): Rect {
   val pivot = Offset(
     x = size.width * origin.pivotFractionX,
     y = size.height * origin.pivotFractionY,
@@ -126,11 +128,33 @@ internal fun Rect.withOrigin(origin: TransformOrigin, action: Rect.() -> Rect): 
   return newRect.translate(pivot)
 }
 
-internal fun Rect.zoomedAndTranslatedBy(scale: ScaleFactor, offset: Offset): Rect {
+internal inline fun Rect.zoomedAndTranslatedBy(scale: ScaleFactor, offset: Offset): Rect {
   return Rect(
     left = (left * scale.scaleX) + offset.x,
     right = (right * scale.scaleX) + offset.x,
     top = (top * scale.scaleY) + offset.y,
     bottom = (bottom * scale.scaleY) + offset.y,
   )
+}
+
+/** A faster version of [Rect.intersect] that minimizes allocations. */
+internal inline fun Rect.intersect(topLeft: Offset, size: Size): Rect {
+  val otherRight = topLeft.x + size.width
+  val otherBottom = topLeft.y + size.height
+
+  return if (
+    this.left < topLeft.x ||
+    this.top < topLeft.y ||
+    this.right > otherRight ||
+    this.bottom > otherBottom
+  ) {
+    this.intersect(
+      otherLeft = topLeft.x,
+      otherTop = topLeft.y,
+      otherRight = otherRight,
+      otherBottom = otherBottom,
+    )
+  } else {
+    this
+  }
 }
