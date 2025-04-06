@@ -22,47 +22,49 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.compose.ui.unit.toSize
+import me.saket.telephoto.zoomable.ZoomableImageState
 
 @Composable
 internal fun CropHandles(
+  imageState: ZoomableImageState,
   modifier: Modifier = Modifier,
 ) {
-  var viewportSize: Size? by remember {
-    mutableStateOf(null)
+  val contentBounds = imageState.zoomableState.contentBounds
+  var cropBounds by remember(contentBounds) {
+    mutableStateOf(contentBounds)
   }
+  cropBounds = cropBounds.intersect(
+    imageState.zoomableState.transformedContentBounds
+  )
 
-  // todo: this is ugly code
-  val (bounds: Rect?, updateBounds: (Rect?) -> Unit) = viewportSize.let { viewportSize ->
-    if (viewportSize == null) {
-      remember { mutableStateOf<Rect?>(Rect.Zero) }
-    } else {
-      LocalDensity.current.run {
-        remember {
-          mutableStateOf(
-            Rect(
-              left = 40.dp.toPx(),
-              top = 120.dp.toPx(),
-              right = viewportSize.width - 40.dp.toPx(),
-              bottom = viewportSize.height - 120.dp.toPx(),
-            ) as Rect?
-          )
-        }
-      }
+  val density = LocalDensity.current
+
+  fun updateCropBounds(
+    left: Float = cropBounds.left,
+    top: Float = cropBounds.top,
+    right: Float = cropBounds.right,
+    bottom: Float = cropBounds.bottom,
+  ) {
+    val minSizePx = with(density) {
+      (CropHandles.handleSize * 4).toPx()
+    }
+    val proposedBounds = Rect(
+      left = left,
+      top = top,
+      right = right,
+      bottom = bottom,
+    )
+    if (!proposedBounds.isEmpty && proposedBounds.size.minDimension > minSizePx) {
+      cropBounds = proposedBounds
     }
   }
 
@@ -70,80 +72,64 @@ internal fun CropHandles(
     modifier
       .fillMaxSize()
       .drawBehind {
-        bounds?.let {
-          clipRect(
-            left = bounds.left,
-            top = bounds.top,
-            right = bounds.right,
-            bottom = bounds.bottom,
-            clipOp = ClipOp.Difference,
-          ) {
-            drawRect(
-              color = Color.Black,
-              alpha = 0.75f,
-            )
-          }
+        clipRect(
+          left = cropBounds.left,
+          top = cropBounds.top,
+          right = cropBounds.right,
+          bottom = cropBounds.bottom,
+          clipOp = ClipOp.Difference,
+        ) {
+          drawRect(
+            color = Color.Black,
+            alpha = 0.5f,
+          )
         }
       }
-      .onSizeChanged {
-        viewportSize = it.toSize().takeIf { it.minDimension > 0 }
-      }
   ) {
-    bounds?.let { bounds ->
-      // todo: enforce a minimum size.
-      Guidelines(
-        modifier = Modifier.matchParentSize(),
-        bounds = { bounds },
-      )
+    Guidelines(
+      modifier = Modifier.matchParentSize(),
+      bounds = { cropBounds },
+    )
 
-      Handle(
-        modifier = Modifier.offset { bounds.topLeft.round() },
-        onDrag = { change ->
-          updateBounds(
-            bounds.copy(
-              top = bounds.top + change.y,
-              left = bounds.left + change.x,
-            )
-          )
-        },
-      )
+    Handle(
+      modifier = Modifier.offset { cropBounds.topLeft.round() },
+      onDrag = { change ->
+        updateCropBounds(
+          top = cropBounds.top + change.y,
+          left = cropBounds.left + change.x,
+        )
+      },
+    )
 
-      Handle(
-        modifier = Modifier.offset { bounds.topRight.round() },
-        onDrag = { change ->
-          updateBounds(
-            bounds.copy(
-              top = bounds.top + change.y,
-              right = bounds.right + change.x,
-            )
-          )
-        },
-      )
+    Handle(
+      modifier = Modifier.offset { cropBounds.topRight.round() },
+      onDrag = { change ->
+        updateCropBounds(
+          top = cropBounds.top + change.y,
+          right = cropBounds.right + change.x,
+        )
+      },
+    )
 
-      Handle(
-        modifier = Modifier.offset { bounds.bottomLeft.round() },
-        onDrag = { change ->
-          updateBounds(
-            bounds.copy(
-              bottom = bounds.bottom + change.y,
-              left = bounds.left + change.x,
-            )
-          )
-        },
-      )
+    Handle(
+      modifier = Modifier.offset { cropBounds.bottomLeft.round() },
+      onDrag = { change ->
+        updateCropBounds(
+          bottom = cropBounds.bottom + change.y,
+          left = cropBounds.left + change.x,
+        )
+      },
+    )
 
-      Handle(
-        modifier = Modifier.offset { bounds.bottomRight.round() },
-        onDrag = { change ->
-          updateBounds(
-            bounds.copy(
-              bottom = bounds.bottom + change.y,
-              right = bounds.right + change.x,
-            )
-          )
-        },
-      )
-    }
+    Handle(
+      modifier = Modifier.offset { cropBounds.bottomRight.round() },
+      onDrag = { change ->
+        updateCropBounds(
+          bottom = cropBounds.bottom + change.y,
+          right = cropBounds.right + change.x,
+        )
+      },
+    )
   }
 }
 
@@ -228,5 +214,5 @@ private fun Guidelines(
 }
 
 object CropHandles {
-  val handleSize = 16.dp
+  val handleSize = 12.dp
 }

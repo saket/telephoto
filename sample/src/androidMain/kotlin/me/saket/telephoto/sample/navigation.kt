@@ -41,6 +41,7 @@ internal fun Navigation(
         is CropImageScreenKey -> {
           CropImageScreen(
             key = screen,
+            navigator = navigator,
           )
         }
       }
