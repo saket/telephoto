@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,6 +41,7 @@ import com.slack.circuit.runtime.Navigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
@@ -63,16 +63,14 @@ import android.util.Size as AndroidSize
 
 @Composable
 internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
-  Scaffold { contentPadding ->
+  Scaffold(
+    contentWindowInsets = WindowInsets.safeGestures,
+  ) { contentPadding ->
     Column(Modifier.padding(contentPadding)) {
       val imageState = rememberZoomableImageState()
       val cropperState = rememberCropperState(imageState)
 
-      Box(
-        Modifier
-          .weight(1f)
-          .padding(WindowInsets.safeGestures.asPaddingValues().union(PaddingValues(40.dp)))
-      ) {
+      Box(Modifier.weight(1f)) {
         // todo: i need contentBounds
         ZoomableAsyncImage(
           modifier = Modifier.fillMaxSize(),
@@ -95,7 +93,7 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
       Row(
         modifier = Modifier
           .fillMaxWidth()
-          .padding(horizontal = 16.dp, vertical = 24.dp),
+          .padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
       ) {
@@ -109,7 +107,7 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
         Button(
           modifier = Modifier.animateContentSize(),
           onClick = { cropRequests.trySend(Unit) },
-          enabled = imageState.isImageDisplayed,
+          enabled = imageState.isImageDisplayed && !isCropping,
         ) {
           Text(if (isCropping) "Saving…" else "Save")
         }
@@ -117,14 +115,15 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
         val context = LocalContext.current
         LaunchedEffect(cropperState) {
           cropRequests.receiveAsFlow()
+            .onEach { isCropping = true }
             .map {
-              isCropping = true
               cropImage(
                 context = context,
                 cropperState = cropperState,
                 mediaItem = key.mediaItem,
               )
             }
+            .onEach { isCropping = false }
             .collect(navigator::goTo)
         }
       }
