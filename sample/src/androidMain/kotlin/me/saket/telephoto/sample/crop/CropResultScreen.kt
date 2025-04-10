@@ -68,6 +68,7 @@ internal fun CropResultScreen(
         model = ImageRequest.Builder(LocalContext.current)
           .data(key.filePath)
           .crossfade(300)
+          .memoryCacheKey(key.filePath) // The default FileKeyer triggers a StrictMode violation
           .build(),
         contentDescription = null,
         contentScale = ContentScale.Fit,

@@ -150,9 +150,11 @@ private suspend fun cropImage(
     ).roundToIntRect()
   }
 
-  val originalImage = context.imageLoader.diskCache!!
-    .openSnapshot(mediaItem.fullSizedUrl)
-    ?: error("image not in cache?")
+  val originalImage = withContext(Dispatchers.IO) {
+    context.imageLoader.diskCache!!
+      .openSnapshot(mediaItem.fullSizedUrl)
+      ?: error("image not in cache?")
+  }
 
   lateinit var originalSize: AndroidSize
 
@@ -165,8 +167,10 @@ private suspend fun cropImage(
     }
   }
 
+  val cacheDir = withContext(Dispatchers.IO) { context.cacheDir }
+  val imagePath = cacheDir.toOkioPath() / "cropped_image_${System.currentTimeMillis()}.jpg"
+
   val fs = FileSystem.SYSTEM
-  val imagePath = context.cacheDir.toOkioPath() / "cropped_image_${System.currentTimeMillis()}.jpg"
   withContext(Dispatchers.IO) {
     fs.write(imagePath) {
       croppedImage.compress(
