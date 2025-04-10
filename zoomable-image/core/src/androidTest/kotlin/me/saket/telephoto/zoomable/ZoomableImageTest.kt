@@ -1742,6 +1742,22 @@ class ZoomableImageTest {
       assertThat(imageState.zoomableState.zoomFraction).isEqualTo(0f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
     }
+
+    // Regression test: When the image is zoomed in and then out, the user offset becomes
+    // negative zero, which breaks my calculation for checking whether the image needs restoration.
+    imageNode.performTouchInput { doubleClick() }
+    rule.waitUntil { imageState.zoomableState.zoomFraction == 1f }
+    imageNode.performTouchInput { doubleClick() }
+    rule.waitUntil { imageState.zoomableState.zoomFraction == 0f }
+
+    recreationTester.recreateWith {
+      rule.setScreenOrientation(ScreenOrientation.PORTRAIT)
+    }
+
+    rule.waitUntil { imageNode.isImageDisplayedInFullQuality() }
+    rule.runOnIdle {
+      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(0f)
+    }
   }
 
   @Test fun layout_changes_are_rendered_immediately_on_the_next_frame() {
