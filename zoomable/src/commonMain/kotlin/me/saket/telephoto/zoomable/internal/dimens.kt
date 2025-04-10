@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.zoomable.BaseZoomFactor
 import me.saket.telephoto.zoomable.ContentZoomFactor
 import me.saket.telephoto.zoomable.UserZoomFactor
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 internal fun Size.roundToIntSize() =
@@ -49,6 +50,13 @@ internal fun ScaleFactor.isPositiveAndFinite(): Boolean {
 
 internal fun Offset.isSpecifiedAndFinite(): Boolean {
   return isSpecified && isFinite
+}
+
+internal fun abs(offset: Offset): Offset {
+  return Offset(
+    x = abs(offset.x),
+    y = abs(offset.y),
+  )
 }
 
 internal fun Float.isPositiveAndFinite(): Boolean {

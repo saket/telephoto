@@ -20,7 +20,9 @@ import me.saket.telephoto.zoomable.SpatialOffset
 import me.saket.telephoto.zoomable.UserOffset
 import me.saket.telephoto.zoomable.UserZoomFactor
 import me.saket.telephoto.zoomable.Viewport
+import me.saket.telephoto.zoomable.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.ZoomableContent
+import kotlin.math.abs
 
 @AndroidParcelize
 internal data class ZoomableSavedState private constructor(
@@ -75,7 +77,7 @@ internal data class ZoomableSavedState private constructor(
     coerceOffsetWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
   ): GestureState {
     val restoredUserOffset = userOffset.unpackAsOffset()
-    val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && userZoom == 1f
+    val wasGestureStateEmpty = abs(restoredUserOffset) == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
     if (
       wasGestureStateEmpty
       || (stateAdjusterInfo == null || stateAdjusterInfo.viewportSize.unpackAsSize() == inputs.viewportSize)

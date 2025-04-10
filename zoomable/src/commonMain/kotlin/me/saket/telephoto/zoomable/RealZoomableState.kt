@@ -839,7 +839,7 @@ internal data class ContentZoomFactor(
 }
 
 /** Differences below this value are ignored when comparing two zoom values. */
-private const val ZoomDeltaEpsilon = 0.001f
+internal const val ZoomDeltaEpsilon = 0.001f
 
 /** Offset applied by the user on top of a base offset. Similar to [UserZoomFactor]. */
 @JvmInline
