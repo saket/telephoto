@@ -65,11 +65,12 @@ class SampleActivity : AppCompatActivity() {
       )
     )
     setContent {
-      TelephotoTheme {
-        Navigation(
-          initialScreenKey = GalleryScreenKey(album)
-        )
-      }
+//      TelephotoTheme {
+//        Navigation(
+//          initialScreenKey = GalleryScreenKey(album)
+//        )
+//      }
+      PopupPreview()
     }
   }
 
