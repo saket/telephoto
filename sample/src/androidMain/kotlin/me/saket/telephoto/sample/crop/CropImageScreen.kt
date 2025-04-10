@@ -1,5 +1,9 @@
 package me.saket.telephoto.sample.crop
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,33 +20,60 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.roundToIntRect
+import coil.annotation.ExperimentalCoilApi
+import coil.imageLoader
 import coil.request.ImageRequest
 import com.slack.circuit.runtime.Navigator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.withContext
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.sample.CropImageScreenKey
+import me.saket.telephoto.sample.CropResultScreenKey
+import me.saket.telephoto.sample.gallery.MediaItem
 import me.saket.telephoto.sample.viewer.CropHandles
+import me.saket.telephoto.sample.viewer.CropperState
+import me.saket.telephoto.sample.viewer.rememberCropperState
+import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.Viewport
+import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
+import okio.FileSystem
+import okio.Path.Companion.toOkioPath
+import android.util.Size as AndroidSize
 
 @Composable
 internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
-  Scaffold(
-    containerColor = Color.Black,
-  ) { contentPadding ->
+  Scaffold { contentPadding ->
     Column(Modifier.padding(contentPadding)) {
+      val imageState = rememberZoomableImageState()
+      val cropperState = rememberCropperState(imageState)
+
       Box(
         Modifier
           .weight(1f)
-          .padding(WindowInsets.safeGestures.asPaddingValues().union(PaddingValues(32.dp)))
+          .padding(WindowInsets.safeGestures.asPaddingValues().union(PaddingValues(40.dp)))
       ) {
-        val imageState = rememberZoomableImageState()
+        // todo: i need contentBounds
         ZoomableAsyncImage(
           modifier = Modifier.fillMaxSize(),
           state = imageState,
@@ -53,10 +84,12 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
           contentDescription = key.mediaItem.caption,
         )
 
-        CropHandles(
-          modifier = Modifier.fillMaxSize(),
-          imageState = imageState,
-        )
+        if (!cropperState.cropBounds.isEmpty) {
+          CropHandles(
+            modifier = Modifier.fillMaxSize(),
+            state = cropperState,
+          )
+        }
       }
 
       Row(
@@ -70,12 +103,87 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
           Text("Cancel")
         }
 
-        Button(onClick = { }) {
-          Text("Save")
+        val cropRequests = remember { Channel<Unit>() }
+        var isCropping by remember { mutableStateOf(false) }
+
+        Button(
+          modifier = Modifier.animateContentSize(),
+          onClick = { cropRequests.trySend(Unit) },
+          enabled = imageState.isImageDisplayed,
+        ) {
+          Text(if (isCropping) "Saving…" else "Save")
+        }
+
+        val context = LocalContext.current
+        LaunchedEffect(cropperState) {
+          cropRequests.receiveAsFlow()
+            .map {
+              isCropping = true
+              cropImage(
+                context = context,
+                cropperState = cropperState,
+                mediaItem = key.mediaItem,
+              )
+            }
+            .collect(navigator::goTo)
         }
       }
     }
   }
+}
+
+@OptIn(ExperimentalTelephotoApi::class, ExperimentalCoilApi::class)
+private suspend fun cropImage(
+  context: Context,
+  cropperState: CropperState,
+  mediaItem: MediaItem.Image,
+): CropResultScreenKey {
+  val cropBounds = cropperState.cropBounds
+  val zoomableState = cropperState.imageState.zoomableState
+
+  // todo: improve this code
+  val boundsInImage = with(zoomableState.coordinateSystem) {
+    val topLeft = SpatialOffset(cropBounds.topLeft, CoordinateSpace.Viewport)
+    val bottomRight = SpatialOffset(cropBounds.bottomRight, CoordinateSpace.Viewport)
+    Rect(
+      topLeft = topLeft.offsetIn(CoordinateSpace.ZoomableContent),
+      bottomRight = bottomRight.offsetIn(CoordinateSpace.ZoomableContent)
+    ).roundToIntRect()
+  }
+
+  val originalImage = context.imageLoader.diskCache!!
+    .openSnapshot(mediaItem.fullSizedUrl)
+    ?: error("image not in cache?")
+
+  lateinit var originalSize: AndroidSize
+
+  val croppedImage = withContext(Dispatchers.IO) {
+    ImageDecoder.decodeBitmap(
+      ImageDecoder.createSource(originalImage.data.toFile())
+    ) { decoder, info, _ ->
+      originalSize = info.size
+      decoder.crop = boundsInImage.toAndroidRect()
+    }
+  }
+
+  val fs = FileSystem.SYSTEM
+  val imagePath = context.cacheDir.toOkioPath() / "cropped_image_${System.currentTimeMillis()}.jpg"
+  withContext(Dispatchers.IO) {
+    fs.write(imagePath) {
+      croppedImage.compress(
+        Bitmap.CompressFormat.JPEG,
+        100,
+        this.outputStream(),
+      )
+    }
+  }
+
+  return CropResultScreenKey(
+    filePath = imagePath.toString(),
+    originalSize = "${originalSize.width} x ${originalSize.height} px",
+    croppedSize = "Size: ${croppedImage.width} x ${croppedImage.height} px",
+    croppedBounds = "Bounds: ${boundsInImage.topLeft} – ${boundsInImage.bottomRight}",
+  )
 }
 
 @Stable

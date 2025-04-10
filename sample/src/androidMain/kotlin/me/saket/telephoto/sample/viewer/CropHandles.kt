@@ -14,39 +14,105 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import me.saket.telephoto.zoomable.ZoomableImageState
 
 @Composable
 internal fun CropHandles(
-  imageState: ZoomableImageState,
+  state: CropperState,
   modifier: Modifier = Modifier,
 ) {
-  val contentBounds = imageState.zoomableState.contentBounds
-  var cropBounds by remember(contentBounds) {
-    mutableStateOf(contentBounds)
-  }
-  cropBounds = cropBounds.intersect(
-    imageState.zoomableState.transformedContentBounds
-  )
+  Box(modifier.fillMaxSize()) {
+    Guidelines(
+      modifier = Modifier.matchParentSize(),
+      state = state,
+    )
 
-  val density = LocalDensity.current
+    Handle(
+      modifier = Modifier.offset { state.cropBounds.topLeft.round() },
+      onDrag = { change ->
+        state.updateCropBounds(
+          top = state.cropBounds.top + change.y,
+          left = state.cropBounds.left + change.x,
+        )
+      },
+    )
+
+    Handle(
+      modifier = Modifier.offset { state.cropBounds.topRight.round() },
+      onDrag = { change ->
+        state.updateCropBounds(
+          top = state.cropBounds.top + change.y,
+          right = state.cropBounds.right + change.x,
+        )
+      },
+    )
+
+    Handle(
+      modifier = Modifier.offset { state.cropBounds.bottomLeft.round() },
+      onDrag = { change ->
+        state.updateCropBounds(
+          bottom = state.cropBounds.bottom + change.y,
+          left = state.cropBounds.left + change.x,
+        )
+      },
+    )
+
+    Handle(
+      modifier = Modifier.offset { state.cropBounds.bottomRight.round() },
+      onDrag = { change ->
+        state.updateCropBounds(
+          bottom = state.cropBounds.bottom + change.y,
+          right = state.cropBounds.right + change.x,
+        )
+      },
+    )
+  }
+}
+
+@Composable
+internal fun rememberCropperState(
+  imageState: ZoomableImageState,
+): CropperState {
+  val contentBounds = imageState.zoomableState.contentBounds
+  val cropBounds = remember(contentBounds) { mutableStateOf(contentBounds) }
+
+  if (imageState.isImageDisplayed) {
+    cropBounds.value = cropBounds.value.intersect(
+      imageState.zoomableState.transformedContentBounds
+    )
+  }
+
+  return remember(imageState, cropBounds) {
+    CropperState(imageState, cropBounds)
+  }.also {
+    it.density = LocalDensity.current
+  }
+}
+
+@Stable
+internal class CropperState(
+  val imageState: ZoomableImageState,
+  private val cropBoundsState: MutableState<Rect>,
+) {
+  val cropBounds: Rect by cropBoundsState
+
+  internal lateinit var density: Density
 
   fun updateCropBounds(
     left: Float = cropBounds.left,
@@ -64,72 +130,8 @@ internal fun CropHandles(
       bottom = bottom,
     )
     if (!proposedBounds.isEmpty && proposedBounds.size.minDimension > minSizePx) {
-      cropBounds = proposedBounds
+      cropBoundsState.value = proposedBounds
     }
-  }
-
-  Box(
-    modifier
-      .fillMaxSize()
-      .drawBehind {
-        clipRect(
-          left = cropBounds.left,
-          top = cropBounds.top,
-          right = cropBounds.right,
-          bottom = cropBounds.bottom,
-          clipOp = ClipOp.Difference,
-        ) {
-          drawRect(
-            color = Color.Black,
-            alpha = 0.5f,
-          )
-        }
-      }
-  ) {
-    Guidelines(
-      modifier = Modifier.matchParentSize(),
-      bounds = { cropBounds },
-    )
-
-    Handle(
-      modifier = Modifier.offset { cropBounds.topLeft.round() },
-      onDrag = { change ->
-        updateCropBounds(
-          top = cropBounds.top + change.y,
-          left = cropBounds.left + change.x,
-        )
-      },
-    )
-
-    Handle(
-      modifier = Modifier.offset { cropBounds.topRight.round() },
-      onDrag = { change ->
-        updateCropBounds(
-          top = cropBounds.top + change.y,
-          right = cropBounds.right + change.x,
-        )
-      },
-    )
-
-    Handle(
-      modifier = Modifier.offset { cropBounds.bottomLeft.round() },
-      onDrag = { change ->
-        updateCropBounds(
-          bottom = cropBounds.bottom + change.y,
-          left = cropBounds.left + change.x,
-        )
-      },
-    )
-
-    Handle(
-      modifier = Modifier.offset { cropBounds.bottomRight.round() },
-      onDrag = { change ->
-        updateCropBounds(
-          bottom = cropBounds.bottom + change.y,
-          right = cropBounds.right + change.x,
-        )
-      },
-    )
   }
 }
 
@@ -161,7 +163,7 @@ private fun Handle(
       )
       .padding(ripplePadding)
       .size(size)
-      .background(Color.White, CircleShape)
+      .background(MaterialTheme.colorScheme.primary, CircleShape)
       .draggable2D(
         state = draggableState,
         interactionSource = interactionSource,
@@ -171,48 +173,21 @@ private fun Handle(
 
 @Composable
 private fun Guidelines(
-  bounds: () -> Rect,
+  state: CropperState,
   modifier: Modifier = Modifier,
 ) {
+  val colors = MaterialTheme.colorScheme
   Canvas(modifier) {
-    // Left line.
-    drawLine(
-      start = bounds().topLeft + Offset(x = 0f, y = CropHandles.handleSize.toPx()),
-      end = bounds().bottomLeft - Offset(x = 0f, y = CropHandles.handleSize.toPx()),
-      color = Color.White,
-      strokeWidth = 2.dp.toPx(),
-      cap = StrokeCap.Round,
-    )
-
-    // Top line.
-    drawLine(
-      start = bounds().topLeft + Offset(x = CropHandles.handleSize.toPx(), y = 0f),
-      end = bounds().topRight - Offset(x = CropHandles.handleSize.toPx(), y = 0f),
-      color = Color.White,
-      strokeWidth = 2.dp.toPx(),
-      cap = StrokeCap.Round,
-    )
-
-    // Right line.
-    drawLine(
-      start = bounds().topRight + Offset(x = 0f, y = CropHandles.handleSize.toPx()),
-      end = bounds().bottomRight - Offset(x = 0f, y = CropHandles.handleSize.toPx()),
-      color = Color.White,
-      strokeWidth = 2.dp.toPx(),
-      cap = StrokeCap.Round,
-    )
-
-    // Bottom line.
-    drawLine(
-      start = bounds().bottomLeft + Offset(x = CropHandles.handleSize.toPx(), y = 0f),
-      end = bounds().bottomRight - Offset(x = CropHandles.handleSize.toPx(), y = 0f),
-      color = Color.White,
-      strokeWidth = 2.dp.toPx(),
-      cap = StrokeCap.Round,
+    val bounds = state.cropBounds
+    drawRect(
+      topLeft = bounds.topLeft,
+      size = bounds.size,
+      color = colors.primary,
+      style = Stroke(2.dp.toPx()),
     )
   }
 }
 
-object CropHandles {
+internal object CropHandles {
   val handleSize = 12.dp
 }

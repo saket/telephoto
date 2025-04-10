@@ -26,7 +26,7 @@ class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     if (BuildConfig.DEBUG) {
-      enableStrictMode()
+//      enableStrictMode()
     }
     enableEdgeToEdge()
     setupImmersiveMode()

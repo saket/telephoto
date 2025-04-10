@@ -17,7 +17,7 @@ kotlin {
       implementation(compose.foundation)
       implementation(compose.components.resources)
 
-      implementation(libs.circuit.runtime)
+      implementation(libs.circuit.foundation)
       implementation(libs.circuit.backstack)
     }
 
