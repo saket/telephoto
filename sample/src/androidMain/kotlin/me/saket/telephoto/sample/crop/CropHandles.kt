@@ -1,4 +1,4 @@
-package me.saket.telephoto.sample.viewer
+package me.saket.telephoto.sample.crop
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi

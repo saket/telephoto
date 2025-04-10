@@ -48,9 +48,6 @@ import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.sample.CropImageScreenKey
 import me.saket.telephoto.sample.CropResultScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
-import me.saket.telephoto.sample.viewer.CropHandles
-import me.saket.telephoto.sample.viewer.CropperState
-import me.saket.telephoto.sample.viewer.rememberCropperState
 import me.saket.telephoto.zoomable.CoordinateSpace
 import me.saket.telephoto.zoomable.SpatialOffset
 import me.saket.telephoto.zoomable.Viewport
