@@ -844,7 +844,14 @@ internal const val ZoomDeltaEpsilon = 0.001f
 /** Offset applied by the user on top of a base offset. Similar to [UserZoomFactor]. */
 @JvmInline
 @Immutable
-internal value class UserOffset(val value: Offset) {
+internal value class UserOffset private constructor(val value: Offset) {
+  companion object {
+    operator fun invoke(value: Offset): UserOffset {
+      val isZero = abs(value.x) == 0f && abs(value.y) == 0f // Negative zeroes lead to subtle calculations errors.
+      return UserOffset(if (isZero) Offset.Zero else value)
+    }
+  }
+
   operator fun minus(other: Offset): UserOffset =
     UserOffset(value.minus(other))
 
