@@ -27,7 +27,6 @@ internal object ImageLoader {
       val options = optionsField.get(this)
       respectHeadersField.get(options) as Boolean
     } catch (e: Throwable) {
-      e.printStackTrace()
       canUseReflection = false
       null
     }
