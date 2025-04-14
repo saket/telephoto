@@ -111,6 +111,8 @@ internal class Resolver(
         // Ignore "no-store" http headers if they're present and always cache images to disk. Otherwise,
         // telephoto will be unable to sub-sample large images directly from coil's memory cache.
         .respectCacheHeaders(false)
+        // Prevent ConnectivityManager.TooManyRequestsException (https://github.com/coil-kt/coil/issues/2567).
+        .networkObserverEnabled(false)
         .build()
     } else imageLoader
 
