@@ -41,6 +41,7 @@ import me.saket.telephoto.subsamplingimage.util.canBeSubSampled
 import me.saket.telephoto.subsamplingimage.util.exists
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
+import me.saket.telephoto.zoomable.coil.ImageLoader.isRespectingCacheHeaders
 import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceCreationResult.EligibleForSubSampling
 import me.saket.telephoto.zoomable.coil.Resolver.ImageSourceCreationResult.ImageDeletedOnlyFromDiskCache
 import me.saket.telephoto.zoomable.copy
@@ -104,12 +105,14 @@ internal class Resolver(
 
   private suspend fun work(request: ImageRequest, imageLoader: ImageLoader, skipMemoryCache: Boolean) {
     @Suppress("NAME_SHADOWING")
-    val imageLoader = imageLoader
-      .newBuilder()
-      // Ignore "no-store" http headers if they're present and always cache images to disk. Otherwise,
-      // telephoto will be unable to sub-sample large images directly from coil's memory cache.
-      .respectCacheHeaders(false)
-      .build()
+    val imageLoader = if (imageLoader.isRespectingCacheHeaders() == true) {
+      imageLoader
+        .newBuilder()
+        // Ignore "no-store" http headers if they're present and always cache images to disk. Otherwise,
+        // telephoto will be unable to sub-sample large images directly from coil's memory cache.
+        .respectCacheHeaders(false)
+        .build()
+    } else imageLoader
 
     val result = imageLoader.execute(
       request.newBuilder()

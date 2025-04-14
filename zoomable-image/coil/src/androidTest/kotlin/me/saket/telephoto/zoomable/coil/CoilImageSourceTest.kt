@@ -6,7 +6,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
-import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -507,6 +506,30 @@ class CoilImageSourceTest {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
     }
+  }
+
+  @Test fun do_not_crash_if_respectCacheHeaders_field_cant_be_accessed() = runTest {
+    lateinit var imageState: ZoomableImageState
+    val fullImageUrl: HttpUrl = withContext(Dispatchers.IO) {
+      serverRule.server.url("full_image.png")
+    }
+
+    val customImageLoader = object : ImageLoader by rule.activity.imageLoader {
+      // The reflection code looks for coil.RealImageLoader.
+      // When custom loaders are used, the code shouldn't crash.
+    }
+    rule.setContent {
+      ZoomableAsyncImage(
+        state = rememberZoomableImageState().also { imageState = it },
+        modifier = Modifier.fillMaxSize(),
+        model = fullImageUrl,
+        imageLoader = customImageLoader,
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil { imageState.isImageDisplayed }
+    assertThat(imageState.subSamplingState).isNotNull()
   }
 
   @Test fun image_url_with_nocache_http_header() = runTest {
