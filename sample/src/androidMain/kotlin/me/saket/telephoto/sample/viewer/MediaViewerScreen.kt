@@ -83,9 +83,8 @@ internal fun MediaViewerScreen(
         val activeMediaItem = key.album.items[pagerState.currentPage]
         if (activeMediaItem is MediaItem.Image) {
           IconButton(
-            onClick = {
-              navigator.goTo(CropImageScreenKey(activeMediaItem))
-            },
+            onClick = { navigator.goTo(CropImageScreenKey(activeMediaItem)) },
+            colors = titleBarIconButtonColors(),
           ) {
             Icon(
               imageVector = Icons.Rounded.Crop,
@@ -103,13 +102,16 @@ private fun CloseNavIconButton() {
   val backDispatcher = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
   IconButton(
     onClick = { backDispatcher.onBackPressed() },
-    colors = IconButtonDefaults.iconButtonColors(
-      containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.4f)
-    ),
+    colors = titleBarIconButtonColors(),
   ) {
     Icon(Icons.Rounded.Close, contentDescription = "Go back")
   }
 }
+
+@Composable
+private fun titleBarIconButtonColors() = IconButtonDefaults.iconButtonColors(
+  containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.4f)
+)
 
 @Composable
 private fun MediaPage(
