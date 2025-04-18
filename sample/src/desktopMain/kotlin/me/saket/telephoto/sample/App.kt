@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.singleWindowApplication
-import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.rememberZoomableState

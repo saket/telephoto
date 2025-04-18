@@ -71,6 +71,9 @@ import me.saket.telephoto.zoomable.internal.withOrigin
 import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
 import me.saket.telephoto.zoomable.internal.zipWithPrevious
 import me.saket.telephoto.zoomable.internal.zoomedAndTranslatedBy
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
+import me.saket.telephoto.zoomable.spatial.takeOrElse
 import kotlin.jvm.JvmInline
 import kotlin.math.abs
 

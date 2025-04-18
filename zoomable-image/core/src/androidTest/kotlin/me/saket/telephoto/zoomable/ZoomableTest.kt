@@ -55,6 +55,7 @@ import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.util.ScreenshotTestActivity
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test

@@ -5,6 +5,9 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSystem
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 
 /**
  * Implement this interface for reacting to double clicks on `Modifier.zoomable`'s content.

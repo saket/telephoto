@@ -28,9 +28,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.QuickZoomStopped
 import me.saket.telephoto.zoomable.internal.QuickZoomEvent.Zooming

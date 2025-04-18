@@ -1,10 +1,12 @@
 package me.saket.telephoto.zoomable
 
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.internal.ContentCoordinateSpace
 import me.saket.telephoto.zoomable.internal.ViewportCoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSystem
+import me.saket.telephoto.zoomable.spatial.SpatialRect
 import kotlin.jvm.JvmSynthetic
 
 /**

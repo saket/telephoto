@@ -44,6 +44,7 @@ import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.focusForwarder
 import me.saket.telephoto.zoomable.internal.receiveFocusFrom
 import me.saket.telephoto.zoomable.internal.scaledToMatch
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 
 /**
  * A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures

@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableImageState
 

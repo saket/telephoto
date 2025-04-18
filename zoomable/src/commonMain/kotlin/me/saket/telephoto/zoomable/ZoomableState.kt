@@ -16,7 +16,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import kotlin.jvm.JvmName
 
 /**

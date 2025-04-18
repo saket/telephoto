@@ -48,8 +48,8 @@ import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.sample.CropImageScreenKey
 import me.saket.telephoto.sample.CropResultScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
-import me.saket.telephoto.zoomable.CoordinateSpace
-import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage

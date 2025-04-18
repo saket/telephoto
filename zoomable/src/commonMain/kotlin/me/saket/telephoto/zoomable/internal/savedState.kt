@@ -12,17 +12,16 @@ import androidx.compose.ui.util.unpackFloat2
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.ContentOffset
 import me.saket.telephoto.zoomable.ContentZoomFactor
-import me.saket.telephoto.zoomable.CoordinateSpace
-import me.saket.telephoto.zoomable.CoordinateSystem
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSystem
 import me.saket.telephoto.zoomable.GestureState
 import me.saket.telephoto.zoomable.GestureStateInputs
-import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.UserOffset
 import me.saket.telephoto.zoomable.UserZoomFactor
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.ZoomableContent
-import kotlin.math.abs
 
 @AndroidParcelize
 internal data class ZoomableSavedState private constructor(

@@ -23,6 +23,9 @@ import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
 import me.saket.telephoto.zoomable.internal.TransformableElement
 import me.saket.telephoto.zoomable.internal.hapticFeedbackPerformer
 import me.saket.telephoto.zoomable.internal.stopTransformation
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.CoordinateSystem
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 
 /**
  * A `Modifier` for handling pan & zoom gestures, designed to be shared across all your media
