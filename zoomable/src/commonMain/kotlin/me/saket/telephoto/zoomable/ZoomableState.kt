@@ -16,7 +16,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.internal.ZoomableCoordinateSystem
+import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
 import kotlin.jvm.JvmName
 
 /**
@@ -83,17 +83,6 @@ sealed interface ZoomableState {
   var contentAlignment: Alignment
 
   /**
-   * The visual bounds of the content _without_ any user zoom or pan. This is calculated by applying
-   * [contentScale] and [contentAlignment] to the value passed to [ZoomableState.setContentLocation].
-   * This property is intended for drawing decorations around the content that remain unaffected by
-   * zoom and pan gestures.
-   *
-   * This value will be [Rect.Zero] if the content hasn't been measured yet, and it will never
-   * exceed the viewport bounds.
-   */
-  val contentBounds: Rect
-
-  /**
    * The visual bounds of the content _with_ user zoom and pan. This is calculated by applying
    * [contentScale] and [contentAlignment] to the value passed to [ZoomableState.setContentLocation].
    * This property is intended for drawing decorations around the content or for performing hit tests.
@@ -101,6 +90,10 @@ sealed interface ZoomableState {
    * This value will be [Rect.Zero] if the content hasn't been measured yet, and it will never
    * exceed the viewport bounds.
    */
+  @Deprecated(
+    message = "Superseded by coordinateSystem.contentBounds.",
+    replaceWith = ReplaceWith("coordinateSystem.contentBounds"),
+  )
   val transformedContentBounds: Rect
 
   /**
@@ -120,6 +113,7 @@ sealed interface ZoomableState {
   /** Whether any zoom, pan (or both) animation is in progress. */
   val isAnimationRunning: Boolean
 
+  // todo: add some basic tests
   /**
    * `Modifier.zoomable()`'s coordinate system for representing spatial offsets in
    * [CoordinateSpace.Viewport][CoordinateSpace.Companion.Viewport] and
@@ -143,8 +137,7 @@ sealed interface ZoomableState {
    * ```
    */
   @ExperimentalTelephotoApi
-  val coordinateSystem: CoordinateSystem
-    get() = ZoomableCoordinateSystem(this)
+  val coordinateSystem: ZoomableCoordinateSystem
 
   /** See [ZoomableContentLocation]. */
   fun setContentLocation(location: ZoomableContentLocation)

@@ -5,6 +5,8 @@ package me.saket.telephoto.zoomable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.isUnspecified
 import dev.drewhamilton.poko.Poko
@@ -13,7 +15,7 @@ import me.saket.telephoto.ExperimentalTelephotoApi
 /**
  * A 2D offset bound to a specific [CoordinateSpace] inside a [CoordinateSystem].
  *
- * `SpatialOffset` ensures that positional data is always contextualized, preventing miscalculations
+ * `SpatialOffset` ensures that geometric data is always contextualized, preventing miscalculations
  * across incompatible coordinate spaces (e.g., viewport vs. image space).
  *
  * For reading the offset in a space, use [SpatialOffset.offsetIn][CoordinateSystem.offsetIn] with
@@ -45,6 +47,40 @@ class SpatialOffset(
 }
 
 /**
+ * A 2D rectangle bound to a specific [CoordinateSpace] inside a [CoordinateSystem].
+ *
+ * Like [SpatialOffset], `SpatialRect` ensures that geometric data remains contextualized,
+ * preventing miscalculations across incompatible coordinate spaces (e.g., viewport vs. image space).
+ *
+ * For reading the bounds or its size in a given space, use [SpatialRect.rectIn][CoordinateSystem.rectIn]
+ * or [SpatialRect.sizeIn][CoordinateSystem.sizeIn] with a [CoordinateSystem] receiver:
+ *
+ * ```kotlin
+ * val spatialRect = SpatialRect(
+ *   topLeft = SpatialOffset(Offset(0f, 0f), CoordinateSpace.Viewport),
+ *   bottomRight = SpatialOffset(Offset(200f, 300f), CoordinateSpace.Viewport),
+ * )
+ *
+ * val imageRect: Rect = with(zoomableState.coordinateSystem) {
+ *   spatialRect.rectIn(CoordinateSpace.ZoomableContent)
+ * }
+ * ```
+ */
+@Poko
+@Immutable
+@ExperimentalTelephotoApi
+class SpatialRect(
+  val topLeft: SpatialOffset,
+  val bottomRight: SpatialOffset,
+) {
+
+  companion object {
+    val Unspecified: SpatialRect
+      get() = SpatialRect(SpatialOffset.Unspecified, SpatialOffset.Unspecified)
+  }
+}
+
+/**
  * Identifies a coordinate space (e.g., viewport or zoomable image) that provides context
  * to [SpatialOffset] values. The conversion between coordinate spaces is provided by a
  * [CoordinateSystem].
@@ -65,13 +101,29 @@ interface CoordinateSpace {
  */
 @ExperimentalTelephotoApi
 interface CoordinateSystem {
+  /**
+   * Converts this [SpatialOffset] to a raw [Offset] in the `target` coordinate space.
+   *
+   * @return the resolved offset, or [Offset.Unspecified] if the spatial offset is unspecified
+   *         or if the `target` coordinate space has not yet been measured.
+   */
   fun SpatialOffset.offsetIn(target: CoordinateSpace): Offset
 
-  fun SpatialOffset.toSpace(target: CoordinateSpace): SpatialOffset {
-    return SpatialOffset(
-      offset = offsetIn(target),
-      space = target,
+  /**
+   * Convert this [SpatialRect] to a raw [Rect] in the `target` coordinate space.
+   *
+   * @return the resolved rect, or an empty rect if the spatial rect is unspecified
+   *         or if the `target` coordinate space has not yet been measured.
+   */
+  fun SpatialRect.rectIn(target: CoordinateSpace): Rect {
+    return Rect(
+      topLeft = topLeft.offsetIn(target),
+      bottomRight = bottomRight.offsetIn(target),
     )
+  }
+
+  fun SpatialRect.sizeIn(target: CoordinateSpace): Size {
+    return rectIn(target).size
   }
 }
 
@@ -91,3 +143,13 @@ val SpatialOffset.isUnspecified: Boolean
  */
 inline fun SpatialOffset.takeOrElse(block: () -> SpatialOffset): SpatialOffset =
   if (isSpecified) this else block()
+
+/** `false` when this is [SpatialRect.Unspecified]. */
+@Stable
+val SpatialRect.isSpecified: Boolean
+  get() = topLeft.isSpecified && bottomRight.isSpecified
+
+/** `true` when this is [SpatialRect.Unspecified]. */
+@Stable
+val SpatialRect.isUnspecified: Boolean
+  get() = topLeft.isUnspecified || bottomRight.isUnspecified

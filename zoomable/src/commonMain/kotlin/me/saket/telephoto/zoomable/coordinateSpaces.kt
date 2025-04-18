@@ -1,5 +1,7 @@
 package me.saket.telephoto.zoomable
 
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.internal.ContentCoordinateSpace
 import me.saket.telephoto.zoomable.internal.ViewportCoordinateSpace
@@ -25,3 +27,32 @@ val CoordinateSpace.Companion.Viewport: CoordinateSpace
 @ExperimentalTelephotoApi
 val CoordinateSpace.Companion.ZoomableContent: CoordinateSpace
   @JvmSynthetic get() = ContentCoordinateSpace
+
+@ExperimentalTelephotoApi
+interface ZoomableCoordinateSystem : CoordinateSystem {
+  /**
+   * The visual bounds of the content _without_ any user zoom or pan. This is calculated by applying
+   * [contentScale][ZoomableState.contentScale] and [contentAlignment][ZoomableState.contentAlignment]
+   * to the value passed to [ZoomableState.setContentLocation]. This property is intended for drawing
+   * decorations around the content that remain unaffected by zoom and pan gestures.
+   *
+   * This value will be [SpatialRect.Unspecified] if the content hasn't been measured yet, and it will
+   * never exceed the viewport bounds.
+   */
+  @ExperimentalTelephotoApi
+  val contentBounds: SpatialRect
+
+  /**
+   * Like [contentBounds], but _without_ any user transformations. This is the initial bounds of the
+   * content, where the content is displayed prior to any zoom or pan gestures.
+   */
+  @ExperimentalTelephotoApi
+  val unscaledContentBounds: SpatialRect
+
+  /**
+   * Size of the composable where `Modifier.zoomable()` is used.
+   *
+   * This value will be [Size.Zero] if the composable hasn't been measured yet.
+   */
+  val viewportSize: Size
+}

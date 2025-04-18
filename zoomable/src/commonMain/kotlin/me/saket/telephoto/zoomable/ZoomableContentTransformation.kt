@@ -35,6 +35,7 @@ interface ZoomableContentTransformation {
    * does not account for the zoom and pan transformations. Useful for synchronizing
    * other elements with the zoomable content.
    */
+  @Deprecated("Use zoomableState.coordinateSystem.unscaledContentBounds instead")
   val contentSize: Size
 
   /**

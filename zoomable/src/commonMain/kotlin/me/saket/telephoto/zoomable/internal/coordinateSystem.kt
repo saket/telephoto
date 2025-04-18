@@ -2,41 +2,113 @@
 
 package me.saket.telephoto.zoomable.internal
 
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import me.saket.telephoto.zoomable.CoordinateSpace
-import me.saket.telephoto.zoomable.CoordinateSystem
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.geometry.takeOrElse
+import androidx.compose.ui.layout.ScaleFactor
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.CoordinateSpace
 import me.saket.telephoto.zoomable.RealZoomableState
 import me.saket.telephoto.zoomable.SpatialOffset
+import me.saket.telephoto.zoomable.SpatialRect
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
-import me.saket.telephoto.zoomable.ZoomableState
-import kotlin.jvm.JvmInline
+import me.saket.telephoto.zoomable.ZoomableCoordinateSystem
+import me.saket.telephoto.zoomable.isUnspecified
 
-@JvmInline
-internal value class ZoomableCoordinateSystem(
-  private val state: ZoomableState,
-) : CoordinateSystem {
+@Stable
+internal class RealZoomableCoordinateSystem(
+  private val state: RealZoomableState,
+) : ZoomableCoordinateSystem {
+
+  override val contentBounds: SpatialRect by derivedStateOf {
+    val boundsInViewport = state.transformUnscaledContentBoundsBy { _, transformation ->
+      zoomedAndTranslatedBy(
+        scale = transformation.scale,
+        offset = transformation.offset,
+      )
+    }
+    if (boundsInViewport != null) {
+      SpatialRect(
+        topLeft = SpatialOffset(boundsInViewport.topLeft, CoordinateSpace.Viewport),
+        bottomRight = SpatialOffset(boundsInViewport.bottomRight, CoordinateSpace.Viewport),
+      )
+    } else {
+      // Note to self: this does not use SpatialRect.Zero as a fallback value.
+      // Because spatial rects are lazily resolved, a zero spatial rect in one
+      // coordinate space could be resolved to a non-zero rect in another space.
+      SpatialRect.Unspecified
+    }
+  }
+
+  override val unscaledContentBounds: SpatialRect by derivedStateOf {
+    val boundsInViewport = state.transformUnscaledContentBoundsBy { inputs, _ ->
+      zoomedAndTranslatedBy(
+        scale = inputs.baseZoom.value,
+        offset = -(inputs.baseOffset * inputs.baseZoom.value),
+      )
+    }
+    if (boundsInViewport != null) {
+      SpatialRect(
+        topLeft = SpatialOffset(boundsInViewport.topLeft, CoordinateSpace.Viewport),
+        bottomRight = SpatialOffset(boundsInViewport.bottomRight, CoordinateSpace.Viewport),
+      )
+    } else {
+      SpatialRect.Unspecified
+    }
+  }
+
+  // todo: add tests for this (including the zero behavior)
+  override val viewportSize: Size
+    get() = state.viewportSize.takeOrElse { Size.Zero }
 
   override fun SpatialOffset.offsetIn(target: CoordinateSpace): Offset {
+    if (this.isUnspecified) {
+      // todo: add tests for this
+      return Offset.Unspecified
+    }
+    val converter = converterIfStateIsReady()
+      ?: return Offset.Unspecified
+
     return when (target) {
       this.space -> this.offset
-      CoordinateSpace.Viewport -> converter().contentToViewport(offset)
-      CoordinateSpace.ZoomableContent -> converter().viewportToContent(offset)
+      CoordinateSpace.Viewport -> converter.contentToViewport(offset)
+      CoordinateSpace.ZoomableContent -> converter.viewportToContent(offset)
       else -> error("Can't convert from ${this.space} to $target")
     }
   }
 
-  private fun converter(): CoordinateSpaceConverter {
-    check(state is RealZoomableState)
-    check(state.isReadyForInteraction) {
-      "Modifier.zoomable() hasn't measured its content yet"
+  override fun SpatialRect.rectIn(target: CoordinateSpace): Rect {
+    if (this.isUnspecified) {
+      // todo: verify that this is okay.
+      // todo: add tests for this
+      // Compose UI does not have a concept of an unspecified rect so this uses a non-zero, but empty rect.
+      return Rect.NonZeroButEmpty
     }
+
+    val topLeftInTarget = this.topLeft.offsetIn(target)
+    val bottomRightInTarget = this.bottomRight.offsetIn(target)
+
+    if (topLeftInTarget.isSpecified && bottomRightInTarget.isSpecified) {
+      return Rect(topLeftInTarget, bottomRightInTarget)
+    } else {
+      // todo: add tests for this?
+      return Rect.NonZeroButEmpty
+    }
+  }
+
+  private fun converterIfStateIsReady(): CoordinateSpaceConverter? {
+    val stateInputs = state.currentGestureStateInputs ?: return null
+    val transformation = state.contentTransformation.takeIf { it.isSpecified } ?: return null
     return CoordinateSpaceConverter(
-      unscaledContentBounds = state.currentGestureStateInputs!!.unscaledContentBounds,
-      transformation = state.contentTransformation,
+      unscaledContentBounds = stateInputs.unscaledContentBounds,
+      transformation = transformation,
     )
   }
 
@@ -44,7 +116,8 @@ internal value class ZoomableCoordinateSystem(
     private val unscaledContentBounds: Rect,
     private val transformation: ZoomableContentTransformation,
   ) {
-    private val scale get() = transformation.scale
+    private val scale: ScaleFactor
+      get() = transformation.scale
 
     /**
      * The content's bounds after applying the current transformation (scale and offset).
@@ -57,6 +130,7 @@ internal value class ZoomableCoordinateSystem(
     private val transformedContentBounds: Rect
       get() = unscaledContentBounds.zoomedAndTranslatedBy(scale, transformation.offset)
 
+    // todo: if a coordinate in the viewport is outside the bounds of the image, it should be coerced in
     fun viewportToContent(offset: Offset): Offset {
       // To convert from viewport to content coordinates:
       // 1. Shift by -transformedContentBounds.topLeft (to get relative to transformed content)
@@ -79,3 +153,5 @@ internal data object ContentCoordinateSpace : CoordinateSpace
 
 internal data object ViewportCoordinateSpace : CoordinateSpace
 
+private val Rect.Companion.NonZeroButEmpty: Rect
+  get() = Rect(-1f, -1f, -1f, -1f)

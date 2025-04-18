@@ -47,6 +47,7 @@ import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
+import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
 import me.saket.telephoto.zoomable.internal.TransformScope
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
@@ -124,6 +125,7 @@ internal class RealZoomableState internal constructor(
   override var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
   override var zoomSpec: ZoomSpec by mutableStateOf(ZoomSpec())
   override var isAnimationRunning: Boolean by mutableStateOf(false)
+  override val coordinateSystem = RealZoomableCoordinateSystem(this)
 
   internal var hardwareShortcutsSpec by mutableStateOf(HardwareShortcutsSpec())
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
@@ -202,19 +204,11 @@ internal class RealZoomableState internal constructor(
   /** See [PlaceholderBoundsProvider]. */
   internal var placeholderBoundsProvider: PlaceholderBoundsProvider? by mutableStateOf(null)
 
-  override val contentBounds: Rect by derivedStateOf {
-    transformUnscaledContentBoundsBy { inputs, _ ->
-      zoomedAndTranslatedBy(
-        scale = inputs.baseZoom.value,
-        offset = -(inputs.baseOffset * inputs.baseZoom.value),
-      )
-        }
-      }
-
+  @Suppress("OVERRIDE_DEPRECATION")
   override val transformedContentBounds: Rect by derivedStateOf {
     transformUnscaledContentBoundsBy { _, transformation ->
       zoomedAndTranslatedBy(transformation.scale, transformation.offset)
-    }
+    } ?: Rect.Zero
   }
 
   /**
@@ -458,7 +452,7 @@ internal class RealZoomableState internal constructor(
     )
     val centroidInViewport = with(coordinateSystem) {
       centroid
-        .takeOrElse { SpatialOffset(gestureStateInputs.viewportSize.center, CoordinateSpace.Viewport) }
+        .takeOrElse { SpatialOffset(viewportSize.center, CoordinateSpace.Viewport) }
         .offsetIn(CoordinateSpace.Viewport)
     }
     animateZoomTo(
@@ -691,9 +685,9 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  private inline fun transformUnscaledContentBoundsBy(
+  internal inline fun transformUnscaledContentBoundsBy(
     transform: Rect.(GestureStateInputs, ZoomableContentTransformation) -> Rect
-  ): Rect {
+  ): Rect? {
     return with(contentTransformation) {
       val bounds = currentGestureStateInputs?.let { inputs ->
         inputs.unscaledContentBounds.withOrigin(transformOrigin) {
@@ -701,8 +695,9 @@ internal class RealZoomableState internal constructor(
         }
       }
       bounds
+      // Note to self: the placeholder bounds are always unscaled
+      // because placeholders can't be zoomed (at least not yet).
         ?: placeholderBoundsProvider?.calculate(state = this@RealZoomableState)
-        ?: Rect.Zero
     }
   }
 
