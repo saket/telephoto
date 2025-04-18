@@ -106,6 +106,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.ActivityRecreationTester
 import me.saket.telephoto.util.CiScreenshotValidator
@@ -130,6 +131,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
+@OptIn(ExperimentalTelephotoApi::class)
 class ZoomableImageTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val timeout = Timeout.seconds(30)!!
@@ -263,7 +265,7 @@ class ZoomableImageTest {
   }
 
   @Ignore("https://github.com/saket/telephoto/issues/128")
-    @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
+  @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
     var assetName by mutableStateOf("fox_1000.jpg")
     lateinit var state: ZoomableImageState
 
@@ -292,7 +294,10 @@ class ZoomableImageTest {
 
     assetName = "fox_1500.jpg"
     rule.waitUntil {
-      state.zoomableState.contentTransformation.contentSize == Size(1500f, 1000f)
+      val imageSize = with(state.zoomableState.coordinateSystem) {
+        unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+      }
+      imageSize == Size(1500f, 1000f)
     }
     // This does not use runOnIdle() because the image's
     // centroid should be retained immediately on the next frame.
@@ -1158,7 +1163,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-    @Test fun pan_and_zoom_using_hardware_shortcuts() {
+  @Test fun pan_and_zoom_using_hardware_shortcuts() {
     lateinit var state: ZoomableImageState
     val maxZoomFactor = 5f
 
@@ -1300,7 +1305,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-    @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
+  @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
     lateinit var state: ZoomableImageState
     val focusRequester = FocusRequester()
 
@@ -1405,7 +1410,13 @@ class ZoomableImageTest {
             .matchParentSize()
             .clipToBounds()
         ) {
-          zoomableState.contentBounds.let { bounds ->
+          val contentBounds = with(zoomableState.coordinateSystem) {
+            contentBounds.rectIn(CoordinateSpace.Viewport)
+          }
+          val unscaledContentBounds = with(zoomableState.coordinateSystem) {
+            unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
+          }
+          contentBounds.let { bounds ->
             drawRect(
               color = Color.Blue,
               topLeft = bounds.topLeft,
@@ -1413,7 +1424,10 @@ class ZoomableImageTest {
               style = Stroke(width = 8.dp.toPx()),
             )
           }
-          zoomableState.transformedContentBounds.let { bounds ->
+
+          // These two rectangles should fully overlap.
+          @Suppress("DEPRECATION")
+          for (bounds in listOf(unscaledContentBounds, zoomableState.transformedContentBounds)) {
             drawRect(
               color = Color.Yellow,
               topLeft = bounds.topLeft,
@@ -1458,7 +1472,13 @@ class ZoomableImageTest {
           state = rememberZoomableImageState(zoomableState).also { imageState = it },
         )
         Canvas(Modifier.matchParentSize()) {
-          zoomableState.contentBounds.let { bounds ->
+          val contentBounds = with(zoomableState.coordinateSystem) {
+            contentBounds.rectIn(CoordinateSpace.Viewport)
+          }
+          val unscaledContentBounds = with(zoomableState.coordinateSystem) {
+            unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
+          }
+          contentBounds.let { bounds ->
             drawRect(
               color = Color.Blue,
               topLeft = bounds.topLeft,
@@ -1466,7 +1486,10 @@ class ZoomableImageTest {
               style = Stroke(width = 8.dp.toPx()),
             )
           }
-          zoomableState.transformedContentBounds.let { bounds ->
+
+          // These two rectangles should fully overlap.
+          @Suppress("DEPRECATION")
+          for (bounds in listOf(unscaledContentBounds, zoomableState.transformedContentBounds)) {
             drawRect(
               color = Color.Yellow,
               topLeft = bounds.topLeft,
@@ -1499,9 +1522,9 @@ class ZoomableImageTest {
 
     val imageNode = rule.onNodeWithTag("image").fetchSemanticsNode()
     rule.runOnIdle {
-      assertThat(imageState.zoomableState.contentBounds).isEqualTo(
-        Rect(Offset.Zero, imageNode.size.toSize())
-      )
+      with(imageState.zoomableState.coordinateSystem) {
+        assertThat(contentBounds.rectIn(CoordinateSpace.Viewport)).isEqualTo(Rect(Offset.Zero, imageNode.size.toSize()))
+      }
     }
   }
 
@@ -1531,6 +1554,10 @@ class ZoomableImageTest {
       assertThat(imageState.zoomableState.transformedContentBounds).isEqualTo(
         Rect(Offset.Zero, imageNode.size.toSize())
       )
+      val bounds = with(imageState.zoomableState.coordinateSystem) {
+        contentBounds.rectIn(CoordinateSpace.Viewport)
+      }
+      assertThat(bounds).isEqualTo(Rect(Offset.Zero, imageNode.size.toSize()))
     }
   }
 
@@ -1782,6 +1809,10 @@ class ZoomableImageTest {
 
     rule.waitUntil { rule.onNodeWithTag("image").isImageDisplayedInFullQuality() }
     rule.runOnIdle {
+      with(imageState.zoomableState.coordinateSystem) {
+        assertThat(contentBounds.rectIn(CoordinateSpace.Viewport).top).isEqualTo(390f)
+      }
+      @Suppress("DEPRECATION")
       assertThat(imageState.zoomableState.transformedContentBounds.top).isEqualTo(390f)
     }
 
@@ -1791,7 +1822,9 @@ class ZoomableImageTest {
     // waitUntil or runOnIdle aren't used here because they can advance the time by multiple frames.
     rule.mainClock.advanceTimeByFrame()
 
-    assertThat(imageState.zoomableState.transformedContentBounds.top).isEqualTo(193f)
+    with(imageState.zoomableState.coordinateSystem) {
+      assertThat(unscaledContentBounds.rectIn(CoordinateSpace.Viewport).top).isEqualTo(193f)
+    }
     assertThat(numOfRecompositions).isEqualTo(numOfRecompositionsBeforeUpdate + 1)
   }
 

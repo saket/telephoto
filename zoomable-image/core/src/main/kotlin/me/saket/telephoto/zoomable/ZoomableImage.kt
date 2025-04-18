@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.flow.filter
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.contentDescription
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
@@ -59,6 +60,7 @@ import me.saket.telephoto.zoomable.internal.scaledToMatch
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  */
 @Composable
+@OptIn(ExperimentalTelephotoApi::class)
 fun ZoomableImage(
   image: ZoomableImageSource,
   contentDescription: String?,
@@ -136,7 +138,9 @@ fun ZoomableImage(
       val painter = animatedPainter(resolved.placeholder!!).scaledToMatch(
         // Align with the full-quality image even if the placeholder is smaller in size.
         // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
-        state.zoomableState.contentTransformation.contentSize,
+        size = with(state.zoomableState.coordinateSystem) {
+          unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+        }
       )
       val boundsProvider = PlaceholderBoundsProvider(contentSize = painter.intrinsicSize)
       DisposableEffect(state, boundsProvider) {

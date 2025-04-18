@@ -30,6 +30,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableImageState
 
 @Composable
@@ -86,10 +89,13 @@ internal fun CropHandles(
 }
 
 @Composable
+@OptIn(ExperimentalTelephotoApi::class)
 internal fun rememberCropperState(
   imageState: ZoomableImageState,
 ): CropperState {
-  val contentBounds = imageState.zoomableState.contentBounds
+  val contentBounds: Rect = with(imageState.zoomableState.coordinateSystem) {
+    unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
+  }
   val cropBounds = remember(contentBounds) { mutableStateOf(contentBounds) }
 
   if (imageState.isImageDisplayed) {

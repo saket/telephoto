@@ -59,11 +59,15 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import leakcanary.LeakAssertions
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.compositionLocalProviderReturnable
 import me.saket.telephoto.util.waitUntil
+import me.saket.telephoto.zoomable.CoordinateSpace
+import me.saket.telephoto.zoomable.Viewport
+import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageState
@@ -97,7 +101,7 @@ import android.graphics.ColorSpace as AndroidColorSpace
 import coil.size.Size as CoilSize
 
 @RunWith(TestParameterInjector::class)
-@OptIn(ExperimentalCoilApi::class)
+@OptIn(ExperimentalCoilApi::class, ExperimentalTelephotoApi::class)
 class CoilImageSourceTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val timeout = Timeout.seconds(30)!!
@@ -281,14 +285,20 @@ class CoilImageSourceTest {
 
     rule.waitUntil { imageState.isImageDisplayed }
     rule.runOnIdle {
-      assertThat(imageState.zoomableState.contentTransformation.contentSize).isEqualTo(Size(256f, 256f))
+      val imageSize = with(imageState.zoomableState.coordinateSystem) {
+        unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+      }
+      assertThat(imageSize).isEqualTo(Size(256f, 256f))
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_first_image")
     }
 
     imageUrl = serverRule.server.url("full_image.png")
 
     rule.waitUntil {
-      imageState.zoomableState.contentTransformation.contentSize == Size(512f, 512f)
+      val imageSize = with(imageState.zoomableState.coordinateSystem) {
+        unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+      }
+      imageSize == Size(512f, 512f)
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_second_image")

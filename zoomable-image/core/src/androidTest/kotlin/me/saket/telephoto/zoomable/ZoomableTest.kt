@@ -53,6 +53,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.util.ScreenshotTestActivity
 import org.junit.After
 import org.junit.Rule
@@ -61,6 +62,7 @@ import org.junit.runner.RunWith
 
 // TODO: move these tests to :zoomable
 @RunWith(TestParameterInjector::class)
+@OptIn(ExperimentalTelephotoApi::class)
 class ZoomableTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val dropshots = Dropshots(
@@ -295,7 +297,14 @@ class ZoomableTest {
     // hydrated with enough information by the modifier node that it can display the content.
     with(secondZoomableState.contentTransformation) {
       assertThat(isSpecified).isTrue()
-      assertThat(contentSize).isEqualTo(firstZoomableState.contentTransformation.contentSize)
+
+      val firstContentSize = with(firstZoomableState.coordinateSystem) {
+        unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+      }
+      val secondContentSize = with(secondZoomableState.coordinateSystem) {
+        unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+      }
+      assertThat(secondContentSize).isEqualTo(firstContentSize)
     }
 
     // Zoom gestures should work with the new state.
