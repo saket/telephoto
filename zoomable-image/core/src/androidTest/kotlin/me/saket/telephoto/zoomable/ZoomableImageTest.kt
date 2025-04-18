@@ -2,6 +2,7 @@
 
 package me.saket.telephoto.zoomable
 
+import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
 import android.view.KeyEvent
 import android.view.ViewConfiguration
@@ -12,6 +13,7 @@ import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,13 +35,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -97,6 +99,7 @@ import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -1405,37 +1408,8 @@ class ZoomableImageTest {
           contentDescription = null,
           state = rememberZoomableImageState(zoomableState).also { imageState = it },
         )
-        Canvas(
-          Modifier
-            .matchParentSize()
-            .clipToBounds()
-        ) {
-          val contentBounds = with(zoomableState.coordinateSystem) {
-            contentBounds.rectIn(CoordinateSpace.Viewport)
-          }
-          val unscaledContentBounds = with(zoomableState.coordinateSystem) {
-            unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
-          }
-          contentBounds.let { bounds ->
-            drawRect(
-              color = Color.Blue,
-              topLeft = bounds.topLeft,
-              size = bounds.size,
-              style = Stroke(width = 8.dp.toPx()),
-            )
-          }
 
-          // These two rectangles should fully overlap.
-          @Suppress("DEPRECATION")
-          for (bounds in listOf(unscaledContentBounds, zoomableState.transformedContentBounds)) {
-            drawRect(
-              color = Color.Yellow,
-              topLeft = bounds.topLeft,
-              size = bounds.size,
-              style = Stroke(width = 2.dp.toPx()),
-            )
-          }
-        }
+        VisualizeAllBounds(zoomableState)
       }
     }
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
@@ -1471,40 +1445,68 @@ class ZoomableImageTest {
           contentDescription = null,
           state = rememberZoomableImageState(zoomableState).also { imageState = it },
         )
-        Canvas(Modifier.matchParentSize()) {
-          val contentBounds = with(zoomableState.coordinateSystem) {
-            contentBounds.rectIn(CoordinateSpace.Viewport)
-          }
-          val unscaledContentBounds = with(zoomableState.coordinateSystem) {
-            unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
-          }
-          contentBounds.let { bounds ->
-            drawRect(
-              color = Color.Blue,
-              topLeft = bounds.topLeft,
-              size = bounds.size,
-              style = Stroke(width = 8.dp.toPx()),
-            )
-          }
 
-          // These two rectangles should fully overlap.
-          @Suppress("DEPRECATION")
-          for (bounds in listOf(unscaledContentBounds, zoomableState.transformedContentBounds)) {
-            drawRect(
-              color = Color.Yellow,
-              topLeft = bounds.topLeft,
-              size = bounds.size,
-              style = Stroke(width = 2.dp.toPx()),
-            )
-          }
-        }
+        VisualizeAllBounds(zoomableState)
       }
     }
     rule.waitUntil { imageState.isPlaceholderDisplayed }
     dropshots.assertSnapshot(rule.activity)
   }
 
-  @Test fun cropped_content_bounds_are_always_within_viewport_bounds() {
+  @Composable
+  @OptIn(ExperimentalTelephotoApi::class)
+  @SuppressLint("ComposeUnstableReceiver")
+  private fun BoxScope.VisualizeAllBounds(zoomableState: ZoomableState) {
+    Canvas(Modifier.matchParentSize()) {
+      val unscaledContentBounds = with(zoomableState.coordinateSystem) {
+        unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
+      }
+
+      drawRect(
+        color = Color.Blue,
+        topLeft = unscaledContentBounds.topLeft,
+        size = unscaledContentBounds.size,
+        style = Stroke(width = 8.dp.toPx()),
+      )
+
+      // These two bounds should overlap.
+      val contentBounds = with(zoomableState.coordinateSystem) {
+        contentBounds.rectIn(CoordinateSpace.Viewport)
+      }
+      drawRect(
+        color = Color.Yellow,
+        topLeft = contentBounds.topLeft,
+        size = contentBounds.size,
+        style = Stroke(
+          width = 6.dp.toPx(),
+          pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 12.dp.toPx())),
+        ),
+      )
+
+      @Suppress("DEPRECATION")
+      zoomableState.transformedContentBounds.let { bounds ->
+        drawRect(
+          color = Color.Magenta,
+          topLeft = bounds.topLeft,
+          size = bounds.size,
+          style = Stroke(width = 2.dp.toPx()),
+        )
+      }
+    }
+
+    ColorLegend(
+      modifier = Modifier
+        .align(Alignment.BottomStart)
+        .padding(16.dp),
+      colorsToNames = persistentListOf(
+        Color.Blue to "unscaledContentBounds",
+        Color.Magenta to "transformedContentBounds",
+        Color.Yellow to "contentBounds",
+      ),
+    )
+  }
+
+  @Test fun content_bounds_of_cropped_content_are_always_within_viewport_bounds() {
     lateinit var imageState: ZoomableImageState
 
     rule.setContent {
@@ -1551,6 +1553,7 @@ class ZoomableImageTest {
 
     val imageNode = rule.onNodeWithTag("image").fetchSemanticsNode()
     rule.runOnIdle {
+      @Suppress("DEPRECATION")
       assertThat(imageState.zoomableState.transformedContentBounds).isEqualTo(
         Rect(Offset.Zero, imageNode.size.toSize())
       )

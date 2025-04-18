@@ -115,16 +115,15 @@ interface CoordinateSystem {
    * @return the resolved rect, or an empty rect if the spatial rect is unspecified
    *         or if the `target` coordinate space has not yet been measured.
    */
-  fun SpatialRect.rectIn(target: CoordinateSpace): Rect {
-    return Rect(
-      topLeft = topLeft.offsetIn(target),
-      bottomRight = bottomRight.offsetIn(target),
-    )
-  }
+  fun SpatialRect.rectIn(target: CoordinateSpace): Rect
 
-  fun SpatialRect.sizeIn(target: CoordinateSpace): Size {
-    return rectIn(target).size
-  }
+  /**
+   * Resolve this [SpatialRect]'s size in the `target` coordinate space.
+   *
+   * @return the resolved size, or [Size.Unspecified] if the spatial rect is unspecified
+   *         or if the `target` coordinate space has not yet been measured.
+   */
+  fun SpatialRect.sizeIn(target: CoordinateSpace): Size
 }
 
 /** `false` when this is [SpatialOffset.Unspecified]. */

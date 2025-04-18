@@ -28,4 +28,5 @@ dependencies {
   androidTestImplementation(projects.testUtil)
   androidTestImplementation(libs.androidx.test.uiautomator)
   androidTestImplementation(libs.espresso.device)
+  androidTestImplementation(libs.kotlinx.immutableCollections)
 }

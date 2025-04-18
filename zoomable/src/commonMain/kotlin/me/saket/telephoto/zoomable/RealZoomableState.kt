@@ -89,17 +89,7 @@ internal class RealZoomableState internal constructor(
         gestureState = gestureState.calculate(gestureStateInputs),
       )
     } else {
-      RealZoomableContentTransformation(
-        isSpecified = false,
-        contentSize = Size.Zero,
-        scale = ScaleFactor.Zero,  // Effectively hide the content until an initial zoom value is calculated.
-        scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
-          initialScale = ScaleFactor.Zero,
-          userZoom = 0f,
-        ),
-        offset = Offset.Zero,
-        centroid = null,
-      )
+      RealZoomableContentTransformation.Unspecified
     }
   }
 

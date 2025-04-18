@@ -20,6 +20,7 @@ import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableCoordinateSystem
+import me.saket.telephoto.zoomable.isSpecified
 import me.saket.telephoto.zoomable.isUnspecified
 
 @Stable
@@ -74,14 +75,9 @@ internal class RealZoomableCoordinateSystem(
       return Offset.Unspecified
     }
     val converter = converterIfStateIsReady()
+      ?: converterWithPlaceholderBounds()
       ?: return Offset.Unspecified
-
-    return when (target) {
-      this.space -> this.offset
-      CoordinateSpace.Viewport -> converter.contentToViewport(offset)
-      CoordinateSpace.ZoomableContent -> converter.viewportToContent(offset)
-      else -> error("Can't convert from ${this.space} to $target")
-    }
+    return converter.convert(this, target)
   }
 
   override fun SpatialRect.rectIn(target: CoordinateSpace): Rect {
@@ -95,11 +91,17 @@ internal class RealZoomableCoordinateSystem(
     val topLeftInTarget = this.topLeft.offsetIn(target)
     val bottomRightInTarget = this.bottomRight.offsetIn(target)
 
-    if (topLeftInTarget.isSpecified && bottomRightInTarget.isSpecified) {
-      return Rect(topLeftInTarget, bottomRightInTarget)
+    return if (topLeftInTarget.isSpecified && bottomRightInTarget.isSpecified) {
+      Rect(topLeftInTarget, bottomRightInTarget)
     } else {
       // todo: add tests for this?
-      return Rect.NonZeroButEmpty
+      Rect.NonZeroButEmpty
+    }
+  }
+
+  override fun SpatialRect.sizeIn(target: CoordinateSpace): Size {
+    return rectIn(target).let {
+      if (it == Rect.NonZeroButEmpty) Size.Unspecified else it.size
     }
   }
 
@@ -110,6 +112,17 @@ internal class RealZoomableCoordinateSystem(
       unscaledContentBounds = stateInputs.unscaledContentBounds,
       transformation = transformation,
     )
+  }
+
+  private fun converterWithPlaceholderBounds(): CoordinateSpaceConverter? {
+    // Note to self: the placeholder bounds are always unscaled
+    // because placeholders can't be zoomed (at least not yet).
+    return state.placeholderBoundsProvider?.calculate(state)?.let { placeholderBounds ->
+      CoordinateSpaceConverter(
+        unscaledContentBounds = placeholderBounds,
+        transformation = RealZoomableContentTransformation.Unspecified,
+      )
+    }
   }
 
   internal data class CoordinateSpaceConverter(
@@ -130,8 +143,17 @@ internal class RealZoomableCoordinateSystem(
     private val transformedContentBounds: Rect
       get() = unscaledContentBounds.zoomedAndTranslatedBy(scale, transformation.offset)
 
+    fun convert(offset: SpatialOffset, target: CoordinateSpace): Offset {
+      return when (target) {
+        offset.space -> offset.offset
+        CoordinateSpace.Viewport -> contentToViewport(offset.offset)
+        CoordinateSpace.ZoomableContent -> viewportToContent(offset.offset)
+        else -> error("Can't convert from ${offset.space} to $target")
+      }
+    }
+
     // todo: if a coordinate in the viewport is outside the bounds of the image, it should be coerced in
-    fun viewportToContent(offset: Offset): Offset {
+    private fun viewportToContent(offset: Offset): Offset {
       // To convert from viewport to content coordinates:
       // 1. Shift by -transformedContentBounds.topLeft (to get relative to transformed content)
       // 2. Divide by scale (to get back to unscaled coordinates)
@@ -139,7 +161,7 @@ internal class RealZoomableCoordinateSystem(
       return (offset - transformedContentBounds.topLeft) / scale + unscaledContentBounds.topLeft
     }
 
-    fun contentToViewport(offset: Offset): Offset {
+    private fun contentToViewport(offset: Offset): Offset {
       // To convert from content to viewport coordinates:
       // 1. Shift by -unscaledContentBounds.topLeft (to get relative to content)
       // 2. Scale by scale factor (to get scaled coordinates)

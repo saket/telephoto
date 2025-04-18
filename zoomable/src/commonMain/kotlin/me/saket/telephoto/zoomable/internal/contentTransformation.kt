@@ -25,6 +25,18 @@ internal data class RealZoomableContentTransformation(
   ) : ZoomableContentTransformation.ScaleMetadata
 
   companion object {
+    val Unspecified = RealZoomableContentTransformation(
+      isSpecified = false,
+      contentSize = Size.Zero,
+      scale = ScaleFactor.Zero,  // Effectively hide the content until an initial zoom value is calculated.
+      scaleMetadata = ScaleMetadata(
+        initialScale = ScaleFactor.Zero,
+        userZoom = 0f,
+      ),
+      offset = Offset.Zero,
+      centroid = null,
+    )
+
     fun calculateFrom(
       gestureStateInputs: GestureStateInputs,
       gestureState: GestureState,
