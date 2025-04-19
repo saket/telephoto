@@ -8,27 +8,8 @@ package me.saket.telephoto {
 
 package me.saket.telephoto.zoomable {
 
-  @me.saket.telephoto.ExperimentalTelephotoApi public interface CoordinateSpace {
-    field public static final me.saket.telephoto.zoomable.CoordinateSpace.Companion Companion;
-  }
-
-  public static final class CoordinateSpace.Companion {
-    method public me.saket.telephoto.zoomable.CoordinateSpace getUnspecified();
-    property public final me.saket.telephoto.zoomable.CoordinateSpace Unspecified;
-  }
-
-  public final class CoordinateSpacesKt {
-    method @kotlin.jvm.JvmSynthetic public static me.saket.telephoto.zoomable.CoordinateSpace getViewport(me.saket.telephoto.zoomable.CoordinateSpace.Companion);
-    method @kotlin.jvm.JvmSynthetic public static me.saket.telephoto.zoomable.CoordinateSpace getZoomableContent(me.saket.telephoto.zoomable.CoordinateSpace.Companion);
-  }
-
-  @me.saket.telephoto.ExperimentalTelephotoApi public interface CoordinateSystem {
-    method public long offsetIn(me.saket.telephoto.zoomable.SpatialOffset, me.saket.telephoto.zoomable.CoordinateSpace target);
-    method public default me.saket.telephoto.zoomable.SpatialOffset toSpace(me.saket.telephoto.zoomable.SpatialOffset, me.saket.telephoto.zoomable.CoordinateSpace target);
-  }
-
   @androidx.compose.runtime.Immutable public fun interface DoubleClickToZoomListener {
-    method @me.saket.telephoto.ExperimentalTelephotoApi public default suspend Object? onDoubleClick(me.saket.telephoto.zoomable.CoordinateSystem, me.saket.telephoto.zoomable.ZoomableState state, me.saket.telephoto.zoomable.SpatialOffset centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public default suspend Object? onDoubleClick(me.saket.telephoto.zoomable.spatial.CoordinateSystem, me.saket.telephoto.zoomable.ZoomableState state, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableState state, long centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     field public static final me.saket.telephoto.zoomable.DoubleClickToZoomListener.Companion Companion;
   }
@@ -121,24 +102,6 @@ package me.saket.telephoto.zoomable {
     property public final me.saket.telephoto.zoomable.OverzoomEffect RubberBanding;
   }
 
-  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko @me.saket.telephoto.ExperimentalTelephotoApi public final class SpatialOffset {
-    ctor public SpatialOffset(long offset, me.saket.telephoto.zoomable.CoordinateSpace space);
-    method public me.saket.telephoto.zoomable.CoordinateSpace getSpace();
-    property public final me.saket.telephoto.zoomable.CoordinateSpace space;
-    field public static final me.saket.telephoto.zoomable.SpatialOffset.Companion Companion;
-  }
-
-  public static final class SpatialOffset.Companion {
-    method public me.saket.telephoto.zoomable.SpatialOffset getUnspecified();
-    property public final me.saket.telephoto.zoomable.SpatialOffset Unspecified;
-  }
-
-  public final class SpatialOffsetKt {
-    method public static boolean isSpecified(me.saket.telephoto.zoomable.SpatialOffset);
-    method public static boolean isUnspecified(me.saket.telephoto.zoomable.SpatialOffset);
-    method public static inline me.saket.telephoto.zoomable.SpatialOffset takeOrElse(me.saket.telephoto.zoomable.SpatialOffset, kotlin.jvm.functions.Function0<me.saket.telephoto.zoomable.SpatialOffset> block);
-  }
-
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ZoomLimit {
     ctor public ZoomLimit(float factor, optional me.saket.telephoto.zoomable.OverzoomEffect overzoomEffect);
     method public float getFactor();
@@ -189,7 +152,7 @@ package me.saket.telephoto.zoomable {
 
   @androidx.compose.runtime.Immutable public interface ZoomableContentTransformation {
     method public androidx.compose.ui.geometry.Offset? getCentroid();
-    method public long getContentSize();
+    method @Deprecated public long getContentSize();
     method public long getOffset();
     method public float getRotationZ();
     method public long getScale();
@@ -198,7 +161,7 @@ package me.saket.telephoto.zoomable {
     method public boolean isSpecified();
     method public default boolean isUnspecified();
     property public abstract androidx.compose.ui.geometry.Offset? centroid;
-    property public abstract long contentSize;
+    property @Deprecated public abstract long contentSize;
     property public abstract boolean isSpecified;
     property public default boolean isUnspecified;
     property public abstract long offset;
@@ -215,6 +178,20 @@ package me.saket.telephoto.zoomable {
     property public abstract float userZoom;
   }
 
+  @me.saket.telephoto.ExperimentalTelephotoApi public interface ZoomableCoordinateSystem extends me.saket.telephoto.zoomable.spatial.CoordinateSystem {
+    method public me.saket.telephoto.zoomable.spatial.SpatialRect getContentBounds();
+    method public me.saket.telephoto.zoomable.spatial.SpatialRect getUnscaledContentBounds();
+    method public long getViewportSize();
+    property public abstract me.saket.telephoto.zoomable.spatial.SpatialRect contentBounds;
+    property public abstract me.saket.telephoto.zoomable.spatial.SpatialRect unscaledContentBounds;
+    property public abstract long viewportSize;
+  }
+
+  public final class ZoomableCoordinateSystemKt {
+    method @kotlin.jvm.JvmSynthetic public static me.saket.telephoto.zoomable.spatial.CoordinateSpace getViewport(me.saket.telephoto.zoomable.spatial.CoordinateSpace.Companion);
+    method @kotlin.jvm.JvmSynthetic public static me.saket.telephoto.zoomable.spatial.CoordinateSpace getZoomableContent(me.saket.telephoto.zoomable.spatial.CoordinateSpace.Companion);
+  }
+
   public final class ZoomableKt {
     method @Deprecated public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
     method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds, optional me.saket.telephoto.zoomable.DoubleClickToZoomListener? onDoubleClick);
@@ -223,16 +200,15 @@ package me.saket.telephoto.zoomable {
   @androidx.compose.runtime.Stable public sealed interface ZoomableState {
     method public boolean getAutoApplyTransformations();
     method public androidx.compose.ui.Alignment getContentAlignment();
-    method public androidx.compose.ui.geometry.Rect getContentBounds();
     method public androidx.compose.ui.layout.ContentScale getContentScale();
     method public me.saket.telephoto.zoomable.ZoomableContentTransformation getContentTransformation();
-    method public default me.saket.telephoto.zoomable.CoordinateSystem getCoordinateSystem();
-    method public androidx.compose.ui.geometry.Rect getTransformedContentBounds();
+    method public me.saket.telephoto.zoomable.ZoomableCoordinateSystem getCoordinateSystem();
+    method @Deprecated public androidx.compose.ui.geometry.Rect getTransformedContentBounds();
     method public Float? getZoomFraction();
     method public me.saket.telephoto.zoomable.ZoomSpec getZoomSpec();
     method public boolean isAnimationRunning();
     method public default suspend Object? panBy(long offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? panBy(me.saket.telephoto.zoomable.SpatialOffset offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? panBy(me.saket.telephoto.zoomable.spatial.SpatialOffset offset, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public suspend Object? resetZoom(optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method @Deprecated public default suspend Object? resetZoom(boolean withAnimation, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setAutoApplyTransformations(boolean);
@@ -241,17 +217,16 @@ package me.saket.telephoto.zoomable {
     method @Deprecated public suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
     method public default suspend Object? zoomBy(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomBy(float zoomFactor, me.saket.telephoto.zoomable.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomBy(float zoomFactor, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public default suspend Object? zoomTo(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomTo(float zoomFactor, me.saket.telephoto.zoomable.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomTo(float zoomFactor, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     property public abstract boolean autoApplyTransformations;
     property public abstract androidx.compose.ui.Alignment contentAlignment;
-    property public abstract androidx.compose.ui.geometry.Rect contentBounds;
     property public abstract androidx.compose.ui.layout.ContentScale contentScale;
     property public abstract me.saket.telephoto.zoomable.ZoomableContentTransformation contentTransformation;
-    property @me.saket.telephoto.ExperimentalTelephotoApi public default me.saket.telephoto.zoomable.CoordinateSystem coordinateSystem;
+    property public abstract me.saket.telephoto.zoomable.ZoomableCoordinateSystem coordinateSystem;
     property public abstract boolean isAnimationRunning;
-    property public abstract androidx.compose.ui.geometry.Rect transformedContentBounds;
+    property @Deprecated public abstract androidx.compose.ui.geometry.Rect transformedContentBounds;
     property public abstract Float? zoomFraction;
     property public abstract me.saket.telephoto.zoomable.ZoomSpec zoomSpec;
     field public static final me.saket.telephoto.zoomable.ZoomableState.Companion Companion;
@@ -282,6 +257,62 @@ package me.saket.telephoto.zoomable.internal {
   }
 
   public interface AndroidParcelable {
+  }
+
+}
+
+package me.saket.telephoto.zoomable.spatial {
+
+  @me.saket.telephoto.ExperimentalTelephotoApi public interface CoordinateSpace {
+    field public static final me.saket.telephoto.zoomable.spatial.CoordinateSpace.Companion Companion;
+  }
+
+  public static final class CoordinateSpace.Companion {
+    method public me.saket.telephoto.zoomable.spatial.CoordinateSpace getUnspecified();
+    property public final me.saket.telephoto.zoomable.spatial.CoordinateSpace Unspecified;
+  }
+
+  @me.saket.telephoto.ExperimentalTelephotoApi public interface CoordinateSystem {
+    method public long offsetIn(me.saket.telephoto.zoomable.spatial.SpatialOffset, me.saket.telephoto.zoomable.spatial.CoordinateSpace target);
+    method public androidx.compose.ui.geometry.Rect rectIn(me.saket.telephoto.zoomable.spatial.SpatialRect, me.saket.telephoto.zoomable.spatial.CoordinateSpace target);
+    method public long sizeIn(me.saket.telephoto.zoomable.spatial.SpatialRect, me.saket.telephoto.zoomable.spatial.CoordinateSpace target);
+  }
+
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko @me.saket.telephoto.ExperimentalTelephotoApi public final class SpatialOffset {
+    ctor public SpatialOffset(long offset, me.saket.telephoto.zoomable.spatial.CoordinateSpace space);
+    method public me.saket.telephoto.zoomable.spatial.CoordinateSpace getSpace();
+    property public final me.saket.telephoto.zoomable.spatial.CoordinateSpace space;
+    field public static final me.saket.telephoto.zoomable.spatial.SpatialOffset.Companion Companion;
+  }
+
+  public static final class SpatialOffset.Companion {
+    method public me.saket.telephoto.zoomable.spatial.SpatialOffset getUnspecified();
+    property public final me.saket.telephoto.zoomable.spatial.SpatialOffset Unspecified;
+  }
+
+  public final class SpatialOffsetKt {
+    method public static boolean isSpecified(me.saket.telephoto.zoomable.spatial.SpatialOffset);
+    method public static boolean isUnspecified(me.saket.telephoto.zoomable.spatial.SpatialOffset);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public static inline me.saket.telephoto.zoomable.spatial.SpatialOffset takeOrElse(me.saket.telephoto.zoomable.spatial.SpatialOffset, kotlin.jvm.functions.Function0<me.saket.telephoto.zoomable.spatial.SpatialOffset> block);
+  }
+
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko @me.saket.telephoto.ExperimentalTelephotoApi public final class SpatialRect {
+    ctor public SpatialRect(me.saket.telephoto.zoomable.spatial.SpatialOffset topLeft, me.saket.telephoto.zoomable.spatial.SpatialOffset bottomRight);
+    method public me.saket.telephoto.zoomable.spatial.SpatialOffset getBottomRight();
+    method public me.saket.telephoto.zoomable.spatial.SpatialOffset getTopLeft();
+    property public final me.saket.telephoto.zoomable.spatial.SpatialOffset bottomRight;
+    property public final me.saket.telephoto.zoomable.spatial.SpatialOffset topLeft;
+    field public static final me.saket.telephoto.zoomable.spatial.SpatialRect.Companion Companion;
+  }
+
+  public static final class SpatialRect.Companion {
+    method public me.saket.telephoto.zoomable.spatial.SpatialRect getUnspecified();
+    property public final me.saket.telephoto.zoomable.spatial.SpatialRect Unspecified;
+  }
+
+  public final class SpatialRectKt {
+    method public static boolean isSpecified(me.saket.telephoto.zoomable.spatial.SpatialRect);
+    method public static boolean isUnspecified(me.saket.telephoto.zoomable.spatial.SpatialRect);
   }
 
 }
