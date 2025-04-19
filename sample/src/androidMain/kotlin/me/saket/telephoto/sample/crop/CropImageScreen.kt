@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -48,12 +47,12 @@ import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.sample.CropImageScreenKey
 import me.saket.telephoto.sample.CropResultScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
-import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialRect
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import android.util.Size as AndroidSize
@@ -134,42 +133,32 @@ private suspend fun cropImage(
   cropperState: CropperState,
   mediaItem: MediaItem.Image,
 ): CropResultScreenKey {
-  val cropBounds = cropperState.cropBounds
-  val zoomableState = cropperState.imageState.zoomableState
-
-  // todo: improve this code
-  val boundsInImage = with(zoomableState.coordinateSystem) {
-    val topLeft = SpatialOffset(cropBounds.topLeft, CoordinateSpace.Viewport)
-    val bottomRight = SpatialOffset(cropBounds.bottomRight, CoordinateSpace.Viewport)
-    Rect(
-      topLeft = topLeft.offsetIn(CoordinateSpace.ZoomableContent),
-      bottomRight = bottomRight.offsetIn(CoordinateSpace.ZoomableContent)
-    ).roundToIntRect()
-  }
-
   val originalImage = withContext(Dispatchers.IO) {
     context.imageLoader.diskCache!!
       .openSnapshot(mediaItem.fullSizedUrl)
       ?: error("image not in cache?")
   }
 
-  lateinit var originalSize: AndroidSize
+  val zoomableState = cropperState.imageState.zoomableState
+  val cropBoundsInImage = with(zoomableState.coordinateSystem) {
+    val spatial = SpatialRect(cropperState.cropBounds, CoordinateSpace.Viewport)
+    spatial.rectIn(CoordinateSpace.ZoomableContent)
+  }
 
+  lateinit var originalSize: AndroidSize
   val croppedImage = withContext(Dispatchers.IO) {
     ImageDecoder.decodeBitmap(
       ImageDecoder.createSource(originalImage.data.toFile())
     ) { decoder, info, _ ->
       originalSize = info.size
-      decoder.crop = boundsInImage.toAndroidRect()
+      decoder.crop = cropBoundsInImage.roundToIntRect().toAndroidRect()
     }
   }
 
-  val cacheDir = withContext(Dispatchers.IO) { context.cacheDir }
-  val imagePath = cacheDir.toOkioPath() / "cropped_image_${System.currentTimeMillis()}.jpg"
-
   val fs = FileSystem.SYSTEM
-  withContext(Dispatchers.IO) {
-    fs.write(imagePath) {
+  val imagePath = withContext(Dispatchers.IO) {
+    val cacheDir = context.cacheDir.toOkioPath()
+    fs.write(cacheDir / "cropped_image_${System.currentTimeMillis()}.jpg") {
       croppedImage.compress(
         Bitmap.CompressFormat.JPEG,
         100,
@@ -182,7 +171,7 @@ private suspend fun cropImage(
     filePath = imagePath.toString(),
     originalSize = "${originalSize.width} x ${originalSize.height} px",
     croppedSize = "Size: ${croppedImage.width} x ${croppedImage.height} px",
-    croppedBounds = "Bounds: ${boundsInImage.topLeft} – ${boundsInImage.bottomRight}",
+    croppedBounds = "Bounds: ${cropBoundsInImage.topLeft} – ${cropBoundsInImage.bottomRight}",
   )
 }
 
