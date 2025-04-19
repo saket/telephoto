@@ -4,35 +4,45 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.toAndroidRect
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntRect
+import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.util.fastForEach
 import coil.annotation.ExperimentalCoilApi
 import coil.imageLoader
 import coil.request.ImageRequest
@@ -62,14 +72,21 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
   Scaffold(
     contentWindowInsets = WindowInsets.safeGestures,
   ) { contentPadding ->
-    Column(Modifier.padding(contentPadding)) {
+    Column {
       val imageState = rememberZoomableImageState()
       val cropperState = rememberCropperState(imageState)
 
-      Box(Modifier.weight(1f)) {
-        // todo: i need contentBounds
+      Box(
+        Modifier
+          .padding(contentPadding)
+          .weight(1f)
+          .padding(horizontal = 16.dp)
+      ) {
+        // todo: i need contentPadding
         ZoomableAsyncImage(
-          modifier = Modifier.fillMaxSize(),
+          modifier = Modifier
+            .fillMaxSize()
+            .disallowTouchEventsOutsideOf { cropperState.cropBounds },
           state = imageState,
           model = ImageRequest.Builder(LocalContext.current)
             .data(key.mediaItem.fullSizedUrl)
@@ -80,7 +97,7 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
 
         if (!cropperState.cropBounds.isEmpty) {
           CropHandles(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.matchParentSize(),
             state = cropperState,
           )
         }
@@ -89,6 +106,8 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
       Row(
         modifier = Modifier
           .fillMaxWidth()
+          .background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
+          .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Bottom))
           .padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -177,28 +196,17 @@ private suspend fun cropImage(
   )
 }
 
-@Stable
-private fun PaddingValues.union(other: PaddingValues): PaddingValues {
-  return UnionPaddingValues(this, other)
-}
-
-private data class UnionPaddingValues(
-  private val first: PaddingValues,
-  private val second: PaddingValues,
-) : PaddingValues {
-  override fun calculateBottomPadding(): Dp {
-    return maxOf(first.calculateBottomPadding(), second.calculateBottomPadding())
-  }
-
-  override fun calculateLeftPadding(layoutDirection: LayoutDirection): Dp {
-    return maxOf(first.calculateLeftPadding(layoutDirection), second.calculateRightPadding(layoutDirection))
-  }
-
-  override fun calculateRightPadding(layoutDirection: LayoutDirection): Dp {
-    return maxOf(first.calculateRightPadding(layoutDirection), second.calculateRightPadding(layoutDirection))
-  }
-
-  override fun calculateTopPadding(): Dp {
-    return maxOf(first.calculateTopPadding(), second.calculateTopPadding())
+internal fun Modifier.disallowTouchEventsOutsideOf(bounds: () -> Rect): Modifier {
+  return pointerInput(bounds) {
+    awaitEachGesture {
+      val downEvent = awaitFirstDown(requireUnconsumed = false)
+      if (!bounds().contains(downEvent.position)) {
+        // Gesture started outside the allowed bounds, consume all events.
+        do {
+          val event = awaitPointerEvent(PointerEventPass.Initial)
+          event.changes.fastForEach { it.consume() }
+        } while (event.changes.fastAny { it.pressed })
+      }
+    }
   }
 }
