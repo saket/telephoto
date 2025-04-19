@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -69,78 +71,82 @@ import android.util.Size as AndroidSize
 
 @Composable
 internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
-  Scaffold(
-    contentWindowInsets = WindowInsets.safeGestures,
-  ) { contentPadding ->
-    Column {
-      val imageState = rememberZoomableImageState()
-      val cropperState = rememberCropperState(imageState)
+  Column(
+    Modifier.background(MaterialTheme.colorScheme.background)
+  ) {
+    val imageState = rememberZoomableImageState()
+    val cropperState = rememberCropperState(imageState)
 
-      Box(
-        Modifier
-          .padding(contentPadding)
-          .weight(1f)
-          .padding(horizontal = 16.dp)
-      ) {
-        // todo: i need contentPadding
-        ZoomableAsyncImage(
+    Box(
+      Modifier
+        .weight(1f)
+        .padding(horizontal = 16.dp)
+    ) {
+      val imageInsets = WindowInsets.safeContent
+        .only(WindowInsetsSides.Horizontal)
+        .union(WindowInsets.safeContent.only(WindowInsetsSides.Top))
+
+      // todo: i need contentPadding
+      ZoomableAsyncImage(
+        modifier = Modifier
+          .windowInsetsPadding(imageInsets)
+          .fillMaxSize()
+          .disallowTouchEventsOutsideOf { cropperState.cropBounds },
+        state = imageState,
+        model = ImageRequest.Builder(LocalContext.current)
+          .data(key.mediaItem.fullSizedUrl)
+          .placeholderMemoryCacheKey(key.mediaItem.placeholderImageUrl)
+          .build(),
+        contentDescription = key.mediaItem.caption,
+      )
+
+      if (!cropperState.cropBounds.isEmpty) {
+        CropHandles(
           modifier = Modifier
-            .fillMaxSize()
-            .disallowTouchEventsOutsideOf { cropperState.cropBounds },
-          state = imageState,
-          model = ImageRequest.Builder(LocalContext.current)
-            .data(key.mediaItem.fullSizedUrl)
-            .placeholderMemoryCacheKey(key.mediaItem.placeholderImageUrl)
-            .build(),
-          contentDescription = key.mediaItem.caption,
+            .matchParentSize()
+            .windowInsetsPadding(imageInsets),
+          state = cropperState,
         )
+      }
+    }
 
-        if (!cropperState.cropBounds.isEmpty) {
-          CropHandles(
-            modifier = Modifier.matchParentSize(),
-            state = cropperState,
-          )
-        }
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
+        .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Bottom))
+        .padding(horizontal = 16.dp, vertical = 16.dp),
+      horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      TextButton(onClick = { navigator.pop() }) {
+        Text("Cancel")
       }
 
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
-          .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Bottom))
-          .padding(horizontal = 16.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
+      val cropRequests = remember { Channel<Unit>() }
+      var isCropping by remember { mutableStateOf(false) }
+
+      Button(
+        modifier = Modifier.animateContentSize(),
+        onClick = { cropRequests.trySend(Unit) },
+        enabled = imageState.isImageDisplayed && !isCropping,
       ) {
-        TextButton(onClick = { navigator.pop() }) {
-          Text("Cancel")
-        }
+        Text(if (isCropping) "Saving…" else "Save")
+      }
 
-        val cropRequests = remember { Channel<Unit>() }
-        var isCropping by remember { mutableStateOf(false) }
-
-        Button(
-          modifier = Modifier.animateContentSize(),
-          onClick = { cropRequests.trySend(Unit) },
-          enabled = imageState.isImageDisplayed && !isCropping,
-        ) {
-          Text(if (isCropping) "Saving…" else "Save")
-        }
-
-        val context = LocalContext.current
-        LaunchedEffect(cropperState) {
-          cropRequests.receiveAsFlow()
-            .onEach { isCropping = true }
-            .map {
-              cropImage(
-                context = context,
-                cropperState = cropperState,
-                mediaItem = key.mediaItem,
-              )
-            }
-            .onEach { isCropping = false }
-            .collect(navigator::goTo)
-        }
+      val context = LocalContext.current
+      LaunchedEffect(cropperState) {
+        cropRequests.receiveAsFlow()
+          .onEach { isCropping = true }
+          .map {
+            cropImage(
+              context = context,
+              cropperState = cropperState,
+              mediaItem = key.mediaItem,
+            )
+          }
+          .onEach { isCropping = false }
+          .collect(navigator::goTo)
       }
     }
   }
