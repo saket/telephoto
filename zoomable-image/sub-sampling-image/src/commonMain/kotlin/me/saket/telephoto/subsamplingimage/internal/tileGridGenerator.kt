@@ -59,6 +59,7 @@ internal fun ImageRegionTileGrid.Companion.generate(
   }
 
   return ImageRegionTileGrid(
+    viewportSize = viewportSize,
     base = baseTile,
     foreground = foregroundTiles,
   )

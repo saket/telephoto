@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 import kotlin.jvm.JvmInline
 
 /** A region in the source image that will be drawn in a [ViewportTile]. */
@@ -84,6 +85,7 @@ internal value class ImageSampleSize(val size: Int) {
 
 /** Collection of [ImageRegionTile] needed for drawing an image at a certain zoom level. */
 internal data class ImageRegionTileGrid(
+  val viewportSize: IntSize,
   val base: ImageRegionTile,
   val foreground: Map<ImageSampleSize, List<ImageRegionTile>>
 ) {

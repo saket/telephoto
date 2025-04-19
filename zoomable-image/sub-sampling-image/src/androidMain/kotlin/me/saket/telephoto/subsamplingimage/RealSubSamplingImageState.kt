@@ -127,7 +127,7 @@ internal class RealSubSamplingImageState(
           region = region,
           bounds = drawBounds,
           isBase = isBaseTile,
-          isVisible = drawBounds.overlaps(viewportSize!!),
+          isVisible = drawBounds.overlaps(tileGrid.viewportSize),
         )
       }
       .toImmutableList()
