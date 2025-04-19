@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable.spatial
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.geometry.Rect
 import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.ExperimentalTelephotoApi
 
@@ -15,23 +16,31 @@ import me.saket.telephoto.ExperimentalTelephotoApi
  * or [SpatialRect.sizeIn][CoordinateSystem.sizeIn] with a [CoordinateSystem] receiver:
  *
  * ```kotlin
- * val spatialRect = SpatialRect(
- *   topLeft = SpatialOffset(Offset(0f, 0f), CoordinateSpace.Viewport),
- *   bottomRight = SpatialOffset(Offset(200f, 300f), CoordinateSpace.Viewport),
+ * val boundsInViewport = SpatialRect(
+ *   rect = Rect(Offset.Zero, Size(200f, 300f)),
+ *   space = CoordinateSpace.Viewport,
  * )
  *
- * val imageRect: Rect = with(zoomableState.coordinateSystem) {
- *   spatialRect.rectIn(CoordinateSpace.ZoomableContent)
+ * val boundsInImage: Rect = with(zoomableState.coordinateSystem) {
+ *   boundsInViewport.rectIn(CoordinateSpace.ZoomableContent)
  * }
  * ```
  */
 @Poko
 @Immutable
 @ExperimentalTelephotoApi
-class SpatialRect(
+class SpatialRect private constructor(
   val topLeft: SpatialOffset,
   val bottomRight: SpatialOffset,
 ) {
+
+  constructor(
+    rect: Rect,
+    space: CoordinateSpace,
+  ) : this(
+    SpatialOffset(rect.topLeft, space),
+    SpatialOffset(rect.bottomRight, space),
+  )
 
   companion object {
     val Unspecified: SpatialRect

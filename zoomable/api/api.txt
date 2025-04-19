@@ -297,7 +297,7 @@ package me.saket.telephoto.zoomable.spatial {
   }
 
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko @me.saket.telephoto.ExperimentalTelephotoApi public final class SpatialRect {
-    ctor public SpatialRect(me.saket.telephoto.zoomable.spatial.SpatialOffset topLeft, me.saket.telephoto.zoomable.spatial.SpatialOffset bottomRight);
+    ctor public SpatialRect(androidx.compose.ui.geometry.Rect rect, me.saket.telephoto.zoomable.spatial.CoordinateSpace space);
     method public me.saket.telephoto.zoomable.spatial.SpatialOffset getBottomRight();
     method public me.saket.telephoto.zoomable.spatial.SpatialOffset getTopLeft();
     property public final me.saket.telephoto.zoomable.spatial.SpatialOffset bottomRight;

@@ -12,14 +12,14 @@ import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.layout.ScaleFactor
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.RealZoomableState
-import me.saket.telephoto.zoomable.spatial.SpatialOffset
-import me.saket.telephoto.zoomable.spatial.SpatialRect
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableCoordinateSystem
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
+import me.saket.telephoto.zoomable.spatial.SpatialRect
 import me.saket.telephoto.zoomable.spatial.isUnspecified
 
 @Stable
@@ -35,10 +35,7 @@ internal class RealZoomableCoordinateSystem(
       )
     }
     if (boundsInViewport != null) {
-      SpatialRect(
-        topLeft = SpatialOffset(boundsInViewport.topLeft, CoordinateSpace.Viewport),
-        bottomRight = SpatialOffset(boundsInViewport.bottomRight, CoordinateSpace.Viewport),
-      )
+      SpatialRect(boundsInViewport, CoordinateSpace.Viewport)
     } else {
       // Note to self: this does not use SpatialRect.Zero as a fallback value.
       // Because spatial rects are lazily resolved, a zero spatial rect in one
@@ -55,10 +52,7 @@ internal class RealZoomableCoordinateSystem(
       )
     }
     if (boundsInViewport != null) {
-      SpatialRect(
-        topLeft = SpatialOffset(boundsInViewport.topLeft, CoordinateSpace.Viewport),
-        bottomRight = SpatialOffset(boundsInViewport.bottomRight, CoordinateSpace.Viewport),
-      )
+      SpatialRect(boundsInViewport, CoordinateSpace.Viewport)
     } else {
       SpatialRect.Unspecified
     }
