@@ -23,24 +23,47 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableImageState
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 
 @Composable
 internal fun CropHandles(
   state: CropperState,
   modifier: Modifier = Modifier,
 ) {
-  Box(modifier.fillMaxSize()) {
+  val backgroundColor = MaterialTheme.colorScheme.background
+  Box(
+    modifier
+      .fillMaxSize()
+      .drawBehind {
+        state.cropBounds.let { bounds ->
+          clipRect(
+            left = bounds.left,
+            top = bounds.top,
+            right = bounds.right,
+            bottom = bounds.bottom,
+            clipOp = ClipOp.Difference,
+          ) {
+            drawRect(
+              color = backgroundColor,
+              alpha = 0.75f,
+            )
+          }
+        }
+      }
+  ) {
     Guidelines(
       modifier = Modifier.matchParentSize(),
       state = state,
