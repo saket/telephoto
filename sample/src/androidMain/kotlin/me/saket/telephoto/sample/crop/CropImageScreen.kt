@@ -156,13 +156,15 @@ private suspend fun cropImage(
   }
 
   val fs = FileSystem.SYSTEM
-  val imagePath = withContext(Dispatchers.IO) {
-    val cacheDir = context.cacheDir.toOkioPath()
-    fs.write(cacheDir / "cropped_image_${System.currentTimeMillis()}.jpg") {
+  val imagePath = withContext(Dispatchers.IO) { // Because Context#cacheDir performs IO.
+    (context.cacheDir.toOkioPath() / "cropped_image_${System.currentTimeMillis()}.jpg")
+  }
+  withContext(Dispatchers.IO) {
+    fs.write(imagePath) {
       croppedImage.compress(
-        Bitmap.CompressFormat.JPEG,
-        100,
-        this.outputStream(),
+        /* format = */ Bitmap.CompressFormat.JPEG,
+        /* quality = */ 100,
+        /* stream = */ this.outputStream(),
       )
     }
   }
