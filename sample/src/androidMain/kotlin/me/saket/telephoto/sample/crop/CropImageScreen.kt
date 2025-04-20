@@ -167,7 +167,7 @@ private suspend fun cropImage(
   val zoomableState = cropperState.imageState.zoomableState
   val cropBoundsInImage = with(zoomableState.coordinateSystem) {
     val spatial = SpatialRect(cropperState.cropBounds, CoordinateSpace.Viewport)
-    spatial.rectIn(CoordinateSpace.ZoomableContent)
+    spatial.rectIn(CoordinateSpace.ZoomableContent).roundToIntRect()
   }
 
   lateinit var originalSize: AndroidSize
@@ -176,7 +176,7 @@ private suspend fun cropImage(
       ImageDecoder.createSource(originalImage.data.toFile())
     ) { decoder, info, _ ->
       originalSize = info.size
-      decoder.crop = cropBoundsInImage.roundToIntRect().toAndroidRect()
+      decoder.crop = cropBoundsInImage.toAndroidRect()
     }
   }
 
@@ -197,8 +197,10 @@ private suspend fun cropImage(
   return CropResultScreenKey(
     filePath = imagePath.toString(),
     originalSize = "${originalSize.width} x ${originalSize.height} px",
-    croppedSize = "Size: ${croppedImage.width} x ${croppedImage.height} px",
-    croppedBounds = "Bounds: ${cropBoundsInImage.topLeft} – ${cropBoundsInImage.bottomRight}",
+    croppedSize = "${croppedImage.width} x ${croppedImage.height} px",
+    croppedBounds = cropBoundsInImage.let {
+      "L ${it.left}, T ${it.top}, R ${it.right}, B ${it.bottom}"
+    }
   )
 }
 
