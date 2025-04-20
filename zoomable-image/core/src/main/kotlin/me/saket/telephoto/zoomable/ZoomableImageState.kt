@@ -25,14 +25,14 @@ class ZoomableImageState internal constructor(
 ) {
   /**
    * Whether the image is loaded and displayed (not necessarily in its full quality).
-   * This be false for placeholders/thumbnails, where [isPlaceholderDisplayed] can be used instead.
+   * This will be `false` for placeholders/thumbnails, where [isPlaceholderDisplayed] can be used instead.
    */
   var isImageDisplayed: Boolean by mutableStateOf(false)
     internal set
 
   /**
    * Whether the image is loaded and displayed in its full quality.
-   * This be false for placeholders/thumbnails, where [isPlaceholderDisplayed] can be used instead.
+   * This be `false` for placeholders/thumbnails, where [isPlaceholderDisplayed] can be used instead.
    **/
   val isImageDisplayedInFullQuality: Boolean by derivedStateOf {
     isImageDisplayed && subSamplingState.let { it == null || it.isImageDisplayedInFullQuality }

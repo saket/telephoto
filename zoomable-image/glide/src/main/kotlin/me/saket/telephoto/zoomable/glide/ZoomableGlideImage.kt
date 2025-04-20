@@ -3,6 +3,7 @@ package me.saket.telephoto.zoomable.glide
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.TypedValue
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.remember
@@ -13,6 +14,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
@@ -65,6 +67,7 @@ fun ZoomableGlideImage(
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
   requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
 ) {
   ZoomableImage(
@@ -81,42 +84,7 @@ fun ZoomableGlideImage(
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
-  )
-}
-
-@Composable
-@NonRestartableComposable
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
-fun ZoomableGlideImage(
-  model: Any?,
-  contentDescription: String?,
-  modifier: Modifier = Modifier,
-  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
-  alpha: Float = DefaultAlpha,
-  colorFilter: ColorFilter? = null,
-  alignment: Alignment = Alignment.Center,
-  contentScale: ContentScale = ContentScale.Fit,
-  gesturesEnabled: Boolean = true,
-  onClick: ((Offset) -> Unit)? = null,
-  onLongClick: ((Offset) -> Unit)? = null,
-  clipToBounds: Boolean = true,
-  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
-) {
-  ZoomableGlideImage(
-    model = model,
-    contentDescription = contentDescription,
-    modifier = modifier,
-    state = state,
-    alpha = alpha,
-    colorFilter = colorFilter,
-    alignment = alignment,
-    contentScale = contentScale,
-    gesturesEnabled = gesturesEnabled,
-    onClick = onClick,
-    onLongClick = onLongClick,
-    onDoubleClick = DoubleClickToZoomListener.cycle(),
-    clipToBounds = clipToBounds,
-    requestBuilderTransform = requestBuilderTransform,
+    contentPadding = contentPadding,
   )
 }
 
@@ -162,6 +130,83 @@ fun ZoomableImageSource.Companion.glide(
       isVectorDrawable = model?.isVectorDrawable(context) == true
     )
   }
+}
+
+@Composable
+@Suppress("unused")
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableGlideImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+) {
+  ZoomableGlideImage(
+    model = model,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    gesturesEnabled = gesturesEnabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = onDoubleClick,
+    contentPadding = PaddingValues(0.dp),
+    requestBuilderTransform = requestBuilderTransform,
+  )
+}
+
+@Composable
+@Suppress("unused")
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableGlideImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+) {
+  ZoomableGlideImage(
+    model = model,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    gesturesEnabled = gesturesEnabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = DoubleClickToZoomListener.cycle(),
+    clipToBounds = clipToBounds,
+    contentPadding = PaddingValues(0.dp),
+    requestBuilderTransform = requestBuilderTransform,
+  )
 }
 
 private fun Any.isVectorDrawable(context: Context): Boolean {

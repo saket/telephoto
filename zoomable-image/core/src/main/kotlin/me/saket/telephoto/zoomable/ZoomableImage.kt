@@ -8,6 +8,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.RememberObserver
@@ -33,6 +35,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.ExperimentalTelephotoApi
@@ -76,10 +79,12 @@ fun ZoomableImage(
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
   state.zoomableState.also {
     it.contentAlignment = alignment
     it.contentScale = contentScale
+    it.contentPadding = contentPadding
   }
 
   var canvasSize by remember { mutableStateOf(Size.Unspecified) }
@@ -152,6 +157,7 @@ fun ZoomableImage(
       }
       Image(
         modifier = Modifier
+          .padding(contentPadding)
           .onSizeChanged { boundsProvider.viewportSize = it }
           .zoomable(
             // Handle gestures, but ignore their transformations. This will prevent
@@ -243,6 +249,41 @@ private fun Modifier.contentDescriptionIfImageIsEmpty(
   } else {
     this.contentDescription(contentDescription)
   }
+}
+
+@Composable
+@Suppress("unused")
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableImage(
+  image: ZoomableImageSource,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+) {
+  ZoomableImage(
+    image = image,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    gesturesEnabled = gesturesEnabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = onDoubleClick
+  )
 }
 
 @Composable

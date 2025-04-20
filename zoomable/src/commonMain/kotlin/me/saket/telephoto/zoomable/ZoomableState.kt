@@ -6,6 +6,8 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
@@ -44,6 +47,7 @@ fun rememberZoomableState(
     it.zoomSpec = zoomSpec
     it.hardwareShortcutsSpec = hardwareShortcutsSpec
     it.layoutDirection = LocalLayoutDirection.current
+    it.density = LocalDensity.current
     //it.RetainPanAcrossContentSizeChangesEffect()
   }
 }
@@ -82,6 +86,12 @@ sealed interface ZoomableState {
    * is large enough to fill all available space. After that, they're scaled uniformly.
    * */
   var contentAlignment: Alignment
+
+  /**
+   * Padding around the zoomable content _within_ the viewport. This will add padding for the.
+   * content after it has been clipped, which is not possible via [Modifier.padding].
+   */
+  var contentPadding: PaddingValues
 
   /**
    * The visual bounds of the content _with_ user zoom and pan. This is calculated by applying

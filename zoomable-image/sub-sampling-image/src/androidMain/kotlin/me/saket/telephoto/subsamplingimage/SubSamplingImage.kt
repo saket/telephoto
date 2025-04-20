@@ -169,9 +169,9 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
   }
 }
 
-@SuppressLint("ComposeParameterOrder")
-@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)  // For binary compatibility.
 @Composable
+@SuppressLint("ComposeParameterOrder")
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
 fun SubSamplingImage(
   state: SubSamplingImageState,
   modifier: Modifier = Modifier,

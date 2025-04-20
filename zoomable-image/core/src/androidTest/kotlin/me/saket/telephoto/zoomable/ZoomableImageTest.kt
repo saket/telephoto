@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -106,6 +107,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
@@ -1941,6 +1944,71 @@ class ZoomableImageTest {
     dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_image_change]")
   }
 
+  @Test fun content_padding(
+    @TestParameter contentPadding: ContentPaddingParam,
+    @TestParameter subSamplingStatus: SubSamplingStatus,
+  ) {
+    lateinit var state: ZoomableImageState
+    val zoomRequests = Channel<Float>()
+    val isPlaceholderVisible = MutableStateFlow(true)
+
+    rule.setContent {
+      val fullQualityImage = when (contentPadding) {
+        ContentPaddingParam.Symmetric -> "arale_1080p.jpg"
+        ContentPaddingParam.Asymmetric -> "cat_1920.jpg"
+      }
+      val placeholderImage = when (contentPadding) {
+        ContentPaddingParam.Symmetric -> "arale_250.jpg"
+        ContentPaddingParam.Asymmetric -> "cat_250.jpg"
+      }
+
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource
+          .asset(fullQualityImage, subSample = subSamplingStatus.enabled)
+          .withPlaceholder(assetPainter(placeholderImage), isPlaceholderVisible),
+        contentDescription = null,
+        state = rememberZoomableImageState().also { state = it },
+        contentPadding = contentPadding.contentPadding,
+      )
+
+      LaunchedEffect(Unit) {
+        zoomRequests.consumeAsFlow().collectLatest { factor ->
+          state.zoomableState.zoomTo(factor)
+        }
+      }
+    }
+
+    rule.waitUntil { state.isPlaceholderDisplayed }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_placeholder")
+    }
+
+    isPlaceholderVisible.value = false
+    rule.waitUntil { state.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_full_image")
+    }
+
+    zoomRequests.trySend(1.1f)
+    rule.waitUntil { state.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
+    }
+
+    with(rule.onNodeWithTag("image")) {
+      performTouchInput {
+        swipeLeft(startX = center.x, endX = centerLeft.x)
+      }
+    }
+    rule.waitUntil { state.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_and_panned")
+    }
+  }
+
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false
@@ -1987,6 +2055,12 @@ class ZoomableImageTest {
   enum class ContentScaleParamWithDifferentProportions(val value: ContentScale) {
     Fit(ContentScale.Fit),          // Scaling is proportionate.
     Fill(ContentScale.FillBounds),  // Scaling is disproportionate
+  }
+
+  @Suppress("unused")
+  enum class ContentPaddingParam(val contentPadding: PaddingValues) {
+    Symmetric(PaddingValues(32.dp)),
+    Asymmetric(PaddingValues(start = 64.dp, end = 16.dp, top = 0.dp, bottom = 120.dp)),
   }
 
   @Suppress("unused")
