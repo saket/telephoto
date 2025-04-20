@@ -386,7 +386,7 @@ internal class RealZoomableState internal constructor(
       finalOffset.withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
         val expectedDrawRegion = Rect(it, unscaledContentBounds.size * proposedZoom).throwIfDrawRegionIsTooLarge()
         expectedDrawRegion.calculateTopLeftToOverlapWith(
-          destination = inputs.viewportSize,
+          viewportBounds = Rect(Offset.Zero, inputs.viewportSize),
           alignment = inputs.contentAlignment,
           layoutDirection = inputs.layoutDirection,
         )
