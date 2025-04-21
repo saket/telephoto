@@ -12,7 +12,6 @@ import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +50,7 @@ import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
 import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
+import me.saket.telephoto.zoomable.internal.ResolvedPaddingValues
 import me.saket.telephoto.zoomable.internal.TransformScope
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
@@ -67,6 +67,7 @@ import me.saket.telephoto.zoomable.internal.isUnspecifiedOrEmpty
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.minScale
 import me.saket.telephoto.zoomable.internal.minus
+import me.saket.telephoto.zoomable.internal.resolve
 import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.unaryMinus
@@ -139,6 +140,12 @@ internal class RealZoomableState internal constructor(
    */
   internal var viewportSize: Size by mutableStateOf(Size.Unspecified)
 
+  internal val resolvedContentPadding: ResolvedPaddingValues? by derivedStateOf {
+    density?.let { density ->
+      contentPadding.resolve(density, layoutDirection)
+    }
+  }
+
   private var gestureState: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
       savedState?.asGestureState(
@@ -157,23 +164,15 @@ internal class RealZoomableState internal constructor(
 
   private val gestureStateInputsCalculator: GestureStateInputsCalculator by derivedStateOf {
     GestureStateInputsCalculator { viewportSize ->
-      val density = this.density
+      val contentPadding = this.resolvedContentPadding
       if (
         viewportSize.isUnspecifiedOrEmpty ||
         unscaledContentLocation == ZoomableContentLocation.Unspecified ||
-        density == null
+        contentPadding == null
       ) {
         return@GestureStateInputsCalculator null
       }
 
-      val paddedViewportBounds = with(density) {
-        Rect(
-          left = contentPadding.calculateStartPadding(layoutDirection).toPx(),
-          top = contentPadding.calculateTopPadding().toPx(),
-          right = viewportSize.width - contentPadding.calculateRightPadding(layoutDirection).toPx(),
-          bottom = viewportSize.height - contentPadding.calculateBottomPadding().toPx(),
-        )
-      }
       val unscaledContentBounds = unscaledContentLocation.location(
         layoutSize = viewportSize,
         direction = layoutDirection,
@@ -182,6 +181,10 @@ internal class RealZoomableState internal constructor(
         return@GestureStateInputsCalculator null
       }
 
+      val paddedViewportBounds = Rect(
+        offset = contentPadding.topLeft,
+        size = viewportSize - contentPadding.size,
+      )
       val baseZoomFactor = contentScale.computeScaleFactor(
         srcSize = unscaledContentBounds.size,
         dstSize = paddedViewportBounds.size,
@@ -190,6 +193,7 @@ internal class RealZoomableState internal constructor(
         "Base zoom shouldn't be zero. content bounds = $unscaledContentBounds, viewport size = $viewportSize"
       }
       val baseOffset = run {
+        // todo: it should be possible to reuse Rect#calculateTopLeftToOverlapWith() here.
         val alignmentOffset = paddedViewportBounds.topLeft + contentAlignment.align(
           size = (unscaledContentBounds.size * baseZoomFactor).roundToIntSize(),
           space = paddedViewportBounds.size.roundToIntSize(),
@@ -710,7 +714,7 @@ internal class RealZoomableState internal constructor(
       bounds
       // Note to self: the placeholder bounds are always unscaled
       // because placeholders can't be zoomed (at least not yet).
-        ?: placeholderBoundsProvider?.calculate(state = this@RealZoomableState)
+        ?: placeholderBoundsProvider?.calculate()
     }
   }
 

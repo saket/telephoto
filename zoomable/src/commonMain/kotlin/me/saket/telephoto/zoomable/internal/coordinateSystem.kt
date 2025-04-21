@@ -110,7 +110,7 @@ internal class RealZoomableCoordinateSystem(
   private fun converterWithPlaceholderBounds(): CoordinateSpaceConverter? {
     // Note to self: the placeholder bounds are always unscaled
     // because placeholders can't be zoomed (at least not yet).
-    return state.placeholderBoundsProvider?.calculate(state)?.let { placeholderBounds ->
+    return state.placeholderBoundsProvider?.calculate()?.let { placeholderBounds ->
       CoordinateSpaceConverter(
         unscaledContentBounds = placeholderBounds,
         transformation = RealZoomableContentTransformation.Unspecified,

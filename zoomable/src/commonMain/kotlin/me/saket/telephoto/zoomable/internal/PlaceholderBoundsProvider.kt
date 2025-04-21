@@ -1,43 +1,29 @@
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.toSize
-import me.saket.telephoto.zoomable.RealZoomableState
+import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomableState
-import me.saket.telephoto.zoomable.RelativeContentLocation
-import me.saket.telephoto.zoomable.ZoomableContentLocation
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.isSpecified
+import kotlin.jvm.JvmInline
 
 /**
  * Used by [me.saket.telephoto.zoomable.ZoomableImage] to provide a fallback value for
  * [ZoomableState.transformedContentBounds] before the full quality image is loaded. This
  * ensures that the bounds aren't empty while a placeholder image is visible.
  */
-internal data class PlaceholderBoundsProvider(val contentSize: Size) {
-  var viewportSize: IntSize? by mutableStateOf(null)
-
+@JvmInline
+@OptIn(ExperimentalTelephotoApi::class)
+internal value class PlaceholderBoundsProvider(
+  private val placeholderState: ZoomableState,
+) {
   @Stable
-  fun calculate(state: RealZoomableState): Rect? {
-    val viewportSize = viewportSize ?: return null
-
-    val locationProvider = if (contentSize.isSpecified) {
-      RelativeContentLocation(
-        size = contentSize,
-        scale = state.contentScale,
-        alignment = state.contentAlignment,
-      )
-    } else {
-      ZoomableContentLocation.SameAsLayoutBounds
+  fun calculate(): Rect? {
+    return with(placeholderState.coordinateSystem) {
+      val contentBounds = contentBounds.takeIf { it.isSpecified } ?: return null
+      contentBounds.rectIn(CoordinateSpace.Viewport)
     }
-    return locationProvider.location(
-      layoutSize = viewportSize.toSize(),
-      direction = state.layoutDirection,
-    )
   }
 }

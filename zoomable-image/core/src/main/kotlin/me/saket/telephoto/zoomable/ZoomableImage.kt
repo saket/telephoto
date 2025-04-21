@@ -148,7 +148,22 @@ fun ZoomableImage(
           unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
         }
       )
-      val boundsProvider = PlaceholderBoundsProvider(contentSize = painter.intrinsicSize)
+      val placeholderZoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f, overzoomEffect = OverzoomEffect.Disabled),
+        hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
+        // Handle gestures, but ignore their transformations. This will prevent
+        // FlickToDismiss() (and other gesture containers) from accidentally dismissing
+        // this image when a quick-zoom gesture is made before the image is fully loaded.
+        autoApplyTransformations = true,
+      ).also {
+        it.contentScale = contentScale
+        it.contentAlignment = alignment
+        it.contentPadding = contentPadding
+        it.setContentLocation(
+          ZoomableContentLocation.scaledToFitAndCenterAligned(painter.intrinsicSize)
+        )
+      }
+      val boundsProvider = PlaceholderBoundsProvider(placeholderZoomableState)
       DisposableEffect(state, boundsProvider) {
         state.realZoomableState.placeholderBoundsProvider = boundsProvider
         onDispose {
@@ -157,17 +172,8 @@ fun ZoomableImage(
       }
       Image(
         modifier = Modifier
-          .padding(contentPadding)
-          .onSizeChanged { boundsProvider.viewportSize = it }
           .zoomable(
-            // Handle gestures, but ignore their transformations. This will prevent
-            // FlickToDismiss() (and other gesture containers) from accidentally dismissing
-            // this image when a quick-zoom gesture is made before the image is fully loaded.
-            state = rememberZoomableState(
-              zoomSpec = ZoomSpec(maxZoomFactor = 1f, overzoomEffect = OverzoomEffect.NoLimits),
-              hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
-              autoApplyTransformations = false,
-            ),
+            state = placeholderZoomableState,
             onClick = onClick,
             onLongClick = onLongClick,
             onDoubleClick = onDoubleClick,
@@ -175,8 +181,8 @@ fun ZoomableImage(
           ),
         painter = painter,
         contentDescription = null,
-        alignment = alignment,
-        contentScale = contentScale,
+        alignment = Alignment.Center,
+        contentScale = ContentScale.Fit,
         alpha = alpha,
         colorFilter = colorFilter,
       )

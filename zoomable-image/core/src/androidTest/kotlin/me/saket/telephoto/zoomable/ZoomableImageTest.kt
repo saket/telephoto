@@ -1394,6 +1394,7 @@ class ZoomableImageTest {
 
   @Test fun calculate_content_bounds_for_full_quality_images(
     @TestParameter subSamplingStatus: SubSamplingStatus,
+    @TestParameter contentPadding: ContentPaddingParam,
   ) {
     lateinit var imageState: ZoomableImageState
 
@@ -1411,6 +1412,7 @@ class ZoomableImageTest {
           image = ZoomableImageSource.asset("forest_fox_1000.jpg", subSample = subSamplingStatus.enabled),
           contentDescription = null,
           state = rememberZoomableImageState(zoomableState).also { imageState = it },
+          contentPadding = contentPadding.contentPadding,
         )
 
         VisualizeAllBounds(zoomableState)
@@ -1430,7 +1432,8 @@ class ZoomableImageTest {
   }
 
   @Test fun calculate_content_bounds_for_placeholder_images(
-    @TestParameter placeholderParam: PlaceholderImageParam
+    @TestParameter placeholderParam: PlaceholderImageParam,
+    @TestParameter contentPadding: ContentPaddingParam,
   ) {
     lateinit var imageState: ZoomableImageState
 
@@ -1448,6 +1451,7 @@ class ZoomableImageTest {
           image = ZoomableImageSource.placeholderOnly(placeholderParam.painter()),
           contentDescription = null,
           state = rememberZoomableImageState(zoomableState).also { imageState = it },
+          contentPadding = contentPadding.contentPadding,
         )
 
         VisualizeAllBounds(zoomableState)

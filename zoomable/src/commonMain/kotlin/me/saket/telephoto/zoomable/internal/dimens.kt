@@ -32,6 +32,13 @@ internal val Size.isSpecifiedAndNonEmpty: Boolean
 internal val Size.isUnspecifiedOrEmpty: Boolean
   get() = !isSpecifiedAndNonEmpty
 
+internal operator fun Size.minus(other: Size): Size {
+  return Size(
+    width = width - other.width,
+    height = height - other.height,
+  )
+}
+
 internal val ScaleFactor.maxScale: Float
   get() = maxOf(scaleX, scaleY)
 
