@@ -86,6 +86,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.Lifecycle
@@ -2010,6 +2011,60 @@ class ZoomableImageTest {
     rule.waitUntil { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_and_panned")
+    }
+  }
+
+  @Test fun min_zoom_factor_should_exclude_content_padding() {
+    lateinit var state: ZoomableImageState
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("fox_1000.jpg", subSample = true),
+        contentDescription = null,
+        state = rememberZoomableImageState().also { state = it },
+        contentPadding = PaddingValues(40.dp),
+        contentScale = ContentScale.Fit,
+      )
+    }
+
+    // When the image is zoomed in and then fully out,
+    // it should go back to its original padded position.
+    rule.waitUntil { state.isImageDisplayedInFullQuality }
+    repeat(2) {
+      rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+      rule.waitForIdle()
+    }
+
+    with(state.zoomableState.coordinateSystem) {
+      val contentBounds = contentBounds.rectIn(CoordinateSpace.Viewport)
+      assertThat(contentBounds.topLeft.round()).isEqualTo(IntOffset(105, 910))
+    }
+    assertThat(state.zoomableState.zoomFraction).isEqualTo(0f)
+  }
+
+  // Regression test.
+  @Test fun placeholder_should_not_be_zoomable_when_content_padding_is_used() {
+    lateinit var state: ZoomableImageState
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image")
+          .border(1.dp, Color.White),
+        image = ZoomableImageSource.placeholderOnly(assetPainter("fox_250.jpg")),
+        contentDescription = null,
+        state = rememberZoomableImageState().also { state = it },
+        contentPadding = PaddingValues(40.dp),
+      )
+    }
+
+    rule.waitUntil { state.isPlaceholderDisplayed }
+
+    rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 

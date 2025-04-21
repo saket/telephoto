@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.RememberObserver
@@ -151,17 +150,11 @@ fun ZoomableImage(
       val placeholderZoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 1f, overzoomEffect = OverzoomEffect.Disabled),
         hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
-        // Handle gestures, but ignore their transformations. This will prevent
-        // FlickToDismiss() (and other gesture containers) from accidentally dismissing
-        // this image when a quick-zoom gesture is made before the image is fully loaded.
-        autoApplyTransformations = true,
       ).also {
         it.contentScale = contentScale
         it.contentAlignment = alignment
         it.contentPadding = contentPadding
-        it.setContentLocation(
-          ZoomableContentLocation.scaledToFitAndCenterAligned(painter.intrinsicSize)
-        )
+        it.setContentLocation(ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize))
       }
       val boundsProvider = PlaceholderBoundsProvider(placeholderZoomableState)
       DisposableEffect(state, boundsProvider) {
@@ -182,7 +175,7 @@ fun ZoomableImage(
         painter = painter,
         contentDescription = null,
         alignment = Alignment.Center,
-        contentScale = ContentScale.Fit,
+        contentScale = ContentScale.Inside,
         alpha = alpha,
         colorFilter = colorFilter,
       )
