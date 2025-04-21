@@ -66,6 +66,10 @@ interface ZoomableContentLocation {
      * the content's scale.
      */
     @Stable
+    @Deprecated(
+      message = "Prefer using scaledInsideAndCenterAligned for best results",
+      replaceWith = ReplaceWith("ZoomableContentLocation.scaledInsideAndCenterAligned(size)"),
+    )
     fun scaledToFitAndCenterAligned(size: Size?): ZoomableContentLocation {
       return when {
         size == null -> Unspecified
