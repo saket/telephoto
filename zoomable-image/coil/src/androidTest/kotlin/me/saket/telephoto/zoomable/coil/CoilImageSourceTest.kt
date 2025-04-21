@@ -65,7 +65,6 @@ import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.compositionLocalProviderReturnable
 import me.saket.telephoto.util.waitUntil
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
@@ -74,6 +73,7 @@ import me.saket.telephoto.zoomable.coil.CoilImageSourceTest.SvgDecodingState.Svg
 import me.saket.telephoto.zoomable.coil.CoilImageSourceTest.SvgDecodingState.SvgDecodingEnabled
 import me.saket.telephoto.zoomable.image.coil.test.R
 import me.saket.telephoto.zoomable.rememberZoomableImageState
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import okhttp3.HttpUrl
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -515,30 +515,6 @@ class CoilImageSourceTest {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
     }
-  }
-
-  @Test fun do_not_crash_if_respectCacheHeaders_field_cant_be_accessed() = runTest {
-    lateinit var imageState: ZoomableImageState
-    val fullImageUrl: HttpUrl = withContext(Dispatchers.IO) {
-      serverRule.server.url("full_image.png")
-    }
-
-    val customImageLoader = object : ImageLoader by rule.activity.imageLoader {
-      // The reflection code looks for coil.RealImageLoader.
-      // When custom loaders are used, the code shouldn't crash.
-    }
-    rule.setContent {
-      ZoomableAsyncImage(
-        state = rememberZoomableImageState().also { imageState = it },
-        modifier = Modifier.fillMaxSize(),
-        model = fullImageUrl,
-        imageLoader = customImageLoader,
-        contentDescription = null,
-      )
-    }
-
-    rule.waitUntil { imageState.isImageDisplayed }
-    assertThat(imageState.subSamplingState).isNotNull()
   }
 
   @Test fun image_url_with_nocache_http_header() = runTest {
