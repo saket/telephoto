@@ -24,7 +24,8 @@ class ScreenshotTestActivity : AppCompatActivity() {
         else -> error("invalid orientation = $orientation")
       }
       check(Build.VERSION.SDK_INT == 34 && isExpectedSize) {
-        "telephoto's test screenshots were generated on an API 31 device with a 1080 x 2400 display/window size."
+        "Telephoto's test screenshots were generated on an API 34 device with a 1080 x 2400 display/window size." +
+          "Current device: API ${Build.VERSION.SDK_INT}, window size = ${it.width} x ${it.height}"
       }
     }
   }
