@@ -10,26 +10,26 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +41,8 @@ import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntRect
 import androidx.compose.ui.util.fastAny
@@ -77,19 +79,9 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
     val imageState = rememberZoomableImageState()
     val cropperState = rememberCropperState(imageState)
 
-    Box(
-      Modifier
-        .weight(1f)
-        .padding(horizontal = 16.dp)
-    ) {
-      val imageInsets = WindowInsets.safeContent
-        .only(WindowInsetsSides.Horizontal)
-        .union(WindowInsets.safeContent.only(WindowInsetsSides.Top))
-
-      // todo: i need contentPadding
+    Box(Modifier.weight(1f)) {
       ZoomableAsyncImage(
         modifier = Modifier
-          .windowInsetsPadding(imageInsets)
           .fillMaxSize()
           .disallowTouchEventsOutsideOf { cropperState.cropBounds },
         state = imageState,
@@ -98,13 +90,16 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
           .placeholderMemoryCacheKey(key.mediaItem.placeholderImageUrl)
           .build(),
         contentDescription = key.mediaItem.caption,
+        contentPadding = WindowInsets.safeContent
+          .only(WindowInsetsSides.Horizontal)
+          .union(WindowInsets.safeContent.only(WindowInsetsSides.Top))
+          .asPaddingValues()
+          .plus(PaddingValues(16.dp)),
       )
 
       if (!cropperState.cropBounds.isEmpty) {
         CropHandles(
-          modifier = Modifier
-            .matchParentSize()
-            .windowInsetsPadding(imageInsets),
+          modifier = Modifier.matchParentSize(),
           state = cropperState,
         )
       }
@@ -216,5 +211,31 @@ internal fun Modifier.disallowTouchEventsOutsideOf(bounds: () -> Rect): Modifier
         } while (event.changes.fastAny { it.pressed })
       }
     }
+  }
+}
+
+@Stable
+private fun PaddingValues.plus(other: PaddingValues): PaddingValues {
+  return PlusPaddingValues(this, other)
+}
+
+private data class PlusPaddingValues(
+  private val first: PaddingValues,
+  private val second: PaddingValues,
+) : PaddingValues {
+  override fun calculateBottomPadding(): Dp {
+    return first.calculateBottomPadding() + second.calculateBottomPadding()
+  }
+
+  override fun calculateLeftPadding(layoutDirection: LayoutDirection): Dp {
+    return first.calculateLeftPadding(layoutDirection) + second.calculateRightPadding(layoutDirection)
+  }
+
+  override fun calculateRightPadding(layoutDirection: LayoutDirection): Dp {
+    return first.calculateRightPadding(layoutDirection) + second.calculateRightPadding(layoutDirection)
+  }
+
+  override fun calculateTopPadding(): Dp {
+    return first.calculateTopPadding() + second.calculateTopPadding()
   }
 }

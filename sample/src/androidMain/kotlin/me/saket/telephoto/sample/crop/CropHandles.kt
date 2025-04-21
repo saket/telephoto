@@ -116,14 +116,16 @@ internal fun CropHandles(
 internal fun rememberCropperState(
   imageState: ZoomableImageState,
 ): CropperState {
-  val contentBounds: Rect = with(imageState.zoomableState.coordinateSystem) {
+  val unscaledContentBounds: Rect = with(imageState.zoomableState.coordinateSystem) {
     unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
   }
-  val cropBounds = remember(contentBounds) { mutableStateOf(contentBounds) }
+  val cropBounds = remember(unscaledContentBounds) { mutableStateOf(unscaledContentBounds) }
 
   if (imageState.isImageDisplayed) {
     cropBounds.value = cropBounds.value.intersect(
-      imageState.zoomableState.transformedContentBounds
+      with(imageState.zoomableState.coordinateSystem) {
+        contentBounds.rectIn(CoordinateSpace.Viewport)
+      }
     )
   }
 
@@ -161,6 +163,9 @@ internal class CropperState(
     if (!proposedBounds.isEmpty && proposedBounds.size.minDimension > minSizePx) {
       cropBoundsState.value = proposedBounds
     }
+
+    // todo: prevent the handles from going outside the viewport's paddings
+    //imageState.zoomableState.contentPadding
   }
 }
 
