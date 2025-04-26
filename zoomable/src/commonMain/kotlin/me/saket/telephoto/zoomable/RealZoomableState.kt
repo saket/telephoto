@@ -105,8 +105,8 @@ internal class RealZoomableState internal constructor(
     if (gestureStateInputs != null) {
       val gestureState = gestureState.calculate(gestureStateInputs)
       val baseZoomFactor = gestureStateInputs.baseZoom
-      val min = ContentZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom
-      val max = ContentZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom
+      val min = AbsoluteZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom
+      val max = AbsoluteZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom
       val current = gestureState.userZoom.coerceIn(min, max)
       when {
         current == min && min == max -> 1f  // Content can't zoom.
@@ -243,7 +243,7 @@ internal class RealZoomableState internal constructor(
 
     val lastGestureState = calculateGestureState() ?: return@TransformableState
     gestureState = GestureStateCalculator { inputs ->
-      val oldZoom = ContentZoomFactor(
+      val oldZoom = AbsoluteZoomFactor(
         baseZoom = inputs.baseZoom,
         userZoom = lastGestureState.userZoom,
       )
@@ -262,7 +262,7 @@ internal class RealZoomableState internal constructor(
       } else {
         zoomDelta
       }
-      val newZoom = ContentZoomFactor(
+      val newZoom = AbsoluteZoomFactor(
         baseZoom = inputs.baseZoom,
         userZoom = oldZoom.userZoom * zoomDelta,
       ).let {
@@ -284,7 +284,7 @@ internal class RealZoomableState internal constructor(
         "New zoom is invalid/infinite = $newZoom. ${collectDebugInfo("zoomDelta" to zoomDelta)}"
       }
 
-      val oldOffset = ContentOffset(
+      val oldOffset = AbsoluteOffset(
         baseOffset = inputs.baseOffset,
         userOffset = lastGestureState.userOffset,
       )
@@ -314,9 +314,9 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = currentGestureStateInputs ?: return false // Content isn't ready yet.
     val current = gestureState.calculate(gestureStateInputs)
 
-    val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, current.userZoom)
+    val currentZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, current.userZoom)
     val panDeltaWithZoom = panDelta / currentZoom
-    val targetOffset = ContentOffset(
+    val targetOffset = AbsoluteOffset(
       baseOffset = gestureStateInputs.baseOffset,
       userOffset = current.userOffset - panDeltaWithZoom,
     )
@@ -338,12 +338,12 @@ internal class RealZoomableState internal constructor(
    * Translate this offset such that the visual position of [centroid]
    * remains the same after applying [panDelta] and [newZoom].
    */
-  private fun ContentOffset.retainCentroidPositionAfterZoom(
+  private fun AbsoluteOffset.retainCentroidPositionAfterZoom(
     centroid: Offset,
     panDelta: Offset = Offset.Zero,
-    oldZoom: ContentZoomFactor,
-    newZoom: ContentZoomFactor,
-  ): ContentOffset {
+    oldZoom: AbsoluteZoomFactor,
+    newZoom: AbsoluteZoomFactor,
+  ): AbsoluteOffset {
     check(this.isFinite) {
       "Can't center around an infinite offset ${collectDebugInfo()}"
     }
@@ -394,10 +394,10 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  private fun ContentOffset.coerceWithinContentBounds(
-    proposedZoom: ContentZoomFactor,
+  private fun AbsoluteOffset.coerceWithinContentBounds(
+    proposedZoom: AbsoluteZoomFactor,
     inputs: GestureStateInputs,
-  ): ContentOffset {
+  ): AbsoluteOffset {
     check(isFinite) {
       "Can't coerce an infinite offset ${collectDebugInfo("proposedZoom" to proposedZoom)}"
     }
@@ -463,7 +463,7 @@ internal class RealZoomableState internal constructor(
     awaitUntilIsReadyForInteraction()
 
     val gestureStateInputs = currentGestureStateInputs!!
-    val targetZoom = ContentZoomFactor.forFinalZoom(
+    val targetZoom = AbsoluteZoomFactor.forFinalZoom(
       baseZoom = gestureStateInputs.baseZoom,
       finalZoom = zoomFactor,
     )
@@ -508,7 +508,7 @@ internal class RealZoomableState internal constructor(
   }
 
   private suspend fun animateZoomTo(
-    targetZoom: ContentZoomFactor,
+    targetZoom: AbsoluteZoomFactor,
     centroid: Offset,
     mutatePriority: MutatePriority,
     animationSpec: AnimationSpec<Float>,
@@ -517,8 +517,8 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = currentGestureStateInputs!!
     val startGestureState = gestureState.calculate(gestureStateInputs)
 
-    val startZoom = ContentZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
-    val startOffset = ContentOffset(gestureStateInputs.baseOffset, startGestureState.userOffset)
+    val startZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
+    val startOffset = AbsoluteOffset(gestureStateInputs.baseOffset, startGestureState.userOffset)
     val targetOffset = startOffset
       .retainCentroidPositionAfterZoom(
         centroid = centroid,
@@ -535,7 +535,7 @@ internal class RealZoomableState internal constructor(
         targetValue = 1f,
         animationSpec = animationSpec.withMinimalVisibilityThreshold(),
       ) {
-        val animatedZoom: ContentZoomFactor = startZoom.copy(
+        val animatedZoom: AbsoluteZoomFactor = startZoom.copy(
           userZoom = UserZoomFactor(
             lerp(
               start = startZoom.userZoom.value,
@@ -572,7 +572,7 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = currentGestureStateInputs ?: return false
     val gestureState = gestureState.calculate(gestureStateInputs)
 
-    val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
+    val currentZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
     val zoomWithinBounds = currentZoom.coerceUserZoomIn(zoomSpec.range)
     return abs(currentZoom.userZoom.value - zoomWithinBounds.userZoom.value) > ZoomDeltaEpsilon
   }
@@ -581,7 +581,7 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = currentGestureStateInputs ?: error("shouldn't have gotten called")
     val gestureState = gestureState.calculate(gestureStateInputs)
 
-    val userZoomWithinBounds = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
+    val userZoomWithinBounds = AbsoluteZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
       .coerceUserZoomIn(zoomSpec.range)
       .userZoom
 
@@ -726,7 +726,7 @@ internal class RealZoomableState internal constructor(
             // Touch events are canceled on state restoration.
             // If the content is over-zoomed, snap back to its zoom limits.
             gestureState.copy(
-              userZoom = ContentZoomFactor(inputs.baseZoom, gestureState.userZoom)
+              userZoom = AbsoluteZoomFactor(inputs.baseZoom, gestureState.userZoom)
                 .coerceUserZoomIn(state.zoomSpec.range)
                 .userZoom
             )
@@ -788,7 +788,7 @@ internal value class BaseZoomFactor(val value: ScaleFactor) {
 @Immutable
 internal value class UserZoomFactor(val value: Float)
 
-internal data class ContentZoomFactor(
+internal data class AbsoluteZoomFactor(
   private val baseZoom: BaseZoomFactor,
   val userZoom: UserZoomFactor,
 ) {
@@ -799,7 +799,7 @@ internal data class ContentZoomFactor(
     range: ZoomRange,
     leewayPercentForMinZoom: Float = 0f,
     leewayPercentForMaxZoom: Float = leewayPercentForMinZoom,
-  ): ContentZoomFactor {
+  ): AbsoluteZoomFactor {
     val minUserZoom = minimum(baseZoom, range).userZoom
     val maxUserZoom = maximum(baseZoom, range).userZoom
     return copy(
@@ -821,29 +821,29 @@ internal data class ContentZoomFactor(
   }
 
   companion object {
-    fun minimum(baseZoom: BaseZoomFactor, range: ZoomRange): ContentZoomFactor {
-      return ContentZoomFactor(
+    fun minimum(baseZoom: BaseZoomFactor, range: ZoomRange): AbsoluteZoomFactor {
+      return AbsoluteZoomFactor(
         baseZoom = baseZoom,
         userZoom = UserZoomFactor(range.minZoomFactor(baseZoom) / baseZoom.maxScale),
       )
     }
 
-    fun maximum(baseZoom: BaseZoomFactor, range: ZoomRange): ContentZoomFactor {
-      return ContentZoomFactor(
+    fun maximum(baseZoom: BaseZoomFactor, range: ZoomRange): AbsoluteZoomFactor {
+      return AbsoluteZoomFactor(
         baseZoom = baseZoom,
         userZoom = UserZoomFactor(range.maxZoomFactor(baseZoom) / baseZoom.maxScale),
       )
     }
 
-    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: Float): ContentZoomFactor {
-      return ContentZoomFactor(
+    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: Float): AbsoluteZoomFactor {
+      return AbsoluteZoomFactor(
         baseZoom = baseZoom,
         userZoom = UserZoomFactor(finalZoom / baseZoom.value.maxScale),
       )
     }
 
-    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: ScaleFactor): ContentZoomFactor {
-      return ContentZoomFactor(
+    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: ScaleFactor): AbsoluteZoomFactor {
+      return AbsoluteZoomFactor(
         baseZoom = baseZoom,
         userZoom = UserZoomFactor(finalZoom.maxScale / baseZoom.value.maxScale),
       )
@@ -872,7 +872,7 @@ internal value class UserOffset private constructor(val value: Offset) {
     UserOffset(value.times(factor))
 }
 
-internal data class ContentOffset(
+internal data class AbsoluteOffset(
   /**
    * The minimum offset needed to position the content within its layout
    * bounds with respect to [ZoomableState.contentAlignment].
@@ -884,7 +884,7 @@ internal data class ContentOffset(
 
   fun finalOffset(): Offset = baseOffset + userOffset.value
 
-  fun transformUserOffset(block: (finalOffset: Offset) -> Offset): ContentOffset {
+  fun transformUserOffset(block: (finalOffset: Offset) -> Offset): AbsoluteOffset {
     val transformed = block(finalOffset())
     return this.copy(
       userOffset = UserOffset(transformed - this.baseOffset)
@@ -892,8 +892,8 @@ internal data class ContentOffset(
   }
 
   companion object {
-    fun forFinalOffset(baseOffset: Offset, finalOffset: Offset): ContentOffset {
-      return ContentOffset(
+    fun forFinalOffset(baseOffset: Offset, finalOffset: Offset): AbsoluteOffset {
+      return AbsoluteOffset(
         baseOffset = baseOffset,
         userOffset = UserOffset(finalOffset - baseOffset),
       )

@@ -5,9 +5,9 @@ import assertk.assertThat
 import assertk.assertions.isCloseTo
 import kotlin.test.Test
 
-class ContentZoomFactorTest {
+class AbsoluteZoomFactorTest {
   @Test fun `calculate final zoom`() {
-    val targetZoom = ContentZoomFactor.forFinalZoom(
+    val targetZoom = AbsoluteZoomFactor.forFinalZoom(
       baseZoom = BaseZoomFactor(ScaleFactor(1.1f, 1.8f)),
       finalZoom = 2.5f,
     )

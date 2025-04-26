@@ -3,8 +3,8 @@ package me.saket.telephoto.zoomable.internal
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ScaleFactor
-import me.saket.telephoto.zoomable.ContentOffset
-import me.saket.telephoto.zoomable.ContentZoomFactor
+import me.saket.telephoto.zoomable.AbsoluteOffset
+import me.saket.telephoto.zoomable.AbsoluteZoomFactor
 import me.saket.telephoto.zoomable.GestureState
 import me.saket.telephoto.zoomable.GestureStateInputs
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
@@ -41,11 +41,11 @@ internal data class RealZoomableContentTransformation(
       gestureStateInputs: GestureStateInputs,
       gestureState: GestureState,
     ): ZoomableContentTransformation {
-      val contentZoom = ContentZoomFactor(
+      val absoluteZoom = AbsoluteZoomFactor(
         baseZoom = gestureStateInputs.baseZoom,
         userZoom = gestureState.userZoom,
       )
-      val contentOffset = ContentOffset(
+      val absoluteOffset = AbsoluteOffset(
         baseOffset = gestureStateInputs.baseOffset,
         userOffset = gestureState.userOffset,
       )
@@ -53,12 +53,12 @@ internal data class RealZoomableContentTransformation(
       return RealZoomableContentTransformation(
         isSpecified = true,
         contentSize = contentSize,
-        scale = contentZoom.finalZoom(),
+        scale = absoluteZoom.finalZoom(),
         scaleMetadata = ScaleMetadata(
           initialScale = gestureStateInputs.baseZoom.value,
           userZoom = gestureState.userZoom.value,
         ),
-        offset = (-contentOffset.finalOffset() * contentZoom.finalZoom()).let {
+        offset = (-absoluteOffset.finalOffset() * absoluteZoom.finalZoom()).let {
           // Make it easier for consumers to perform `if (offset == zero)` checks.
           if (it == -Offset.Zero) Offset.Zero else it
         },

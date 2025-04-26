@@ -3,8 +3,8 @@ package me.saket.telephoto.zoomable.internal
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.layout.ScaleFactor
-import me.saket.telephoto.zoomable.ContentOffset
-import me.saket.telephoto.zoomable.ContentZoomFactor
+import me.saket.telephoto.zoomable.AbsoluteOffset
+import me.saket.telephoto.zoomable.AbsoluteZoomFactor
 import me.saket.telephoto.zoomable.GestureState
 import me.saket.telephoto.zoomable.GestureStateInputs
 import me.saket.telephoto.zoomable.ZoomableState
@@ -20,11 +20,11 @@ internal class GestureStateAdjuster(
 
   fun adjustForNewViewportSize(
     inputs: GestureStateInputs,
-    coerceWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
+    coerceWithinBounds: (AbsoluteOffset, AbsoluteZoomFactor) -> AbsoluteOffset,
   ): GestureState {
     // Retain the same zoom level. This will change the user zoom level, but that's okay.
     // Switching from a smaller to a larger screen should display more content, not the same.
-    val newZoom = ContentZoomFactor.forFinalZoom(inputs.baseZoom, finalZoom = oldFinalZoom)
+    val newZoom = AbsoluteZoomFactor.forFinalZoom(inputs.baseZoom, finalZoom = oldFinalZoom)
 
     // todo: can SpatialOffset be used here?
     // Find the offset needed to move the old anchor (i.e., the content offset at the viewport
@@ -33,13 +33,13 @@ internal class GestureStateAdjuster(
     val newUserOffset = oldContentOffsetAtViewportCenter.withZoom(newZoom.finalZoom()) { anchorInViewportSpace ->
       anchorInViewportSpace - inputs.viewportSize.center
     }
-    val proposedContentOffset = ContentOffset.forFinalOffset(
+    val proposedAbsoluteOffset = AbsoluteOffset.forFinalOffset(
       baseOffset = inputs.baseOffset,
       finalOffset = newUserOffset,
     )
 
     return GestureState(
-      userOffset = coerceWithinBounds(proposedContentOffset, newZoom).userOffset,
+      userOffset = coerceWithinBounds(proposedAbsoluteOffset, newZoom).userOffset,
       userZoom = newZoom.userZoom,
       lastCentroid = inputs.viewportSize.center
     )

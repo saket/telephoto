@@ -10,8 +10,8 @@ import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
 import androidx.compose.ui.util.unpackFloat2
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.zoomable.ContentOffset
-import me.saket.telephoto.zoomable.ContentZoomFactor
+import me.saket.telephoto.zoomable.AbsoluteOffset
+import me.saket.telephoto.zoomable.AbsoluteZoomFactor
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.CoordinateSystem
 import me.saket.telephoto.zoomable.GestureState
@@ -59,7 +59,7 @@ internal data class ZoomableSavedState private constructor(
               )
               viewportCenter.offsetIn(CoordinateSpace.ZoomableContent)
             }.packToLong(),
-            finalZoomFactor = ContentZoomFactor(
+            finalZoomFactor = AbsoluteZoomFactor(
               baseZoom = gestureStateInputs.baseZoom,
               userZoom = gestureState.userZoom,
             ).finalZoom().packToLong(),
@@ -73,7 +73,7 @@ internal data class ZoomableSavedState private constructor(
 
   fun asGestureState(
     inputs: GestureStateInputs,
-    coerceOffsetWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
+    coerceOffsetWithinBounds: (AbsoluteOffset, AbsoluteZoomFactor) -> AbsoluteOffset,
   ): GestureState {
     val restoredUserOffset = userOffset.unpackAsOffset()
     val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon

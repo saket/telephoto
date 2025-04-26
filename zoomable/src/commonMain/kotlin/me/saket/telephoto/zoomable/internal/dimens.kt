@@ -14,7 +14,7 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.zoomable.BaseZoomFactor
-import me.saket.telephoto.zoomable.ContentZoomFactor
+import me.saket.telephoto.zoomable.AbsoluteZoomFactor
 import me.saket.telephoto.zoomable.UserZoomFactor
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -79,13 +79,13 @@ internal operator fun Offset.times(factor: ScaleFactor) =
 internal operator fun Offset.div(factor: ScaleFactor) =
   Offset(x = x / factor.scaleX, y = y / factor.scaleY)
 
-internal operator fun Offset.div(zoom: ContentZoomFactor): Offset =
+internal operator fun Offset.div(zoom: AbsoluteZoomFactor): Offset =
   div(zoom.finalZoom())
 
-internal operator fun Offset.times(zoom: ContentZoomFactor): Offset =
+internal operator fun Offset.times(zoom: AbsoluteZoomFactor): Offset =
   times(zoom.finalZoom())
 
-internal operator fun Size.times(zoom: ContentZoomFactor): Size =
+internal operator fun Size.times(zoom: AbsoluteZoomFactor): Size =
   times(zoom.finalZoom())
 
 internal fun Size.aspectRatio(): Float =
