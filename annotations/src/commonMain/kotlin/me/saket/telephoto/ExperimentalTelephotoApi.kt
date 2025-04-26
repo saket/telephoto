@@ -1,5 +1,3 @@
-@file:Suppress("PackageDirectoryMismatch")  // todo: move this to :annotations?
-
 package me.saket.telephoto
 
 @RequiresOptIn(
