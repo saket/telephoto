@@ -57,7 +57,7 @@ internal class RealZoomableCoordinateSystem(
   }
 
   override val viewportSize: Size
-    get() = state.viewportSize
+    get() = state.viewportSize.takeOrElse { Size.Zero }
 
   override fun SpatialOffset.offsetIn(target: CoordinateSpace): Offset {
     if (this.isUnspecified) {
