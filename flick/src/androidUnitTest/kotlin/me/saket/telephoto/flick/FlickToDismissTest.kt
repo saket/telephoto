@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissed
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
@@ -53,6 +54,7 @@ import org.junit.runner.RunWith
 import kotlin.math.roundToInt
 
 @RunWith(TestParameterInjector::class)
+@OptIn(ExperimentalTelephotoApi::class)
 class FlickToDismissTest {
 
   @get:Rule val paparazzi = Paparazzi(

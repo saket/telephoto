@@ -14,6 +14,7 @@ class ZoomableContentLocationTest {
    * ZoomableImage uses Unspecified as the default value. This ensures that images
    * stay hidden until a location is set and its base-zoom value is calculated.
    */
+  @Suppress("DEPRECATION")
   @Test fun `when size is null then set location as unspecified`() {
     assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(null).isSpecified).isFalse()
     assertThat(ZoomableContentLocation.scaledInsideAndCenterAligned(Size.Unspecified).isSpecified).isTrue()
