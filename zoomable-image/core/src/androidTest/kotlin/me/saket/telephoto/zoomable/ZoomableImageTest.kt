@@ -36,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -124,6 +125,7 @@ import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import org.junit.After
 import org.junit.AssumptionViolatedException
 import org.junit.Before
@@ -1573,6 +1575,139 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun visualize_image_spatial_offsets_in_viewport_space() {
+    lateinit var state: ZoomableImageState
+    val rawContentSize = Size(1000f, 605f)
+
+    rule.setContent {
+      state = rememberZoomableImageState(
+        rememberZoomableState(
+          ZoomSpec(maxZoomFactor = 3f)
+        )
+      )
+
+      Box(Modifier.fillMaxSize()) {
+        ZoomableImage(
+          modifier = Modifier
+            .padding(vertical = 200.dp)
+            .border(1.dp, Color.White)
+            .fillMaxSize()
+            .testTag("image")
+            .drawWithContent {
+              drawContent()
+
+              val aboveViewportOffset = SpatialOffset(
+                Offset(rawContentSize.width / 2f, y = rawContentSize.height),
+                CoordinateSpace.ZoomableContent,
+              )
+              drawCircle(
+                color = Color.White,
+                center = with(state.zoomableState.coordinateSystem) {
+                  aboveViewportOffset.offsetIn(CoordinateSpace.Viewport)
+                },
+                radius = 10.dp.toPx(),
+              )
+
+              val belowImageOffset = SpatialOffset(
+                Offset(rawContentSize.width / 2f, y = 0f),
+                CoordinateSpace.ZoomableContent,
+              )
+              drawCircle(
+                color = Color.White,
+                center = with(state.zoomableState.coordinateSystem) {
+                  belowImageOffset.offsetIn(CoordinateSpace.Viewport)
+                },
+                radius = 10.dp.toPx(),
+              )
+            },
+          image = ZoomableImageSource.asset("forest_fox_1000.jpg", subSample = true),
+          contentDescription = null,
+          state = state,
+          contentScale = ContentScale.Fit,
+          alignment = Alignment.Center,
+        )
+      }
+    }
+
+    rule.waitUntil { state.isImageDisplayedInFullQuality }
+    dropshots.assertSnapshot(rule.activity)
+
+    rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[zoomed]")
+    }
+
+    rule.onNodeWithTag("image").performTouchInput { swipeLeft() }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[zoomed_and_panned]")
+    }
+  }
+
+  @Test fun spatial_offsets_are_always_coerced_within_bounds() {
+    lateinit var state: ZoomableImageState
+    val rawImageSize = Size(1000f, 605f)
+
+    rule.setContent {
+      state = rememberZoomableImageState()
+
+      ZoomableImage(
+        modifier = Modifier
+          .padding(40.dp)
+          .fillMaxWidth()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("forest_fox_1000.jpg", subSample = true),
+        contentDescription = null,
+        contentScale = ContentScale.Inside,
+        alignment = Alignment.Center,
+        state = state,
+      )
+    }
+
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayed()
+    }
+
+    // Viewport offsets.
+    with(state.zoomableState.coordinateSystem) {
+      val outOfBoundsTopLeft = SpatialOffset(
+        offset = Offset(-40f, -60f),
+        space = CoordinateSpace.Viewport,
+      )
+      val outOfBoundsBottomRight = SpatialOffset(
+        offset = viewportSize.asOffset() + Offset(20f, 30f),
+        space = CoordinateSpace.Viewport,
+      )
+
+      // Scenario: same source and destination coordinate spaces.
+      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.Viewport)).isEqualTo(Offset.Zero)
+      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.Viewport)).isEqualTo(viewportSize.asOffset())
+
+      // Scenario: different source and destination coordinate spaces.
+      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(Offset.Zero)
+      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(rawImageSize.asOffset())
+    }
+
+    // Zoomable content offsets.
+    with(state.zoomableState.coordinateSystem) {
+      val outOfBoundsTopLeft = SpatialOffset(
+        offset = Offset(-35f, -90f),
+        space = CoordinateSpace.ZoomableContent,
+      )
+      val outOfBoundsBottomRight = SpatialOffset(
+        offset = rawImageSize.asOffset() + Offset(50f, 15f),
+        space = CoordinateSpace.ZoomableContent,
+      )
+
+      // Scenario: same source and destination coordinate spaces.
+      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(Offset.Zero)
+      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(rawImageSize.asOffset())
+
+      // Scenario: different source and destination coordinate spaces.
+      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.Viewport)).isEqualTo(Offset.Zero)
+      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.Viewport)).isEqualTo(viewportSize.asOffset())
+    }
+  }
+
   @Test fun image_without_an_intrinsic_size() {
     lateinit var imageState: ZoomableImageState
 
@@ -2348,4 +2483,8 @@ private fun ZoomableImageSource.Companion.painter(
       }
     }
   }
+}
+
+internal fun Size.asOffset(): Offset {
+  return Offset(width, height)
 }

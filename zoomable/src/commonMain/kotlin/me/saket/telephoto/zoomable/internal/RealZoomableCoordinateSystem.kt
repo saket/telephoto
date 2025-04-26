@@ -11,6 +11,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.util.fastCoerceIn
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.RealZoomableState
 import me.saket.telephoto.zoomable.Viewport
@@ -55,14 +56,11 @@ internal class RealZoomableCoordinateSystem(
     }
   }
 
-  // todo: resolve all these todos!
-  // todo: add tests for this (including the zero behavior)
   override val viewportSize: Size
-    get() = state.viewportSize.takeOrElse { Size.Zero }
+    get() = state.viewportSize
 
   override fun SpatialOffset.offsetIn(target: CoordinateSpace): Offset {
     if (this.isUnspecified) {
-      // todo: add tests for this
       return Offset.Unspecified
     }
     val converter = converterIfStateIsReady()
@@ -73,9 +71,7 @@ internal class RealZoomableCoordinateSystem(
 
   override fun SpatialRect.rectIn(target: CoordinateSpace): Rect {
     if (this.isUnspecified) {
-      // todo: verify that this is okay.
-      // todo: add tests for this
-      return Rect.Unspecified
+      return Rect.Zero
     }
 
     val topLeftInTarget = this.topLeft.offsetIn(target)
@@ -84,8 +80,7 @@ internal class RealZoomableCoordinateSystem(
     return if (topLeftInTarget.isSpecified && bottomRightInTarget.isSpecified) {
       Rect(topLeftInTarget, bottomRightInTarget)
     } else {
-      // todo: add tests for this?
-      Rect.Unspecified
+      Rect.Zero
     }
   }
 
@@ -95,16 +90,19 @@ internal class RealZoomableCoordinateSystem(
     return CoordinateSpaceConverter(
       unscaledContentBounds = stateInputs.unscaledContentBounds,
       transformation = transformation,
+      viewportSize = stateInputs.viewportSize,
     )
   }
 
   private fun converterWithPlaceholderBounds(): CoordinateSpaceConverter? {
     // Note to self: the placeholder bounds are always unscaled
     // because placeholders can't be zoomed (at least not yet).
+    val stateInputs = state.currentGestureStateInputs ?: return null
     return state.placeholderBoundsProvider?.calculate()?.let { placeholderBounds ->
       CoordinateSpaceConverter(
         unscaledContentBounds = placeholderBounds,
         transformation = RealZoomableContentTransformation.Unspecified,
+        viewportSize = stateInputs.viewportSize,
       )
     }
   }
@@ -112,6 +110,7 @@ internal class RealZoomableCoordinateSystem(
   internal data class CoordinateSpaceConverter(
     private val unscaledContentBounds: Rect,
     private val transformation: ZoomableContentTransformation,
+    private val viewportSize: Size,
   ) {
     private val scale: ScaleFactor
       get() = transformation.scale
@@ -128,21 +127,35 @@ internal class RealZoomableCoordinateSystem(
       get() = unscaledContentBounds.zoomedAndTranslatedBy(scale, transformation.offset)
 
     fun convert(offset: SpatialOffset, target: CoordinateSpace): Offset {
-      return when (target) {
-        offset.space -> offset.offset
-        CoordinateSpace.Viewport -> contentToViewport(offset.offset)
-        CoordinateSpace.ZoomableContent -> viewportToContent(offset.offset)
-        else -> error("Can't convert from ${offset.space} to $target")
+      val source = offset.space
+      return when {
+        source == target -> {
+          when (target) {
+            CoordinateSpace.Viewport -> offset.offset.coerceIn(Offset.Zero, viewportSize)
+            CoordinateSpace.ZoomableContent -> offset.offset.coerceIn(Offset.Zero, unscaledContentBounds.size)
+            else -> error("unknown coordinate space = $target")
+          }
+        }
+        source == CoordinateSpace.Viewport && target == CoordinateSpace.ZoomableContent -> {
+          viewportToContent(offset.offset)
+        }
+        source == CoordinateSpace.ZoomableContent && target == CoordinateSpace.Viewport -> {
+          contentToViewport(offset.offset)
+        }
+        else -> {
+          error("Can't convert from ${offset.space} to $target")
+        }
       }
     }
 
-    // todo: if a coordinate in the viewport is outside the bounds of the image, it should be coerced in
     private fun viewportToContent(offset: Offset): Offset {
       // To convert from viewport to content coordinates:
       // 1. Shift by -transformedContentBounds.topLeft (to get relative to transformed content)
       // 2. Divide by scale (to get back to unscaled coordinates)
       // 3. Shift by +unscaledContentBounds.topLeft (to get absolute coordinates)
-      return (offset - transformedContentBounds.topLeft) / scale + unscaledContentBounds.topLeft
+      return (
+        (offset - transformedContentBounds.topLeft) / scale + unscaledContentBounds.topLeft
+      ).coerceIn(Offset.Zero, unscaledContentBounds.size)
     }
 
     private fun contentToViewport(offset: Offset): Offset {
@@ -150,7 +163,9 @@ internal class RealZoomableCoordinateSystem(
       // 1. Shift by -unscaledContentBounds.topLeft (to get relative to content)
       // 2. Scale by scale factor (to get scaled coordinates)
       // 3. Shift by +transformedContentBounds.topLeft (to get absolute coordinates)
-      return (offset - unscaledContentBounds.topLeft) * scale + transformedContentBounds.topLeft
+      return (
+        (offset - unscaledContentBounds.topLeft) * scale + transformedContentBounds.topLeft
+      ).coerceIn(Offset.Zero, viewportSize)
     }
   }
 }
@@ -159,8 +174,12 @@ internal data object ContentCoordinateSpace : CoordinateSpace
 
 internal data object ViewportCoordinateSpace : CoordinateSpace
 
-// Compose UI does not have a concept of an unspecified rect, so I'm using Float.NaNs.
-// Unlike the official Compose UI components, telephoto can't use Rect.Zero as a placeholder
-// because 0,0 on the viewport can map to a non-zero position on the zoomable content.
-private val Rect.Companion.Unspecified: Rect
-  get() = Rect(Float.NaN, Float.NaN, Float.NaN, Float.NaN)
+private fun Offset.coerceIn(
+  minimumValue: Offset,
+  maximumValue: Size,
+): Offset {
+  return Offset(
+    x = this.x.fastCoerceIn(minimumValue.x, maximumValue.width),
+    y = this.y.fastCoerceIn(minimumValue.y, maximumValue.height),
+  )
+}

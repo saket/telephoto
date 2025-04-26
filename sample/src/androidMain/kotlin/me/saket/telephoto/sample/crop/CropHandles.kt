@@ -116,12 +116,8 @@ internal fun CropHandles(
 internal fun rememberCropperState(
   imageState: ZoomableImageState,
 ): CropperState {
-  val unscaledContentBounds: Rect = if (imageState.isImageDisplayed) {
-    with(imageState.zoomableState.coordinateSystem) {
-      unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
-    }
-  } else {
-    Rect.Zero
+  val unscaledContentBounds: Rect = with(imageState.zoomableState.coordinateSystem) {
+    unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
   }
   val cropBounds = remember(unscaledContentBounds) {
     mutableStateOf(unscaledContentBounds)

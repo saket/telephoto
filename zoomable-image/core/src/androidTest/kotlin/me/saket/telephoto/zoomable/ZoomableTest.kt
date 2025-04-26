@@ -20,11 +20,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
@@ -56,6 +59,8 @@ import leakcanary.LeakAssertions
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
+import me.saket.telephoto.zoomable.spatial.SpatialRect
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -598,6 +603,63 @@ class ZoomableTest {
     rule.onNodeWithTag("content").performClick()
     rule.runOnIdle {
       assertThat(onClickCalled).isTrue()
+    }
+  }
+
+  @Test fun all_spatial_values_are_unspecified_when_content_is_not_measured_yet() {
+    lateinit var state: ZoomableState
+    rule.setContent {
+      state = rememberZoomableState()
+    }
+
+    rule.waitForIdle()
+    with(state.coordinateSystem) {
+      assertThat(viewportSize).isEqualTo(Size.Zero)
+
+      assertThat(
+        SpatialOffset(Offset.Zero, CoordinateSpace.Viewport).offsetIn(CoordinateSpace.ZoomableContent)
+      ).isEqualTo(Offset.Unspecified)
+      assertThat(
+        SpatialOffset(Offset.Zero, CoordinateSpace.ZoomableContent).offsetIn(CoordinateSpace.Viewport)
+      ).isEqualTo(Offset.Unspecified)
+
+      assertThat(contentBounds).isEqualTo(SpatialRect.Unspecified)
+      assertThat(contentBounds.rectIn(CoordinateSpace.ZoomableContent)).isEqualTo(Rect.Zero)
+
+      assertThat(unscaledContentBounds).isEqualTo(SpatialRect.Unspecified)
+      assertThat(unscaledContentBounds.rectIn(CoordinateSpace.ZoomableContent)).isEqualTo(Rect.Zero)
+    }
+  }
+
+  @Test fun resolved_spatial_offsets_resolve_to_unspecified_offsets() {
+    lateinit var state: ZoomableState
+    rule.setContent {
+      state = rememberZoomableState()
+
+      Box(
+        Modifier
+          .size(200.dp, 300.dp)
+          .testTag("content")
+          .zoomable(state)
+      )
+    }
+
+    rule.waitUntil {
+      rule.onNodeWithTag("content").isDisplayed()
+    }
+
+    with(state.coordinateSystem) {
+      assertThat(
+        SpatialOffset.Unspecified.offsetIn(CoordinateSpace.Viewport)
+      ).isEqualTo(Offset.Unspecified)
+
+      assertThat(
+        SpatialOffset(Offset.Unspecified, CoordinateSpace.Viewport).offsetIn(CoordinateSpace.ZoomableContent)
+      ).isEqualTo(Offset.Unspecified)
+
+      assertThat(
+        SpatialRect.Unspecified.rectIn(CoordinateSpace.ZoomableContent).size
+      ).isEqualTo(Size.Unspecified)
     }
   }
 }

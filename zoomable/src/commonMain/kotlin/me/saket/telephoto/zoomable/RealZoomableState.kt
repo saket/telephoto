@@ -702,6 +702,7 @@ internal class RealZoomableState internal constructor(
     }
   }
 
+  // Note to self: these bounds are in the viewport's coordinate space.
   internal inline fun transformUnscaledContentBoundsBy(
     transform: Rect.(GestureStateInputs, ZoomableContentTransformation) -> Rect
   ): Rect? {
@@ -712,8 +713,8 @@ internal class RealZoomableState internal constructor(
         }
       }
       bounds
-      // Note to self: the placeholder bounds are always unscaled
-      // because placeholders can't be zoomed (at least not yet).
+        // The placeholder bounds are always unscaled because
+        // placeholders can't be zoomed (at least not yet).
         ?: placeholderBoundsProvider?.calculate()
     }
   }
