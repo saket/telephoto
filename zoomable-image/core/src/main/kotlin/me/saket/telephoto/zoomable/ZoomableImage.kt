@@ -37,7 +37,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.flow.filter
-import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.contentDescription
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
@@ -45,8 +44,6 @@ import me.saket.telephoto.zoomable.internal.FocusForwarder
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.focusForwarder
 import me.saket.telephoto.zoomable.internal.receiveFocusFrom
-import me.saket.telephoto.zoomable.internal.scaledToMatch
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 
 /**
  * A _drop-in_ replacement for async `Image()` composables featuring support for pan & zoom gestures
@@ -63,7 +60,6 @@ import me.saket.telephoto.zoomable.spatial.CoordinateSpace
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  */
 @Composable
-@OptIn(ExperimentalTelephotoApi::class)
 fun ZoomableImage(
   image: ZoomableImageSource,
   contentDescription: String?,
@@ -140,13 +136,12 @@ fun ZoomableImage(
     }
 
     if (state.isPlaceholderDisplayed && !wasImageZoomedIn) {
-      val painter = animatedPainter(resolved.placeholder!!).scaledToMatch(
-        // Align with the full-quality image even if the placeholder is smaller in size.
-        // This will only work when ZoomableImage is given fillMaxSize or a fixed size.
-        size = with(state.zoomableState.coordinateSystem) {
-          unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
-        }
-      )
+      val painter = animatedPainter(resolved.placeholder!!)
+
+      // The placeholder image uses a separate ZoomableState so that it
+      // can swallow all zoom gestures while the full image is loading.
+      // TODO: Make placeholders zoomable and smoothly transition to full
+      //  image without losing zoom level https://github.com/saket/telephoto/issues/104
       val placeholderZoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 1f, overzoomEffect = OverzoomEffect.Disabled),
         hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
