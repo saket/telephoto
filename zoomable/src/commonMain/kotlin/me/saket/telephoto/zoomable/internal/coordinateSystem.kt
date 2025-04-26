@@ -37,9 +37,6 @@ internal class RealZoomableCoordinateSystem(
     if (boundsInViewport != null) {
       SpatialRect(boundsInViewport, CoordinateSpace.Viewport)
     } else {
-      // Note to self: this does not use SpatialRect.Zero as a fallback value.
-      // Because spatial rects are lazily resolved, a zero spatial rect in one
-      // coordinate space could be resolved to a non-zero rect in another space.
       SpatialRect.Unspecified
     }
   }
@@ -77,8 +74,7 @@ internal class RealZoomableCoordinateSystem(
     if (this.isUnspecified) {
       // todo: verify that this is okay.
       // todo: add tests for this
-      // Compose UI does not have a concept of an unspecified rect so this uses a non-zero, but empty rect.
-      return Rect.NonZeroButEmpty
+      return Rect.Unspecified
     }
 
     val topLeftInTarget = this.topLeft.offsetIn(target)
@@ -88,13 +84,7 @@ internal class RealZoomableCoordinateSystem(
       Rect(topLeftInTarget, bottomRightInTarget)
     } else {
       // todo: add tests for this?
-      Rect.NonZeroButEmpty
-    }
-  }
-
-  override fun SpatialRect.sizeIn(target: CoordinateSpace): Size {
-    return rectIn(target).let {
-      if (it == Rect.NonZeroButEmpty) Size.Unspecified else it.size
+      Rect.Unspecified
     }
   }
 
@@ -168,5 +158,8 @@ internal data object ContentCoordinateSpace : CoordinateSpace
 
 internal data object ViewportCoordinateSpace : CoordinateSpace
 
-private val Rect.Companion.NonZeroButEmpty: Rect
-  get() = Rect(-1f, -1f, -1f, -1f)
+// Compose UI does not have a concept of an unspecified rect, so I'm using Float.NaNs.
+// Unlike the official Compose UI components, telephoto can't use Rect.Zero as a placeholder
+// because 0,0 on the viewport can map to a non-zero position on the zoomable content.
+private val Rect.Companion.Unspecified: Rect
+  get() = Rect(Float.NaN, Float.NaN, Float.NaN, Float.NaN)

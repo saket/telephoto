@@ -36,5 +36,7 @@ interface CoordinateSystem {
    * @return the resolved size, or [Size.Unspecified] if the spatial rect is unspecified
    *         or if the `target` coordinate space has not yet been measured.
    */
-  fun SpatialRect.sizeIn(target: CoordinateSpace): Size
+  fun SpatialRect.sizeIn(target: CoordinateSpace): Size {
+    return rectIn(target).size
+  }
 }
