@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import coil.request.ImageRequest
 import com.slack.circuit.runtime.Navigator
 import kotlinx.coroutines.delay
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismiss
 import me.saket.telephoto.flick.FlickToDismissState
 import me.saket.telephoto.flick.rememberFlickToDismissState
@@ -114,6 +115,7 @@ private fun titleBarIconButtonColors() = IconButtonDefaults.iconButtonColors(
 )
 
 @Composable
+@OptIn(ExperimentalTelephotoApi::class)
 private fun MediaPage(
   model: MediaItem,
   isActivePage: Boolean,

@@ -14,12 +14,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import kotlinx.coroutines.launch
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
 
 /**
  * A layout composable that can be flick dismissed using vertical swipe gestures.
  */
 @Composable
+@ExperimentalTelephotoApi
 fun FlickToDismiss(
   state: FlickToDismissState,
   modifier: Modifier = Modifier,

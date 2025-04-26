@@ -10,6 +10,7 @@ kotlin {
     commonMain {
       dependencies {
         api(compose.foundation)
+        api(projects.annotations)
         implementation(compose.uiUtil)
       }
     }
