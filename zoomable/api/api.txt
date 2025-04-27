@@ -1,11 +1,4 @@
 // Signature format: 4.0
-package me.saket.telephoto {
-
-  @kotlin.RequiresOptIn(message="This telephoto API is experimental and can receive breaking changes in the future.", level=kotlin.RequiresOptIn.Level.ERROR) @kotlin.annotation.Retention(kotlin.annotation.AnnotationRetention.BINARY) public @interface ExperimentalTelephotoApi {
-  }
-
-}
-
 package me.saket.telephoto.zoomable {
 
   @androidx.compose.runtime.Immutable public fun interface DoubleClickToZoomListener {
@@ -278,7 +271,7 @@ package me.saket.telephoto.zoomable.spatial {
   @me.saket.telephoto.ExperimentalTelephotoApi public interface CoordinateSystem {
     method public long offsetIn(me.saket.telephoto.zoomable.spatial.SpatialOffset, me.saket.telephoto.zoomable.spatial.CoordinateSpace target);
     method public androidx.compose.ui.geometry.Rect rectIn(me.saket.telephoto.zoomable.spatial.SpatialRect, me.saket.telephoto.zoomable.spatial.CoordinateSpace target);
-    method public long sizeIn(me.saket.telephoto.zoomable.spatial.SpatialRect, me.saket.telephoto.zoomable.spatial.CoordinateSpace target);
+    method public default long sizeIn(me.saket.telephoto.zoomable.spatial.SpatialRect, me.saket.telephoto.zoomable.spatial.CoordinateSpace target);
   }
 
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko @me.saket.telephoto.ExperimentalTelephotoApi public final class SpatialOffset {
