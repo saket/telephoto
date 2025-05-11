@@ -11,7 +11,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.layout.ScaleFactor
-import androidx.compose.ui.util.fastCoerceIn
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.RealZoomableState
 import me.saket.telephoto.zoomable.Viewport
@@ -131,8 +130,8 @@ internal class RealZoomableCoordinateSystem(
       return when {
         source == target -> {
           when (target) {
-            CoordinateSpace.Viewport -> offset.offset.coerceIn(Offset.Zero, viewportSize)
-            CoordinateSpace.ZoomableContent -> offset.offset.coerceIn(Offset.Zero, unscaledContentBounds.size)
+            CoordinateSpace.Viewport -> offset.offset
+            CoordinateSpace.ZoomableContent -> offset.offset
             else -> error("unknown coordinate space = $target")
           }
         }
@@ -155,7 +154,7 @@ internal class RealZoomableCoordinateSystem(
       // 3. Shift by +unscaledContentBounds.topLeft (to get absolute coordinates)
       return (
         (offset - transformedContentBounds.topLeft) / scale + unscaledContentBounds.topLeft
-      ).coerceIn(Offset.Zero, unscaledContentBounds.size)
+        )
     }
 
     private fun contentToViewport(offset: Offset): Offset {
@@ -165,7 +164,7 @@ internal class RealZoomableCoordinateSystem(
       // 3. Shift by +transformedContentBounds.topLeft (to get absolute coordinates)
       return (
         (offset - unscaledContentBounds.topLeft) * scale + transformedContentBounds.topLeft
-      ).coerceIn(Offset.Zero, viewportSize)
+        )
     }
   }
 }
@@ -173,13 +172,3 @@ internal class RealZoomableCoordinateSystem(
 internal data object ContentCoordinateSpace : CoordinateSpace
 
 internal data object ViewportCoordinateSpace : CoordinateSpace
-
-private fun Offset.coerceIn(
-  minimumValue: Offset,
-  maximumValue: Size,
-): Offset {
-  return Offset(
-    x = this.x.fastCoerceIn(minimumValue.x, maximumValue.width),
-    y = this.y.fastCoerceIn(minimumValue.y, maximumValue.height),
-  )
-}

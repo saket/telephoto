@@ -1596,26 +1596,26 @@ class ZoomableImageTest {
             .drawWithContent {
               drawContent()
 
-              val aboveViewportOffset = SpatialOffset(
+              val viewportTopOffset = SpatialOffset(
                 Offset(rawContentSize.width / 2f, y = rawContentSize.height),
                 CoordinateSpace.ZoomableContent,
               )
               drawCircle(
                 color = Color.White,
                 center = with(state.zoomableState.coordinateSystem) {
-                  aboveViewportOffset.offsetIn(CoordinateSpace.Viewport)
+                  viewportTopOffset.offsetIn(CoordinateSpace.Viewport)
                 },
                 radius = 10.dp.toPx(),
               )
 
-              val belowImageOffset = SpatialOffset(
+              val imageBottomOffset = SpatialOffset(
                 Offset(rawContentSize.width / 2f, y = 0f),
                 CoordinateSpace.ZoomableContent,
               )
               drawCircle(
                 color = Color.White,
                 center = with(state.zoomableState.coordinateSystem) {
-                  belowImageOffset.offsetIn(CoordinateSpace.Viewport)
+                  imageBottomOffset.offsetIn(CoordinateSpace.Viewport)
                 },
                 radius = 10.dp.toPx(),
               )
@@ -1640,71 +1640,6 @@ class ZoomableImageTest {
     rule.onNodeWithTag("image").performTouchInput { swipeLeft() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[zoomed_and_panned]")
-    }
-  }
-
-  @Test fun spatial_offsets_are_always_coerced_within_bounds() {
-    lateinit var state: ZoomableImageState
-    val rawImageSize = Size(1000f, 605f)
-
-    rule.setContent {
-      state = rememberZoomableImageState()
-
-      ZoomableImage(
-        modifier = Modifier
-          .padding(40.dp)
-          .fillMaxWidth()
-          .testTag("image"),
-        image = ZoomableImageSource.asset("forest_fox_1000.jpg", subSample = true),
-        contentDescription = null,
-        contentScale = ContentScale.Inside,
-        alignment = Alignment.Center,
-        state = state,
-      )
-    }
-
-    rule.waitUntil {
-      rule.onNodeWithTag("image").isImageDisplayed()
-    }
-
-    // Viewport offsets.
-    with(state.zoomableState.coordinateSystem) {
-      val outOfBoundsTopLeft = SpatialOffset(
-        offset = Offset(-40f, -60f),
-        space = CoordinateSpace.Viewport,
-      )
-      val outOfBoundsBottomRight = SpatialOffset(
-        offset = viewportSize.asOffset() + Offset(20f, 30f),
-        space = CoordinateSpace.Viewport,
-      )
-
-      // Scenario: same source and destination coordinate spaces.
-      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.Viewport)).isEqualTo(Offset.Zero)
-      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.Viewport)).isEqualTo(viewportSize.asOffset())
-
-      // Scenario: different source and destination coordinate spaces.
-      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(Offset.Zero)
-      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(rawImageSize.asOffset())
-    }
-
-    // Zoomable content offsets.
-    with(state.zoomableState.coordinateSystem) {
-      val outOfBoundsTopLeft = SpatialOffset(
-        offset = Offset(-35f, -90f),
-        space = CoordinateSpace.ZoomableContent,
-      )
-      val outOfBoundsBottomRight = SpatialOffset(
-        offset = rawImageSize.asOffset() + Offset(50f, 15f),
-        space = CoordinateSpace.ZoomableContent,
-      )
-
-      // Scenario: same source and destination coordinate spaces.
-      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(Offset.Zero)
-      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.ZoomableContent)).isEqualTo(rawImageSize.asOffset())
-
-      // Scenario: different source and destination coordinate spaces.
-      assertThat(outOfBoundsTopLeft.offsetIn(CoordinateSpace.Viewport)).isEqualTo(Offset.Zero)
-      assertThat(outOfBoundsBottomRight.offsetIn(CoordinateSpace.Viewport)).isEqualTo(viewportSize.asOffset())
     }
   }
 
