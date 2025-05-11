@@ -303,17 +303,19 @@ class ZoomableTest {
     // hydrated with enough information by the modifier node that it can display the content.
     with(secondZoomableState.contentTransformation) {
       assertThat(isSpecified).isTrue()
+      @Suppress("DEPRECATION")
+      assertThat(contentSize).isEqualTo(firstZoomableState.contentTransformation.contentSize)
 
       val firstContentSize = with(firstZoomableState.coordinateSystem) {
-        unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+        unscaledContentBounds.sizeIn(CoordinateSpace.Viewport)
       }
       val secondContentSize = with(secondZoomableState.coordinateSystem) {
-        unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
+        unscaledContentBounds.sizeIn(CoordinateSpace.Viewport)
       }
       assertThat(secondContentSize).isEqualTo(firstContentSize)
     }
 
-    // Zoom gestures should work with the new state.
+    // Zoom gestures should update the new state object.
     content.performTouchInput {
       doubleClick()
     }
@@ -631,7 +633,7 @@ class ZoomableTest {
     }
   }
 
-  @Test fun resolved_spatial_offsets_resolve_to_unspecified_offsets() {
+  @Test fun resolve_unresolved_spatial_values() {
     lateinit var state: ZoomableState
     rule.setContent {
       state = rememberZoomableState()
@@ -658,8 +660,8 @@ class ZoomableTest {
       ).isEqualTo(Offset.Unspecified)
 
       assertThat(
-        SpatialRect.Unspecified.rectIn(CoordinateSpace.ZoomableContent).size
-      ).isEqualTo(Size.Unspecified)
+        SpatialRect.Unspecified.rectIn(CoordinateSpace.ZoomableContent)
+      ).isEqualTo(Rect.Zero)
     }
   }
 }
