@@ -110,4 +110,13 @@ class OverzoomEffect internal constructor(
      */
     val Disabled: OverzoomEffect = OverzoomEffect(3)
   }
+
+  override fun toString(): String {
+    return when (value) {
+      1 -> "OverzoomEffect.RubberBanding"
+      2 -> "OverzoomEffect.NoLimits"
+      3 -> "OverzoomEffect.Disabled"
+      else -> super.toString()
+    }
+  }
 }
