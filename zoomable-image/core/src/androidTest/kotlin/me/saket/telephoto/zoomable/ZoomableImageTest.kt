@@ -98,6 +98,7 @@ import assertk.assertions.isCloseTo
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThan
 import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
@@ -2147,6 +2148,33 @@ class ZoomableImageTest {
     }
     assertThat(contentBoundsBefore).isEqualTo(contentBoundsAfter)
   }
+
+  // Regression test: large images get cropped if the placeholder Image uses ContentScale.None.
+  @Test fun placeholder_image_larger_than_viewport() {
+    lateinit var state: ZoomableImageState
+
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image")
+          .border(1.dp, Color.White),
+        image = ZoomableImageSource.placeholderOnly(assetPainter("fox_1500.jpg")),
+        contentDescription = null,
+        state = rememberZoomableImageState().also { state = it },
+      )
+    }
+
+    rule.waitUntil { state.isPlaceholderDisplayed }
+    rule.waitForIdle()
+
+    with(state.zoomableState.coordinateSystem) {
+      val imageSize = unscaledContentBounds.sizeIn(CoordinateSpace.Viewport)
+      assertThat(imageSize.maxDimension).isGreaterThan(viewportSize.maxDimension)
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
+    }
   }
 
   private class PainterStub(private val initialSize: Size) : Painter() {
