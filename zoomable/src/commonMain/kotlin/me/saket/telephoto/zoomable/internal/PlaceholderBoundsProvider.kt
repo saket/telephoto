@@ -22,8 +22,8 @@ internal value class PlaceholderBoundsProvider(
   @Stable
   fun calculate(): Rect? {
     return with(placeholderState.coordinateSystem) {
-      val contentBounds = contentBounds.takeIf { it.isSpecified } ?: return null
-      contentBounds.rectIn(CoordinateSpace.Viewport)
+      val bounds = unscaledContentBounds.takeIf { it.isSpecified } ?: return null
+      bounds.rectIn(CoordinateSpace.Viewport)
     }
   }
 }

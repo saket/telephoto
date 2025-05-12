@@ -89,19 +89,16 @@ internal class RealZoomableCoordinateSystem(
     return CoordinateSpaceConverter(
       unscaledContentBounds = stateInputs.unscaledContentBounds,
       transformation = transformation,
-      viewportSize = stateInputs.viewportSize,
     )
   }
 
   private fun converterWithPlaceholderBounds(): CoordinateSpaceConverter? {
     // Note to self: the placeholder bounds are always unscaled
     // because placeholders can't be zoomed (at least not yet).
-    val stateInputs = state.currentGestureStateInputs ?: return null
     return state.placeholderBoundsProvider?.calculate()?.let { placeholderBounds ->
       CoordinateSpaceConverter(
         unscaledContentBounds = placeholderBounds,
         transformation = RealZoomableContentTransformation.Unspecified,
-        viewportSize = stateInputs.viewportSize,
       )
     }
   }
@@ -109,7 +106,6 @@ internal class RealZoomableCoordinateSystem(
   internal data class CoordinateSpaceConverter(
     private val unscaledContentBounds: Rect,
     private val transformation: ZoomableContentTransformation,
-    private val viewportSize: Size,
   ) {
     private val scale: ScaleFactor
       get() = transformation.scale

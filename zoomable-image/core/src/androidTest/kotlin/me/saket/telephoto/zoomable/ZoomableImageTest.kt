@@ -2115,7 +2115,9 @@ class ZoomableImageTest {
   }
 
   // Regression test.
-  @Test fun placeholder_should_not_be_zoomable_when_content_padding_is_used() {
+  @Test fun placeholder_should_not_be_zoomable_when_content_padding_is_used(
+    @TestParameter placeholderParam: PlaceholderImageParam
+  ) {
     lateinit var state: ZoomableImageState
     rule.setContent {
       ZoomableImage(
@@ -2123,19 +2125,28 @@ class ZoomableImageTest {
           .fillMaxSize()
           .testTag("image")
           .border(1.dp, Color.White),
-        image = ZoomableImageSource.placeholderOnly(assetPainter("fox_250.jpg")),
+        image = ZoomableImageSource.placeholderOnly(placeholderParam.painter()),
         contentDescription = null,
         state = rememberZoomableImageState().also { state = it },
         contentPadding = PaddingValues(40.dp),
       )
     }
-
     rule.waitUntil { state.isPlaceholderDisplayed }
+
+    val contentBoundsBefore = with(state.zoomableState.coordinateSystem) {
+      contentBounds.rectIn(CoordinateSpace.Viewport)
+    }
 
     rule.onNodeWithTag("image").performTouchInput { doubleClick() }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
+
+    val contentBoundsAfter = with(state.zoomableState.coordinateSystem) {
+      contentBounds.rectIn(CoordinateSpace.Viewport)
+    }
+    assertThat(contentBoundsBefore).isEqualTo(contentBoundsAfter)
+  }
   }
 
   private class PainterStub(private val initialSize: Size) : Painter() {

@@ -42,6 +42,7 @@ import me.saket.telephoto.subsamplingimage.contentDescription
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.internal.FocusForwarder
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
+import me.saket.telephoto.zoomable.internal.applyBaseTransformation
 import me.saket.telephoto.zoomable.internal.focusForwarder
 import me.saket.telephoto.zoomable.internal.receiveFocusFrom
 
@@ -145,6 +146,10 @@ fun ZoomableImage(
       val placeholderZoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 1f, overzoomEffect = OverzoomEffect.Disabled),
         hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
+        // Handle gestures, but ignore their transformations. This will prevent
+        // FlickToDismiss() (and other gesture containers) from accidentally dismissing
+        // this image when a quick-zoom gesture is made before the image is fully loaded.
+        autoApplyTransformations = false,
       ).also {
         it.contentScale = contentScale
         it.contentAlignment = alignment
@@ -166,7 +171,8 @@ fun ZoomableImage(
             onLongClick = onLongClick,
             onDoubleClick = onDoubleClick,
             clipToBounds = clipToBounds,
-          ),
+          )
+          .applyBaseTransformation(placeholderZoomableState),
         painter = painter,
         contentDescription = null,
         alignment = Alignment.Center,
