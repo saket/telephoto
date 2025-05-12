@@ -50,7 +50,6 @@ import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
 import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
-import me.saket.telephoto.zoomable.internal.ResolvedPaddingValues
 import me.saket.telephoto.zoomable.internal.TransformScope
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
@@ -140,12 +139,6 @@ internal class RealZoomableState internal constructor(
    */
   internal var viewportSize: Size by mutableStateOf(Size.Unspecified)
 
-  internal val resolvedContentPadding: ResolvedPaddingValues? by derivedStateOf {
-    density?.let { density ->
-      contentPadding.resolve(density, layoutDirection)
-    }
-  }
-
   private var gestureState: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
       savedState?.asGestureState(
@@ -164,7 +157,9 @@ internal class RealZoomableState internal constructor(
 
   private val gestureStateInputsCalculator: GestureStateInputsCalculator by derivedStateOf {
     GestureStateInputsCalculator { viewportSize ->
-      val contentPadding = this.resolvedContentPadding
+      val contentPadding = density?.let { density ->
+        this.contentPadding.resolve(density, layoutDirection)
+      }
       if (
         viewportSize.isUnspecifiedOrEmpty ||
         unscaledContentLocation == ZoomableContentLocation.Unspecified ||
