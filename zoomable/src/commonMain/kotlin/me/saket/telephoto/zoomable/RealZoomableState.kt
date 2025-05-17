@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
+import me.saket.telephoto.zoomable.internal.SavedGestureState
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
@@ -53,7 +54,7 @@ import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
 import me.saket.telephoto.zoomable.internal.TransformScope
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
-import me.saket.telephoto.zoomable.internal.ZoomableSavedState
+import me.saket.telephoto.zoomable.internal.SavedZoomableState
 import me.saket.telephoto.zoomable.internal.aspectRatio
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.coerceIn
@@ -83,8 +84,7 @@ import kotlin.math.abs
 @Stable
 @OptIn(ExperimentalTelephotoApi::class)
 internal class RealZoomableState internal constructor(
-  savedState: ZoomableSavedState?,
-  autoApplyTransformations: Boolean,
+  savedState: SavedZoomableState,
 ) : ZoomableState {
 
   override val contentTransformation: ZoomableContentTransformation by derivedStateOf {
@@ -116,7 +116,7 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  override var autoApplyTransformations: Boolean by mutableStateOf(autoApplyTransformations)
+  override var autoApplyTransformations: Boolean by mutableStateOf(savedState.autoApplyTransformations)
   override var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
   override var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
   override var contentPadding: PaddingValues by mutableStateOf(PaddingValues(0.dp))
@@ -139,9 +139,9 @@ internal class RealZoomableState internal constructor(
    */
   internal var viewportSize: Size by mutableStateOf(Size.Unspecified)
 
-  private var gestureState: GestureStateCalculator by mutableStateOf(
+  internal var gestureState: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
-      savedState?.asGestureState(
+      savedState.gestureState?.restore(
         inputs = inputs,
         coerceOffsetWithinBounds = { contentOffset, contentZoom ->
           contentOffset.coerceWithinContentBounds(contentZoom, inputs)
@@ -717,30 +717,12 @@ internal class RealZoomableState internal constructor(
   companion object {
     internal val Saver = Saver(
       save = { state ->
-        state.currentGestureStateInputs?.let { inputs ->
-          val gestureState = state.gestureState.calculate(inputs).let { gestureState ->
-            // Touch events are canceled on state restoration.
-            // If the content is over-zoomed, snap back to its zoom limits.
-            gestureState.copy(
-              userZoom = AbsoluteZoomFactor(inputs.baseZoom, gestureState.userZoom)
-                .coerceUserZoomIn(state.zoomSpec.range)
-                .userZoom
-            )
-          }
-          ZoomableSavedState.from(
-            gestureState = gestureState,
-            gestureStateInputs = inputs,
-            coordinateSystem = state.coordinateSystem,
-            autoApplyTransformations = state.autoApplyTransformations,
-          )
-        }
-      },
-      restore = { savedState: ZoomableSavedState ->
-        RealZoomableState(
-          savedState = savedState,
-          autoApplyTransformations = savedState.autoApplyTransformations,
+        SavedZoomableState(
+          gestureState = SavedGestureState.from(state),
+          autoApplyTransformations = state.autoApplyTransformations,
         )
       },
+      restore = ::RealZoomableState,
     )
   }
 }
@@ -766,7 +748,7 @@ internal data class GestureStateInputs(
 )
 
 @Immutable
-private fun interface GestureStateCalculator {
+internal fun interface GestureStateCalculator {
   fun calculate(inputs: GestureStateInputs): GestureState
 }
 

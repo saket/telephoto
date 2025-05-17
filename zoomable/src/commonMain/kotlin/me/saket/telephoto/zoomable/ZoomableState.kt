@@ -19,6 +19,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.internal.SavedZoomableState
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import kotlin.jvm.JvmName
@@ -41,8 +42,9 @@ fun rememberZoomableState(
 ): ZoomableState {
   return rememberSaveable(saver = RealZoomableState.Saver) {
     RealZoomableState(
-      savedState = null,
-      autoApplyTransformations = autoApplyTransformations,
+      savedState = SavedZoomableState(
+        autoApplyTransformations = autoApplyTransformations,
+      )
     )
   }.also {
     it.zoomSpec = zoomSpec

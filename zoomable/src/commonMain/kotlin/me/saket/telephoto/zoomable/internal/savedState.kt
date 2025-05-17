@@ -12,28 +12,33 @@ import androidx.compose.ui.util.unpackFloat2
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.AbsoluteOffset
 import me.saket.telephoto.zoomable.AbsoluteZoomFactor
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
-import me.saket.telephoto.zoomable.spatial.CoordinateSystem
 import me.saket.telephoto.zoomable.GestureState
 import me.saket.telephoto.zoomable.GestureStateInputs
-import me.saket.telephoto.zoomable.spatial.SpatialOffset
+import me.saket.telephoto.zoomable.RealZoomableState
 import me.saket.telephoto.zoomable.UserOffset
 import me.saket.telephoto.zoomable.UserZoomFactor
 import me.saket.telephoto.zoomable.Viewport
 import me.saket.telephoto.zoomable.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.ZoomableContent
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
+import me.saket.telephoto.zoomable.spatial.SpatialOffset
 
 @AndroidParcelize
-internal data class ZoomableSavedState private constructor(
+internal data class SavedZoomableState(
+  val autoApplyTransformations: Boolean,
+  val gestureState: SavedGestureState? = null,
+) : AndroidParcelable
+
+@AndroidParcelize
+internal data class SavedGestureState(
   private val userOffset: Long,
   private val userZoom: Float,
   private val centroid: Long,
-  private val stateAdjusterInfo: StateRestorerInfo?,
-  val autoApplyTransformations: Boolean,
+  private val contentPositionInfo: ContentPositionInfo?,
 ) : AndroidParcelable {
 
   @AndroidParcelize
-  data class StateRestorerInfo(
+  data class ContentPositionInfo(
     val viewportSize: Long,
     val contentOffsetAtViewportCenter: Long,  // Present in the content's coordinate space.
     val finalZoomFactor: Long,
@@ -41,40 +46,47 @@ internal data class ZoomableSavedState private constructor(
 
   @OptIn(ExperimentalTelephotoApi::class)
   companion object {
-    fun from(
-      gestureState: GestureState,
-      gestureStateInputs: GestureStateInputs,
-      coordinateSystem: CoordinateSystem,
-      autoApplyTransformations: Boolean,
-    ) = ZoomableSavedState(
-      userOffset = gestureState.userOffset.value.packToLong(),
-      userZoom = gestureState.userZoom.value,
-      centroid = gestureState.lastCentroid.packToLong(),
-      stateAdjusterInfo = gestureStateInputs.viewportSize.let { viewportSize ->
-        if (viewportSize.isSpecifiedAndNonEmpty) {
-          StateRestorerInfo(
-            viewportSize = viewportSize.packToLong(),
-            contentOffsetAtViewportCenter = with(coordinateSystem) {
-              val viewportCenter = SpatialOffset(
-                offset = viewportSize.center,
-                space = CoordinateSpace.Viewport,
-              )
-              viewportCenter.offsetIn(CoordinateSpace.ZoomableContent)
-            }.packToLong(),
-            finalZoomFactor = AbsoluteZoomFactor(
-              baseZoom = gestureStateInputs.baseZoom,
-              userZoom = gestureState.userZoom,
-            ).finalZoom().packToLong(),
-          )
-        } else {
-          null
-        }
-      },
-      autoApplyTransformations = autoApplyTransformations,
-    )
+    fun from(state: RealZoomableState): SavedGestureState? {
+      val inputs = state.currentGestureStateInputs ?: return null
+      val gestureState = state.gestureState.calculate(inputs).let { gestureState ->
+        // Touch events are canceled on state restoration.
+        // If the content is over-zoomed, snap back to its zoom limits.
+        gestureState.copy(
+          userZoom = AbsoluteZoomFactor(inputs.baseZoom, gestureState.userZoom)
+            .coerceUserZoomIn(state.zoomSpec.range)
+            .userZoom
+        )
+      }
+
+      return SavedGestureState(
+        userOffset = gestureState.userOffset.value.packToLong(),
+        userZoom = gestureState.userZoom.value,
+        centroid = gestureState.lastCentroid.packToLong(),
+        contentPositionInfo = inputs.viewportSize.let { viewportSize ->
+          if (viewportSize.isSpecifiedAndNonEmpty) {
+            ContentPositionInfo(
+              viewportSize = viewportSize.packToLong(),
+              contentOffsetAtViewportCenter = with(state.coordinateSystem) {
+                val viewportCenter = SpatialOffset(
+                  offset = viewportSize.center,
+                  space = CoordinateSpace.Viewport,
+                )
+                viewportCenter.offsetIn(CoordinateSpace.ZoomableContent)
+              }.packToLong(),
+              finalZoomFactor = AbsoluteZoomFactor(
+                baseZoom = inputs.baseZoom,
+                userZoom = gestureState.userZoom,
+              ).finalZoom().packToLong(),
+            )
+          } else {
+            null
+          }
+        },
+      )
+    }
   }
 
-  fun asGestureState(
+  fun restore(
     inputs: GestureStateInputs,
     coerceOffsetWithinBounds: (AbsoluteOffset, AbsoluteZoomFactor) -> AbsoluteOffset,
   ): GestureState {
@@ -82,7 +94,7 @@ internal data class ZoomableSavedState private constructor(
     val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
     if (
       wasGestureStateEmpty
-      || (stateAdjusterInfo == null || stateAdjusterInfo.viewportSize.unpackAsSize() == inputs.viewportSize)
+      || (contentPositionInfo == null || contentPositionInfo.viewportSize.unpackAsSize() == inputs.viewportSize)
     ) {
       return GestureState(
         userOffset = UserOffset(restoredUserOffset),
@@ -96,8 +108,8 @@ internal data class ZoomableSavedState private constructor(
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
     // to maintain the anchor's position in the new viewport.
     val stateAdjuster = GestureStateAdjuster(
-      oldFinalZoom = stateAdjusterInfo.finalZoomFactor.unpackAsScaleFactor(),
-      oldContentOffsetAtViewportCenter = stateAdjusterInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
+      oldFinalZoom = contentPositionInfo.finalZoomFactor.unpackAsScaleFactor(),
+      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
     )
     return stateAdjuster.adjustForNewViewportSize(
       inputs = inputs,
