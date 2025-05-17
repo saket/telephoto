@@ -6,11 +6,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.layout.ScaleFactor
-import dev.icerock.moko.parcelize.Parcel
+import androidx.compose.ui.util.packFloats
+import androidx.compose.ui.util.unpackFloat1
+import androidx.compose.ui.util.unpackFloat2
 import dev.icerock.moko.parcelize.Parcelable
-import dev.icerock.moko.parcelize.Parceler
 import dev.icerock.moko.parcelize.Parcelize
-import dev.icerock.moko.parcelize.TypeParceler
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.AbsoluteOffset
 import me.saket.telephoto.zoomable.AbsoluteZoomFactor
@@ -32,22 +32,18 @@ internal data class SavedZoomableState(
 ) : Parcelable
 
 @Parcelize
-@TypeParceler<Offset, OffsetParceler>
 internal data class SavedGestureState(
-  private val userOffset: Offset,
+  private val userOffset: Long,
   private val userZoom: Float,
-  private val centroid: Offset,
+  private val centroid: Long,
   private val contentPositionInfo: ContentPositionInfo?,
 ) : Parcelable {
 
   @Parcelize
-  @TypeParceler<Size, SizeParceler>
-  @TypeParceler<Offset, OffsetParceler>
-  @TypeParceler<ScaleFactor, ScaleFactorParceler>
   data class ContentPositionInfo(
-    val viewportSize: Size,
-    val contentOffsetAtViewportCenter: Offset,  // Present in the content's coordinate space.
-    val finalZoomFactor: ScaleFactor,
+    val viewportSize: Long,
+    val contentOffsetAtViewportCenter: Long,  // Present in the content's coordinate space.
+    val finalZoomFactor: Long,
   ) : Parcelable
 
   @OptIn(ExperimentalTelephotoApi::class)
@@ -65,24 +61,24 @@ internal data class SavedGestureState(
       }
 
       return SavedGestureState(
-        userOffset = gestureState.userOffset.value,
+        userOffset = gestureState.userOffset.value.packToLong(),
         userZoom = gestureState.userZoom.value,
-        centroid = gestureState.lastCentroid,
+        centroid = gestureState.lastCentroid.packToLong(),
         contentPositionInfo = inputs.viewportSize.let { viewportSize ->
           if (viewportSize.isSpecifiedAndNonEmpty) {
             ContentPositionInfo(
-              viewportSize = viewportSize,
+              viewportSize = viewportSize.packToLong(),
               contentOffsetAtViewportCenter = with(state.coordinateSystem) {
                 val viewportCenter = SpatialOffset(
                   offset = viewportSize.center,
                   space = CoordinateSpace.Viewport,
                 )
                 viewportCenter.offsetIn(CoordinateSpace.ZoomableContent)
-              },
+              }.packToLong(),
               finalZoomFactor = AbsoluteZoomFactor(
                 baseZoom = inputs.baseZoom,
                 userZoom = gestureState.userZoom,
-              ).finalZoom(),
+              ).finalZoom().packToLong(),
             )
           } else {
             null
@@ -96,15 +92,16 @@ internal data class SavedGestureState(
     inputs: GestureStateInputs,
     coerceOffsetWithinBounds: (AbsoluteOffset, AbsoluteZoomFactor) -> AbsoluteOffset,
   ): GestureState {
-    val wasGestureStateEmpty = userOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
+    val restoredUserOffset = userOffset.unpackAsOffset()
+    val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
     if (
       wasGestureStateEmpty
-      || (contentPositionInfo == null || contentPositionInfo.viewportSize == inputs.viewportSize)
+      || (contentPositionInfo == null || contentPositionInfo.viewportSize.unpackAsSize() == inputs.viewportSize)
     ) {
       return GestureState(
-        userOffset = UserOffset(userOffset),
+        userOffset = UserOffset(restoredUserOffset),
         userZoom = UserZoomFactor(userZoom),
-        lastCentroid = centroid,
+        lastCentroid = centroid.unpackAsOffset(),
       )
     }
 
@@ -113,8 +110,8 @@ internal data class SavedGestureState(
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
     // to maintain the anchor's position in the new viewport.
     val stateAdjuster = GestureStateAdjuster(
-      oldFinalZoom = contentPositionInfo.finalZoomFactor,
-      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter,
+      oldFinalZoom = contentPositionInfo.finalZoomFactor.unpackAsScaleFactor(),
+      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
     )
     return stateAdjuster.adjustForNewViewportSize(
       inputs = inputs,
@@ -123,32 +120,20 @@ internal data class SavedGestureState(
   }
 }
 
-private object OffsetParceler : Parceler<Offset> {
-  override fun create(parcel: Parcel) =
-    Offset(x = parcel.readFloat(), y = parcel.readFloat())
+private fun Offset.packToLong(): Long =
+  packFloats(x, y)
 
-  override fun Offset.write(parcel: Parcel, flags: Int) {
-    parcel.writeFloat(x)
-    parcel.writeFloat(y)
-  }
-}
+private fun Size.packToLong(): Long =
+  packFloats(width, height)
 
-private object SizeParceler : Parceler<Size> {
-  override fun create(parcel: Parcel) =
-    Size(width = parcel.readFloat(), height = parcel.readFloat())
+private fun ScaleFactor.packToLong(): Long =
+  packFloats(scaleX, scaleY)
 
-  override fun Size.write(parcel: Parcel, flags: Int) {
-    parcel.writeFloat(width)
-    parcel.writeFloat(height)
-  }
-}
+private fun Long.unpackAsOffset(): Offset =
+  Offset(x = unpackFloat1(this), y = unpackFloat2(this))
 
-private object ScaleFactorParceler : Parceler<ScaleFactor> {
-  override fun create(parcel: Parcel) =
-    ScaleFactor(scaleX = parcel.readFloat(), scaleY = parcel.readFloat())
+private fun Long.unpackAsSize(): Size =
+  Size(width = unpackFloat1(this), height = unpackFloat2(this))
 
-  override fun ScaleFactor.write(parcel: Parcel, flags: Int) {
-    parcel.writeFloat(scaleX)
-    parcel.writeFloat(scaleY)
-  }
-}
+private fun Long.unpackAsScaleFactor(): ScaleFactor =
+  ScaleFactor(scaleX = unpackFloat1(this), scaleY = unpackFloat2(this))
