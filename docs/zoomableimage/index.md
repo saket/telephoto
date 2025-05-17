@@ -16,6 +16,7 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 - Click listeners
 - [Keyboard and mouse shortcuts](#keyboard-shortcuts)
 - State preservation across config changes (including screen rotations)
+- HDR images
 
 ### Installation
 
