@@ -41,6 +41,7 @@ fun rememberZoomableState(
 ): ZoomableState {
   return rememberSaveable(saver = RealZoomableState.Saver) {
     RealZoomableState(
+      savedState = null,
       autoApplyTransformations = autoApplyTransformations,
     )
   }.also {

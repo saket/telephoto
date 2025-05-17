@@ -83,8 +83,8 @@ import kotlin.math.abs
 @Stable
 @OptIn(ExperimentalTelephotoApi::class)
 internal class RealZoomableState internal constructor(
-  savedState: ZoomableSavedState? = null,
-  autoApplyTransformations: Boolean = true,
+  savedState: ZoomableSavedState?,
+  autoApplyTransformations: Boolean,
 ) : ZoomableState {
 
   override val contentTransformation: ZoomableContentTransformation by derivedStateOf {
@@ -731,10 +731,16 @@ internal class RealZoomableState internal constructor(
             gestureState = gestureState,
             gestureStateInputs = inputs,
             coordinateSystem = state.coordinateSystem,
+            autoApplyTransformations = state.autoApplyTransformations,
           )
         }
       },
-      restore = ::RealZoomableState,
+      restore = { savedState: ZoomableSavedState ->
+        RealZoomableState(
+          savedState = savedState,
+          autoApplyTransformations = savedState.autoApplyTransformations,
+        )
+      },
     )
   }
 }

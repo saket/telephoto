@@ -29,6 +29,7 @@ internal data class ZoomableSavedState private constructor(
   private val userZoom: Float,
   private val centroid: Long,
   private val stateAdjusterInfo: StateRestorerInfo?,
+  val autoApplyTransformations: Boolean,
 ) : AndroidParcelable {
 
   @AndroidParcelize
@@ -44,6 +45,7 @@ internal data class ZoomableSavedState private constructor(
       gestureState: GestureState,
       gestureStateInputs: GestureStateInputs,
       coordinateSystem: CoordinateSystem,
+      autoApplyTransformations: Boolean,
     ) = ZoomableSavedState(
       userOffset = gestureState.userOffset.value.packToLong(),
       userZoom = gestureState.userZoom.value,
@@ -68,6 +70,7 @@ internal data class ZoomableSavedState private constructor(
           null
         }
       },
+      autoApplyTransformations = autoApplyTransformations,
     )
   }
 

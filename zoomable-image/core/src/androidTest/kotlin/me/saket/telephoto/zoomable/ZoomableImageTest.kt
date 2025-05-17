@@ -258,7 +258,10 @@ class ZoomableImageTest {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_before_state_restoration")
     }
 
+    // Before saving state, enable the placeholder so that it is
+    // displayed upon state restoration before loading the full image.
     isPlaceholderVisible.value = placeholderParam.canBeUsed
+
     stateRestorationTester.emulateSavedInstanceStateRestore()
 
     if (placeholderParam.canBeUsed) {
