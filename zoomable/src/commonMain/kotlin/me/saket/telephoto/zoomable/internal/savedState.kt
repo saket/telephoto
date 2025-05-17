@@ -6,11 +6,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.layout.ScaleFactor
-import androidx.compose.ui.util.packFloats
-import androidx.compose.ui.util.unpackFloat1
-import androidx.compose.ui.util.unpackFloat2
+import dev.icerock.moko.parcelize.Parcel
 import dev.icerock.moko.parcelize.Parcelable
+import dev.icerock.moko.parcelize.Parceler
 import dev.icerock.moko.parcelize.Parcelize
+import dev.icerock.moko.parcelize.TypeParceler
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.AbsoluteOffset
 import me.saket.telephoto.zoomable.AbsoluteZoomFactor
@@ -32,18 +32,22 @@ internal data class SavedZoomableState(
 ) : Parcelable
 
 @Parcelize
+@TypeParceler<Offset, OffsetParceler>
 internal data class SavedGestureState(
-  private val userOffset: Long,
+  private val userOffset: Offset,
   private val userZoom: Float,
-  private val centroid: Long,
+  private val centroid: Offset,
   private val contentPositionInfo: ContentPositionInfo?,
 ) : Parcelable {
 
   @Parcelize
+  @TypeParceler<Size, SizeParceler>
+  @TypeParceler<Offset, OffsetParceler>
+  @TypeParceler<ScaleFactor, ScaleFactorParceler>
   data class ContentPositionInfo(
-    val viewportSize: Long,
-    val contentOffsetAtViewportCenter: Long,  // Present in the content's coordinate space.
-    val finalZoomFactor: Long,
+    val viewportSize: Size,
+    val contentOffsetAtViewportCenter: Offset,  // Present in the content's coordinate space.
+    val finalZoomFactor: ScaleFactor,
   ) : Parcelable
 
   @OptIn(ExperimentalTelephotoApi::class)
@@ -61,24 +65,24 @@ internal data class SavedGestureState(
       }
 
       return SavedGestureState(
-        userOffset = gestureState.userOffset.value.packToLong(),
+        userOffset = gestureState.userOffset.value,
         userZoom = gestureState.userZoom.value,
-        centroid = gestureState.lastCentroid.packToLong(),
+        centroid = gestureState.lastCentroid,
         contentPositionInfo = inputs.viewportSize.let { viewportSize ->
           if (viewportSize.isSpecifiedAndNonEmpty) {
             ContentPositionInfo(
-              viewportSize = viewportSize.packToLong(),
+              viewportSize = viewportSize,
               contentOffsetAtViewportCenter = with(state.coordinateSystem) {
                 val viewportCenter = SpatialOffset(
                   offset = viewportSize.center,
                   space = CoordinateSpace.Viewport,
                 )
                 viewportCenter.offsetIn(CoordinateSpace.ZoomableContent)
-              }.packToLong(),
+              },
               finalZoomFactor = AbsoluteZoomFactor(
                 baseZoom = inputs.baseZoom,
                 userZoom = gestureState.userZoom,
-              ).finalZoom().packToLong(),
+              ).finalZoom(),
             )
           } else {
             null
@@ -92,16 +96,15 @@ internal data class SavedGestureState(
     inputs: GestureStateInputs,
     coerceOffsetWithinBounds: (AbsoluteOffset, AbsoluteZoomFactor) -> AbsoluteOffset,
   ): GestureState {
-    val restoredUserOffset = userOffset.unpackAsOffset()
-    val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
+    val wasGestureStateEmpty = userOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
     if (
       wasGestureStateEmpty
-      || (contentPositionInfo == null || contentPositionInfo.viewportSize.unpackAsSize() == inputs.viewportSize)
+      || (contentPositionInfo == null || contentPositionInfo.viewportSize == inputs.viewportSize)
     ) {
       return GestureState(
-        userOffset = UserOffset(restoredUserOffset),
+        userOffset = UserOffset(userOffset),
         userZoom = UserZoomFactor(userZoom),
-        lastCentroid = centroid.unpackAsOffset(),
+        lastCentroid = centroid,
       )
     }
 
@@ -110,8 +113,8 @@ internal data class SavedGestureState(
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
     // to maintain the anchor's position in the new viewport.
     val stateAdjuster = GestureStateAdjuster(
-      oldFinalZoom = contentPositionInfo.finalZoomFactor.unpackAsScaleFactor(),
-      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
+      oldFinalZoom = contentPositionInfo.finalZoomFactor,
+      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter,
     )
     return stateAdjuster.adjustForNewViewportSize(
       inputs = inputs,
@@ -120,20 +123,32 @@ internal data class SavedGestureState(
   }
 }
 
-private fun Offset.packToLong(): Long =
-  packFloats(x, y)
+private object OffsetParceler : Parceler<Offset> {
+  override fun create(parcel: Parcel) =
+    Offset(x = parcel.readFloat(), y = parcel.readFloat())
 
-private fun Size.packToLong(): Long =
-  packFloats(width, height)
+  override fun Offset.write(parcel: Parcel, flags: Int) {
+    parcel.writeFloat(x)
+    parcel.writeFloat(y)
+  }
+}
 
-private fun ScaleFactor.packToLong(): Long =
-  packFloats(scaleX, scaleY)
+private object SizeParceler : Parceler<Size> {
+  override fun create(parcel: Parcel) =
+    Size(width = parcel.readFloat(), height = parcel.readFloat())
 
-private fun Long.unpackAsOffset(): Offset =
-  Offset(x = unpackFloat1(this), y = unpackFloat2(this))
+  override fun Size.write(parcel: Parcel, flags: Int) {
+    parcel.writeFloat(width)
+    parcel.writeFloat(height)
+  }
+}
 
-private fun Long.unpackAsSize(): Size =
-  Size(width = unpackFloat1(this), height = unpackFloat2(this))
+private object ScaleFactorParceler : Parceler<ScaleFactor> {
+  override fun create(parcel: Parcel) =
+    ScaleFactor(scaleX = parcel.readFloat(), scaleY = parcel.readFloat())
 
-private fun Long.unpackAsScaleFactor(): ScaleFactor =
-  ScaleFactor(scaleX = unpackFloat1(this), scaleY = unpackFloat2(this))
+  override fun ScaleFactor.write(parcel: Parcel, flags: Int) {
+    parcel.writeFloat(scaleX)
+    parcel.writeFloat(scaleY)
+  }
+}
