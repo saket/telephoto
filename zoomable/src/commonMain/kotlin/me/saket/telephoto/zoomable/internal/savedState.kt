@@ -9,8 +9,6 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
 import androidx.compose.ui.util.unpackFloat2
-import dev.icerock.moko.parcelize.Parcelable
-import dev.icerock.moko.parcelize.Parcelize
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.AbsoluteOffset
 import me.saket.telephoto.zoomable.AbsoluteZoomFactor
@@ -25,26 +23,26 @@ import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 
-@Parcelize
+@AndroidParcelize
 internal data class SavedZoomableState(
   val autoApplyTransformations: Boolean,
   val gestureState: SavedGestureState? = null,
-) : Parcelable
+) : AndroidParcelable
 
-@Parcelize
+@AndroidParcelize
 internal data class SavedGestureState(
   private val userOffset: Long,
   private val userZoom: Float,
   private val centroid: Long,
   private val contentPositionInfo: ContentPositionInfo?,
-) : Parcelable {
+) : AndroidParcelable {
 
-  @Parcelize
+  @AndroidParcelize
   data class ContentPositionInfo(
     val viewportSize: Long,
     val contentOffsetAtViewportCenter: Long,  // Present in the content's coordinate space.
     val finalZoomFactor: Long,
-  ) : Parcelable
+  ) : AndroidParcelable
 
   @OptIn(ExperimentalTelephotoApi::class)
   companion object {

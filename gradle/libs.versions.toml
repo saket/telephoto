@@ -4,7 +4,6 @@ compileSdk = "35"
 kotlin = "2.1.0" # https://kotlinlang.org/docs/releases.html#release-details
 agp = "8.9.1"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
 compose-multiplatform = "1.7.3" # https://github.com/JetBrains/compose-multiplatform/releases
-moko-parcelize = "0.9.0" # https://github.com/icerockdev/moko-parcelize
 androidx-compose-runtime = "1.7.8" # https://developer.android.com/jetpack/androidx/releases/compose-runtime
 androidx-compose-ui = "1.7.8" # https://developer.android.com/jetpack/androidx/releases/compose-ui
 androidx-compose-ui-material = "1.7.8" # https://developer.android.com/jetpack/androidx/releases/compose-material3
@@ -125,7 +124,6 @@ glide-core = { module = "com.github.bumptech.glide:glide", version.ref = "glide"
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-immutableCollections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-immutableCollections" }
-moko-parcelize = { module = "dev.icerock.moko:parcelize", version.ref = "moko-parcelize" }
 
 okio-core = { module = "com.squareup.okio:okio", version.ref = "okio" }
 okio-fakeFileSystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
