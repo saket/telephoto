@@ -1,7 +1,7 @@
 [versions]
 minSdk = "21"
 compileSdk = "35"
-kotlin = "2.1.20" # https://kotlinlang.org/docs/releases.html#release-details
+kotlin = "2.1.21" # https://kotlinlang.org/docs/releases.html#release-details
 agp = "8.10.0"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
 compose-multiplatform = "1.8.0" # https://github.com/JetBrains/compose-multiplatform/releases
 androidx-compose-runtime = "1.7.8" # https://developer.android.com/jetpack/androidx/releases/compose-runtime
@@ -47,7 +47,7 @@ espresso-device = "1.0.1"
 robolectric = "4.14.1"
 benchmark-macro-junit4 = "1.3.4"
 metalava = "0.4.0-alpha03"  # https://github.com/tylerbwong/metalava-gradle/releases
-poko = "0.17.2" # https://github.com/drewhamilton/Poko/blob/main/CHANGELOG.md
+poko = "0.18.7" # https://github.com/drewhamilton/Poko/blob/main/CHANGELOG.md
 composeLintChecks = "1.4.2" # https://slackhq.github.io/compose-lints/changelog/
 modernstorage = "1.0.0-alpha10" # https://github.com/saket/modernstorage/releases
 
