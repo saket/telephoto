@@ -15,6 +15,7 @@ kotlin {
         implementation(compose("org.jetbrains.compose.ui:ui-util"))
         api(compose.foundation)
         api(projects.annotations)
+        implementation(libs.moko.parcelize)
       }
     }
 
