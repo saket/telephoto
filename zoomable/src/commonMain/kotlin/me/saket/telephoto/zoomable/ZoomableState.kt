@@ -35,7 +35,7 @@ import kotlin.jvm.JvmName
  */
 @Composable
 fun rememberZoomableState(
-  zoomSpec: ZoomSpec = ZoomSpec(),
+  zoomSpec: ZoomSpec = ZoomSpec(maxZoomFactor = 2f),
   autoApplyTransformations: Boolean = true,
   hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
 ): ZoomableState {
