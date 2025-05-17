@@ -1597,20 +1597,20 @@ class ZoomableImageTest {
             .drawWithContent {
               drawContent()
 
-              val viewportTopOffset = SpatialOffset(
-                Offset(rawContentSize.width / 2f, y = rawContentSize.height),
+              val imageTopOffset = SpatialOffset(
+                Offset(rawContentSize.width / 2f, y = 0f),
                 CoordinateSpace.ZoomableContent,
               )
               drawCircle(
                 color = Color.White,
                 center = with(state.zoomableState.coordinateSystem) {
-                  viewportTopOffset.offsetIn(CoordinateSpace.Viewport)
+                  imageTopOffset.offsetIn(CoordinateSpace.Viewport)
                 },
                 radius = 10.dp.toPx(),
               )
 
               val imageBottomOffset = SpatialOffset(
-                Offset(rawContentSize.width / 2f, y = 0f),
+                Offset(rawContentSize.width / 2f, y = rawContentSize.height),
                 CoordinateSpace.ZoomableContent,
               )
               drawCircle(
@@ -1626,6 +1626,7 @@ class ZoomableImageTest {
           state = state,
           contentScale = ContentScale.Fit,
           alignment = Alignment.Center,
+          clipToBounds = false,
         )
       }
     }
@@ -1638,7 +1639,9 @@ class ZoomableImageTest {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[zoomed]")
     }
 
-    rule.onNodeWithTag("image").performTouchInput { swipeLeft() }
+    rule.onNodeWithTag("image").performTouchInput {
+      swipeLeft(startX = centerRight.x, endX = centerRight.x - 200f)
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[zoomed_and_panned]")
     }
