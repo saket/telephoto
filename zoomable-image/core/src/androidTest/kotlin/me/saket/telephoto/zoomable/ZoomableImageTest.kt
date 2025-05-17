@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -2183,6 +2184,39 @@ class ZoomableImageTest {
     }
   }
 
+  // Regression test: This test simulates a scenario where a sub-sampled image is deleted from
+  // the disk after it's displayed. On state restoration, the following error image will be
+  // displayed without any sub-sampling.
+  @Test fun auto_transformation_works_if_sub_sampling_is_disabled_after_state_restoration() {
+    val stateRestorer = StateRestorationTester(rule)
+    lateinit var state: ZoomableImageState
+
+    stateRestorer.setContent {
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = !wasStateRestored()),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        alignment = Alignment.CenterStart,
+        state = rememberZoomableImageState().also { state = it },
+      )
+    }
+
+    rule.waitUntil { state.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_[before_state_restoration]")
+    }
+
+    stateRestorer.emulateSavedInstanceStateRestore()
+
+    rule.waitUntil { state.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_[after_state_restoration]")
+    }
+  }
+
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false
@@ -2465,6 +2499,9 @@ private fun ZoomableImageSource.Companion.painter(
   }
 }
 
-internal fun Size.asOffset(): Offset {
-  return Offset(width, height)
+@Composable
+private fun wasStateRestored(): Boolean {
+  val time = remember { System.currentTimeMillis() }
+  val restoredTime by rememberSaveable { mutableStateOf(time) }
+  return time != restoredTime
 }
