@@ -49,7 +49,14 @@ jobs:
 
       - name: (Fail-only) Bundle instrumented test reports
         if: failure()
-        run: find . -type d '(' -name 'reports' -o -name 'test-results' ')' | zip -@ -r instrumentation-test-build-reports.zip
+        run: |
+          set -e
+          files=$(find . -type d \( -name 'reports' -o -name 'test-results' \))
+          if [ -n "$files" ]; then
+            echo "$files" | zip -@ -r instrumentation-test-build-reports.zip
+          else
+            echo "No test report directories found. Skipping zip."
+          fi
 
       - name: (Fail-only) Upload instrumented test reports
         if: failure()
@@ -57,6 +64,7 @@ jobs:
         with:
           name: instrumentation-test-report
           path: instrumentation-test-build-reports.zip
+          if-no-files-found: warn
 
   screenshot-tests:
     name: Compile non-JVM sources
