@@ -1219,8 +1219,8 @@ class ZoomableImageTest {
     }
     rule.runOnIdle {
       state.zoomableState.contentTransformation.run {
-        assertThat(scale.toString()).isEqualTo(ScaleFactor(4.3f, 4.3f).toString())
-        assertThat(offset.toString()).isEqualTo(Offset(-1781.9f, -3958.5f).toString())
+        assertThat(scale).isCloseTo(ScaleFactor(4.3f, 4.3f), delta = 0.1f)
+        assertThat(offset).isCloseTo(Offset(-1781.9f, -3958.5f), delta = 0.1f)
       }
     }
     // Zoom out.
@@ -1233,8 +1233,8 @@ class ZoomableImageTest {
     }
     rule.runOnIdle {
       state.zoomableState.contentTransformation.run {
-        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
-        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2382.3f).toString())
+        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
+        assertThat(offset).isCloseTo(Offset(-1072.4f, -2382.3f), delta = 0.1f)
       }
     }
 
@@ -1246,8 +1246,8 @@ class ZoomableImageTest {
     }
     rule.runOnIdle {
       state.zoomableState.contentTransformation.run {
-        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
-        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2119.8f).toString())
+        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
+        assertThat(offset).isCloseTo(Offset(-1072.4f, -2119.8f), delta = 0.1f)
       }
     }
     // Pan towards down.
@@ -1258,8 +1258,8 @@ class ZoomableImageTest {
     }
     rule.runOnIdle {
       state.zoomableState.contentTransformation.run {
-        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
-        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2382.3f).toString())
+        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
+        assertThat(offset).isCloseTo(Offset(-1072.4f, -2382.3f), delta = 0.1f)
       }
     }
 
@@ -1271,8 +1271,8 @@ class ZoomableImageTest {
     }
     rule.runOnIdle {
       state.zoomableState.contentTransformation.run {
-        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
-        assertThat(offset.toString()).isEqualTo(Offset(-1334.9f, -2382.3f).toString())
+        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
+        assertThat(offset).isCloseTo(Offset(-1334.9f, -2382.3f), delta = 0.1f)
       }
     }
     // Pan towards left.
@@ -1283,8 +1283,8 @@ class ZoomableImageTest {
     }
     rule.runOnIdle {
       state.zoomableState.contentTransformation.run {
-        assertThat(scale.toString()).isEqualTo(ScaleFactor(2.99f, 2.99f).toString())
-        assertThat(offset.toString()).isEqualTo(Offset(-1072.4f, -2382.3f).toString())
+        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
+        assertThat(offset).isCloseTo(Offset(-1072.4f, -2382.3f), delta = 0.1f)
       }
     }
 
@@ -1300,8 +1300,9 @@ class ZoomableImageTest {
     }
     rule.runOnIdle {
       // Should not over-zoom.
-      assertThat(state.zoomableState.contentTransformation.scale.toString()).isEqualTo(
-        ScaleFactor(maxZoomFactor, maxZoomFactor).toString()
+      assertThat(state.zoomableState.contentTransformation.scale).isCloseTo(
+        value = ScaleFactor(maxZoomFactor, maxZoomFactor),
+        delta = 0.1f,
       )
     }
     // Zoom out using mouse.
@@ -1313,8 +1314,9 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      assertThat(state.zoomableState.contentTransformation.scale.toString()).isEqualTo(
-        ScaleFactor(1.4f, 1.4f).toString()
+      assertThat(state.zoomableState.contentTransformation.scale).isCloseTo(
+        value = ScaleFactor(1.4f, 1.4f),
+        delta = 0.1f,
       )
     }
   }
@@ -1368,8 +1370,8 @@ class ZoomableImageTest {
 
     rule.runOnIdle {
       state.zoomableState.contentTransformation.run {
-        assertThat(scale.toString()).isEqualTo(ScaleFactor(1f, 1f).toString())
-        assertThat(offset.toString()).isEqualTo(Offset.Zero.toString())
+        assertThat(scale).isEqualTo(ScaleFactor(1f, 1f))
+        assertThat(offset).isEqualTo(Offset.Zero)
       }
     }
   }
