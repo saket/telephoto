@@ -230,7 +230,7 @@ private class FlowTarget<ResourceT : Any>(
   override fun onLoadFailed(
     e: GlideException?,
     model: Any?,
-    target: Target<ResourceT>?,
+    target: Target<ResourceT>,
     isFirstResource: Boolean,
   ): Boolean {
     val localLastResource = lastResource
@@ -243,10 +243,10 @@ private class FlowTarget<ResourceT : Any>(
 
   override fun onResourceReady(
     resource: ResourceT,
-    model: Any?,
+    model: Any,
     target: Target<ResourceT>?,
-    dataSource: DataSource?,
-    isFirstResource: Boolean,
+    dataSource: DataSource,
+    isFirstResource: Boolean
   ): Boolean {
     return false
   }
