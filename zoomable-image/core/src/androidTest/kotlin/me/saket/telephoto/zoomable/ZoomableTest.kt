@@ -72,7 +72,7 @@ import org.junit.runner.RunWith
 class ZoomableTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val dropshots = Dropshots(
-    filenameFunc = { "zoomable_$it" },
+    filenameFunc = { _, testName -> "zoomable_$testName" },
   )
 
   @After

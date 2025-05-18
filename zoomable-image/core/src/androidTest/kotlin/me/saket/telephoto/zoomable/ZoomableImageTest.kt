@@ -155,7 +155,7 @@ class ZoomableImageTest {
     tolerancePercentOnCi = 0.01f,
   )
   @get:Rule val dropshots = Dropshots(
-    filenameFunc = { it },
+    filenameFunc = { _, testName -> testName },
     resultValidator = screenshotValidator,
   )
 
