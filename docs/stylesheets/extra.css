@@ -37,6 +37,7 @@
 /* Active links on the left sidebar aren't very obvious in light mode. Increase their font-weight. */
 .md-nav__item .md-nav__link--active {
   font-weight: 600;
+  color: var(--md-accent-fg-color);
 }
 
 /* Code blocks, both inline and multi-line. */
@@ -74,10 +75,27 @@ table {
   }
 }
 
+.md-typeset a {
+  color: var(--md-accent-fg-color);
+}
 
+.js .md-typeset .tabbed-labels:before {
+  background: var(--md-accent-fg-color);
+}
+
+/* Link color for the active tab. */
+.md-typeset .tabbed-set>input:first-child:checked~.tabbed-labels>:first-child,
+.md-typeset .tabbed-set>input:nth-child(2):checked~.tabbed-labels>:nth-child(2),
+.md-typeset .tabbed-set>input:nth-child(3):checked~.tabbed-labels>:nth-child(3),
+.md-typeset .tabbed-set>input:nth-child(4):checked~.tabbed-labels>:nth-child(4) {
+  color: var(--md-accent-fg-color);
+}
+
+/* Light theme */
 [data-md-color-scheme="default"] {
   --md-header-bg-color: #DAE6CB;
   --md-accent-fg-color: #386A20;
+  --md-typeset-a-color: var(--md-accent-fg-color);
   --md-primary-fg-color: var(--md-accent-fg-color);
   --md-primary-fg-color--dark: var(--md-accent-fg-color);
   --md-primary-bg-color: var(--md-default-fg-color);
@@ -89,8 +107,10 @@ table {
   --md-code-border-color: var(--md-header-bg-color);
   --md-header-search-bg-color: var(--md-default-bg-color);
   --md-code-hl-color: #e5ff76a3;
+  --md-code-hl-color--light: var(--md-code-hl-color);
 }
 
+/* Dark theme */
 [data-md-color-scheme="slate"] {
   --md-header-bg-color: #22232F;
   --md-accent-fg-color: #B6F397;
@@ -102,4 +122,6 @@ table {
   --md-inline-code-bg-color: var(--md-code-bg-color);
   --md-code-border-color: transparent;
   --md-header-search-bg-color: var(--md-default-bg-color);
+  --md-code-hl-color: #2977ff1a;
+  --md-code-hl-color--light: var(--md-code-hl-color);
 }

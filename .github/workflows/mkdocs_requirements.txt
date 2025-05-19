@@ -4,61 +4,85 @@
 #
 #    pip-compile mkdocs_requirements.in
 #
-certifi==2024.8.30
+babel==2.17.0
+    # via mkdocs-material
+backrefs==5.8
+    # via mkdocs-material
+certifi==2025.4.26
     # via
     #   -r mkdocs_requirements.in
     #   requests
-charset-normalizer==3.4.0
+charset-normalizer==3.4.2
     # via requests
-click==8.1.7
+click==8.2.0
     # via mkdocs
 colorama==0.4.6
     # via mkdocs-material
 ghp-import==2.1.0
     # via mkdocs
+hjson==3.1.0
+    # via
+    #   mkdocs-macros-plugin
+    #   super-collections
 idna==3.10
     # via
     #   -r mkdocs_requirements.in
     #   requests
-jinja2==3.1.4
+jinja2==3.1.6
     # via
     #   -r mkdocs_requirements.in
     #   mkdocs
     #   mkdocs-macros-plugin
     #   mkdocs-material
-lxml==5.3.0
+lxml==5.4.0
     # via mkdocs-video
-markdown==3.3.7
+markdown==3.8
     # via
     #   mdx-truly-sane-lists
     #   mkdocs
     #   mkdocs-material
     #   pymdown-extensions
 markupsafe==3.0.2
-    # via jinja2
+    # via
+    #   jinja2
+    #   mkdocs
 mdx-truly-sane-lists==1.3
     # via -r mkdocs_requirements.in
 mergedeep==1.3.4
-    # via mkdocs
-mkdocs==1.4.2
+    # via
+    #   mkdocs
+    #   mkdocs-get-deps
+mkdocs==1.6.1
     # via
     #   -r mkdocs_requirements.in
     #   mkdocs-macros-plugin
     #   mkdocs-material
     #   mkdocs-video
-mkdocs-macros-plugin==0.7.0
+mkdocs-get-deps==0.2.0
+    # via mkdocs
+mkdocs-macros-plugin==1.3.7
     # via -r mkdocs_requirements.in
-mkdocs-material==9.0.6
+mkdocs-material==9.6.14
     # via -r mkdocs_requirements.in
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 mkdocs-video==1.5.0
     # via -r mkdocs_requirements.in
-packaging==24.2
-    # via mkdocs
-pygments==2.18.0
+packaging==25.0
+    # via
+    #   mkdocs
+    #   mkdocs-macros-plugin
+paginate==0.5.7
     # via mkdocs-material
-pymdown-extensions==10.4
+pathspec==0.12.1
+    # via
+    #   mkdocs
+    #   mkdocs-macros-plugin
+platformdirs==4.3.8
+    # via mkdocs-get-deps
+pygments==2.19.1
+    # via mkdocs-material
+pymdown-extensions==10.15
     # via
     #   -r mkdocs_requirements.in
     #   mkdocs-material
@@ -69,22 +93,23 @@ python-dateutil==2.9.0.post0
 pyyaml==6.0.2
     # via
     #   mkdocs
+    #   mkdocs-get-deps
     #   mkdocs-macros-plugin
     #   pymdown-extensions
     #   pyyaml-env-tag
-pyyaml-env-tag==0.1
+pyyaml-env-tag==1.1
     # via mkdocs
-regex==2024.11.6
-    # via mkdocs-material
 requests==2.32.3
     # via
     #   -r mkdocs_requirements.in
     #   mkdocs-material
-six==1.16.0
+six==1.17.0
     # via python-dateutil
-termcolor==2.5.0
+super-collections==0.5.3
     # via mkdocs-macros-plugin
-urllib3==2.2.3
+termcolor==3.1.0
+    # via mkdocs-macros-plugin
+urllib3==2.4.0
     # via
     #   -r mkdocs_requirements.in
     #   requests
