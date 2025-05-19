@@ -11,7 +11,7 @@ _Drop-in_ replacement for `Image()` composables featuring support for pan & zoom
 ### [Modifier.zoomable()](https://saket.github.io/telephoto/zoomable/)
 `ZoomableImage`'s gesture detector, packaged as a standalone `Modifier` that can be used with non-image composables.
 
-### [Modifier.zoomablePeekOverlay()](https://saket.github.io/telephoto/zoomable-peek-overlay/)
+### [Zoomable Peek Overlay](https://saket.github.io/telephoto/zoomable-peek-overlay/)
 Transient, overlaid zoom effect inspired by Instagram.
 
 See [project website](https://saket.github.io/telephoto) for full documentation.

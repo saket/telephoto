@@ -79,4 +79,4 @@ nav:
   - 'Modifier.zoomable()':
       - 'Overview': zoomable/index.md
       - 'Recipes': zoomable/recipes.md
-  - 'Modifier.zoomablePeekOverlay()': zoomable-peek-overlay/index.md
+  - 'Zoomable Peek Overlay': zoomable-peek-overlay/index.md
