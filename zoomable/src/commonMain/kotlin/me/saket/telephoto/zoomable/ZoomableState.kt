@@ -127,7 +127,6 @@ sealed interface ZoomableState {
   /** Whether any zoom, pan (or both) animation is in progress. */
   val isAnimationRunning: Boolean
 
-  // todo: add some basic tests
   /**
    * `Modifier.zoomable()`'s coordinate system for representing spatial offsets in
    * [CoordinateSpace.Viewport][CoordinateSpace.Companion.Viewport] and
