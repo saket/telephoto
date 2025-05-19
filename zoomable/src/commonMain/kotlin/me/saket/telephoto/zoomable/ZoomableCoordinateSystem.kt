@@ -9,6 +9,19 @@ import me.saket.telephoto.zoomable.spatial.CoordinateSystem
 import me.saket.telephoto.zoomable.spatial.SpatialRect
 import kotlin.jvm.JvmSynthetic
 
+/**
+ * `Modifier.zoomable()`'s coordinate system for representing spatial offsets in
+ * [CoordinateSpace.Viewport][CoordinateSpace.Companion.Viewport] and
+ * [CoordinateSpace.ZoomableContent][CoordinateSpace.Companion.ZoomableContent].
+ *
+ * Usage example:
+ *
+ * ```kotlin
+ * val visibleImageRegion = with(zoomableState.coordinateSystem) {
+ *   contentBounds.rectIn(CoordinateSpace.ZoomableContent)
+ * }
+ * ```
+ */
 @ExperimentalTelephotoApi
 interface ZoomableCoordinateSystem : CoordinateSystem {
   /**
