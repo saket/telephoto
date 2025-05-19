@@ -26,8 +26,9 @@
     ```kotlin hl_lines="2-5"
     val zoomableState = rememberZoomableState(
       zoomSpec = ZoomSpec(
-      maxZoomFactor = 4f,
-      overzoomEffect = OverzoomEffect.RubberBanding,
+        maxZoomFactor = 4f,
+        overzoomEffect = OverzoomEffect.RubberBanding,
+      )
     )
     
     ZoomableGlideImage(
@@ -48,6 +49,90 @@ val showLoadingIndicator = imageState.isImageDisplayed
 
 AnimatedVisibility(visible = showLoadingIndicator) {
   CircularProgressIndicator()    
+}
+```
+
+### Converting between viewport and image coordinates
+
+=== "Coil"
+    ```kotlin
+    val zoomableState = rememberZoomableState()
+    
+    ZoomableAsyncImage(
+      state = rememberZoomableImageState(zoomableState),
+      model = "https://example.com/image.jpg",
+      contentDescription = "…",
+      onClick = { clickedAt: Offset ->
+        val clickedAt = SpatialOffset(clickedAt, CoordinateSpace.Viewport)
+        val offsetInImage = with(zoomableState.coordinateSystem) {
+          clickedAt.offsetIn(CoordinateSpace.ZoomableContent)
+        }
+      }
+    )
+    ```
+=== "Glide"
+    ```kotlin
+    val zoomableState = rememberZoomableState()
+    
+    ZoomableGlideImage(
+      state = rememberZoomableImageState(zoomableState),
+      model = "https://example.com/image.jpg",
+      contentDescription = "…",
+      onClick = { clickedAt: Offset ->
+        val clickedAt = SpatialOffset(clickedAt, CoordinateSpace.Viewport)
+        val offsetInImage = with(zoomableState.coordinateSystem) {
+          clickedAt.offsetIn(CoordinateSpace.ZoomableContent)
+        }
+      }
+    )
+    ```
+
+### Drawing drop shadows
+
+`Modifier.shadow()` doesn't work with `ZoomableImage`, as it applies shadows to the whole viewport. Instead, use `graphicsLayer` with a custom shape to apply shadows only to the visible bounds of the image:  
+
+=== "Coil"
+    ```kotlin hl_lines="4-7"
+    val zoomableState = rememberZoomableState() 
+    
+    ZoomableAsyncImage(
+      modifier = Modifier.graphicsLayer {
+        this.shadowElevation = 40.dp.toPx()
+        this.shape = VisibleImageShape(zoomableState)
+      },
+      state = rememberZoomableImageState(zoomableState),
+      model = "https://example.com/image.jpg",
+      contentDescription = "…",
+    )
+    ```
+=== "Glide"
+    ```kotlin
+    val zoomableState = rememberZoomableState() 
+    
+    ZoomableGlideImage(
+      modifier = Modifier.graphicsLayer {
+        this.shadowElevation = 40.dp.toPx()
+        this.shape = VisibleImageShape(zoomableState)
+      },
+      state = rememberZoomableImageState(zoomableState),
+      model = "https://example.com/image.jpg",
+      contentDescription = "…",
+    )
+    ```
+
+```kotlin
+/** A shape that clips a composable to match the visible image area.*/
+@OptIn(ExperimentalTelephotoApi::class)
+data class VisibleImageShape(
+  val state: ZoomableState
+): Shape {
+
+  override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+    val visibleBounds: Rect = with(state.coordinateSystem) {
+      contentBounds.rectIn(CoordinateSpace.Viewport)
+    }
+    return Outline.Rectangle(visibleBounds)
+  }
 }
 ```
 
