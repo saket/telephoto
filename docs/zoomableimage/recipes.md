@@ -8,27 +8,32 @@
 ### Setting zoom limits
 
 === "Coil"
-    ```kotlin hl_lines="2"
+    ```kotlin hl_lines="2-5"
     val zoomableState = rememberZoomableState(
-      zoomSpec = ZoomSpec(maxZoomFactor = 4f)
+      zoomSpec = ZoomSpec(
+        maxZoomFactor = 4f,
+        overzoomEffect = OverzoomEffect.RubberBanding,
+      )
     )
     
     ZoomableAsyncImage(
       state = rememberZoomableImageState(zoomableState),
       model = "https://example.com/image.jpg",
-      contentDescription = …,
+      contentDescription = "…",
     )
     ```
 === "Glide"
-    ```kotlin hl_lines="2"
+    ```kotlin hl_lines="2-5"
     val zoomableState = rememberZoomableState(
-      zoomSpec = ZoomSpec(maxZoomFactor = 4f)
+      zoomSpec = ZoomSpec(
+      maxZoomFactor = 4f,
+      overzoomEffect = OverzoomEffect.RubberBanding,
     )
     
     ZoomableGlideImage(
       state = rememberZoomableImageState(zoomableState),
       model = "https://example.com/image.jpg",
-      contentDescription = …,
+      contentDescription = "…",
     )
     ```
 
@@ -84,7 +89,7 @@ AnimatedVisibility(visible = showLoadingIndicator) {
     ZoomableAsyncImage(
       model = imageUrl,
       state = state,
-      contentDescription = …,
+      contentDescription = "…",
     )
 
     if (state.isImageDisplayed) {
@@ -115,7 +120,7 @@ AnimatedVisibility(visible = showLoadingIndicator) {
     ZoomableGlideImage(
       model = imageUrl,
       state = state,
-      contentDescription = …,
+      contentDescription = "…",
     )
 
     if (state.isImageDisplayed) {
