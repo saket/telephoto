@@ -169,8 +169,9 @@ sealed interface ZoomableState {
    * @param zoomFactor Ratio by which to zoom relative to the current size. For example, a [zoomFactor]
    * of `3f` will triple the *current* zoom level.
    *
-   * @param centroid Focal point for this zoom within the content's size. Defaults to the center
-   * of the content.
+   * @param centroid Focal point for this zoom, in the viewport's coordinate space. Defaults to the
+   * center of the viewport. To specify a centroid in content coordinates, use the [SpatialOffset]
+   * overload instead.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
@@ -203,8 +204,9 @@ sealed interface ZoomableState {
    * set the content's zoom level to two times its *original* size. This value is internally coerced
    * between [ZoomSpec.maximum] and [ZoomSpec.minimum].
    *
-   * @param centroid Focal point for this zoom within the content's size. Defaults to the center
-   * of the viewport.
+   * @param centroid Focal point for this zoom, in the viewport's coordinate space. Defaults to the
+   * center of the viewport. To specify a centroid in content coordinates, use the [SpatialOffset]
+   * overload instead.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
@@ -231,6 +233,9 @@ sealed interface ZoomableState {
 
   /**
    * Animate pan by [offset] in pixels and suspend until it's finished.
+   *
+   * @param offset Distance for this pan, in the viewport's coordinate space. To specify
+   * an offset in content coordinates, use the [SpatialOffset] overload instead.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
