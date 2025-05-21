@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -61,18 +65,18 @@ private fun AlbumGrid(
   navigator: Navigator,
   modifier: Modifier = Modifier
 ) {
-  LazyVerticalGrid(
+  LazyVerticalStaggeredGrid(
     modifier = modifier,
-    columns = GridCells.Adaptive(minSize = 160.dp),
+    columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
     contentPadding = PaddingValues(4.dp),
-    verticalArrangement = Arrangement.spacedBy(4.dp),
+    verticalItemSpacing = 4.dp,
     horizontalArrangement = Arrangement.spacedBy(4.dp),
   ) {
     itemsIndexed(items = album.items) { index, item ->
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .height(280.dp)
+          .aspectRatio(item.aspectRatio)
           .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
           .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) }
           .zoomablePeekOverlay(rememberZoomablePeekOverlayState()),

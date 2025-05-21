@@ -11,11 +11,13 @@ data class MediaAlbum(
 sealed interface MediaItem : Parcelable {
   val caption: String
   val placeholderImageUrl: String?
+  val aspectRatio: Float
 
   @Parcelize
   data class Image(
     val fullSizedUrl: String,
     override val placeholderImageUrl: String?,
     override val caption: String,
+    override val aspectRatio: Float,
   ) : MediaItem
 }

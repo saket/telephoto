@@ -40,27 +40,32 @@ class SampleActivity : AppCompatActivity() {
 
     val album = MediaAlbum(
       items = listOf(
-        // Photo by Anita Austvika on https://unsplash.com/photos/yFxAORZcJQk.
+        // Photo by Mahyar Motebassem (https://unsplash.com/photos/f0d83M-PkNw).
         MediaItem.Image(
-          fullSizedUrl = "https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65",
-          placeholderImageUrl = "https://images.unsplash.com/photo-1678465952838-c9d7f5daaa65?w=300",
+          fullSizedUrl = "https://unsplash.com/photos/f0d83M-PkNw/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzQ3ODMzODU2fA&force=true",
+          placeholderImageUrl = "https://unsplash.com/photos/f0d83M-PkNw/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzQ3ODMzODU2fA&force=true&w=300",
           caption = "Breakfast",
+          aspectRatio = 300f / 375f,
         ),
-        // Photos by Romain Guy on https://www.flickr.com/photos/romainguy/.
+        // Photo by Jack White (https://unsplash.com/photos/jDCIBr88RGU/).
         MediaItem.Image(
-          fullSizedUrl = "https://live.staticflickr.com/65535/46217553745_fa38e0e7f0_o_d.jpg",
-          placeholderImageUrl = "https://live.staticflickr.com/65535/46217553745_e8d9242548_w_d.jpg",
-          caption = "Follow the light",
+          fullSizedUrl = "https://unsplash.com/photos/L_SjEwDtJEI/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzQ3ODM0MjAxfA&force=true",
+          placeholderImageUrl = "https://unsplash.com/photos/L_SjEwDtJEI/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzQ3ODM0MjAxfA&force=true&w=300",
+          caption = "Porsche 912",
+          aspectRatio = 300f / 450f,
+        ),
+        // Photo by Romain Guy (https://www.flickr.com/photos/romainguy/).
+        MediaItem.Image(
+          fullSizedUrl = "https://live.staticflickr.com/4734/39442725251_be4b6395a2_o_d.jpg",
+          placeholderImageUrl = "https://live.staticflickr.com/4734/39442725251_ed2353237e_c_d.jpg",
+          caption = "Long Sight",
+          aspectRatio = 533f / 800f
         ),
         MediaItem.Image(
-          fullSizedUrl = "https://live.staticflickr.com/2809/11679312514_3f759b77cd_o_d.jpg",
-          placeholderImageUrl = "https://live.staticflickr.com/2809/11679312514_7592396e9f_w_d.jpg",
-          caption = "Flamingo",
-        ),
-        MediaItem.Image(
-          fullSizedUrl = "https://live.staticflickr.com/6024/5911366388_600e7e6734_o_d.jpg",
-          placeholderImageUrl = "https://i.imgur.com/TUpdBdi.jpeg",
-          caption = "Sierra Sunset",
+          fullSizedUrl = "https://live.staticflickr.com/4687/39511378181_e815b89822_o_d.jpg",
+          placeholderImageUrl = "https://live.staticflickr.com/4687/39511378181_ab0c158858_c_d.jpg",
+          caption = "Follow",
+          aspectRatio = 449 / 800f,
         ),
       )
     )
