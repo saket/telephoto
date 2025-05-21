@@ -1,5 +1,6 @@
 package me.saket.telephoto.sample.gallery
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,11 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -32,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.slack.circuit.runtime.Navigator
+import com.slack.circuit.sharedelements.SharedElementTransitionScope
 import me.saket.telephoto.sample.GalleryScreenKey
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.R
@@ -60,38 +58,45 @@ internal fun GalleryScreen(
 }
 
 @Composable
+@OptIn(ExperimentalSharedTransitionApi::class)
 private fun AlbumGrid(
   album: MediaAlbum,
   navigator: Navigator,
   modifier: Modifier = Modifier
 ) {
-  LazyVerticalStaggeredGrid(
-    modifier = modifier,
-    columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
-    contentPadding = PaddingValues(4.dp),
-    verticalItemSpacing = 4.dp,
-    horizontalArrangement = Arrangement.spacedBy(4.dp),
-  ) {
-    itemsIndexed(items = album.items) { index, item ->
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
-          .aspectRatio(item.aspectRatio)
-          .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
-          .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) }
-          .zoomablePeekOverlay(rememberZoomablePeekOverlayState()),
-        contentAlignment = Alignment.BottomStart
-      ) {
-        AsyncImage(
-          modifier = Modifier.fillMaxSize(),
-          model = ImageRequest.Builder(LocalContext.current)
-            .data(item.placeholderImageUrl)
-            .memoryCacheKey(item.placeholderImageUrl)
-            .crossfade(300)
-            .build(),
-          contentDescription = item.caption,
-          contentScale = ContentScale.Crop,
-        )
+  SharedElementTransitionScope {
+    LazyVerticalStaggeredGrid(
+      modifier = modifier,
+      columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
+      contentPadding = PaddingValues(4.dp),
+      verticalItemSpacing = 4.dp,
+      horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+      itemsIndexed(items = album.items) { index, item ->
+        Box(
+          modifier = Modifier
+            .sharedElement(
+              sharedContentState = rememberSharedContentState(item.placeholderImageUrl),
+              animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+            )
+            .fillMaxWidth()
+            .aspectRatio(item.aspectRatio)
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+            .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) }
+            .zoomablePeekOverlay(rememberZoomablePeekOverlayState()),
+          contentAlignment = Alignment.BottomStart
+        ) {
+          AsyncImage(
+            modifier = Modifier.fillMaxSize(),
+            model = ImageRequest.Builder(LocalContext.current)
+              .data(item.placeholderImageUrl)
+              .memoryCacheKey(item.placeholderImageUrl)
+              .crossfade(300)
+              .build(),
+            contentDescription = item.caption,
+            contentScale = ContentScale.Crop,
+          )
+        }
       }
     }
   }

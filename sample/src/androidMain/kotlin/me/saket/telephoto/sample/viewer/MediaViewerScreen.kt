@@ -2,6 +2,7 @@ package me.saket.telephoto.sample.viewer
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -35,6 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import coil.request.ImageRequest
 import com.slack.circuit.runtime.Navigator
+import com.slack.circuit.sharedelements.SharedElementTransitionScope
+import com.slack.circuit.sharedelements.requireActiveAnimatedScope
 import kotlinx.coroutines.delay
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismiss
@@ -115,7 +118,7 @@ private fun titleBarIconButtonColors() = IconButtonDefaults.iconButtonColors(
 )
 
 @Composable
-@OptIn(ExperimentalTelephotoApi::class)
+@OptIn(ExperimentalTelephotoApi::class, ExperimentalSharedTransitionApi::class)
 private fun MediaPage(
   model: MediaItem,
   isActivePage: Boolean,
@@ -131,35 +134,45 @@ private fun MediaPage(
     state = flickState,
     modifier = modifier.background(backgroundColorFor(flickState.gestureState)),
   ) {
-    when (model) {
-      is MediaItem.Image -> {
-        // TODO: handle errors here.
-        val imageState = rememberZoomableImageState(zoomableState)
-        ZoomableAsyncImage(
-          modifier = Modifier
-            .fillMaxSize()
-            .focusRequester(focusRequester),
-          state = imageState,
-          model = ImageRequest.Builder(LocalContext.current)
-            .data(model.fullSizedUrl)
-            .placeholderMemoryCacheKey(model.placeholderImageUrl)
-            .crossfade(300)
-            .build(),
-          contentDescription = model.caption,
-        )
+    SharedElementTransitionScope {
+      when (model) {
+        is MediaItem.Image -> {
+          // TODO: handle errors here.
+          val imageState = rememberZoomableImageState(zoomableState)
+          ZoomableAsyncImage(
+            modifier = Modifier
+              .then(
+                if (isActivePage) {
+                  Modifier.sharedElement(
+                    sharedContentState = rememberSharedContentState(model.placeholderImageUrl),
+                    animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+                  )
+                } else Modifier
+              )
+              .fillMaxSize()
+              .focusRequester(focusRequester),
+            state = imageState,
+            model = ImageRequest.Builder(LocalContext.current)
+              .data(model.fullSizedUrl)
+              .placeholderMemoryCacheKey(model.placeholderImageUrl)
+              .crossfade(300)
+              .build(),
+            contentDescription = model.caption,
+          )
 
-        // Focus the image so that it can receive keyboard and mouse shortcut events.
-        if (isActivePage) {
-          LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
+          // Focus the image so that it can receive keyboard and mouse shortcut events.
+          if (isActivePage) {
+            LaunchedEffect(Unit) {
+              focusRequester.requestFocus()
+            }
           }
-        }
 
-        AnimatedVisibility(
-          modifier = Modifier.align(Alignment.Center),
-          visible = !imageState.isImageDisplayed
-        ) {
-          CircularProgressIndicator(color = Color.White)
+          AnimatedVisibility(
+            modifier = Modifier.align(Alignment.Center),
+            visible = !imageState.isImageDisplayed
+          ) {
+            CircularProgressIndicator(color = Color.White)
+          }
         }
       }
     }

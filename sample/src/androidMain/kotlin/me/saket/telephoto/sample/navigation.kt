@@ -1,5 +1,6 @@
 package me.saket.telephoto.sample
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -9,6 +10,7 @@ import com.slack.circuit.foundation.NavigableCircuitContent
 import com.slack.circuit.foundation.rememberCircuitNavigator
 import com.slack.circuit.runtime.CircuitUiState
 import com.slack.circuit.runtime.ui.Ui
+import com.slack.circuit.sharedelements.SharedElementTransitionLayout
 import kotlinx.parcelize.Parcelize
 import me.saket.telephoto.sample.crop.CropImageScreen
 import me.saket.telephoto.sample.crop.CropResultScreen
@@ -19,6 +21,7 @@ import me.saket.telephoto.sample.viewer.MediaViewerScreen
 import com.slack.circuit.runtime.screen.StaticScreen as CircuitScreenKey
 
 @Composable
+@OptIn(ExperimentalSharedTransitionApi::class)
 internal fun Navigation(
   initialScreenKey: ScreenKey,
 ) {
@@ -64,11 +67,13 @@ internal fun Navigation(
       .build()
   }
 
-  NavigableCircuitContent(
-    circuit = circuit,
-    navigator = navigator,
-    backStack = backstack,
-  )
+  SharedElementTransitionLayout {
+    NavigableCircuitContent(
+      circuit = circuit,
+      navigator = navigator,
+      backStack = backstack,
+    )
+  }
 }
 
 sealed interface ScreenKey : CircuitScreenKey
