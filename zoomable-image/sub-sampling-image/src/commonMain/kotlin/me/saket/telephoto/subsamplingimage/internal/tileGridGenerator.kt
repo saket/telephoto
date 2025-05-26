@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.toSize
 internal fun ImageRegionTileGrid.Companion.generate(
   viewportSize: IntSize,
   unscaledImageSize: IntSize,
-  minTileSize: IntSize = viewportSize / 2,
+  minTileSize: IntSize = IntSize(64, 64),
 ): ImageRegionTileGrid {
   val baseSampleSize = ImageSampleSize.calculateFor(
     viewportSize = viewportSize,
