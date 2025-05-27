@@ -73,9 +73,8 @@ import android.util.Size as AndroidSize
 
 @Composable
 internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
-  Column(
-    Modifier.background(MaterialTheme.colorScheme.background)
-  ) {
+  val backgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+  Column(Modifier.background(backgroundColor)) {
     val imageState = rememberZoomableImageState()
     val cropperState = rememberCropperState(imageState)
 
@@ -101,6 +100,7 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
         CropHandles(
           modifier = Modifier.matchParentSize(),
           state = cropperState,
+          backgroundColor = backgroundColor,
         )
       }
     }
@@ -108,7 +108,7 @@ internal fun CropImageScreen(key: CropImageScreenKey, navigator: Navigator) {
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp))
+        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(12.dp))
         .windowInsetsPadding(WindowInsets.safeContent.only(WindowInsetsSides.Bottom))
         .padding(horizontal = 16.dp, vertical = 16.dp),
       horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),

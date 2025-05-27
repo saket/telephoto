@@ -1,6 +1,9 @@
 package me.saket.telephoto.sample
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -68,11 +71,13 @@ internal fun Navigation(
   }
 
   SharedElementTransitionLayout {
-    NavigableCircuitContent(
-      circuit = circuit,
-      navigator = navigator,
-      backStack = backstack,
-    )
+    Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+      NavigableCircuitContent(
+        circuit = circuit,
+        navigator = navigator,
+        backStack = backstack,
+      )
+    }
   }
 }
 

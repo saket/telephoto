@@ -1,6 +1,10 @@
 package me.saket.telephoto.sample.gallery
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +26,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -75,13 +80,21 @@ private fun AlbumGrid(
       itemsIndexed(items = album.items) { index, item ->
         Box(
           modifier = Modifier
+            .sharedBounds(
+              sharedContentState = rememberSharedContentState("container_${item.placeholderImageUrl}"),
+              animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+              boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
+              enter = EnterTransition.None,
+              exit = ExitTransition.None,
+            )
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
             .sharedElement(
               sharedContentState = rememberSharedContentState(item.placeholderImageUrl),
               animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+              boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
             )
             .fillMaxWidth()
             .aspectRatio(item.aspectRatio)
-            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
             .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) }
             .zoomablePeekOverlay(rememberZoomablePeekOverlayState()),
           contentAlignment = Alignment.BottomStart
@@ -101,3 +114,6 @@ private fun AlbumGrid(
     }
   }
 }
+
+internal inline fun <reified T> sharedElementTransitionSpring() =
+  spring<T>(stiffness = (Spring.StiffnessMedium + Spring.StiffnessMediumLow) / 2f)

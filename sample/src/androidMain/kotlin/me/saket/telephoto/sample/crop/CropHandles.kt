@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
@@ -41,9 +42,9 @@ import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 @Composable
 internal fun CropHandles(
   state: CropperState,
+  backgroundColor: Color,
   modifier: Modifier = Modifier,
 ) {
-  val backgroundColor = MaterialTheme.colorScheme.background
   Box(
     modifier
       .fillMaxSize()
