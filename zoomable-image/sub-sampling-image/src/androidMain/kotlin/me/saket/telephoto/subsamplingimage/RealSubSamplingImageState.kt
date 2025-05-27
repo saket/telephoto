@@ -46,6 +46,7 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder.DecodeRes
 internal class RealSubSamplingImageState(
   private val imageSource: SubSamplingImageSource,
   private val contentTransformation: () -> ZoomableContentTransformation,
+  private val minTileSize: IntSize? = null
 ) : SubSamplingImageState {
 
   override val imageSize: IntSize?
@@ -102,6 +103,7 @@ internal class RealSubSamplingImageState(
       ImageRegionTileGrid.generate(
         viewportSize = viewportSize!!,
         unscaledImageSize = imageOrPreviewSize!!,
+        minTileSize = minTileSize ?: (viewportSize!! / 2)
       )
     } else null
   }

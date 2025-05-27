@@ -46,6 +46,7 @@ import java.io.IOException
 fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   zoomableState: ZoomableState,
+  minTileSize: IntSize? = null,
   imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease
 ): SubSamplingImageState {
@@ -53,6 +54,7 @@ fun rememberSubSamplingImageState(
     imageSource = imageSource,
     transformation = { zoomableState.contentTransformation },
     imageOptions = imageOptions,
+    minTileSize = minTileSize,
     errorReporter = errorReporter,
   )
 
@@ -77,11 +79,12 @@ internal fun rememberSubSamplingImageState(
   imageSource: SubSamplingImageSource,
   transformation: () -> ZoomableContentTransformation,
   imageOptions: ImageBitmapOptions = ImageBitmapOptions.Default,
+  minTileSize: IntSize?,
   errorReporter: SubSamplingImageErrorReporter = SubSamplingImageErrorReporter.NoOpInRelease,
 ): SubSamplingImageState {
   val transformation by rememberUpdatedState(transformation)
   val state = remember(imageSource) {
-    RealSubSamplingImageState(imageSource, transformation)
+    RealSubSamplingImageState(imageSource, transformation, minTileSize)
   }.also {
     it.imageRegionDecoder = createImageRegionDecoder(imageSource, imageOptions, errorReporter)
   }
