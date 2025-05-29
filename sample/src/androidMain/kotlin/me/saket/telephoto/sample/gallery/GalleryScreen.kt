@@ -80,6 +80,9 @@ private fun AlbumGrid(
       itemsIndexed(items = album.items) { index, item ->
         Box(
           modifier = Modifier
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+            .fillMaxWidth()
+            .aspectRatio(item.aspectRatio)
             .sharedBounds(
               sharedContentState = rememberSharedContentState("container_${item.placeholderImageUrl}"),
               animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
@@ -87,20 +90,22 @@ private fun AlbumGrid(
               enter = EnterTransition.None,
               exit = ExitTransition.None,
             )
-            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
-            .sharedElement(
-              sharedContentState = rememberSharedContentState(item.placeholderImageUrl),
-              animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
-              boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
-            )
-            .fillMaxWidth()
-            .aspectRatio(item.aspectRatio)
             .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) }
             .zoomablePeekOverlay(rememberZoomablePeekOverlayState()),
           contentAlignment = Alignment.BottomStart
         ) {
           AsyncImage(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+              .fillMaxSize()
+              // This uses sharedBounds() instead of sharedElement() because the outgoing image may be
+              // zoomed in. Apps like Google Photos smoothly reset the zoom during the back transition,
+              // but this behavior appears to be unsupported in Compose UI. As a good workaround,
+              // sharedBounds() crossfades the incoming and outgoing images to mask the zoom difference.
+              .sharedBounds(
+                sharedContentState = rememberSharedContentState(item.placeholderImageUrl),
+                animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+                boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
+              ),
             model = ImageRequest.Builder(LocalContext.current)
               .data(item.placeholderImageUrl)
               .memoryCacheKey(item.placeholderImageUrl)

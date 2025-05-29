@@ -195,7 +195,7 @@ private fun SharedElementTransitionScope.MediaPage(
           modifier = Modifier
             .then(
               if (isActivePage) {
-                Modifier.sharedElement(
+                Modifier.sharedBounds(
                   sharedContentState = rememberSharedContentState(model.placeholderImageUrl),
                   animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
                   boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
