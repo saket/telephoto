@@ -88,13 +88,13 @@ private fun AlbumGrid(
               exit = ExitTransition.None,
             )
             .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+            .fillMaxWidth()
+            .aspectRatio(item.aspectRatio)
             .sharedElement(
               sharedContentState = rememberSharedContentState(item.placeholderImageUrl),
               animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
               boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
             )
-            .fillMaxWidth()
-            .aspectRatio(item.aspectRatio)
             .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) }
             .zoomablePeekOverlay(rememberZoomablePeekOverlayState()),
           contentAlignment = Alignment.BottomStart
