@@ -1,11 +1,16 @@
 package me.saket.telephoto.flick
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
@@ -30,17 +35,16 @@ fun FlickToDismiss(
   val haptic = LocalHapticFeedback.current
   check(state is RealFlickToDismissState)
 
+  val offset = state.smoothOffset()
   Box(
     modifier = modifier
-      .offset { state.offset.round() }
+      .offset { offset.value.round() }
       .graphicsLayer { rotationZ = state.rotationZ }
       .verticalDragThenDraggable2D(
         enabled = true,
         state = state.draggableState,
         startDragImmediately = { state.gestureState is Resetting },
-        onDragStarted = { offset ->
-          state.handleOnDragStarted(offset)
-        },
+        onDragStarted = { state.handleOnDragStarted(it) },
         onDragStopped = { velocity ->
           scope.launch {
             if (state.willDismissOnRelease(velocity.y)) {
@@ -56,5 +60,14 @@ fun FlickToDismiss(
         state.contentSize = size
       },
     content = { content() },
+  )
+}
+
+/** Applies a spring-based easing to changes in drag offsets for smoother, more natural motion. */
+@Composable
+private fun FlickToDismissState.smoothOffset(): State<Offset> {
+  return animateOffsetAsState(
+    targetValue = offset,
+    animationSpec = spring(stiffness = Spring.StiffnessMedium),
   )
 }

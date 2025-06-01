@@ -3,6 +3,7 @@ package me.saket.telephoto.flick
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.Draggable2DState
@@ -141,7 +142,7 @@ internal class RealFlickToDismissState(
       stiffness = Spring.StiffnessMediumLow,
       // A non-null threshold is used to avoid long trailing animations at the end,
       // which helps prevent unintended horizontal swipes from being intercepted.
-      visibilityThreshold = Offset(1f, 1f),
+      visibilityThreshold = Offset.VisibilityThreshold,
     )
   }
 }
