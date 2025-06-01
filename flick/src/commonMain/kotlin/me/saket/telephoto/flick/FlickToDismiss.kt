@@ -1,7 +1,5 @@
 package me.saket.telephoto.flick
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.offset
@@ -12,10 +10,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.round
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
+import me.saket.telephoto.flick.internal.verticalDragThenDraggable2D
 
 /**
  * A layout composable that can be flick dismissed using vertical swipe gestures.
@@ -33,20 +32,20 @@ fun FlickToDismiss(
 
   Box(
     modifier = modifier
-      .offset { IntOffset(x = 0, y = state.offset.toInt()) }
+      .offset { state.offset.round() }
       .graphicsLayer { rotationZ = state.rotationZ }
-      .draggable(
+      .verticalDragThenDraggable2D(
+        enabled = true,
         state = state.draggableState,
-        orientation = Orientation.Vertical,
-        startDragImmediately = state.gestureState is Resetting,
+        startDragImmediately = { state.gestureState is Resetting },
         onDragStarted = { offset ->
           state.handleOnDragStarted(offset)
         },
         onDragStopped = { velocity ->
           scope.launch {
-            if (state.willDismissOnRelease(velocity)) {
+            if (state.willDismissOnRelease(velocity.y)) {
               haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-              state.animateDismissal(velocity)
+              state.animateDismissal(velocity.y)
             } else {
               state.animateReset()
             }

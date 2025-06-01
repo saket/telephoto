@@ -2,9 +2,10 @@ package me.saket.telephoto.flick
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatePriority
-import androidx.compose.foundation.gestures.DraggableState
+import androidx.compose.foundation.gestures.Draggable2DState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -29,7 +30,7 @@ internal class RealFlickToDismissState(
   internal val dismissThresholdRatio: Float = 0.3f,
   private val rotateOnDrag: Boolean = true,
 ) : FlickToDismissState {
-  override var offset: Float by mutableStateOf(0f)
+  override var offset: Offset by mutableStateOf(Offset.Zero)
   override var gestureState: GestureState by mutableStateOf(Idle)
 
   override val rotationZ: Float by derivedStateOf {
@@ -45,19 +46,19 @@ internal class RealFlickToDismissState(
     if (contentHeight == 0) {
       0f
     } else {
-      (abs(offset) / contentHeight).coerceIn(0f, 1f)
+      (abs(offset.y) / contentHeight).coerceIn(0f, 1f)
     }
   }
 
   internal var contentSize: IntSize by mutableStateOf(IntSize.Zero)
   private var dragStartedOnLeftSide: Boolean by mutableStateOf(false)
 
-  internal val draggableState = DraggableState { dy ->
-    offset += dy
+  internal val draggableState = Draggable2DState { delta ->
+    offset += delta
 
     gestureState = when (gestureState) {
       is Idle, is Dragging -> {
-        if (abs(offset) < ZoomDeltaEpsilon) {
+        if (abs(offset.y) < ZoomDeltaEpsilon) {
           Idle
         } else {
           Dragging(willDismissOnRelease = abs(offsetFraction) > dismissThresholdRatio)
@@ -93,13 +94,15 @@ internal class RealFlickToDismissState(
         }
         animateWithDuration(
           initialValue = offset,
-          targetValue = (contentSize.height + distanceCoveredByRotation) * if (offset > 0f) 1f else -1f,
+          targetValue = offset.copy(
+            y = (contentSize.height + distanceCoveredByRotation) * if (offset.y > 0f) 1f else -1f,
+          ),
           initialVelocity = velocity,
-          animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+          animationSpec = AnimationSpec,
           onStart = { duration ->
             gestureState = Dismissing(duration)
           }
-        ) { value, _ ->
+        ) { value ->
           dragBy(value - offset)
         }
       } finally {
@@ -112,9 +115,13 @@ internal class RealFlickToDismissState(
     try {
       gestureState = Resetting
       draggableState.drag {
-        Animatable(offset).animateTo(targetValue = 0f) {
-          dragBy(value - offset)
-        }
+        Animatable(offset, Offset.VectorConverter)
+          .animateTo(
+            targetValue = Offset.Zero,
+            animationSpec = AnimationSpec,
+          ) {
+            dragBy(value - offset)
+          }
       }
     } finally {
       gestureState = Idle
@@ -129,6 +136,13 @@ internal class RealFlickToDismissState(
     private const val MaxRotationInDegrees = 20f
 
     internal const val FlingSlopMultiplier = 10f // A large enough value to exclude short flings.
+
+    private val AnimationSpec = spring(
+      stiffness = Spring.StiffnessMediumLow,
+      // A non-null threshold is used to avoid long trailing animations at the end,
+      // which helps prevent unintended horizontal swipes from being intercepted.
+      visibilityThreshold = Offset(1f, 1f),
+    )
   }
 }
 

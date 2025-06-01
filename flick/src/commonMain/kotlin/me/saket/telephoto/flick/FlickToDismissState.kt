@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
 import dev.drewhamilton.poko.Poko
 import kotlin.time.Duration
 
@@ -31,7 +32,7 @@ fun rememberFlickToDismissState(
 
 @Stable
 sealed interface FlickToDismissState {
-  val offset: Float
+  val offset: Offset
   val rotationZ: Float
   val gestureState: GestureState
 
