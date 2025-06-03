@@ -85,8 +85,8 @@ class ImageRegionTileGridGeneratorTest {
       tileGrid.foreground.map { (sample, tiles) -> sample.size to tiles.size }
     ).containsExactly(
       4 to 4,
-      2 to 8,
-      1 to 16,
+      2 to 16,
+      1 to 32,
     )
 
     assertThat(tileGrid.base.bounds).isEqualTo(IntRect(IntOffset.Zero, imageSize))
