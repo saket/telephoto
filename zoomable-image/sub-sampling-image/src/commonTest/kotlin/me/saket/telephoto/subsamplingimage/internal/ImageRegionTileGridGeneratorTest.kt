@@ -62,6 +62,56 @@ class ImageRegionTileGridGeneratorTest {
     assertThat(tileGrid.foreground).isNotEmpty()
   }
 
+  @Test fun `image aspect ratio less than half of screen aspect ratio`() {
+    val imageSize = IntSize(
+      width = 9888,
+      height = 12800
+    )
+    val tileGrid = ImageRegionTileGrid.generate(
+      viewportSize = IntSize(
+        width = 2560,
+        height = 1600
+      ),
+      unscaledImageSize = imageSize
+    )
+
+    // Verify that the layers are sorted by their sample size.
+    // Max sampling at the top. Highest quality layer with least sampling at the bottom.
+    assertThat(tileGrid.base.sampleSize.size).isEqualTo(8)
+    assertThat(tileGrid.foreground.keys.map { it.size }).containsExactly(4, 2, 1)
+
+    // Verify that the number of tiles for each sample size is correct.
+    assertThat(
+      tileGrid.foreground.map { (sample, tiles) -> sample.size to tiles.size }
+    ).containsExactly(
+      4 to 4,
+      2 to 16,
+      1 to 64,
+    )
+
+    assertThat(tileGrid.base.bounds).isEqualTo(IntRect(IntOffset.Zero, imageSize))
+
+    tileGrid.foreground.forEach { (sampleSize, tiles) ->
+      val name = "Sample size = ${sampleSize.size}"
+
+      // Verify that the tiles cover the entire image without any gaps.
+      assertThat(tiles.minOf { it.bounds.left }, name).isEqualTo(0)
+      assertThat(tiles.minOf { it.bounds.top }, name).isEqualTo(0)
+      assertThat(tiles.maxOf { it.bounds.right }, name).isEqualTo(imageSize.width)
+      assertThat(tiles.maxOf { it.bounds.bottom }, name).isEqualTo(imageSize.height)
+      assertThat(tiles.sumOf { it.bounds.area }, name).isEqualTo(imageSize.area)
+
+      // Verify that the tiles don't have any overlap.
+      val overlappingTiles: List<ImageRegionTile> = tiles.flatMap { tile ->
+        tiles.minus(tile).filter { other ->
+          tile.bounds.overlaps(other.bounds)
+        }
+      }
+      assertThat(overlappingTiles, name).isEmpty()
+    }
+
+  }
+
   @Test fun `image size larger than viewport bounds`() {
     val imageSize = IntSize(
       width = 9734,
