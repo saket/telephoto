@@ -65,6 +65,11 @@ internal fun ImageRegionTileGrid.Companion.generate(
   )
 }
 
+/** Calculates a minimum tile size that:
+ * - is less than half the viewport size
+ * - divides the unscaled image size by a multiple of 2
+ * - as large as possible
+ * */
 internal fun ImageRegionTileGrid.Companion.defaultMinSize(
   viewportSize: IntSize,
   unscaledImageSize: IntSize,
