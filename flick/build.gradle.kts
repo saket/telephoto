@@ -11,6 +11,7 @@ kotlin {
       dependencies {
         api(compose.foundation)
         api(projects.annotations)
+        implementation(projects.zoomable)
         implementation(compose.uiUtil)
       }
     }

@@ -22,6 +22,11 @@ fun rememberFlickToDismissState(
   dismissThresholdRatio: Float = 0.2f,
   rotateOnDrag: Boolean = true,
 ): FlickToDismissState {
+  // todo: should these remember keys be mutable states?
+  check(dismissThresholdRatio > 0f) {
+    "The dismiss threshold ratio must be a non-zero value."
+  }
+
   return remember(dismissThresholdRatio, rotateOnDrag) {
     RealFlickToDismissState(
       dismissThresholdRatio = dismissThresholdRatio,
@@ -40,7 +45,7 @@ sealed interface FlickToDismissState {
    * Distance dragged as a fraction of the content's height.
    *
    * @return A value between 0 and 1, where 0 indicates that the content is fully settled in its
-   * default position and 1 indicates that the content is past its dismiss threshold
+   * default position and 1 indicates that the content is past its layout height.
    */
   val offsetFraction: Float
 

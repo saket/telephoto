@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -47,7 +48,11 @@ import androidx.compose.ui.unit.dp
 import coil.request.ImageRequest
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.sharedelements.SharedElementTransitionScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismiss
 import me.saket.telephoto.flick.FlickToDismissState
@@ -180,7 +185,10 @@ private fun SharedElementTransitionScope.MediaPage(
   val zoomableState = rememberZoomableState()
   val focusRequester = remember { FocusRequester() }
 
-  val flickState = rememberFlickToDismissState(dismissThresholdRatio = 0.05f)
+  val flickState = rememberFlickToDismissState(
+    rotateOnDrag = false,
+    dismissThresholdRatio = 0.15f, // todo: change default to 0.1 as well?
+  )
   CloseScreenOnFlickDismissEffect(flickState)
 
   FlickToDismiss(
@@ -249,14 +257,16 @@ private fun CloseScreenOnFlickDismissEffect(flickState: FlickToDismissState) {
   val backDispatcher = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
   val gestureState = flickState.gestureState
 
+  // todo: what if the state never enters Dismissing? maybe because animations are disabled?
   if (gestureState is FlickToDismissState.GestureState.Dismissing) {
     LaunchedEffect(Unit) {
-      // Schedule an exit in advance because there is a slight delay from when an exit
-      // navigation is issued to when the screen actually hides from the UI. Gotta think
-      // of a better way to do this. Could the flick animation integrate with the navigation
-      // framework's exit transition?
-      delay(gestureState.animationDuration / 2)
-      backDispatcher.onBackPressed()
+      withContext(NonCancellable) {
+        // Let the content animate its dismissal for a moment before starting the back transition
+        // because compose UI does not support content transformations during shared element transitions.
+        // https://issuetracker.google.com/issues/421153547
+        delay(gestureState.animationDuration)
+        backDispatcher.onBackPressed()
+      }
     }
   }
 }

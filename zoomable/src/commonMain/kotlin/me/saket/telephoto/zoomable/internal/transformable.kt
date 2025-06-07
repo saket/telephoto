@@ -286,6 +286,7 @@ private fun ViewConfiguration.pointerSlop(pointerType: PointerType): Float {
   }
 }
 
+// todo: replace this with Velocity#toValidVelocity()
 // Workaround for https://github.com/saket/telephoto/issues/97
 // (https://issuetracker.google.com/issues/309841148#comment7)
 private fun VelocityTracker.calculateFiniteVelocity(maximumVelocity: Velocity): Velocity {

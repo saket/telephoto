@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.internal.HapticEffect
 import me.saket.telephoto.zoomable.internal.HardwareShortcutsElement
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
@@ -242,7 +243,7 @@ private class ZoomableNode(
   val onQuickZoomStopped = {
     if (state.isZoomOutsideRange()) {
       coroutineScope.launch {
-        hapticFeedback.performHapticFeedback()
+        hapticFeedback.performHapticFeedback(HapticEffect.Overzoom)
         state.animateSettlingOfZoomOnGestureEnd()
       }
     }
@@ -251,7 +252,7 @@ private class ZoomableNode(
     if (state.isReadyForInteraction) {
       coroutineScope.launch {
         if (state.isZoomOutsideRange()) {
-          hapticFeedback.performHapticFeedback()
+          hapticFeedback.performHapticFeedback(HapticEffect.Overzoom)
           state.animateSettlingOfZoomOnGestureEnd()
         } else {
           state.fling(velocity = velocity, density = requireDensity())
