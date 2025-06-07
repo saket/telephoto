@@ -5,10 +5,33 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 
+/**
+ * Generates a 3D tile grid for a zoomable image.
+ *
+ * Produces a list of 2D tile collections -- one for each zoom level.
+ * The base tile spans the full image, while higher zoom levels contain
+ * smaller tiles with adjusted sample sizes.
+ */
 internal fun ImageRegionTileGrid.Companion.generate(
   viewportSize: IntSize,
   unscaledImageSize: IntSize,
-  minTileSize: IntSize = defaultMinSize(viewportSize, unscaledImageSize),
+  preferConsistentTileSize: Boolean = true,
+): ImageRegionTileGrid {
+  return generate(
+    viewportSize = viewportSize,
+    unscaledImageSize = unscaledImageSize,
+    minTileSize = if (preferConsistentTileSize) {
+      calculateMinSizeForEqualSizedTiles(viewportSize, unscaledImageSize)
+    } else {
+      viewportSize / 2
+    },
+  )
+}
+
+internal fun ImageRegionTileGrid.Companion.generate(
+  viewportSize: IntSize,
+  unscaledImageSize: IntSize,
+  minTileSize: IntSize,
 ): ImageRegionTileGrid {
   val baseSampleSize = ImageSampleSize.calculateFor(
     viewportSize = viewportSize,
@@ -70,12 +93,11 @@ internal fun ImageRegionTileGrid.Companion.generate(
  * - divides the unscaled image size by a multiple of 2
  * - as large as possible
  * */
-internal fun ImageRegionTileGrid.Companion.defaultMinSize(
+private fun calculateMinSizeForEqualSizedTiles(
   viewportSize: IntSize,
   unscaledImageSize: IntSize,
 ): IntSize {
   val minWidth: Int
-
   var candidateWidth = unscaledImageSize.width
   while (candidateWidth > viewportSize.width / 2) {
     candidateWidth /= 2

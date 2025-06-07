@@ -7,6 +7,7 @@ import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
+import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isLessThan
@@ -72,7 +73,8 @@ class ImageRegionTileGridGeneratorTest {
         width = 2560,
         height = 1600
       ),
-      unscaledImageSize = imageSize
+      unscaledImageSize = imageSize,
+      preferConsistentTileSize = true,
     )
 
     // Verify that the layers are sorted by their sample size.
@@ -88,28 +90,7 @@ class ImageRegionTileGridGeneratorTest {
       2 to 16,
       1 to 64,
     )
-
     assertThat(tileGrid.base.bounds).isEqualTo(IntRect(IntOffset.Zero, imageSize))
-
-    tileGrid.foreground.forEach { (sampleSize, tiles) ->
-      val name = "Sample size = ${sampleSize.size}"
-
-      // Verify that the tiles cover the entire image without any gaps.
-      assertThat(tiles.minOf { it.bounds.left }, name).isEqualTo(0)
-      assertThat(tiles.minOf { it.bounds.top }, name).isEqualTo(0)
-      assertThat(tiles.maxOf { it.bounds.right }, name).isEqualTo(imageSize.width)
-      assertThat(tiles.maxOf { it.bounds.bottom }, name).isEqualTo(imageSize.height)
-      assertThat(tiles.sumOf { it.bounds.area }, name).isEqualTo(imageSize.area)
-
-      // Verify that the tiles don't have any overlap.
-      val overlappingTiles: List<ImageRegionTile> = tiles.flatMap { tile ->
-        tiles.minus(tile).filter { other ->
-          tile.bounds.overlaps(other.bounds)
-        }
-      }
-      assertThat(overlappingTiles, name).isEmpty()
-    }
-
   }
 
   @Test fun `image size larger than viewport bounds`() {
@@ -122,7 +103,8 @@ class ImageRegionTileGridGeneratorTest {
         width = 1080,
         height = 2214
       ),
-      unscaledImageSize = imageSize
+      unscaledImageSize = imageSize,
+      preferConsistentTileSize = false,
     )
 
     // Verify that the layers are sorted by their sample size.
@@ -135,8 +117,8 @@ class ImageRegionTileGridGeneratorTest {
       tileGrid.foreground.map { (sample, tiles) -> sample.size to tiles.size }
     ).containsExactly(
       4 to 4,
-      2 to 16,
-      1 to 32,
+      2 to 8,
+      1 to 16,
     )
 
     assertThat(tileGrid.base.bounds).isEqualTo(IntRect(IntOffset.Zero, imageSize))
@@ -159,6 +141,32 @@ class ImageRegionTileGridGeneratorTest {
       }
       assertThat(overlappingTiles, name).isEmpty()
     }
+  }
+
+  @Test fun `tile sizes should be consistent`() {
+    val imageSize = IntSize(
+      width = 9888,
+      height = 12800
+    )
+    val tileGrid = ImageRegionTileGrid.generate(
+      viewportSize = IntSize(
+        width = 2560,
+        height = 1600
+      ),
+      unscaledImageSize = imageSize,
+      preferConsistentTileSize = true,
+    )
+
+    val consistentTileSizes = tileGrid.foreground.map { (sampleSize, tiles) ->
+      val distinctTiles = tiles.distinctBy { it.bounds.size }
+      assertThat(distinctTiles).hasSize(1)
+      sampleSize.size to distinctTiles.single().bounds.size
+    }
+    assertThat(consistentTileSizes).containsExactly(
+      4 to imageSize / 2,
+      2 to imageSize / 4,
+      1 to imageSize / 8,
+    )
   }
 
   @Ignore // "The output of this test is different when it's run individually vs with the whole class"

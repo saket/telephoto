@@ -37,7 +37,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.flow.filter
+import me.saket.telephoto.subsamplingimage.RealSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.contentDescription
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.internal.FocusForwarder
@@ -219,7 +221,9 @@ fun ZoomableImage(
           imageSource = delegate.source,
           zoomableState = state.zoomableState,
           imageOptions = delegate.imageOptions
-        )
+        ).also {
+          it.asReal().preferConsistentTileSize = false
+        }
         DisposableEffect(state, subSamplingState) {
           state.subSamplingState = subSamplingState
           onDispose {
@@ -339,6 +343,9 @@ private val ZoomableImageSource.ResolveResult.crossfadeDurationMs: Int
 
 private val ZoomableImageState.realZoomableState: RealZoomableState
   get() = zoomableState as RealZoomableState  // Safe because ZoomableState is a sealed type.
+
+private fun SubSamplingImageState.asReal(): RealSubSamplingImageState =
+  this as RealSubSamplingImageState  // Safe because SubSamplingImageState is a sealed type.
 
 private fun ZoomableImageState.hardwareShortcutsEnabled(): Boolean {
   return realZoomableState.hardwareShortcutsSpec.enabled

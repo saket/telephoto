@@ -72,6 +72,23 @@ internal class RealSubSamplingImageState(
   internal var showTileBounds = false  // Only used by tests.
 
   /**
+   * Controls whether the image is divided into equally sized tiles.
+   *
+   * When enabled, all tiles are generated with uniform dimensions. This creates a
+   * predictable tile layout, ideal for dynamic content such as PDFs, in exchange
+   * for a potentially higher number of tiles.
+   *
+   * When disabled, the tile sizes may vary, particularly along the image edges, in
+   * order to reduce the total number of tiles. This is preferred for raster image
+   * formats like JPEG and PNG, where decoding bitmaps for fewer, larger tiles is
+   * typically more performant than loading many smaller ones.
+   *
+   * This is currently internal as there hasn't yet been a clear external use case.
+   * If you'd like to control this behavior, please file an issue!
+   */
+  internal var preferConsistentTileSize by mutableStateOf(true)
+
+  /**
    * Images collected from [ImageCache].
    *
    * Loaded images are kept in a separate state instead of being combined with viewport tiles
@@ -102,6 +119,7 @@ internal class RealSubSamplingImageState(
       ImageRegionTileGrid.generate(
         viewportSize = viewportSize!!,
         unscaledImageSize = imageOrPreviewSize!!,
+        preferConsistentTileSize = preferConsistentTileSize,
       )
     } else null
   }
