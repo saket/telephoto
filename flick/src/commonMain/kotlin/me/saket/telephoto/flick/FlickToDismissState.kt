@@ -6,6 +6,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import dev.drewhamilton.poko.Poko
+import me.saket.telephoto.flick.FlickToDismissState.GestureState
 import kotlin.time.Duration
 
 /**
@@ -22,6 +23,10 @@ fun rememberFlickToDismissState(
   dismissThresholdRatio: Float = 0.2f,
   rotateOnDrag: Boolean = true,
 ): FlickToDismissState {
+  check(dismissThresholdRatio > 0f) {
+    "The dismiss threshold ratio must be a non-zero value."
+  }
+
   return remember(dismissThresholdRatio, rotateOnDrag) {
     RealFlickToDismissState(
       dismissThresholdRatio = dismissThresholdRatio,
@@ -40,7 +45,7 @@ sealed interface FlickToDismissState {
    * Distance dragged as a fraction of the content's height.
    *
    * @return A value between 0 and 1, where 0 indicates that the content is fully settled in its
-   * default position and 1 indicates that the content is past its dismiss threshold
+   * default position and 1 indicates that the content is past its layout height.
    */
   val offsetFraction: Float
 
