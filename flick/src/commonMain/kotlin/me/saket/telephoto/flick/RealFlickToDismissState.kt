@@ -137,7 +137,8 @@ internal class RealFlickToDismissState(
     internal const val FlingSlopMultiplier = 10f // A large enough value to exclude short flings.
 
     private val AnimationSpec = spring(
-      stiffness = Spring.StiffnessMediumLow,
+      // Kept in sync with ZoomableState.DefaultSettleAnimationSpec.
+      stiffness = Spring.StiffnessMedium,
       // A non-null threshold is used to avoid long trailing animations at the end,
       // which helps prevent unintended horizontal swipes from being intercepted.
       visibilityThreshold = Offset.VisibilityThreshold,
