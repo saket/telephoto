@@ -178,7 +178,9 @@ class SubSamplingImageTest {
         state = rememberSubSamplingImageState(
           zoomableState = zoomableState,
           imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-        ),
+        ).also {
+          it.asReal().preferConsistentTileSize = true
+        },
         contentDescription = null,
       )
     }
@@ -277,6 +279,7 @@ class SubSamplingImageTest {
             imageSource = imageSource,
           ).asReal().also {
             it.showTileBounds = true
+            it.preferConsistentTileSize = true
           },
           contentDescription = null,
         )
@@ -322,6 +325,7 @@ class SubSamplingImageTest {
           imageSource = imageSource,
         ).asReal().also {
           it.showTileBounds = true
+          it.preferConsistentTileSize = true
         },
         contentDescription = null,
       )
@@ -364,7 +368,9 @@ class SubSamplingImageTest {
               centroid = Offset.Zero,
             )
           },
-        )
+        ).also {
+          it.asReal().preferConsistentTileSize = true
+        }
 
         SubSamplingImage(
           modifier = Modifier
@@ -457,6 +463,7 @@ class SubSamplingImageTest {
           imageSource = SubSamplingImageSource.asset("pahade.jpg"),
         ).asReal().also {
           it.showTileBounds = true
+          it.preferConsistentTileSize = true
         },
         contentDescription = null,
       )
@@ -656,7 +663,9 @@ class SubSamplingImageTest {
       imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = imageSource,
-      )
+      ).also {
+        it.asReal().preferConsistentTileSize = true
+      }
       SubSamplingImage(
         modifier = Modifier
           .fillMaxSize()
@@ -709,7 +718,9 @@ class SubSamplingImageTest {
       imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = imageSource,
-      )
+      ).also {
+        it.asReal().preferConsistentTileSize = true
+      }
       SubSamplingImage(
         modifier = Modifier
           .fillMaxSize()
