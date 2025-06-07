@@ -66,8 +66,13 @@ fun FlickToDismiss(
 /** Applies a spring-based easing to changes in drag offsets for smoother, more natural motion. */
 @Composable
 private fun FlickToDismissState.smoothOffset(): State<Offset> {
+  val isRubberBanding = when (val it = gestureState) {
+    is GestureState.Dragging -> !it.willDismissOnRelease
+    is Resetting -> true
+    else -> false
+  }
   return animateOffsetAsState(
-    targetValue = offset,
+    targetValue = if (isRubberBanding) offset / 2f else offset,
     animationSpec = spring(stiffness = Spring.StiffnessMedium),
   )
 }
