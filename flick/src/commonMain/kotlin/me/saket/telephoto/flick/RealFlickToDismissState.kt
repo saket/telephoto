@@ -85,8 +85,8 @@ internal class RealFlickToDismissState(
   }
 
   internal suspend fun animateDismissal(velocity: Float) {
-    draggableState.drag(MutatePriority.PreventUserInput) {
-      try {
+    try {
+      draggableState.drag(MutatePriority.PreventUserInput) {
         val distanceCoveredByRotation = if (rotateOnDrag) {
           val theta = MaxRotationInDegrees.toRadians()
           (1f - sin(theta)) * (theta * (contentSize.diagonal / 2))
@@ -100,15 +100,13 @@ internal class RealFlickToDismissState(
           ),
           initialVelocity = velocity,
           animationSpec = AnimationSpec,
-          onStart = { duration ->
-            gestureState = Dismissing(duration)
-          }
+          onStart = { duration -> gestureState = Dismissing(duration) },
         ) { value ->
           dragBy(value - offset)
         }
-      } finally {
-        gestureState = Dismissed
       }
+    } finally {
+      gestureState = Dismissed
     }
   }
 
