@@ -47,7 +47,9 @@ import androidx.compose.ui.unit.dp
 import coil.request.ImageRequest
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.sharedelements.SharedElementTransitionScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismiss
 import me.saket.telephoto.flick.FlickToDismissState
@@ -251,12 +253,13 @@ private fun CloseScreenOnFlickDismissEffect(flickState: FlickToDismissState) {
 
   if (gestureState is FlickToDismissState.GestureState.Dismissing) {
     LaunchedEffect(Unit) {
-      // Schedule an exit in advance because there is a slight delay from when an exit
-      // navigation is issued to when the screen actually hides from the UI. Gotta think
-      // of a better way to do this. Could the flick animation integrate with the navigation
-      // framework's exit transition?
-      delay(gestureState.animationDuration / 2)
-      backDispatcher.onBackPressed()
+      withContext(NonCancellable) {
+        // Let the content animate its dismissal for a moment before starting the back transition
+        // because compose UI does not support content transformations during shared element transitions.
+        // https://issuetracker.google.com/issues/421153547
+        delay(gestureState.animationDuration)
+        backDispatcher.onBackPressed()
+      }
     }
   }
 }
