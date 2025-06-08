@@ -36,6 +36,7 @@ import me.saket.telephoto.flick.internal.verticalDragThenDraggable2D
 fun FlickToDismiss(
   state: FlickToDismissState,
   modifier: Modifier = Modifier,
+  enabled: Boolean = true,
   content: @Composable BoxScope.() -> Unit,
 ) {
   val scope = rememberCoroutineScope()
@@ -47,7 +48,7 @@ fun FlickToDismiss(
       .offset { offset.value.round() }
       .graphicsLayer { rotationZ = state.rotationZ }
       .verticalDragThenDraggable2D(
-        enabled = true,
+        enabled = enabled,
         state = state.draggableState,
         startDragImmediately = { state.gestureState is Resetting },
         onDragStarted = { state.handleOnDragStarted(it) },
@@ -86,6 +87,22 @@ fun FlickToDismiss(
         }
       }
   }
+}
+
+@Composable
+@ExperimentalTelephotoApi
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun FlickToDismiss(
+  state: FlickToDismissState,
+  modifier: Modifier = Modifier,
+  content: @Composable BoxScope.() -> Unit,
+) {
+  FlickToDismiss(
+    state = state,
+    modifier = modifier,
+    enabled = true,
+    content = content,
+  )
 }
 
 /** Applies a spring-based easing to changes in drag offsets for smoother, more natural motion. */
