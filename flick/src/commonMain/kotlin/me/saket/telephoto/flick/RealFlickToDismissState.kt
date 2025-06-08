@@ -28,7 +28,7 @@ import kotlin.math.sqrt
 
 @Stable
 internal class RealFlickToDismissState(
-  internal val dismissThresholdRatio: Float = 0.3f,
+  internal val dismissThresholdRatio: Float = 0.2f, // Kept in sync with rememberFlickToDismissState().
   private val rotateOnDrag: Boolean = true,
 ) : FlickToDismissState {
   override var offset: Offset by mutableStateOf(Offset.Zero)
