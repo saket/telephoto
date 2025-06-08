@@ -182,7 +182,7 @@ private fun SharedElementTransitionScope.MediaPage(
   val zoomableState = rememberZoomableState()
   val focusRequester = remember { FocusRequester() }
 
-  val flickState = rememberFlickToDismissState(dismissThresholdRatio = 0.05f)
+  val flickState = rememberFlickToDismissState(rotateOnDrag = false)
   CloseScreenOnFlickDismissEffect(flickState)
 
   FlickToDismiss(
