@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Velocity
 import me.saket.telephoto.flick.FlickToDismissState.GestureState
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissed
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing
@@ -84,7 +85,7 @@ internal class RealFlickToDismissState(
     }
   }
 
-  internal suspend fun animateDismissal(velocity: Float) {
+  internal suspend fun animateDismissal(velocity: Velocity) {
     try {
       draggableState.drag(MutatePriority.PreventUserInput) {
         val distanceCoveredByRotation = if (rotateOnDrag) {

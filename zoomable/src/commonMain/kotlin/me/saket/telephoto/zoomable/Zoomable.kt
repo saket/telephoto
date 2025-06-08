@@ -7,12 +7,16 @@ import androidx.compose.foundation.focusable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
@@ -21,7 +25,6 @@ import me.saket.telephoto.zoomable.internal.HardwareShortcutsElement
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
 import me.saket.telephoto.zoomable.internal.TransformableElement
-import me.saket.telephoto.zoomable.internal.hapticFeedbackPerformer
 import me.saket.telephoto.zoomable.internal.stopTransformation
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.CoordinateSystem
@@ -232,7 +235,8 @@ private class ZoomableNode(
   onDoubleClick: DoubleClickToZoomListener?,
 ) : DelegatingNode(), CompositionLocalConsumerModifierNode {
 
-  private val hapticFeedback = hapticFeedbackPerformer()
+  private val hapticFeedback: HapticFeedback
+    get() = currentValueOf(LocalHapticFeedback)
 
   val onPress: () -> Unit = {
     coroutineScope.launch {
@@ -242,7 +246,7 @@ private class ZoomableNode(
   val onQuickZoomStopped = {
     if (state.isZoomOutsideRange()) {
       coroutineScope.launch {
-        hapticFeedback.performHapticFeedback()
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.Reject)
         state.animateSettlingOfZoomOnGestureEnd()
       }
     }
@@ -251,7 +255,7 @@ private class ZoomableNode(
     if (state.isReadyForInteraction) {
       coroutineScope.launch {
         if (state.isZoomOutsideRange()) {
-          hapticFeedback.performHapticFeedback()
+          hapticFeedback.performHapticFeedback(HapticFeedbackType.Reject)
           state.animateSettlingOfZoomOnGestureEnd()
         } else {
           state.fling(velocity = velocity, density = requireDensity())

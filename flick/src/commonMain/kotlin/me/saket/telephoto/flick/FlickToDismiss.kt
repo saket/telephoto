@@ -54,7 +54,7 @@ fun FlickToDismiss(
         onDragStopped = { velocity ->
           scope.launch {
             if (state.willDismissOnRelease(velocity.y)) {
-              state.animateDismissal(velocity.y)
+              state.animateDismissal(velocity)
             } else {
               state.animateReset()
             }

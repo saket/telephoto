@@ -5,6 +5,7 @@ import androidx.compose.animation.core.TargetBasedAnimation
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -15,7 +16,7 @@ import kotlin.time.Duration.Companion.nanoseconds
 internal suspend fun animateWithDuration(
   initialValue: Offset,
   targetValue: Offset,
-  initialVelocity: Float,
+  initialVelocity: Velocity,
   animationSpec: AnimationSpec<Offset>,
   onStart: (duration: Duration) -> Unit,
   block: (value: Offset) -> Unit,
@@ -25,13 +26,13 @@ internal suspend fun animateWithDuration(
     targetValue = targetValue,
     typeConverter = Offset.VectorConverter,
     animationSpec = animationSpec,
-    initialVelocity = Offset(initialVelocity, initialVelocity),
+    initialVelocity = Offset(initialVelocity.x, initialVelocity.y),
   )
   onStart(anim.durationNanos.nanoseconds)
   animate(
     initialValue = initialValue,
     targetValue = targetValue,
-    initialVelocity = Offset(initialVelocity, initialVelocity),
+    initialVelocity = Offset(initialVelocity.x, initialVelocity.y),
     animationSpec = animationSpec,
     block = { value, _ -> block(value) },
     typeConverter = Offset.VectorConverter,
