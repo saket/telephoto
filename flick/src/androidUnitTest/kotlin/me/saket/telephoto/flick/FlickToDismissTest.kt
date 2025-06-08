@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.cash.molecule.RecompositionMode
@@ -147,7 +148,7 @@ class FlickToDismissTest {
     val scope = CoroutineScope(Dispatchers.IO)
     scope.launchMolecule(mode = RecompositionMode.Immediate) {
       LaunchedEffect(Unit) {
-        state.animateDismissal(velocity = 0f)
+        state.animateDismissal(velocity = Velocity.Zero)
       }
     }
     while (true) {
@@ -237,7 +238,7 @@ class FlickToDismissTest {
 
     val gestureStates = backgroundScope.launchMolecule(mode = RecompositionMode.Immediate) {
       LaunchedEffect(Unit) {
-        state.animateDismissal(velocity = 0f)
+        state.animateDismissal(Velocity.Zero)
       }
       state.gestureState
     }
@@ -355,8 +356,8 @@ class FlickToDismissTest {
 
           // This time, trigger a dismiss directly, without crossing the threshold.
           // Only one haptic feedback should be played in response to this.
-          // The total haptic feedback count should be 3 after this.
-          state.animateDismissal(velocity = -1000f)
+          state.animateDismissal(velocity = Velocity(-1000f, -1000f))
+          assertThat(recordingHapticFeedback.count).isEqualTo(3)
         }
       }
     }
