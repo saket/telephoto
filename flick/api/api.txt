@@ -7,11 +7,11 @@ package me.saket.telephoto.flick {
 
   @androidx.compose.runtime.Stable public sealed interface FlickToDismissState {
     method public me.saket.telephoto.flick.FlickToDismissState.GestureState getGestureState();
-    method public float getOffset();
+    method public long getOffset();
     method public float getOffsetFraction();
     method public float getRotationZ();
     property public abstract me.saket.telephoto.flick.FlickToDismissState.GestureState gestureState;
-    property public abstract float offset;
+    property public abstract long offset;
     property public abstract float offsetFraction;
     property public abstract float rotationZ;
   }
