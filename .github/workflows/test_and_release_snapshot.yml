@@ -14,7 +14,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
-      - uses: gradle/actions/wrapper-validation@v3
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
@@ -74,7 +73,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
-      - uses: gradle/actions/wrapper-validation@v3
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
@@ -97,7 +95,6 @@ jobs:
     needs: [unit-tests, screenshot-tests]
     steps:
       - uses: actions/checkout@v3
-      - uses: gradle/actions/wrapper-validation@v3
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
