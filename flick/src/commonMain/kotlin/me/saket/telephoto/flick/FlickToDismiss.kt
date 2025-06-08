@@ -22,7 +22,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
-import me.saket.telephoto.flick.FlickToDismissState.GestureState
+import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissed
+import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing
+import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
 import me.saket.telephoto.flick.internal.verticalDragThenDraggable2D
 
@@ -71,12 +73,13 @@ fun FlickToDismiss(
     snapshotFlow { state.gestureState }
       .zipWithPrevious(::Pair)
       .collect { (previous, current) ->
-        val thresholdCrossed = current.willDismissOnRelease() != previous.willDismissOnRelease()
+        val thresholdCrossed = current is Dragging && previous is Dragging &&
+          (current.willDismissOnRelease != previous.willDismissOnRelease)
 
         // The gesture state can go directly from Dragging(willDismissOnRelease=false)
         // to Dismissing/Dismissed because StateFlows don't guarantee emission of intermediate states.
-        val jumpedToDismiss = (current is GestureState.Dismissing || current is GestureState.Dismissed)
-          && !previous.willDismissOnRelease()
+        val jumpedToDismiss = (current is Dismissing || current is Dismissed)
+          && (previous is Dragging && !previous.willDismissOnRelease)
 
         if (thresholdCrossed || jumpedToDismiss) {
           haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -89,7 +92,7 @@ fun FlickToDismiss(
 @Composable
 private fun FlickToDismissState.smoothOffset(): State<Offset> {
   val isRubberBanding = when (val it = gestureState) {
-    is GestureState.Dragging -> !it.willDismissOnRelease
+    is Dragging -> !it.willDismissOnRelease
     is Resetting -> true
     else -> false
   }
@@ -98,9 +101,6 @@ private fun FlickToDismissState.smoothOffset(): State<Offset> {
     animationSpec = spring(stiffness = Spring.StiffnessMedium),
   )
 }
-
-private fun GestureState.willDismissOnRelease(): Boolean =
-  this is GestureState.Dragging && willDismissOnRelease
 
 private fun <T, R> Flow<T>.zipWithPrevious(
   mapper: (previous: T, current: T) -> R,

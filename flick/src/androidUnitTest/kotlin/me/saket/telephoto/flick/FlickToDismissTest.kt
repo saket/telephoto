@@ -1,22 +1,34 @@
 package me.saket.telephoto.flick
 
-import android.content.Context
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.launchMolecule
 import app.cash.paparazzi.DeviceConfig
@@ -35,6 +47,7 @@ import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import me.saket.telephoto.ExperimentalTelephotoApi
@@ -52,6 +65,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
 @OptIn(ExperimentalTelephotoApi::class)
@@ -62,7 +76,6 @@ class FlickToDismissTest {
     renderingMode = RenderingMode.SHRINK,
   )
   private val deviceConfig get() = DeviceConfig.PIXEL_5
-  private val context: Context get() = paparazzi.context
 
   @Test fun idle() {
     val state = RealFlickToDismissState()
@@ -83,6 +96,7 @@ class FlickToDismissTest {
     }
   }
 
+  // todo: use paparazzi.gif
   @Test fun `apply rotation during drag`(
     @TestParameter dragStartedAt: DragStartLocationParam
   ) = runBlocking {
@@ -121,10 +135,12 @@ class FlickToDismissTest {
     state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
     state.draggableState.drag {
       dragBy(
-        Offset(x = 0f, y = when (swipeDirection) {
-          UpwardSwipe -> -1f
-          DownwardSwipe -> 1f
-        })
+        Offset(
+          x = 0f, y = when (swipeDirection) {
+            UpwardSwipe -> -1f
+            DownwardSwipe -> 1f
+          }
+        )
       )
     }
 
@@ -185,6 +201,7 @@ class FlickToDismissTest {
     assertThat(state.willDismissOnRelease(velocity = 0f)).isTrue()
   }
 
+  // todo: use paparazzi.gif
   @Test fun `play reset animation`() = runTest {
     val state = RealFlickToDismissState()
     state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
@@ -208,6 +225,7 @@ class FlickToDismissTest {
     }
   }
 
+  // todo: use paparazzi.gif
   @Test fun `play dismiss animation`() = runTest {
     val state = RealFlickToDismissState()
     state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
@@ -257,6 +275,91 @@ class FlickToDismissTest {
       dragBy(Offset(x = -state.contentSize.width * 2f, y = -state.contentSize.height * 2f))
     }
     assertThat(state.offsetFraction).isEqualTo(1f)
+  }
+
+  @Test fun `play haptic feedback`() {
+    val state = RealFlickToDismissState(
+      dismissThresholdRatio = 0.2f,
+      rotateOnDrag = false,
+    )
+
+    val recordingHapticFeedback = object : HapticFeedback {
+      var count by mutableIntStateOf(0)
+
+      override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
+        count++
+      }
+    }
+
+    paparazzi.gif(fps = 60, end = 3.seconds) {
+      Box(
+        Modifier
+          .fillMaxWidth()
+          .height(1920.dp)
+          .background(MaterialTheme.colorScheme.background)
+      ) {
+        CompositionLocalProvider(LocalHapticFeedback provides recordingHapticFeedback) {
+          FlickToDismiss(
+            modifier = Modifier.fillMaxSize(),
+            state = state,
+          ) {
+            Box(
+              Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.secondary)
+                .padding(vertical = 100.dp),
+            )
+          }
+        }
+
+        BasicText(
+          modifier = Modifier
+            .align(Alignment.BottomStart)
+            .padding(24.dp),
+          text = "Haptic feedback count = ${recordingHapticFeedback.count}",
+          style = TextStyle(
+            fontSize = 24.sp,
+            color = Color.Black,
+          ),
+        )
+      }
+
+      // todo: open source TouchRobot from Cash App for drawing these gestures in a much easier way.
+      if (state.contentSize != IntSize.Zero) {
+        LaunchedEffect(Unit) {
+          state.handleOnDragStarted(Offset(x = 20f, y = state.contentSize.height / 2f))
+
+          // Drag until the threshold is crossed.
+          val thresholdDistance = (state.dismissThresholdRatio * state.contentSize.height).toInt()
+          val pxPerMove = 10f
+
+          state.draggableState.drag(MutatePriority.UserInput) {
+            repeat((thresholdDistance + dpToPx(24)) / pxPerMove.toInt()) {
+              dragBy(Offset(0f, -pxPerMove))
+              delay(1)
+            }
+          }
+
+          delay(250)
+
+          // Reverse drag to move back under the threshold.
+          state.draggableState.drag(MutatePriority.UserInput) {
+            repeat(thresholdDistance / pxPerMove.toInt()) {
+              dragBy(Offset(0f, pxPerMove))
+              delay(1)
+            }
+          }
+
+          delay(250)
+
+          // This time, trigger a dismiss directly, without crossing the threshold.
+          // Only one haptic feedback should be played in response to this.
+          // The total haptic feedback count should be 3 after this.
+          state.animateDismissal(velocity = -1000f)
+        }
+      }
+    }
   }
 
   enum class DragStartLocationParam {
