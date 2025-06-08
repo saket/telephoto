@@ -95,7 +95,7 @@ class FlickToDismissTest {
         }
       )
       draggableState.drag {
-        dragBy(context.dp(-100f))
+        dragBy(Offset(0f, y = dpToPx(-100f)))
       }
     }
 
@@ -118,13 +118,13 @@ class FlickToDismissTest {
     @TestParameter swipeDirection: SwipeDirectionParam
   ) = runBlocking {
     val state = RealFlickToDismissState()
-    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = context.dp(300))
+    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
     state.draggableState.drag {
       dragBy(
-        when (swipeDirection) {
+        Offset(x = 0f, y = when (swipeDirection) {
           UpwardSwipe -> -1f
           DownwardSwipe -> 1f
-        }
+        })
       )
     }
 
@@ -162,10 +162,10 @@ class FlickToDismissTest {
 
   @Test fun `content can be dismissed after it has reached its dismiss threshold`() = runTest {
     val state = RealFlickToDismissState()
-    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = context.dp(300))
+    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
 
     state.draggableState.drag {
-      dragBy(1f)  // This will move the gesture state from Idle to Dragging.
+      dragBy(Offset(0f, 1f))  // This will move the gesture state from Idle to Dragging.
     }
 
     // When a fling is registered, the content can be dismissed if the velocity
@@ -175,22 +175,22 @@ class FlickToDismissTest {
 
     val dragNeededToDismiss = state.contentSize.height * state.dismissThresholdRatio + 1f
     state.draggableState.drag {
-      dragBy(dragNeededToDismiss - 5f)
+      dragBy(Offset(0f, dragNeededToDismiss - 5f))
     }
     assertThat(state.willDismissOnRelease(velocity = 0f)).isFalse()
 
     state.draggableState.drag {
-      dragBy(5f)
+      dragBy(Offset(0f, 5f))
     }
     assertThat(state.willDismissOnRelease(velocity = 0f)).isTrue()
   }
 
   @Test fun `play reset animation`() = runTest {
     val state = RealFlickToDismissState()
-    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = context.dp(300))
+    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
 
     state.draggableState.drag {
-      dragBy(context.dp(50f))
+      dragBy(Offset(dpToPx(70f), dpToPx(50f)))
     }
     assertThat(state.gestureState).isEqualTo(Dragging(willDismissOnRelease = false))
 
@@ -204,16 +204,16 @@ class FlickToDismissTest {
       skipItems(1)  // Dragging state.
       assertThat(awaitItem()).isEqualTo(Resetting)
       assertThat(awaitItem()).isEqualTo(Idle)
-      assertThat(state.offset).isEqualTo(0f)
+      assertThat(state.offset).isEqualTo(Offset.Zero)
     }
   }
 
   @Test fun `play dismiss animation`() = runTest {
     val state = RealFlickToDismissState()
-    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = context.dp(300))
+    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
 
     state.draggableState.drag {
-      dragBy(context.dp(200f))
+      dragBy(Offset(x = dpToPx(120f), y = dpToPx(200f)))
     }
     assertThat(state.gestureState).isEqualTo(Dragging(willDismissOnRelease = true))
 
@@ -227,7 +227,10 @@ class FlickToDismissTest {
       skipItems(1)  // Dragging state.
       assertThat(awaitItem()).isInstanceOf<Dismissing>()
       assertThat(awaitItem()).isEqualTo(Dismissed)
-      assertThat(state.offset).isGreaterThan(context.dp(300f))
+      state.offset.also {
+        assertThat(it.x).isEqualTo(dpToPx(120f))
+        assertThat(it.y).isGreaterThan(dpToPx(300f))
+      }
     }
   }
 
@@ -235,23 +238,23 @@ class FlickToDismissTest {
     val state = RealFlickToDismissState()
     assertThat(state.offsetFraction).isEqualTo(0f)
 
-    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = context.dp(300))
+    state.contentSize = IntSize(width = deviceConfig.screenWidth, height = dpToPx(300))
     assertThat(state.offsetFraction).isEqualTo(0f)
 
     state.draggableState.drag {
-      dragBy(context.dp(50f))
+      dragBy(Offset(10f, dpToPx(50f)))
     }
     assertThat(state.offsetFraction).isCloseTo(0.16f, delta = 0.01f)
 
     // Offset fraction should be positive even if the offset is negative.
     state.draggableState.drag {
-      dragBy(context.dp(-200f))
+      dragBy(Offset(-15f, dpToPx(-200f)))
     }
     assertThat(state.offsetFraction).isEqualTo(0.5f)
 
     // Offset fraction should remain within its bounds even when the content is dismissed beyond its height.
     state.draggableState.drag {
-      dragBy(-state.contentSize.height * 2f)
+      dragBy(Offset(x = -state.contentSize.width * 2f, y = -state.contentSize.height * 2f))
     }
     assertThat(state.offsetFraction).isEqualTo(1f)
   }
@@ -266,12 +269,12 @@ class FlickToDismissTest {
     DownwardSwipe,
   }
 
-  private fun Context.dp(value: Int): Int {
-    return dp(value.toFloat()).roundToInt()
+  private fun dpToPx(value: Int): Int {
+    return dpToPx(value.toFloat()).roundToInt()
   }
 
-  private fun Context.dp(value: Float): Float {
-    val density = resources.displayMetrics.density
+  private fun dpToPx(value: Float): Float {
+    val density = paparazzi.resources.displayMetrics.density
     return density * value
   }
 }
