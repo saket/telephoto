@@ -2,6 +2,7 @@
 
 package me.saket.telephoto.zoomable.coil3
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.getValue
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.LocalAsyncImageModelEqualityDelegate
@@ -46,7 +48,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
  * )
  * ```
  *
- * See [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImage] for full documentation of parameters.
+ * See [ZoomableImage()][ZoomableImage] for full documentation of parameters.
  */
 @Composable
 @NonRestartableComposable
@@ -65,6 +67,7 @@ fun ZoomableAsyncImage(
   onLongClick: ((Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
   ZoomableImage(
     image = ZoomableImageSource.coil(model, imageLoader),
@@ -80,12 +83,13 @@ fun ZoomableAsyncImage(
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
   )
 }
 
 /**
  * A zoomable image that can be loaded by Coil and displayed using
- * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
+ * [ZoomableImage()][ZoomableImageSource].
  *
  * Example usage:
  *
@@ -120,4 +124,43 @@ fun ZoomableImageSource.Companion.coil(
       imageLoaders = snapshotFlow { imageLoader },
     )
   }
+}
+
+@Composable
+@Suppress("unused")
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+) {
+  ZoomableAsyncImage(
+    model = model,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    imageLoader = imageLoader,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    gesturesEnabled = gesturesEnabled,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = onDoubleClick,
+    contentPadding = PaddingValues(0.dp),
+  )
 }
