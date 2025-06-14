@@ -44,8 +44,19 @@ package me.saket.telephoto.flick {
     field public static final me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting INSTANCE;
   }
 
+  @dev.drewhamilton.poko.Poko public static final class FlickToDismissState.RubberBandingSpec {
+    ctor public FlickToDismissState.RubberBandingSpec(optional float resistanceFactor);
+    field public static final me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec.Companion Companion;
+  }
+
+  public static final class FlickToDismissState.RubberBandingSpec.Companion {
+    method public me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec getDisabled();
+    property public final me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec Disabled;
+  }
+
   public final class FlickToDismissStateKt {
-    method @androidx.compose.runtime.Composable public static me.saket.telephoto.flick.FlickToDismissState rememberFlickToDismissState(optional float dismissThresholdRatio, optional boolean rotateOnDrag);
+    method @Deprecated @androidx.compose.runtime.Composable public static me.saket.telephoto.flick.FlickToDismissState rememberFlickToDismissState(optional float dismissThresholdRatio, optional boolean rotateOnDrag);
+    method @androidx.compose.runtime.Composable public static me.saket.telephoto.flick.FlickToDismissState rememberFlickToDismissState(optional float dismissThresholdRatio, optional boolean rotateOnDrag, optional me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec rubberBandingSpec);
   }
 
 }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.gestures.Draggable2DState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
@@ -22,6 +21,7 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dismissing
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Idle
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
+import me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec
 import me.saket.telephoto.flick.internal.animateWithDuration
 import me.saket.telephoto.flick.internal.toRadians
 import kotlin.math.abs
@@ -31,12 +31,14 @@ import kotlin.math.sqrt
 @Stable
 internal class RealFlickToDismissState(
   rotateOnDrag: Boolean = true,
+  rubberBandingSpec: RubberBandingSpec = RubberBandingSpec.Disabled,
   internal var dismissThresholdRatio: Float = 0.2f, // Kept in sync with rememberFlickToDismissState().
 ) : FlickToDismissState {
 
   override var offset: Offset by mutableStateOf(Offset.Zero)
   override var gestureState: GestureState by mutableStateOf(Idle)
   internal var rotateOnDrag: Boolean by mutableStateOf(rotateOnDrag)
+  internal var rubberBandingSpec: RubberBandingSpec by mutableStateOf(rubberBandingSpec)
 
   override val rotationZ: Float by derivedStateOf {
     if (this.rotateOnDrag) {

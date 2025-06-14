@@ -6,6 +6,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import dev.drewhamilton.poko.Poko
+import me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec
 import kotlin.time.Duration
 
 /**
@@ -21,6 +22,7 @@ import kotlin.time.Duration
 fun rememberFlickToDismissState(
   dismissThresholdRatio: Float = 0.2f,
   rotateOnDrag: Boolean = true,
+  rubberBandingSpec: RubberBandingSpec = RubberBandingSpec.Disabled,
 ): FlickToDismissState {
   check(dismissThresholdRatio > 0f) {
     "The dismiss threshold ratio must be a non-zero value."
@@ -31,6 +33,7 @@ fun rememberFlickToDismissState(
   }.also {
     it.rotateOnDrag = rotateOnDrag
     it.dismissThresholdRatio = dismissThresholdRatio
+    it.rubberBandingSpec = rubberBandingSpec
   }
 }
 
@@ -104,4 +107,40 @@ sealed interface FlickToDismissState {
      */
     data object Dismissed : GestureState
   }
+
+  /**
+   * Applies a rubber banding effect to the content while it is being dragged,
+   * up until the dismiss threshold is reached.
+   *
+   * @param resistanceFactor Controls the strength of the rubber banding effect.
+   * A value of `1f` disables the effect entirely (no resistance). Higher values
+   * increase resistance by proportionally reducing the visible drag distance.
+   * */
+  @Poko
+  class RubberBandingSpec(internal val resistanceFactor: Float = 2f) {
+    companion object {
+      val Disabled: RubberBandingSpec = RubberBandingSpec(1f)
+    }
+
+    init {
+      require(resistanceFactor > 0f) {
+        "resistanceFactor must be greater than 0 to avoid division by zero. " +
+          "To disable rubber banding, use 1f or RubberBandingSpec.Disabled."
+      }
+    }
+  }
+}
+
+@Composable
+@Suppress("unused")
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun rememberFlickToDismissState(
+  dismissThresholdRatio: Float = 0.2f,
+  rotateOnDrag: Boolean = true,
+): FlickToDismissState {
+  return rememberFlickToDismissState(
+    dismissThresholdRatio = dismissThresholdRatio,
+    rotateOnDrag = rotateOnDrag,
+    rubberBandingSpec = RubberBandingSpec.Disabled,
+  )
 }

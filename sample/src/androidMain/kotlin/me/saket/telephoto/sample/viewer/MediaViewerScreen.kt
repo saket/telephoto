@@ -53,6 +53,7 @@ import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.flick.FlickToDismiss
 import me.saket.telephoto.flick.FlickToDismissState
+import me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec
 import me.saket.telephoto.flick.rememberFlickToDismissState
 import me.saket.telephoto.sample.CropImageScreenKey
 import me.saket.telephoto.sample.MediaViewerScreenKey
@@ -182,7 +183,10 @@ private fun SharedElementTransitionScope.MediaPage(
   val zoomableState = rememberZoomableState()
   val focusRequester = remember { FocusRequester() }
 
-  val flickState = rememberFlickToDismissState(rotateOnDrag = false)
+  val flickState = rememberFlickToDismissState(
+    rotateOnDrag = false,
+    rubberBandingSpec = RubberBandingSpec(),
+  )
   CloseScreenOnFlickDismissEffect(flickState)
 
   FlickToDismiss(
