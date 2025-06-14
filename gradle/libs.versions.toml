@@ -2,7 +2,7 @@
 minSdk = "21"
 compileSdk = "35"
 kotlin = "2.1.21" # https://kotlinlang.org/docs/releases.html#release-details
-agp = "8.10.0"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
+agp = "8.10.1"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
 compose-multiplatform = "1.8.0" # https://github.com/JetBrains/compose-multiplatform/releases
 androidx-compose-runtime = "1.8.0" # https://developer.android.com/jetpack/androidx/releases/compose-runtime
 androidx-compose-ui = "1.8.0" # https://developer.android.com/jetpack/androidx/releases/compose-ui
