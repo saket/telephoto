@@ -6,7 +6,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import dev.drewhamilton.poko.Poko
-import me.saket.telephoto.flick.FlickToDismissState.GestureState
 import kotlin.time.Duration
 
 /**
@@ -27,11 +26,11 @@ fun rememberFlickToDismissState(
     "The dismiss threshold ratio must be a non-zero value."
   }
 
-  return remember(dismissThresholdRatio, rotateOnDrag) {
-    RealFlickToDismissState(
-      dismissThresholdRatio = dismissThresholdRatio,
-      rotateOnDrag = rotateOnDrag
-    )
+  return remember {
+    RealFlickToDismissState()
+  }.also {
+    it.rotateOnDrag = rotateOnDrag
+    it.dismissThresholdRatio = dismissThresholdRatio
   }
 }
 

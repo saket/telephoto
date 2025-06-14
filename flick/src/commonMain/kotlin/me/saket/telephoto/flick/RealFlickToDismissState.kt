@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.Draggable2DState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
@@ -29,14 +30,16 @@ import kotlin.math.sqrt
 
 @Stable
 internal class RealFlickToDismissState(
-  internal val dismissThresholdRatio: Float = 0.2f, // Kept in sync with rememberFlickToDismissState().
-  private val rotateOnDrag: Boolean = true,
+  rotateOnDrag: Boolean = true,
+  internal var dismissThresholdRatio: Float = 0.2f, // Kept in sync with rememberFlickToDismissState().
 ) : FlickToDismissState {
+
   override var offset: Offset by mutableStateOf(Offset.Zero)
   override var gestureState: GestureState by mutableStateOf(Idle)
+  internal var rotateOnDrag: Boolean by mutableStateOf(rotateOnDrag)
 
   override val rotationZ: Float by derivedStateOf {
-    if (rotateOnDrag) {
+    if (this.rotateOnDrag) {
       offsetFraction * if (dragStartedOnLeftSide) -MaxRotationInDegrees else MaxRotationInDegrees
     } else {
       0f
