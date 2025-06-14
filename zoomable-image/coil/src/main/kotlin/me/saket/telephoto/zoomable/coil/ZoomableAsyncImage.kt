@@ -86,6 +86,43 @@ fun ZoomableAsyncImage(
   )
 }
 
+/**
+ * A zoomable image that can be loaded by Coil and displayed using
+ * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
+ *
+ * Example usage:
+ *
+ * ```kotlin
+ * ZoomableImage(
+ *   image = ZoomableImageSource.coil("https://example.com/image.jpg"),
+ *   contentDescription = …
+ * )
+ *
+ * ZoomableImage(
+ *   image = ZoomableImageSource.coil(
+ *     ImageRequest.Builder(LocalContext.current)
+ *       .data("https://example.com/image.jpg")
+ *       .build()
+ *   ),
+ *   contentDescription = …
+ * )
+ * ```
+ */
+@Composable
+fun ZoomableImageSource.Companion.coil(
+  model: Any?,
+  imageLoader: ImageLoader = LocalContext.current.imageLoader
+): ZoomableImageSource {
+  val model by rememberUpdatedState(model)
+  val imageLoader by rememberUpdatedState(imageLoader)
+  return remember {
+    CoilImageSource(
+      models = snapshotFlow { model }.distinctUntilChanged(DefaultModelEqualityDelegate::equals),
+      imageLoaders = snapshotFlow { imageLoader },
+    )
+  }
+}
+
 @Composable
 @Suppress("unused")
 @NonRestartableComposable
@@ -161,41 +198,4 @@ fun ZoomableAsyncImage(
     onDoubleClick = DoubleClickToZoomListener.cycle(),
     contentPadding = PaddingValues(0.dp),
   )
-}
-
-/**
- * A zoomable image that can be loaded by Coil and displayed using
- * [ZoomableImage()][me.saket.telephoto.zoomable.ZoomableImageSource].
- *
- * Example usage:
- *
- * ```kotlin
- * ZoomableImage(
- *   image = ZoomableImageSource.coil("https://example.com/image.jpg"),
- *   contentDescription = …
- * )
- *
- * ZoomableImage(
- *   image = ZoomableImageSource.coil(
- *     ImageRequest.Builder(LocalContext.current)
- *       .data("https://example.com/image.jpg")
- *       .build()
- *   ),
- *   contentDescription = …
- * )
- * ```
- */
-@Composable
-fun ZoomableImageSource.Companion.coil(
-  model: Any?,
-  imageLoader: ImageLoader = LocalContext.current.imageLoader
-): ZoomableImageSource {
-  val model by rememberUpdatedState(model)
-  val imageLoader by rememberUpdatedState(imageLoader)
-  return remember {
-    CoilImageSource(
-      models = snapshotFlow { model }.distinctUntilChanged(DefaultModelEqualityDelegate::equals),
-      imageLoaders = snapshotFlow { imageLoader },
-    )
-  }
 }
