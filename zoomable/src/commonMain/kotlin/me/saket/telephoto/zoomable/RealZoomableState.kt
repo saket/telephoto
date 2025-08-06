@@ -252,10 +252,10 @@ internal class RealZoomableState internal constructor(
       val isAtMinZoom = oldZoom.isAtMinZoom(zoomSpec.range)
 
       // Apply overzoom effect if content is being over/under-zoomed.
-      val zoomDelta = if (isZoomingIn && isAtMaxZoom || isZoomingOut && isAtMinZoom) {
-        zoomSpec.maximum.overzoomEffect.adjust(zoomDelta)
-      } else {
-        zoomDelta
+      val zoomDelta = when {
+        isZoomingIn && isAtMaxZoom -> zoomSpec.maximum.overzoomEffect.adjust(zoomDelta)
+        isZoomingOut && isAtMinZoom -> zoomSpec.minimum.overzoomEffect.adjust(zoomDelta)
+        else -> zoomDelta
       }
       val newZoom = AbsoluteZoomFactor(
         baseZoom = inputs.baseZoom,
