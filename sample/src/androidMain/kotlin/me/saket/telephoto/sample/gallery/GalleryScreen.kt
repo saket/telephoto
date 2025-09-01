@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -53,11 +52,10 @@ internal fun GalleryScreen(
     }
   ) { contentPadding ->
     AlbumGrid(
-      modifier = Modifier
-        .padding(contentPadding)
-        .fillMaxSize(),
+      modifier = Modifier.fillMaxSize(),
       album = key.album,
       navigator = navigator,
+      contentPadding = contentPadding,
     )
   }
 }
@@ -67,13 +65,14 @@ internal fun GalleryScreen(
 private fun AlbumGrid(
   album: MediaAlbum,
   navigator: Navigator,
-  modifier: Modifier = Modifier
+  contentPadding: PaddingValues,
+  modifier: Modifier = Modifier,
 ) {
   SharedElementTransitionScope {
     LazyVerticalStaggeredGrid(
       modifier = modifier,
       columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
-      contentPadding = PaddingValues(4.dp),
+      contentPadding = contentPadding,
       verticalItemSpacing = 4.dp,
       horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
