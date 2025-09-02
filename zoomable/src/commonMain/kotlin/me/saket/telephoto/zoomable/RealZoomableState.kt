@@ -57,7 +57,6 @@ import me.saket.telephoto.zoomable.internal.Zero
 import me.saket.telephoto.zoomable.internal.SavedZoomableState
 import me.saket.telephoto.zoomable.internal.aspectRatio
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
-import me.saket.telephoto.zoomable.internal.coerceIn
 import me.saket.telephoto.zoomable.internal.copy
 import me.saket.telephoto.zoomable.internal.div
 import me.saket.telephoto.zoomable.internal.intersect
@@ -104,12 +103,12 @@ internal class RealZoomableState internal constructor(
     if (gestureStateInputs != null) {
       val gestureState = gestureState.calculate(gestureStateInputs)
       val baseZoomFactor = gestureStateInputs.baseZoom
-      val min = AbsoluteZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom
-      val max = AbsoluteZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom
-      val current = gestureState.userZoom.coerceIn(min, max)
+      val min = AbsoluteZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom.value
+      val max = AbsoluteZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom.value
+      val current = gestureState.userZoom.value.coerceIn(min, max)
       when {
         current == min && min == max -> 1f  // Content can't zoom.
-        else -> ((current - min) / (max - min)).value.coerceIn(0f, 1f)
+        else -> ((current - min) / (max - min)).coerceIn(0f, 1f)
       }
     } else {
       null

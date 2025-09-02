@@ -29,7 +29,8 @@ import kotlin.jvm.JvmName
  *
  * @param autoApplyTransformations Determines whether the resulting scale and translation of pan and zoom
  * gestures should be automatically applied by [Modifier.zoomable] to its content. This can be disabled
- * if your content prefers applying the transformations in a bespoke manner.
+ * if your content prefers applying the [transformations][ZoomableState.contentTransformation] in a
+ * bespoke manner.
  *
  * @param hardwareShortcutsSpec Spec used for handling keyboard and mouse shortcuts, or
  * [HardwareShortcutsSpec.Disabled] for disabling them.
