@@ -3,7 +3,6 @@ package me.saket.telephoto.zoomable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
-import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.CoordinateSystem
@@ -61,10 +60,8 @@ fun interface DoubleClickToZoomListener {
 /**
  * See [DoubleClickToZoomListener.cycle].
  */
-@Poko
-@Immutable
 @OptIn(ExperimentalTelephotoApi::class)
-private class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = null) : DoubleClickToZoomListener {
+private data class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = null) : DoubleClickToZoomListener {
   override suspend fun CoordinateSystem.onDoubleClick(state: ZoomableState, centroid: SpatialOffset) {
     val transformation = state.contentTransformation.takeIf { it.isSpecified } ?: return // Content isn't ready yet
     val maxZoomFactor = maxZoomFactor ?: state.zoomSpec.maximum.factor
