@@ -9,11 +9,15 @@ class ZoomSpec(
   /**
    * The maximum zoom level as a percentage of the content's unscaled/original size.
    * For example, a factor of 2.0 allows zooming up to 200% of the original size.
+   *
+   * If the content is initially displayed larger than its original size to fill the
+   * viewport (based on its content scale), the maximum zoom limit is relative
+   * to that displayed size instead of the original size.
    */
   val maximum: ZoomLimit = ZoomLimit(factor = 2f, overzoomEffect = OverzoomEffect.RubberBanding),
 
   /**
-   * The minimum zoom level relative to the content's base scale.
+   * The minimum zoom level _relative_ to the content's base scale.
    * The base scale is calculated using the content's original size and the
    * [content scale][ZoomableState.contentScale]. For example, a factor of 1.0 ensures
    * the content cannot be zoomed out beyond this base scale.
@@ -120,3 +124,13 @@ class OverzoomEffect internal constructor(
     }
   }
 }
+
+internal fun ZoomSpec.copy(
+  maximum: ZoomLimit = this.maximum,
+  minimum: ZoomLimit = this.minimum,
+): ZoomSpec = ZoomSpec(maximum, minimum)
+
+internal fun ZoomLimit.copy(
+  factor: Float = this.factor,
+  overzoomEffect: OverzoomEffect = this.overzoomEffect,
+) = ZoomLimit(factor, overzoomEffect)

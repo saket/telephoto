@@ -41,6 +41,30 @@ fun rememberZoomableState(
   autoApplyTransformations: Boolean = true,
   hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
 ): ZoomableState {
+  return rememberZoomableState(
+    zoomSpec = DynamicZoomSpec.adapt(zoomSpec),
+    autoApplyTransformations = autoApplyTransformations,
+    hardwareShortcutsSpec = hardwareShortcutsSpec,
+  )
+}
+
+/**
+ * Create a [ZoomableState] that can be used with [Modifier.zoomable].
+ *
+ * @param autoApplyTransformations Determines whether the resulting scale and translation of pan and zoom
+ * gestures should be automatically applied by [Modifier.zoomable] to its content. This can be disabled
+ * if your content prefers applying the [transformations][ZoomableState.contentTransformation] in a
+ * bespoke manner.
+ *
+ * @param hardwareShortcutsSpec Spec used for handling keyboard and mouse shortcuts, or
+ * [HardwareShortcutsSpec.Disabled] for disabling them.
+ */
+@Composable
+fun rememberZoomableState(
+  zoomSpec: DynamicZoomSpec,
+  autoApplyTransformations: Boolean = true,
+  hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
+): ZoomableState {
   return rememberSaveable(saver = RealZoomableState.Saver) {
     RealZoomableState(
       savedState = SavedZoomableState(
@@ -48,7 +72,7 @@ fun rememberZoomableState(
       )
     )
   }.also {
-    it.zoomSpec = zoomSpec
+    it.dynamicZoomSpec = zoomSpec
     it.hardwareShortcutsSpec = hardwareShortcutsSpec
     it.layoutDirection = LocalLayoutDirection.current
     it.density = LocalDensity.current
@@ -201,9 +225,9 @@ sealed interface ZoomableState {
    * Zooms in or out around [centroid] to achieve a final zoom level specified by [zoomFactor],
    * and suspends until it's finished.
    *
-   * @param zoomFactor Target zoom level for the content. For example, a [zoomFactor] of `2f` will
-   * set the content's zoom level to two times its *original* size. This value is internally coerced
-   * between [ZoomSpec.maximum] and [ZoomSpec.minimum].
+   * @param zoomFactor Target zoom level for the content relative to its *original* size. For example,
+   * a [zoomFactor] of `2f` will set the content's zoom level to two times its original size. This value
+   * is internally coerced between the zoom limits described by [ZoomSpec].
    *
    * @param centroid Focal point for this zoom, in the viewport's coordinate space. Defaults to the
    * center of the viewport. To specify a centroid in content coordinates, use the [SpatialOffset]

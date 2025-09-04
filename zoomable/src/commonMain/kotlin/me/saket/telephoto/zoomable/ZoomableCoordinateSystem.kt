@@ -25,10 +25,9 @@ import kotlin.jvm.JvmSynthetic
 @ExperimentalTelephotoApi
 interface ZoomableCoordinateSystem : CoordinateSystem {
   /**
-   * The visual bounds of the content _without_ any user zoom or pan. This is calculated by applying
+   * The visual bounds of the content _after_ user zoom and pan. This is calculated by applying
    * [contentScale][ZoomableState.contentScale] and [contentAlignment][ZoomableState.contentAlignment]
-   * to the value passed to [ZoomableState.setContentLocation]. This property is intended for drawing
-   * decorations around the content that remain unaffected by zoom and pan gestures.
+   * to the value passed to [ZoomableState.setContentLocation].
    *
    * This value will be [SpatialRect.Unspecified] if the content hasn't been measured yet, and it will
    * never exceed the viewport bounds.
@@ -38,7 +37,8 @@ interface ZoomableCoordinateSystem : CoordinateSystem {
 
   /**
    * Like [contentBounds], but _without_ any user transformations. This is the initial bounds of the
-   * content, where the content is displayed prior to any zoom or pan gestures.
+   * content, where the content is displayed prior to any zoom or pan gestures. This property is
+   * intended for drawing decorations around the content that remain unaffected by zoom and pan gestures.
    */
   @ExperimentalTelephotoApi
   val unscaledContentBounds: SpatialRect

@@ -46,15 +46,15 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
-import me.saket.telephoto.zoomable.internal.SavedGestureState
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
 import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
+import me.saket.telephoto.zoomable.internal.SavedGestureState
+import me.saket.telephoto.zoomable.internal.SavedZoomableState
 import me.saket.telephoto.zoomable.internal.TransformScope
 import me.saket.telephoto.zoomable.internal.TransformableState
 import me.saket.telephoto.zoomable.internal.Zero
-import me.saket.telephoto.zoomable.internal.SavedZoomableState
 import me.saket.telephoto.zoomable.internal.aspectRatio
 import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
 import me.saket.telephoto.zoomable.internal.copy
@@ -119,7 +119,6 @@ internal class RealZoomableState internal constructor(
   override var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
   override var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
   override var contentPadding: PaddingValues by mutableStateOf(PaddingValues(0.dp))
-  override var zoomSpec: ZoomSpec by mutableStateOf(ZoomSpec())
   override var isAnimationRunning: Boolean by mutableStateOf(false)
   override val coordinateSystem = RealZoomableCoordinateSystem(this)
 
@@ -137,6 +136,9 @@ internal class RealZoomableState internal constructor(
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
    */
   internal var viewportSize: Size by mutableStateOf(Size.Unspecified)
+
+  internal var dynamicZoomSpec: DynamicZoomSpec by mutableStateOf(DynamicZoomSpec.adapt(ZoomSpec()))
+  override val zoomSpec: ZoomSpec get() = currentGestureStateInputs?.zoomSpec ?: ZoomSpec()
 
   internal var gestureState: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
@@ -204,6 +206,15 @@ internal class RealZoomableState internal constructor(
         unscaledContentBounds = unscaledContentBounds,
         contentAlignment = contentAlignment,
         layoutDirection = layoutDirection,
+        zoomSpec = with(dynamicZoomSpec) {
+          RealDynamicZoomSpecScope.compute(
+            DynamicZoomSpecInputs(
+              unscaledContentSize = unscaledContentBounds.size,
+              scaledContentBounds = unscaledContentBounds.zoomedAndTranslatedBy(baseZoomFactor, baseOffset),
+              paddedViewportBounds = paddedViewportBounds,
+            )
+          )
+        }
       )
     }
   }
@@ -429,7 +440,7 @@ internal class RealZoomableState internal constructor(
   override suspend fun resetZoom(animationSpec: AnimationSpec<Float>) {
     awaitUntilIsReadyForInteraction()
     zoomTo(
-      zoomFactor = currentGestureStateInputs!!.baseZoom.maxScale,
+      zoomFactor = zoomSpec.range.minZoomFactor(currentGestureStateInputs!!.baseZoom),
       animationSpec = animationSpec,
     )
   }
@@ -707,8 +718,8 @@ internal class RealZoomableState internal constructor(
         }
       }
       bounds
-        // The placeholder bounds are always unscaled because
-        // placeholders can't be zoomed (at least not yet).
+      // The placeholder bounds are always unscaled because
+      // placeholders can't be zoomed (at least not yet).
         ?: placeholderBoundsProvider?.calculate()
     }
   }
@@ -744,6 +755,7 @@ internal data class GestureStateInputs(
   val unscaledContentBounds: Rect,
   val contentAlignment: Alignment,
   val layoutDirection: LayoutDirection,
+  val zoomSpec: ZoomSpec,
 )
 
 @Immutable
@@ -885,7 +897,7 @@ internal data class AbsoluteOffset(
 }
 
 internal data class ZoomRange(
-  private val minZoomAsRatioOfBaseZoom: Float = 1f,
+  private val minZoomAsRatioOfBaseZoom: Float,
   private val maxZoomAsRatioOfSize: Float,
 ) {
 

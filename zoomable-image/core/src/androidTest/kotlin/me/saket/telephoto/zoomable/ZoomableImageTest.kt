@@ -280,7 +280,7 @@ class ZoomableImageTest {
   }
 
   @Ignore("https://github.com/saket/telephoto/issues/128")
-  @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
+    @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
     var assetName by mutableStateOf("fox_1000.jpg")
     lateinit var state: ZoomableImageState
 
@@ -763,35 +763,22 @@ class ZoomableImageTest {
 
     rule.waitUntil(5.seconds) { state!!.isImageDisplayed }
 
-    val isImageStretchedToFill = when (scale) {
-      ContentScaleParam.Crop -> true
-      ContentScaleParam.Fit -> false
-      ContentScaleParam.Inside -> false
-      ContentScaleParam.Fill -> true
+    rule.runOnIdle {
+      assertThat(zoomFraction()).isEqualTo(0f)
     }
 
-    if (isImageStretchedToFill) {
-      rule.runOnIdle {
-        assertThat(zoomFraction()).isEqualTo(1f)
-      }
-    } else {
-      rule.runOnIdle {
-        assertThat(zoomFraction()).isEqualTo(0f)
-      }
+    rule.onNodeWithTag("image").performTouchInput {
+      pinchToZoomInBy(IntOffset(0, 5))
+    }
+    rule.runOnIdle {
+      assertThat(zoomFraction()!!).isEqualTo(1.0f)
+    }
 
-      rule.onNodeWithTag("image").performTouchInput {
-        pinchToZoomInBy(IntOffset(0, 5))
-      }
-      rule.runOnIdle {
-        assertThat(zoomFraction()!!).isEqualTo(1.0f)
-      }
-
-      rule.onNodeWithTag("image").performTouchInput {
-        doubleClick()
-      }
-      rule.runOnIdle {
-        assertThat(zoomFraction()).isEqualTo(0f)
-      }
+    rule.onNodeWithTag("image").performTouchInput {
+      doubleClick()
+    }
+    rule.runOnIdle {
+      assertThat(zoomFraction()).isEqualTo(0f)
     }
   }
 
@@ -983,20 +970,22 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun double_click_should_toggle_zoom() {
+  @Test fun double_click_should_toggle_zoom(
+    @TestParameter imageAsset: ImageAssetParam,
+  ) {
     lateinit var state: ZoomableState
     lateinit var composeScope: CoroutineScope
 
     rule.setContent {
       composeScope = rememberCoroutineScope()
       state = rememberZoomableState(
-        zoomSpec = ZoomSpec()
+        zoomSpec = ZoomSpec(maxZoomFactor = 2f)
       )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
           .testTag("zoomable"),
-        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        image = ZoomableImageSource.asset(imageAsset.assetName, subSample = false),
         contentDescription = null,
         state = rememberZoomableImageState(state),
         onClick = { error("click listener should not get called") },
@@ -1017,7 +1006,7 @@ class ZoomableImageTest {
     // When the image is partially zoomed out, double clicking on it should zoom-in again.
     // This matches the original behavior before DoubleClickToZoomListener was introduced.
     composeScope.launch {
-      state.zoomTo(zoomFactor = 1.8f)
+      state.zoomTo(zoomFactor = state.zoomSpec.maximum.factor * 0.9f)
     }
     rule.runOnIdle {
       assertThat(state.zoomFraction!!).isCloseTo(0.8f, delta = 0.01f)
@@ -1178,7 +1167,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-  @Test fun pan_and_zoom_using_hardware_shortcuts() {
+    @Test fun pan_and_zoom_using_hardware_shortcuts() {
     lateinit var state: ZoomableImageState
     val maxZoomFactor = 5f
 
@@ -1322,7 +1311,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-  @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
+    @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
     lateinit var state: ZoomableImageState
     val focusRequester = FocusRequester()
 
