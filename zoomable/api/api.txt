@@ -16,6 +16,27 @@ package me.saket.telephoto.zoomable {
     field @Deprecated public static final me.saket.telephoto.zoomable.DoubleClickToZoomListener.ToggleBetweenMinAndMax INSTANCE;
   }
 
+  @androidx.compose.runtime.Immutable public fun interface DynamicZoomSpec {
+    method public me.saket.telephoto.zoomable.ZoomSpec compute(me.saket.telephoto.zoomable.DynamicZoomSpecScope, me.saket.telephoto.zoomable.DynamicZoomSpecInputs inputs);
+    field public static final me.saket.telephoto.zoomable.DynamicZoomSpec.Companion Companion;
+  }
+
+  public static final class DynamicZoomSpec.Companion {
+    method public me.saket.telephoto.zoomable.DynamicZoomSpec recommend(me.saket.telephoto.zoomable.ZoomSpec zoomSpec);
+  }
+
+  @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class DynamicZoomSpecInputs {
+    method public androidx.compose.ui.geometry.Rect getPaddedViewportBounds();
+    method public androidx.compose.ui.geometry.Rect getScaledContentBounds();
+    method public long getUnscaledContentSize();
+    property public final androidx.compose.ui.geometry.Rect paddedViewportBounds;
+    property public final androidx.compose.ui.geometry.Rect scaledContentBounds;
+    property public final long unscaledContentSize;
+  }
+
+  @androidx.compose.runtime.Immutable public interface DynamicZoomSpecScope {
+  }
+
   @androidx.compose.runtime.Immutable public interface HardwareShortcutDetector {
     method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent? detectKey(android.view.KeyEvent event);
     method public me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent? detectScroll(androidx.compose.ui.input.pointer.PointerEvent event);
@@ -238,6 +259,7 @@ package me.saket.telephoto.zoomable {
   }
 
   public final class ZoomableStateKt {
+    method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(me.saket.telephoto.zoomable.DynamicZoomSpec zoomSpec, optional boolean autoApplyTransformations, optional me.saket.telephoto.zoomable.HardwareShortcutsSpec hardwareShortcutsSpec);
     method @Deprecated @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations);
     method @androidx.compose.runtime.Composable public static me.saket.telephoto.zoomable.ZoomableState rememberZoomableState(optional me.saket.telephoto.zoomable.ZoomSpec zoomSpec, optional boolean autoApplyTransformations, optional me.saket.telephoto.zoomable.HardwareShortcutsSpec hardwareShortcutsSpec);
   }
