@@ -15,9 +15,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.toOffset
 import me.saket.telephoto.zoomable.internal.Zero
-import me.saket.telephoto.zoomable.internal.discardFractionalParts
 
 /**
  * [Modifier.zoomable] uses [ZoomableContentLocation] to understand the content's _visual_ size and
@@ -168,8 +168,8 @@ internal data class RelativeContentLocation(
     @Suppress("DEPRECATION")
     val scaledSize = size(layoutSize)
     val alignedOffset = alignment.align(
-      size = scaledSize.discardFractionalParts(),
-      space = layoutSize.discardFractionalParts(),
+      size = scaledSize.roundToIntSize(),
+      space = layoutSize.roundToIntSize(),
       layoutDirection = direction,
     )
     return Rect(

@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.roundToIntSize
 import me.saket.telephoto.zoomable.zoomable
 import kotlin.LazyThreadSafetyMode.NONE
 

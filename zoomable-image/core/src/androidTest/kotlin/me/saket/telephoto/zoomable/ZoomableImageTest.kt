@@ -280,7 +280,7 @@ class ZoomableImageTest {
   }
 
   @Ignore("https://github.com/saket/telephoto/issues/128")
-    @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
+  @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
     var assetName by mutableStateOf("fox_1000.jpg")
     lateinit var state: ZoomableImageState
 
@@ -1169,7 +1169,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-    @Test fun pan_and_zoom_using_hardware_shortcuts() {
+  @Test fun pan_and_zoom_using_hardware_shortcuts() {
     lateinit var state: ZoomableImageState
     val maxZoomFactor = 5f
 
@@ -1313,7 +1313,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-    @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
+  @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
     lateinit var state: ZoomableImageState
     val focusRequester = FocusRequester()
 

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +68,6 @@ import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.minScale
 import me.saket.telephoto.zoomable.internal.minus
 import me.saket.telephoto.zoomable.internal.resolve
-import me.saket.telephoto.zoomable.internal.roundToIntSize
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.unaryMinus
 import me.saket.telephoto.zoomable.internal.withOrigin

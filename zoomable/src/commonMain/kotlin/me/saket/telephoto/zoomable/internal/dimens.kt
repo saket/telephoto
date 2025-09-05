@@ -13,18 +13,12 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.roundToIntSize
 import me.saket.telephoto.zoomable.BaseZoomFactor
 import me.saket.telephoto.zoomable.AbsoluteZoomFactor
 import me.saket.telephoto.zoomable.UserZoomFactor
 import kotlin.math.abs
 import kotlin.math.roundToInt
-
-internal fun Size.roundToIntSize() =
-  IntSize(width.roundToInt(), height.roundToInt())
-
-internal fun Size.discardFractionalParts(): IntSize {
-  return IntSize(width = width.toInt(), height = height.toInt())
-}
 
 internal val Size.isSpecifiedAndNonEmpty: Boolean
   get() = isSpecified && !isEmpty()
