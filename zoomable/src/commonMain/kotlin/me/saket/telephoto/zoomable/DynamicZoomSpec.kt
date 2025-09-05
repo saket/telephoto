@@ -15,8 +15,9 @@ fun interface DynamicZoomSpec {
   fun DynamicZoomSpecScope.compute(inputs: DynamicZoomSpecInputs): ZoomSpec
 
   companion object {
-    fun adapt(zoomSpec: ZoomSpec): DynamicZoomSpec =
-      AdaptedDynamicZoomSpec(zoomSpec)
+    /** Applies recommended adjustments to [zoomSpec], if necessary. */
+    fun recommend(zoomSpec: ZoomSpec): DynamicZoomSpec =
+      RecommendedDynamicZoomSpec(zoomSpec)
   }
 }
 
@@ -41,7 +42,7 @@ class DynamicZoomSpecInputs internal constructor(
 )
 
 @JvmInline
-private value class AdaptedDynamicZoomSpec(val delegate: ZoomSpec) : DynamicZoomSpec {
+private value class RecommendedDynamicZoomSpec(val delegate: ZoomSpec) : DynamicZoomSpec {
   override fun DynamicZoomSpecScope.compute(inputs: DynamicZoomSpecInputs): ZoomSpec {
     val initialScale = inputs.scaledContentBounds.size.maxDimension / inputs.unscaledContentSize.maxDimension
     return if (initialScale > 1f) {

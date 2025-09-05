@@ -42,7 +42,7 @@ fun rememberZoomableState(
   hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
 ): ZoomableState {
   return rememberZoomableState(
-    zoomSpec = DynamicZoomSpec.adapt(zoomSpec),
+    zoomSpec = DynamicZoomSpec.recommend(zoomSpec),
     autoApplyTransformations = autoApplyTransformations,
     hardwareShortcutsSpec = hardwareShortcutsSpec,
   )

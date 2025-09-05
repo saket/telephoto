@@ -137,7 +137,7 @@ internal class RealZoomableState internal constructor(
    */
   internal var viewportSize: Size by mutableStateOf(Size.Unspecified)
 
-  internal var dynamicZoomSpec: DynamicZoomSpec by mutableStateOf(DynamicZoomSpec.adapt(ZoomSpec()))
+  internal var dynamicZoomSpec: DynamicZoomSpec by mutableStateOf(DynamicZoomSpec.recommend(ZoomSpec()))
   override val zoomSpec: ZoomSpec get() = currentGestureStateInputs?.zoomSpec ?: ZoomSpec()
 
   internal var gestureState: GestureStateCalculator by mutableStateOf(
