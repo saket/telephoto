@@ -972,6 +972,7 @@ class ZoomableImageTest {
 
   @Test fun double_click_should_toggle_zoom(
     @TestParameter imageAsset: ImageAssetParam,
+    @TestParameter contentScale: ContentScaleParamWithDifferentProportions,
   ) {
     lateinit var state: ZoomableState
     lateinit var composeScope: CoroutineScope
@@ -987,6 +988,7 @@ class ZoomableImageTest {
           .testTag("zoomable"),
         image = ZoomableImageSource.asset(imageAsset.assetName, subSample = false),
         contentDescription = null,
+        contentScale = contentScale.value,
         state = rememberZoomableImageState(state),
         onClick = { error("click listener should not get called") },
         onLongClick = { error("long click listener should not get called") },
@@ -1009,7 +1011,7 @@ class ZoomableImageTest {
       state.zoomTo(zoomFactor = state.zoomSpec.maximum.factor * 0.9f)
     }
     rule.runOnIdle {
-      assertThat(state.zoomFraction!!).isCloseTo(0.8f, delta = 0.01f)
+      assertThat(state.zoomFraction!!).isGreaterThan(0.6f)
     }
     rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
     rule.runOnIdle {

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.geometry.Offset
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.CoordinateSystem
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
@@ -65,7 +66,7 @@ private data class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = nu
   override suspend fun CoordinateSystem.onDoubleClick(state: ZoomableState, centroid: SpatialOffset) {
     val transformation = state.contentTransformation.takeIf { it.isSpecified } ?: return // Content isn't ready yet
     val maxZoomFactor = maxZoomFactor ?: state.zoomSpec.maximum.factor
-    val isAtMaxZoom = maxZoomFactor - transformation.scale.scaleX < 0.05f
+    val isAtMaxZoom = maxZoomFactor - transformation.scale.maxScale < 0.05f
 
     if (isAtMaxZoom) {
       state.resetZoom()

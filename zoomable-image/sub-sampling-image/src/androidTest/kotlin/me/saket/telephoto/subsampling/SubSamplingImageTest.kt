@@ -179,7 +179,7 @@ class SubSamplingImageTest {
           zoomableState = zoomableState,
           imageSource = SubSamplingImageSource.asset("pahade.jpg"),
         ).also {
-          it.asReal().preferConsistentTileSize = true
+          it.asReal().preferConsistentTileSize = false
         },
         contentDescription = null,
       )
@@ -279,7 +279,7 @@ class SubSamplingImageTest {
             imageSource = imageSource,
           ).asReal().also {
             it.showTileBounds = true
-            it.preferConsistentTileSize = true
+            it.preferConsistentTileSize = false
           },
           contentDescription = null,
         )
@@ -325,7 +325,7 @@ class SubSamplingImageTest {
           imageSource = imageSource,
         ).asReal().also {
           it.showTileBounds = true
-          it.preferConsistentTileSize = true
+          it.preferConsistentTileSize = false
         },
         contentDescription = null,
       )
@@ -369,7 +369,7 @@ class SubSamplingImageTest {
             )
           },
         ).also {
-          it.asReal().preferConsistentTileSize = true
+          it.asReal().preferConsistentTileSize = false
         }
 
         SubSamplingImage(
@@ -463,7 +463,7 @@ class SubSamplingImageTest {
           imageSource = SubSamplingImageSource.asset("pahade.jpg"),
         ).asReal().also {
           it.showTileBounds = true
-          it.preferConsistentTileSize = true
+          it.preferConsistentTileSize = false
         },
         contentDescription = null,
       )
@@ -664,7 +664,7 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = imageSource,
       ).also {
-        it.asReal().preferConsistentTileSize = true
+        it.asReal().preferConsistentTileSize = false
       }
       SubSamplingImage(
         modifier = Modifier
@@ -719,7 +719,7 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = imageSource,
       ).also {
-        it.asReal().preferConsistentTileSize = true
+        it.asReal().preferConsistentTileSize = false
       }
       SubSamplingImage(
         modifier = Modifier
@@ -734,7 +734,7 @@ class SubSamplingImageTest {
     rule.waitUntil { imageState.isImageDisplayed }
     rule.onNodeWithTag("image").performTouchInput { doubleClick() }
 
-    rule.waitUntil(3.seconds) { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       assertThat(decodedRegionCount.get()).isEqualTo(4)
     }
