@@ -64,15 +64,26 @@ fun interface DoubleClickToZoomListener {
 @OptIn(ExperimentalTelephotoApi::class)
 private data class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = null) : DoubleClickToZoomListener {
   override suspend fun CoordinateSystem.onDoubleClick(state: ZoomableState, centroid: SpatialOffset) {
-    val transformation = state.contentTransformation.takeIf { it.isSpecified } ?: return // Content isn't ready yet
-    val maxZoomFactor = maxZoomFactor ?: state.zoomSpec.maximum.factor
-    val isAtMaxZoom = maxZoomFactor - transformation.scale.maxScale < 0.05f
+    val transformation = state.contentTransformation.takeIf { it.isSpecified }
+    val zoomFraction = state.zoomFraction
+
+    if (transformation == null || zoomFraction == null) {
+      // Content isn't ready yet. Technically, this should never happen because Modifier.zoomable()
+      // doesn't register a double click listener until after it has measured the content.
+      return
+    }
+
+    val isAtMaxZoom = if (maxZoomFactor == null) {
+      zoomFraction >= 0.95f
+    } else {
+      maxZoomFactor - transformation.scale.maxScale < 0.05f
+    }
 
     if (isAtMaxZoom) {
       state.resetZoom()
     } else {
       state.zoomTo(
-        zoomFactor = maxZoomFactor,
+        zoomFactor = maxZoomFactor ?: state.zoomSpec.maximum.factor,
         centroid = centroid,
       )
     }
