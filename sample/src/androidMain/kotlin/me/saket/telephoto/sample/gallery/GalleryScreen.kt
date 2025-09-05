@@ -82,6 +82,7 @@ private fun AlbumGrid(
             .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
             .fillMaxWidth()
             .aspectRatio(item.aspectRatio)
+            // todo: this only looks good when image width is edge-to-edge.
             .sharedBounds(
               sharedContentState = rememberSharedContentState("container_${item.placeholderImageUrl}"),
               animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
