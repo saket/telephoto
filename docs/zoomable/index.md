@@ -134,10 +134,10 @@ Box(
 By default, the following shortcuts are recognized. These can be customized (or disabled) by passing a
 custom `HardwareShortcutsSpec` to `rememberZoomableState()`.
 
-|           | Android            | Desktop               |
-|-----------|--------------------|-----------------------|
-| Zoom in   | `Control` + `=`    | `Meta` + `=`          |
-| Zoom out  | `Control` + `-`    | `Meta` + `-`          |
-| Pan       | Arrow keys         | Arrow keys            |
-| Extra pan | `Alt` + arrow keys | `Option` + arrow keys |
+|           | Android            | Desktop                         |
+|-----------|--------------------|---------------------------------|
+| Zoom in   | `Control` + `=`    | `Meta` + `=`, `Option` + scroll |
+| Zoom out  | `Control` + `-`    | `Meta` + `-`, `Option` + scroll |
+| Pan       | Arrow keys         | Arrow keys                      |
+| Extra pan | `Alt` + arrow keys | `Option` + arrow keys           |
 
