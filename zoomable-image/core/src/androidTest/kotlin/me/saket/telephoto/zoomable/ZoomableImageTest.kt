@@ -1181,7 +1181,7 @@ class ZoomableImageTest {
           .focusRequester(focusRequester)
           .testTag("image"),
         image = ZoomableImageSource
-          .asset("cat_1920.jpg", subSample = false)
+          .asset("cat_1920.jpg", subSample = true)
           .withDelay(500.milliseconds), // Ensures that the focus is received before the content is ready.
         contentDescription = null,
         state = rememberZoomableImageState(
@@ -1209,10 +1209,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      state.zoomableState.contentTransformation.run {
-        assertThat(scale).isCloseTo(ScaleFactor(4.3f, 4.3f), delta = 0.1f)
-        assertThat(offset).isCloseTo(Offset(-1781.9f, -3958.5f), delta = 0.1f)
-      }
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_zoom_in_8x")
     }
     // Zoom out.
     repeat(2) {
@@ -1223,10 +1220,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      state.zoomableState.contentTransformation.run {
-        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
-        assertThat(offset).isCloseTo(Offset(-1072.4f, -2382.3f), delta = 0.1f)
-      }
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_zoom_out_2x")
     }
 
     // Pan towards up.
@@ -1236,10 +1230,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      state.zoomableState.contentTransformation.run {
-        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
-        assertThat(offset).isCloseTo(Offset(-1072.4f, -2119.8f), delta = 0.1f)
-      }
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_up_2x")
     }
     // Pan towards down.
     repeat(2) {
@@ -1248,10 +1239,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      state.zoomableState.contentTransformation.run {
-        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
-        assertThat(offset).isCloseTo(Offset(-1072.4f, -2382.3f), delta = 0.1f)
-      }
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_down_2x")
     }
 
     // Pan towards right.
@@ -1261,10 +1249,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      state.zoomableState.contentTransformation.run {
-        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
-        assertThat(offset).isCloseTo(Offset(-1334.9f, -2382.3f), delta = 0.1f)
-      }
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_right_2x")
     }
     // Pan towards left.
     repeat(2) {
@@ -1273,10 +1258,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      state.zoomableState.contentTransformation.run {
-        assertThat(scale).isCloseTo(ScaleFactor(2.99f, 2.99f), delta = 0.1f)
-        assertThat(offset).isCloseTo(Offset(-1072.4f, -2382.3f), delta = 0.1f)
-      }
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_left_2x")
     }
 
     // Zoom in using mouse.
@@ -1284,12 +1266,14 @@ class ZoomableImageTest {
       rule.onNodeWithTag("image").performMultiModalInput {
         key {
           withKeyDown(Key.AltLeft) {
-            mouse { scroll(-1f) }
+            mouse { scroll(delta = -1f) }
           }
         }
       }
     }
     rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_mouse_zoom_in_10x")
+
       // Should not over-zoom.
       assertThat(state.zoomableState.contentTransformation.scale).isCloseTo(
         value = ScaleFactor(maxZoomFactor, maxZoomFactor),
@@ -1305,10 +1289,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      assertThat(state.zoomableState.contentTransformation.scale).isCloseTo(
-        value = ScaleFactor(1.4f, 1.4f),
-        delta = 0.1f,
-      )
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_mouse_zoom_out_1x")
     }
   }
 
