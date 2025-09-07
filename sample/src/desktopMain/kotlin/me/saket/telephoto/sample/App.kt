@@ -23,6 +23,7 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.singleWindowApplication
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.ZoomFocalPoint
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.ZoomableContentLocation
@@ -67,13 +68,15 @@ private fun Map(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) {
       zoomableState.zoomTo(
         zoomFactor = zoomableState.zoomSpec.maximum.factor,
-        centroid = SpatialOffset(
-          offset = Offset(
-            x = painter.intrinsicSize.width * 0.30f,
-            y = painter.intrinsicSize.height * 0.84f,
-          ),
-          space = CoordinateSpace.ZoomableContent,
-        ),
+        focal = ZoomFocalPoint.moveToViewportCenter(
+          SpatialOffset(
+            offset = Offset(
+              x = painter.intrinsicSize.width * 0.30f,
+              y = painter.intrinsicSize.height * 0.84f,
+            ),
+            space = CoordinateSpace.ZoomableContent,
+          )
+        )
       )
     }
   }

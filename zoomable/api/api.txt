@@ -116,6 +116,16 @@ package me.saket.telephoto.zoomable {
     property public final me.saket.telephoto.zoomable.OverzoomEffect RubberBanding;
   }
 
+  @me.saket.telephoto.ExperimentalTelephotoApi public abstract class ZoomFocalPoint {
+    field public static final me.saket.telephoto.zoomable.ZoomFocalPoint.Companion Companion;
+  }
+
+  public static final class ZoomFocalPoint.Companion {
+    method public me.saket.telephoto.zoomable.ZoomFocalPoint moveToViewportCenter(me.saket.telephoto.zoomable.spatial.SpatialOffset newCenter);
+    method public me.saket.telephoto.zoomable.ZoomFocalPoint viewportCenter();
+    method public me.saket.telephoto.zoomable.ZoomFocalPoint zoomAround(me.saket.telephoto.zoomable.spatial.SpatialOffset centroid);
+  }
+
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ZoomLimit {
     ctor public ZoomLimit(float factor, optional me.saket.telephoto.zoomable.OverzoomEffect overzoomEffect);
     method public float getFactor();
@@ -233,9 +243,11 @@ package me.saket.telephoto.zoomable {
     method public void setContentPadding(androidx.compose.foundation.layout.PaddingValues);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
     method public default suspend Object? zoomBy(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomBy(float zoomFactor, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @Deprecated @me.saket.telephoto.ExperimentalTelephotoApi public default suspend Object? zoomBy(float zoomFactor, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomBy(float zoomFactor, me.saket.telephoto.zoomable.ZoomFocalPoint focal, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public default suspend Object? zoomTo(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomTo(float zoomFactor, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @Deprecated @me.saket.telephoto.ExperimentalTelephotoApi public default suspend Object? zoomTo(float zoomFactor, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public suspend Object? zoomTo(float zoomFactor, me.saket.telephoto.zoomable.ZoomFocalPoint focal, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     property public abstract boolean autoApplyTransformations;
     property public abstract androidx.compose.ui.Alignment contentAlignment;
     property public abstract androidx.compose.foundation.layout.PaddingValues contentPadding;

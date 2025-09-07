@@ -181,6 +181,7 @@ internal class RealZoomableState internal constructor(
         offset = contentPadding.topLeft,
         size = viewportSize - contentPadding.size,
       )
+
       val baseZoomFactor = contentScale.computeScaleFactor(
         srcSize = unscaledContentBounds.size,
         dstSize = paddedViewportBounds.size,
@@ -447,22 +448,26 @@ internal class RealZoomableState internal constructor(
 
   override suspend fun zoomBy(
     zoomFactor: Float,
-    centroid: SpatialOffset,
-    animationSpec: AnimationSpec<Float>,
+    focal: ZoomFocalPoint,
+    animationSpec: AnimationSpec<Float>
   ) {
     awaitUntilIsReadyForInteraction()
 
-    val gestureState = calculateGestureState()!!
+    val gestureStateInputs = currentGestureStateInputs!!
+    val gestureState = gestureState.calculate(gestureStateInputs)
+    val currentZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
+    val targetZoom = currentZoom.finalZoom().maxScale * zoomFactor
+
     zoomTo(
-      zoomFactor = gestureState.userZoom.value * zoomFactor,
-      centroid = centroid,
+      zoomFactor = targetZoom,
+      focal = focal,
       animationSpec = animationSpec,
     )
   }
 
   override suspend fun zoomTo(
     zoomFactor: Float,
-    centroid: SpatialOffset,
+    focal: ZoomFocalPoint,
     animationSpec: AnimationSpec<Float>,
   ) {
     awaitUntilIsReadyForInteraction()
@@ -472,6 +477,7 @@ internal class RealZoomableState internal constructor(
       baseZoom = gestureStateInputs.baseZoom,
       finalZoom = zoomFactor,
     )
+    val centroid = focal.computeCentroid(this, zoomFactor)
     val centroidInViewport = with(coordinateSystem) {
       centroid
         .takeOrElse { SpatialOffset(viewportSize.center, CoordinateSpace.Viewport) }

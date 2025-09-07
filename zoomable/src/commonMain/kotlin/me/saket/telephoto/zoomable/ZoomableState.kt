@@ -192,11 +192,11 @@ sealed interface ZoomableState {
    * and suspends until it's finished.
    *
    * @param zoomFactor Ratio by which to zoom relative to the current size. For example, a [zoomFactor]
-   * of `3f` will triple the *current* zoom level.
+   * of `3.0` will triple the *current* zoom level, while `0.9` will reduce it by 10%.
    *
    * @param centroid Focal point for this zoom, in the viewport's coordinate space. Defaults to the
-   * center of the viewport. To specify a centroid in content coordinates, use the [SpatialOffset]
-   * overload instead.
+   * center of the viewport. This behaves the same as using [ZoomFocalPoint.zoomAround] with the given
+   * `centroid`. To specify a point in content coordinates, use the [ZoomFocalPoint] overload instead.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
@@ -208,16 +208,26 @@ sealed interface ZoomableState {
   ) {
     zoomBy(
       zoomFactor = zoomFactor,
-      centroid = SpatialOffset(centroid, CoordinateSpace.Viewport),
+      focal = ZoomFocalPoint.zoomAround(SpatialOffset(centroid, CoordinateSpace.Viewport)),
       animationSpec = animationSpec,
     )
   }
 
-  /** See [zoomBy]. */
+  /**
+   * Zooms in or out by a ratio of `zoomFactor`, using `focal` to determine how the zoom
+   * should be anchored, and suspends until the animation (if any) is finished.
+   *
+   * @param zoomFactor Ratio by which to zoom relative to the current size. For example, a `zoomFactor`
+   * of `3.0` will triple the *current* zoom level, while `0.9` will reduce it by 10%.
+   *
+   * @param focal Focal point for this zoom. See [ZoomFocalPoint] for more information.
+   *
+   * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
+   */
   @ExperimentalTelephotoApi
   suspend fun zoomBy(
     zoomFactor: Float,
-    centroid: SpatialOffset,
+    focal: ZoomFocalPoint,
     animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
   )
 
@@ -226,12 +236,12 @@ sealed interface ZoomableState {
    * and suspends until it's finished.
    *
    * @param zoomFactor Target zoom level for the content relative to its *original* size. For example,
-   * a [zoomFactor] of `2f` will set the content's zoom level to two times its original size. This value
+   * a `zoomFactor` of `2f` will set the content's zoom level to two times its original size. This value
    * is internally coerced between the zoom limits described by [ZoomSpec].
    *
    * @param centroid Focal point for this zoom, in the viewport's coordinate space. Defaults to the
-   * center of the viewport. To specify a centroid in content coordinates, use the [SpatialOffset]
-   * overload instead.
+   * center of the viewport. This behaves the same as using [ZoomFocalPoint.zoomAround] with the given
+   * `centroid`. To specify a point in content coordinates, use the [ZoomFocalPoint] overload instead.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
@@ -243,16 +253,27 @@ sealed interface ZoomableState {
   ) {
     zoomTo(
       zoomFactor = zoomFactor,
-      centroid = SpatialOffset(centroid, CoordinateSpace.Viewport),
+      focal = ZoomFocalPoint.zoomAround(SpatialOffset(centroid, CoordinateSpace.Viewport)),
       animationSpec = animationSpec,
     )
   }
 
-  /** See [zoomTo]. */
+  /**
+   * Zooms in or out to the specified `zoomFactor`, using `focal` to determine how the zoom
+   * should be anchored, and suspends until the animation (if any) is finished.
+   *
+   * @param zoomFactor Target zoom level for the content relative to its *original* size. For example,
+   * a `zoomFactor` of `2.0` will set the content's zoom level to two times its original size. This value
+   * is internally coerced between the zoom limits described by [ZoomSpec].
+   *
+   * @param focal Focal point for this zoom. See [ZoomFocalPoint] for more information.
+   *
+   * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
+   */
   @ExperimentalTelephotoApi
   suspend fun zoomTo(
     zoomFactor: Float,
-    centroid: SpatialOffset,
+    focal: ZoomFocalPoint,
     animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
   )
 
@@ -292,6 +313,46 @@ sealed interface ZoomableState {
     } else {
       resetZoom(animationSpec = SnapSpec())
     }
+  }
+
+  @Deprecated(
+    message = "Replaced by zoomBy() with the 'focal' parameter. ",
+    replaceWith = ReplaceWith(
+      "zoomBy(zoomFactor, ZoomFocalPoint.zoomAround(centroid))",
+      "me.saket.telephoto.zoomable.ZoomFocalPoint",
+    ),
+  )
+  @ExperimentalTelephotoApi
+  suspend fun zoomBy(
+    zoomFactor: Float,
+    centroid: SpatialOffset,
+    animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
+  ) {
+    zoomBy(
+      zoomFactor = zoomFactor,
+      focal = ZoomFocalPoint.zoomAround(centroid),
+      animationSpec = animationSpec,
+    )
+  }
+
+  @Deprecated(
+    message = "Replaced by zoomTo() with the 'focal' parameter. ",
+    replaceWith = ReplaceWith(
+      "zoomTo(zoomFactor, ZoomFocalPoint.zoomAround(centroid))",
+      "me.saket.telephoto.zoomable.ZoomFocalPoint",
+    ),
+  )
+  @ExperimentalTelephotoApi
+  suspend fun zoomTo(
+    zoomFactor: Float,
+    centroid: SpatialOffset,
+    animationSpec: AnimationSpec<Float> = DefaultZoomAnimationSpec,
+  ) {
+    zoomTo(
+      zoomFactor = zoomFactor,
+      focal = ZoomFocalPoint.zoomAround(centroid),
+      animationSpec = animationSpec,
+    )
   }
 
   /** See [ZoomableContentLocation]. */

@@ -84,7 +84,7 @@ private data class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = nu
     } else {
       state.zoomTo(
         zoomFactor = maxZoomFactor ?: state.zoomSpec.maximum.factor,
-        centroid = centroid,
+        focal = ZoomFocalPoint.zoomAround(centroid),
       )
     }
   }
