@@ -120,6 +120,7 @@ class ZoomablePeekOverlayTest {
       this.cancel()
     }
     rule.waitUntil { !state.isZoomedIn }
+    rule.waitForIdle()
     dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[after_zoom]")
   }
 
@@ -162,6 +163,7 @@ class ZoomablePeekOverlayTest {
       this.cancel()
     }
     rule.waitUntil { !state.isZoomedIn }
+    rule.waitForIdle()
     dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[after_zoom]")
   }
 
@@ -469,7 +471,7 @@ private suspend fun Activity.takePixelCopyScreenshot(): Bitmap {
   }
 }
 
-// This exists because disabling HW acceleration on the test activity doesn't seem to be working.
+// This was written because disabling HW acceleration on the test activity doesn't seem to be working.
 @Composable
 private fun SoftwareAcceleratedLayout(content: @Composable () -> Unit) {
   AndroidView(
