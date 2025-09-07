@@ -65,9 +65,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 class ZoomablePeekOverlayTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
@@ -103,8 +102,9 @@ class ZoomablePeekOverlayTest {
       }
     }
 
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[before_zoom]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[before_zoom]")
+    }
 
     rule.onNodeWithTag("content").performTouchInput {
       val noUpScope = object : TouchInjectionScope by this {
@@ -112,16 +112,18 @@ class ZoomablePeekOverlayTest {
       }
       noUpScope.pinchToZoomInBy(IntOffset(5, 5))
     }
-    rule.waitForIdle()
-    assertThat(state.isZoomedIn).isTrue()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[during_zoom]")
+    rule.runOnIdle {
+      assertThat(state.isZoomedIn).isTrue()
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[during_zoom]")
+    }
 
     rule.onNodeWithTag("content").performTouchInput {
       this.cancel()
     }
     rule.waitUntil { !state.isZoomedIn }
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[after_zoom]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[after_zoom]")
+    }
   }
 
   @Test fun custom_overlay_decoration() = runTest {
@@ -147,8 +149,9 @@ class ZoomablePeekOverlayTest {
       }
     }
 
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[before_zoom]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[before_zoom]")
+    }
 
     rule.onNodeWithTag("content").performTouchInput {
       val noUpScope = object : TouchInjectionScope by this {
@@ -156,15 +159,17 @@ class ZoomablePeekOverlayTest {
       }
       noUpScope.pinchToZoomInBy(IntOffset(5, 5))
     }
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[during_zoom]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[during_zoom]")
+    }
 
     rule.onNodeWithTag("content").performTouchInput {
       this.cancel()
     }
     rule.waitUntil { !state.isZoomedIn }
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[after_zoom]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[after_zoom]")
+    }
   }
 
   @Test fun brush_overlay_decoration() = runTest {
@@ -191,8 +196,9 @@ class ZoomablePeekOverlayTest {
       }
       noUpScope.pinchToZoomInBy(IntOffset(5, 5))
     }
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot())
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot())
+    }
   }
 
   @OptIn(ExperimentalFoundationApi::class)
@@ -268,20 +274,23 @@ class ZoomablePeekOverlayTest {
       }
       noUpScope.pinchToZoomInBy(IntOffset(5, 5))
     }
-    rule.waitForIdle()
-    assertThat(state.isZoomedIn).isTrue()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[initial]")
+    rule.runOnIdle {
+      assertThat(state.isZoomedIn).isTrue()
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[initial]")
+    }
 
     // Content can be updated.
     contentText = "text updated after zoom"
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[content_updated]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[content_updated]")
+    }
 
     // Content's position can also be updated.
     contentText = "position updated"
     contentAlignment = Alignment.BottomCenter
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[position_updated]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[position_updated]")
+    }
   }
 
   // Regression test for https://github.com/saket/telephoto/commit/70044719301933df178d89348770dc4b31bd0660
@@ -390,8 +399,9 @@ class ZoomablePeekOverlayTest {
       }
     }
 
-    rule.waitForIdle()
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[before_zoom]")
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[before_zoom]")
+    }
 
     rule.onNodeWithTag("content").performTouchInput {
       val noUpScope = object : TouchInjectionScope by this {
@@ -402,8 +412,8 @@ class ZoomablePeekOverlayTest {
     rule.runOnIdle {
       // The content shouldn't have consumed zoom gestures.
       assertThat(state.isZoomedIn).isFalse()
+      dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[during_zoom]")
     }
-    dropshots.assertSnapshot(rule.activity.takePixelCopyScreenshot(), testName.methodName + "_[during_zoom]")
   }
 
   @Test fun do_not_restore_state_with_out_of_bounds_zoom() {
@@ -460,15 +470,23 @@ private fun TouchInjectionScope.pinchToZoomInBy(by: IntOffset) {
   )
 }
 
-private suspend fun Activity.takePixelCopyScreenshot(): Bitmap {
-  return suspendCoroutine { continuation ->
-    PixelCopy.request(
-      /* request = */ PixelCopy.Request.Builder.ofWindow(window).build(),
-      /* callbackExecutor = */ Executor(Runnable::run),
-    ) { result ->
-      continuation.resume(result.bitmap)
+private fun Activity.takePixelCopyScreenshot(): Bitmap {
+  val latch = CountDownLatch(1)
+  var bitmap: Bitmap? = null
+
+  PixelCopy.request(
+    /* request = */ PixelCopy.Request.Builder.ofWindow(window).build(),
+    /* callbackExecutor = */ Executor(Runnable::run),
+  ) { result ->
+    try {
+      bitmap = result.bitmap
+    } finally {
+      latch.countDown()
     }
   }
+
+  latch.await()
+  return checkNotNull(bitmap) { "PixelCopy did not return a bitmap" }
 }
 
 // This was written because disabling HW acceleration on the test activity doesn't seem to be working.
