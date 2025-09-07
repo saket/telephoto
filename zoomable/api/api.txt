@@ -2,7 +2,7 @@
 package me.saket.telephoto.zoomable {
 
   @androidx.compose.runtime.Immutable public fun interface DoubleClickToZoomListener {
-    method @me.saket.telephoto.ExperimentalTelephotoApi public default suspend Object? onDoubleClick(me.saket.telephoto.zoomable.spatial.CoordinateSystem, me.saket.telephoto.zoomable.ZoomableState state, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method @me.saket.telephoto.ExperimentalTelephotoApi public default suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableCoordinateSystem, me.saket.telephoto.zoomable.ZoomableState state, me.saket.telephoto.zoomable.spatial.SpatialOffset centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public suspend Object? onDoubleClick(me.saket.telephoto.zoomable.ZoomableState state, long centroid, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     field public static final me.saket.telephoto.zoomable.DoubleClickToZoomListener.Companion Companion;
   }

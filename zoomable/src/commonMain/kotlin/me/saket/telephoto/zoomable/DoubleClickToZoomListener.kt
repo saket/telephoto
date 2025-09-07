@@ -6,7 +6,6 @@ import androidx.compose.ui.geometry.Offset
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
-import me.saket.telephoto.zoomable.spatial.CoordinateSystem
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 
 /**
@@ -32,7 +31,7 @@ fun interface DoubleClickToZoomListener {
   )
 
   @ExperimentalTelephotoApi
-  suspend fun CoordinateSystem.onDoubleClick(
+  suspend fun ZoomableCoordinateSystem.onDoubleClick(
     state: ZoomableState,
     centroid: SpatialOffset,
   ) {
@@ -63,7 +62,7 @@ fun interface DoubleClickToZoomListener {
  */
 @OptIn(ExperimentalTelephotoApi::class)
 private data class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = null) : DoubleClickToZoomListener {
-  override suspend fun CoordinateSystem.onDoubleClick(state: ZoomableState, centroid: SpatialOffset) {
+  override suspend fun ZoomableCoordinateSystem.onDoubleClick(state: ZoomableState, centroid: SpatialOffset) {
     val transformation = state.contentTransformation.takeIf { it.isSpecified }
     val zoomFraction = state.zoomFraction
 
