@@ -475,7 +475,8 @@ internal class RealZoomableState internal constructor(
     val targetZoom = AbsoluteZoomFactor.forFinalZoom(
       baseZoom = gestureStateInputs.baseZoom,
       finalZoom = zoomFactor,
-    )
+    ).coerceUserZoomIn(zoomSpec.range)  // Prevent overzooms. This doesn't support OverzoomEffect yet.
+
     val centroid = focal.computeCentroid(this, zoomFactor)
     val centroidInViewport = with(coordinateSystem) {
       centroid
@@ -488,13 +489,6 @@ internal class RealZoomableState internal constructor(
       mutatePriority = MutatePriority.UserInput,
       animationSpec = animationSpec,
     )
-
-    // Reset the zoom if needed. An advantage of doing *after* accepting the requested zoom
-    // versus limiting the requested zoom above is that repeated over-zoom events (from
-    // the keyboard for example) will result in a nice rubber banding effect.
-    if (isZoomOutsideRange()) {
-      animateSettlingOfZoomOnGestureEnd()
-    }
   }
 
   override suspend fun panBy(offset: SpatialOffset, animationSpec: AnimationSpec<Offset>) {
