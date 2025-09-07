@@ -422,6 +422,35 @@ class ZoomableTest {
     }
   }
 
+  @Test fun invalid_zoom_requests_should_not_crash() = runTest {
+    val zoomByRequests = Channel<suspend (ZoomableState) -> Unit>()
+
+    rule.setContent {
+      val state = rememberZoomableState()
+      Box(
+        Modifier
+          .fillMaxSize()
+          .zoomable(state)
+      )
+      LaunchedEffect(Unit) {
+        zoomByRequests.consumeAsFlow().collect { it(state) }
+      }
+    }
+
+    for (invalidFactor in listOf(-1f, 0f, Float.MAX_VALUE)) {
+      rule.waitForIdle()
+      zoomByRequests.send { state ->
+        state.zoomBy(zoomFactor = invalidFactor)
+      }
+    }
+    for (invalidFactor in listOf(-1f, 0f, Float.MAX_VALUE)) {
+      rule.waitForIdle()
+      zoomByRequests.send { state ->
+        state.zoomTo(zoomFactor = invalidFactor)
+      }
+    }
+  }
+
   @Test fun correctly_calculate_isAnimationRunning() = runTest {
     lateinit var state: ZoomableState
     val animatedZoomTriggers = Channel<Float>(capacity = 5)

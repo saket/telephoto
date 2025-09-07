@@ -254,7 +254,7 @@ internal class RealZoomableState internal constructor(
         userZoom = lastGestureState.userZoom,
       )
       check(oldZoom.finalZoom().isPositiveAndFinite()) {
-        "Old zoom is invalid/infinite. ${collectDebugInfo()}"
+        "Old zoom is invalid/infinite. ${collectDebugInfo(gestureState = lastGestureState)}"
       }
 
       val isZoomingOut = zoomDelta < 1f
@@ -414,7 +414,7 @@ internal class RealZoomableState internal constructor(
     // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
     return transformUserOffset { finalOffset ->
       finalOffset.withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
-        val expectedDrawRegion = Rect(it, unscaledContentBounds.size * proposedZoom).throwIfDrawRegionIsTooLarge()
+        val expectedDrawRegion = Rect(it, unscaledContentBounds.size * proposedZoom).coerceAtMostMaxValue()
         expectedDrawRegion.calculateTopLeftToOverlapWith(
           viewportBounds = inputs.paddedViewportBounds,
           alignment = inputs.contentAlignment,
@@ -424,13 +424,11 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  private fun Rect.throwIfDrawRegionIsTooLarge(): Rect {
-    return also {
-      check(size.isSpecified) {
-        "The zoomable content is too large to safely calculate its draw region. This can happen if you're using" +
-          " an unusually large value for ZoomSpec#maxZoomFactor (for e.g., Float.MAX_VALUE). Please file an issue" +
-          " on https://github.com/saket/telephoto/issues if you think this is a mistake."
-      }
+  private fun Rect.coerceAtMostMaxValue(): Rect {
+    return if (size.isSpecified) {
+      this
+    } else {
+      Rect(topLeft, Size(Float.MAX_VALUE, Float.MAX_VALUE)).also {}
     }
   }
 
@@ -470,6 +468,7 @@ internal class RealZoomableState internal constructor(
     focal: ZoomFocalPoint,
     animationSpec: AnimationSpec<Float>,
   ) {
+    if (zoomFactor <= 0) return
     awaitUntilIsReadyForInteraction()
 
     val gestureStateInputs = currentGestureStateInputs!!
@@ -697,15 +696,26 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  private fun collectDebugInfo(vararg extras: Pair<String, Any>): String {
+  private fun collectDebugInfo(
+    vararg extras: Pair<String, Any>,
+    gestureState: GestureState? = null,
+  ): String {
+    fun readSafely(block: () -> Any?): String? {
+      return try {
+        block().toString()
+      } catch (e: Throwable) {
+        "(failed to read due to: $e)"
+      }
+    }
+
     return buildString {
       appendLine()
       extras.forEach { (key, value) ->
         appendLine("$key = $value")
       }
-      appendLine("gestureStateInputs = $currentGestureStateInputs")
-      appendLine("gestureState = ${calculateGestureState()}")
-      appendLine("contentTransformation = $contentTransformation")
+      appendLine("gestureStateInputs = ${readSafely { currentGestureStateInputs }}")
+      appendLine("gestureState = ${gestureState ?: readSafely { calculateGestureState() }}")
+      appendLine("contentTransformation = ${readSafely { contentTransformation }}")
       appendLine("contentScale = $contentScale")
       appendLine("unscaledContentLocation = $unscaledContentLocation")
       appendLine("zoomSpec = $zoomSpec")
