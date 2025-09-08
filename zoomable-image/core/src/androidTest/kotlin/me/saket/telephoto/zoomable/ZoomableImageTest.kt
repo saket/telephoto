@@ -1209,7 +1209,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_zoom_in_8x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_zoom_in")
     }
     // Zoom out.
     repeat(2) {
@@ -1220,7 +1220,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_zoom_out_2x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_zoom_out")
     }
 
     // Pan towards up.
@@ -1230,7 +1230,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_up_2x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_pan_up")
     }
     // Pan towards down.
     repeat(2) {
@@ -1239,7 +1239,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_down_2x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_pan_down")
     }
 
     // Pan towards right.
@@ -1249,7 +1249,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_right_2x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_pan_right")
     }
     // Pan towards left.
     repeat(2) {
@@ -1258,7 +1258,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_pan_left_2x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_key_pan_left")
     }
 
     // Zoom in using mouse.
@@ -1272,7 +1272,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_mouse_zoom_in_10x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_mouse_zoom_in")
 
       // Should not over-zoom.
       assertThat(state.zoomableState.contentTransformation.scale).isCloseTo(
@@ -1289,7 +1289,7 @@ class ZoomableImageTest {
       }
     }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_mouse_zoom_out_1x")
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_mouse_zoom_out")
     }
   }
 
