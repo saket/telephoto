@@ -1,5 +1,3 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package me.saket.telephoto.zoomable
 
 import android.view.ViewConfiguration
@@ -26,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -39,6 +38,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toOffset
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsOnly
@@ -66,13 +66,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// TODO: move these tests to :zoomable
 @RunWith(TestParameterInjector::class)
 @OptIn(ExperimentalTelephotoApi::class)
 class ZoomableTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val dropshots = Dropshots(
-    filenameFunc = { _, testName -> "zoomable_$testName" },
+    filenameFunc = { _, testName -> testName },
   )
 
   @After
@@ -127,14 +126,14 @@ class ZoomableTest {
     rule.onNodeWithTag("content").performClick()
     rule.mainClock.advanceTimeBy(ViewConfiguration.getLongPressTimeout().toLong())
     rule.runOnIdle {
-      check(!zoomableState.real().isReadyForInteraction)
+      check(!zoomableState.asReal().isReadyForInteraction)
       assertThat(clickCount).isEqualTo(1)
     }
 
     // Regression test for https://github.com/saket/telephoto/issues/93
     // Transformation gestures (for zooming and panning) made before the
     // content was ready was causing a crash.
-    check(!zoomableState.real().isReadyForInteraction)
+    check(!zoomableState.asReal().isReadyForInteraction)
     rule.onNodeWithTag("content").performTouchInput {
       pinchToZoomInBy(visibleSize.center / 2f)
     }
@@ -695,7 +694,7 @@ class ZoomableTest {
   }
 }
 
-internal fun ZoomableState.real(): RealZoomableState {
+private fun ZoomableState.asReal(): RealZoomableState {
   return this as RealZoomableState  // Safe because ZoomableState is a sealed type.
 }
 
@@ -704,4 +703,13 @@ private fun <T> ArrayDeque<T>.removeAll(): List<T> {
   val destination = ArrayList(source)
   source.clear()
   return destination
+}
+
+internal fun TouchInjectionScope.pinchToZoomInBy(by: IntOffset) {
+  pinch(
+    start0 = center,
+    start1 = center,
+    end0 = center - by.toOffset(),
+    end1 = center + by.toOffset(),
+  )
 }

@@ -1,7 +1,6 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
-import org.jetbrains.compose.ComposeExtension
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -61,7 +60,7 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
         }
         commonTest {
           dependencies {
-            implementation(libs.findLibrary("assertk").get())
+            implementation(versionCatalog.findLibrary("assertk").get())
           }
         }
       }
