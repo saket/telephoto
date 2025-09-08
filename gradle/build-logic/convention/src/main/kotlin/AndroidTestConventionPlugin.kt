@@ -3,13 +3,10 @@ import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ModuleDependency
-import org.gradle.api.artifacts.dsl.DependencyHandler
-import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
 import org.gradle.kotlin.dsl.closureOf
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.exclude
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer.ArgumentType.Companion.all
 import wtf.emulator.EwExtension
 import java.time.Duration
 import com.android.build.api.dsl.LibraryExtension as AndroidLibraryExtension
@@ -29,22 +26,22 @@ class AndroidTestConventionPlugin : Plugin<Project> {
       defaultConfig {
         // targetSdk version has no effect for libraries. This is only used for
         // the test APK. Workarounds https://issuetracker.google.com/issues/283219177.
-        targetSdk = libs.findVersion("compileSdk").get().toString().toInt()
+        targetSdk = versionCatalog.findVersion("compileSdk").get().toString().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
       }
       testOptions.animationsDisabled = false
     }
 
     dependencies {
-      add("androidTestImplementation", libs.findLibrary("androidx.test.ktx").get())
-      add("androidTestImplementation", libs.findLibrary("androidx.test.rules").get())
-      add("androidTestImplementation", libs.findLibrary("androidx.test.junit").get())
-      add("androidTestImplementation", libs.findLibrary("compose.ui.test.junit").get())
-      add("androidTestImplementation", libs.findLibrary("assertk").get())
-      add("androidTestImplementation", libs.findLibrary("testParamInjector").get())
-      add("androidTestImplementation", libs.findLibrary("compose.ui.test.activityManifest").get())
-      add("androidTestImplementation", libs.findLibrary("leakcanary.test").get())
-      add("debugImplementation", libs.findLibrary("leakcanary.core").get(), configureClosure {
+      add("androidTestImplementation", versionCatalog.findLibrary("androidx.test.ktx").get())
+      add("androidTestImplementation", versionCatalog.findLibrary("androidx.test.rules").get())
+      add("androidTestImplementation", versionCatalog.findLibrary("androidx.test.junit").get())
+      add("androidTestImplementation", versionCatalog.findLibrary("compose.ui.test.junit").get())
+      add("androidTestImplementation", versionCatalog.findLibrary("assertk").get())
+      add("androidTestImplementation", versionCatalog.findLibrary("testParamInjector").get())
+      add("androidTestImplementation", versionCatalog.findLibrary("compose.ui.test.activityManifest").get())
+      add("androidTestImplementation", versionCatalog.findLibrary("leakcanary.test").get())
+      add("debugImplementation", versionCatalog.findLibrary("leakcanary.core").get(), configureClosure {
         // Workaround for https://github.com/square/leakcanary/pull/2624.
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
       })
@@ -57,7 +54,7 @@ class AndroidTestConventionPlugin : Plugin<Project> {
     emulatorwtf {
       val usesPixelCopy = project.name == "zoomable-peek-overlay"
 
-      version.set(libs.findVersion("emulatorWtfCli").get().toString())
+      version.set(versionCatalog.findVersion("emulatorWtfCli").get().toString())
       devices.set(
         listOf(
           mapOf(

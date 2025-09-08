@@ -18,8 +18,9 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
     }
 
     dependencies {
-      add("implementation", libs.findLibrary("compose.runtime").get())
-      add("lintChecks", libs.findLibrary("composeLintChecks").get())
+
+      add("implementation", versionCatalog.findLibrary("compose.runtime").get())
+      add("lintChecks", versionCatalog.findLibrary("composeLintChecks").get())
     }
   }
 }

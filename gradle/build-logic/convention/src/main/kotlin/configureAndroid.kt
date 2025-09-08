@@ -3,9 +3,9 @@ import org.gradle.api.Project
 
 internal fun Project.configureAndroid(commonExtension: CommonExtension <*, *, *, *, *, *>) {
   commonExtension.apply {
-    compileSdk = libs.findVersion("compileSdk").get().toString().toInt()
+    compileSdk = versionCatalog.findVersion("compileSdk").get().toString().toInt()
     defaultConfig {
-      minSdk = libs.findVersion("minSdk").get().toString().toInt()
+      minSdk = versionCatalog.findVersion("minSdk").get().toString().toInt()
     }
     lint {
       abortOnError = true

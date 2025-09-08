@@ -908,7 +908,7 @@ class ZoomableImageTest {
     rule.setContent {
       state = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
-      ).real()
+      ).asReal()
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -1193,7 +1193,7 @@ class ZoomableImageTest {
       LaunchedEffect(Unit) {
         // If the focus was received before the image was ready,
         // it should retain focus after the image becomes visible.
-        assertThat(state.zoomableState.real().isReadyForInteraction).isFalse()
+        assertThat(state.zoomableState.asReal().isReadyForInteraction).isFalse()
         focusRequester.requestFocus()
       }
     }
@@ -2478,4 +2478,8 @@ private fun wasStateRestored(): Boolean {
   val time = remember { System.currentTimeMillis() }
   val restoredTime by rememberSaveable { mutableStateOf(time) }
   return time != restoredTime
+}
+
+private fun ZoomableState.asReal(): RealZoomableState {
+  return this as RealZoomableState  // Safe because ZoomableState is a sealed type.
 }
