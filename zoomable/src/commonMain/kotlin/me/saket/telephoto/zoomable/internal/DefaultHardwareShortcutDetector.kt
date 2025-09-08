@@ -60,11 +60,8 @@ internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
   }
 
   override fun detectScroll(event: PointerEvent): ShortcutEvent? {
-    if (!event.keyboardModifiers.isAltPressed) {
-      // Google Photos does not require any modifier key to be pressed for zooming into
-      // images using mouse scroll. Telephoto does not follow the same pattern because
-      // it might migrate to 2D scrolling in the future for panning content once Compose
-      // UI supports it.
+    // todo: support panning using mouse scrolls.
+    if (!event.isZoomEvent()) {
       return null
     }
     return when (val scrollY = event.calculateScroll().y) {
@@ -72,11 +69,29 @@ internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
       else -> ShortcutEvent.Zoom(
         direction = if (scrollY < 0f) ZoomDirection.In else ZoomDirection.Out,
         centroid = event.calculateScrollCentroid(),
-        // Scroll delta always seems to be either 1f or -1f depending on the direction.
-        // Although some mice are capable of sending precise scrolls, I'm assuming
-        // Android coerces them to be at least (+/-)1f.
-        zoomFactor = ShortcutEvent.DefaultZoomFactor * scrollY.absoluteValue,
+        // Deltas observed on various platforms and mice:
+        // Android:
+        //   Logitech MX: -1.0 / +1.0
+        // macOS:
+        //   Logitech MX: -1.2 / +1.3
+        //   MacBook trackpad: -0.1 / 0.1
+        zoomFactor = (ShortcutEvent.DefaultZoomFactor / 2f) * scrollY.absoluteValue,
       )
+    }
+  }
+
+  private fun PointerEvent.isZoomEvent(): Boolean {
+    return when (HostPlatform.current) {
+      HostPlatform.Android, HostPlatform.iOS -> {
+        // Google Photos does not require any modifier key to be pressed for zooming into
+        // images using mouse scroll. Telephoto does not follow the same pattern because
+        // it might migrate to 2D scrolling in the future for panning content once Compose
+        // UI supports it.
+        keyboardModifiers.isAltPressed
+      }
+      HostPlatform.Desktop, HostPlatform.Web -> {
+        keyboardModifiers.isAltPressed
+      }
     }
   }
 

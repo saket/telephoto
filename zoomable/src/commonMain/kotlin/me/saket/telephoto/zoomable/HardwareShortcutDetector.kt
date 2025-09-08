@@ -48,7 +48,7 @@ interface HardwareShortcutDetector {
 
     @Suppress("ConstPropertyName")
     companion object {
-      const val DefaultZoomFactor = 1.2f
+      const val DefaultZoomFactor = 0.2f
       val DefaultPanOffset = 50.dp
     }
   }

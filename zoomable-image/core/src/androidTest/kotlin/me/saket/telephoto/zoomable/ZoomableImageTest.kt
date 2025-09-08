@@ -1262,7 +1262,7 @@ class ZoomableImageTest {
     }
 
     // Zoom in using mouse.
-    repeat(10) {
+    repeat(20) {
       rule.onNodeWithTag("image").performMultiModalInput {
         key {
           withKeyDown(Key.AltLeft) {
