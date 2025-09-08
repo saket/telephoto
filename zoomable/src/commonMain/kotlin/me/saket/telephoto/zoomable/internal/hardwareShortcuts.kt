@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import kotlinx.coroutines.launch
+import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent
 import me.saket.telephoto.zoomable.HardwareShortcutsSpec
 import me.saket.telephoto.zoomable.ZoomableState
-import me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent
 
 /** Responds to keyboard and mouse events to zoom and pan. */
 internal data class HardwareShortcutsElement(
@@ -101,8 +101,8 @@ internal class HardwareShortcutsNode(
     when (shortcut) {
       is ShortcutEvent.Zoom -> {
         when (shortcut.direction) {
-          ShortcutEvent.ZoomDirection.In -> onZoom(shortcut.zoomFactor, shortcut.centroid)
-          ShortcutEvent.ZoomDirection.Out -> onZoom(1f / shortcut.zoomFactor, shortcut.centroid)
+          ShortcutEvent.ZoomDirection.In -> onZoom(1f + shortcut.zoomFactor, shortcut.centroid)
+          ShortcutEvent.ZoomDirection.Out -> onZoom(1f - shortcut.zoomFactor, shortcut.centroid)
         }
       }
       is ShortcutEvent.Pan -> {
