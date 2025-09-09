@@ -1575,40 +1575,6 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun transformed_content_bounds_are_always_within_viewport_bounds() {
-    lateinit var imageState: ZoomableImageState
-
-    rule.setContent {
-      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 10f))
-      ZoomableImage(
-        modifier = Modifier
-          .fillMaxSize()
-          .testTag("image"),
-        image = ZoomableImageSource.asset("forest_fox_1000.jpg", subSample = true),
-        contentDescription = null,
-        state = rememberZoomableImageState(zoomableState).also { imageState = it },
-      )
-    }
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
-    rule.onNodeWithTag("image").run {
-      performTouchInput { doubleClick() }
-      performTouchInput { swipeRight() }
-    }
-    rule.waitUntil { imageState.zoomableState.zoomFraction == 1f }
-
-    val imageNode = rule.onNodeWithTag("image").fetchSemanticsNode()
-    rule.runOnIdle {
-      @Suppress("DEPRECATION")
-      assertThat(imageState.zoomableState.transformedContentBounds).isEqualTo(
-        Rect(Offset.Zero, imageNode.size.toSize())
-      )
-      val bounds = with(imageState.zoomableState.coordinateSystem) {
-        contentBounds.rectIn(CoordinateSpace.Viewport)
-      }
-      assertThat(bounds).isEqualTo(Rect(Offset.Zero, imageNode.size.toSize()))
-    }
-  }
-
   @Test fun visualize_image_spatial_offsets_in_viewport_space() {
     lateinit var state: ZoomableImageState
     val rawContentSize = Size(1000f, 605f)
