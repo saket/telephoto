@@ -1397,7 +1397,48 @@ class ZoomableImageTest {
           contentPadding = contentPadding.contentPadding,
         )
 
-        VisualizeAllBounds(zoomableState)
+        VisualizeAllBounds(
+          zoomableState = zoomableState,
+          clipToViewport = true,
+        )
+      }
+    }
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_out")
+
+    rule.onNodeWithTag("image").run {
+      performTouchInput { doubleClick() }
+      performTouchInput { swipeRight() }
+    }
+    rule.waitUntil { imageState.zoomableState.zoomFraction == 1f }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_in")
+    }
+  }
+
+  @Test fun calculate_unclipped_content_bounds_for_full_quality_images() {
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
+      Box(
+        Modifier
+          .fillMaxSize()
+          .padding(24.dp)
+      ) {
+        ZoomableImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
+          image = ZoomableImageSource.asset("forest_fox_1000.jpg", subSample = true),
+          contentDescription = null,
+          state = rememberZoomableImageState(zoomableState).also { imageState = it },
+        )
+
+        VisualizeAllBounds(
+          zoomableState = zoomableState,
+          clipToViewport = false,
+        )
       }
     }
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
@@ -1436,7 +1477,10 @@ class ZoomableImageTest {
           contentPadding = contentPadding.contentPadding,
         )
 
-        VisualizeAllBounds(zoomableState)
+        VisualizeAllBounds(
+          zoomableState = zoomableState,
+          clipToViewport = true,
+        )
       }
     }
     rule.waitUntil { imageState.isPlaceholderDisplayed }
@@ -1446,10 +1490,17 @@ class ZoomableImageTest {
   @Composable
   @OptIn(ExperimentalTelephotoApi::class)
   @SuppressLint("ComposeUnstableReceiver")
-  private fun BoxScope.VisualizeAllBounds(zoomableState: ZoomableState) {
+  private fun BoxScope.VisualizeAllBounds(
+    zoomableState: ZoomableState,
+    clipToViewport: Boolean,
+  ) {
     Canvas(Modifier.matchParentSize()) {
       val unscaledContentBounds = with(zoomableState.coordinateSystem) {
-        unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
+        if (clipToViewport) {
+          unscaledContentBounds.rectIn(CoordinateSpace.Viewport)
+        } else {
+          unscaledContentBounds(clipToViewport = false).rectIn(CoordinateSpace.Viewport)
+        }
       }
 
       drawRect(
@@ -1461,7 +1512,11 @@ class ZoomableImageTest {
 
       // These two bounds should overlap.
       val contentBounds = with(zoomableState.coordinateSystem) {
-        contentBounds.rectIn(CoordinateSpace.Viewport)
+        if (clipToViewport) {
+          contentBounds.rectIn(CoordinateSpace.Viewport)
+        } else {
+          contentBounds(clipToViewport = false).rectIn(CoordinateSpace.Viewport)
+        }
       }
       drawRect(
         color = Color.Yellow,

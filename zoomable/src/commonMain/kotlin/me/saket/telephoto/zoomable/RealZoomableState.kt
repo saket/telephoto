@@ -229,7 +229,7 @@ internal class RealZoomableState internal constructor(
 
   @Suppress("OVERRIDE_DEPRECATION")
   override val transformedContentBounds: Rect by derivedStateOf {
-    transformUnscaledContentBoundsBy { _, transformation ->
+    transformUnscaledContentBoundsBy(clipToViewport = false) { _, transformation ->
       zoomedAndTranslatedBy(transformation.scale, transformation.offset)
     } ?: Rect.Zero
   }
@@ -719,12 +719,18 @@ internal class RealZoomableState internal constructor(
 
   // Note to self: these bounds are in the viewport's coordinate space.
   internal inline fun transformUnscaledContentBoundsBy(
+    clipToViewport: Boolean,
     transform: Rect.(GestureStateInputs, ZoomableContentTransformation) -> Rect
   ): Rect? {
     return with(contentTransformation) {
       val bounds = currentGestureStateInputs?.let { inputs ->
         inputs.unscaledContentBounds.withOrigin(transformOrigin) {
-          transform(inputs, this@with).intersect(Offset.Zero, inputs.viewportSize)
+          val transformed = transform(inputs, this@with)
+          if (clipToViewport) {
+            transformed.intersect(Offset.Zero, inputs.viewportSize)
+          } else {
+            transformed
+          }
         }
       }
       bounds

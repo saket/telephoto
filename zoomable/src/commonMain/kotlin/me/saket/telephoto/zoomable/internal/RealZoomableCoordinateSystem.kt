@@ -28,13 +28,17 @@ internal class RealZoomableCoordinateSystem(
 ) : ZoomableCoordinateSystem {
 
   override val contentBounds: SpatialRect by derivedStateOf {
-    val boundsInViewport = state.transformUnscaledContentBoundsBy { _, transformation ->
+    contentBounds(clipToViewport = true)
+  }
+
+  override fun contentBounds(clipToViewport: Boolean): SpatialRect {
+    val boundsInViewport = state.transformUnscaledContentBoundsBy(clipToViewport) { _, transformation ->
       zoomedAndTranslatedBy(
         scale = transformation.scale,
         offset = transformation.offset,
       )
     }
-    if (boundsInViewport != null) {
+    return if (boundsInViewport != null) {
       SpatialRect(boundsInViewport, CoordinateSpace.Viewport)
     } else {
       SpatialRect.Unspecified
@@ -42,13 +46,17 @@ internal class RealZoomableCoordinateSystem(
   }
 
   override val unscaledContentBounds: SpatialRect by derivedStateOf {
-    val boundsInViewport = state.transformUnscaledContentBoundsBy { inputs, _ ->
+    unscaledContentBounds(clipToViewport = true)
+  }
+
+  override fun unscaledContentBounds(clipToViewport: Boolean): SpatialRect {
+    val boundsInViewport = state.transformUnscaledContentBoundsBy(clipToViewport) { inputs, _ ->
       zoomedAndTranslatedBy(
         scale = inputs.baseZoom.value,
         offset = -(inputs.baseOffset * inputs.baseZoom.value),
       )
     }
-    if (boundsInViewport != null) {
+    return if (boundsInViewport != null) {
       SpatialRect(boundsInViewport, CoordinateSpace.Viewport)
     } else {
       SpatialRect.Unspecified

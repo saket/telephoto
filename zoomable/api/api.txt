@@ -50,13 +50,13 @@ package me.saket.telephoto.zoomable {
 
   public static sealed interface HardwareShortcutDetector.ShortcutEvent {
     field public static final me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent.Companion Companion;
-    field public static final float DefaultZoomFactor = 1.2f;
+    field public static final float DefaultZoomFactor = 0.2f;
   }
 
   public static final class HardwareShortcutDetector.ShortcutEvent.Companion {
     method public float getDefaultPanOffset();
     property public final float DefaultPanOffset;
-    field public static final float DefaultZoomFactor = 1.2f;
+    field public static final float DefaultZoomFactor = 0.2f;
   }
 
   @dev.drewhamilton.poko.Poko public static final class HardwareShortcutDetector.ShortcutEvent.Pan implements me.saket.telephoto.zoomable.HardwareShortcutDetector.ShortcutEvent {
@@ -203,11 +203,13 @@ package me.saket.telephoto.zoomable {
   }
 
   @me.saket.telephoto.ExperimentalTelephotoApi public interface ZoomableCoordinateSystem extends me.saket.telephoto.zoomable.spatial.CoordinateSystem {
-    method public me.saket.telephoto.zoomable.spatial.SpatialRect getContentBounds();
-    method public me.saket.telephoto.zoomable.spatial.SpatialRect getUnscaledContentBounds();
+    method public me.saket.telephoto.zoomable.spatial.SpatialRect contentBounds(boolean clipToViewport);
+    method public default me.saket.telephoto.zoomable.spatial.SpatialRect getContentBounds();
+    method public default me.saket.telephoto.zoomable.spatial.SpatialRect getUnscaledContentBounds();
     method public long getViewportSize();
-    property public abstract me.saket.telephoto.zoomable.spatial.SpatialRect contentBounds;
-    property public abstract me.saket.telephoto.zoomable.spatial.SpatialRect unscaledContentBounds;
+    method public me.saket.telephoto.zoomable.spatial.SpatialRect unscaledContentBounds(boolean clipToViewport);
+    property public default me.saket.telephoto.zoomable.spatial.SpatialRect contentBounds;
+    property public default me.saket.telephoto.zoomable.spatial.SpatialRect unscaledContentBounds;
     property public abstract long viewportSize;
   }
 

@@ -25,23 +25,23 @@ import kotlin.jvm.JvmSynthetic
 @ExperimentalTelephotoApi
 interface ZoomableCoordinateSystem : CoordinateSystem {
   /**
-   * The visual bounds of the content _after_ user zoom and pan. This is calculated by applying
+   * The visible bounds of the content _after_ user zoom and pan. This is calculated by applying
    * [contentScale][ZoomableState.contentScale] and [contentAlignment][ZoomableState.contentAlignment]
    * to the value passed to [ZoomableState.setContentLocation].
    *
    * This value will be [SpatialRect.Unspecified] if the content hasn't been measured yet, and it will
    * never exceed the viewport bounds.
    */
-  @ExperimentalTelephotoApi
   val contentBounds: SpatialRect
+    get() = contentBounds(clipToViewport = true)
 
   /**
    * Like [contentBounds], but _without_ any user transformations. This is the initial bounds of the
    * content, where the content is displayed prior to any zoom or pan gestures. This property is
    * intended for drawing decorations around the content that remain unaffected by zoom and pan gestures.
    */
-  @ExperimentalTelephotoApi
   val unscaledContentBounds: SpatialRect
+    get() = unscaledContentBounds(clipToViewport = true)
 
   /**
    * Size of the composable where `Modifier.zoomable()` is used.
@@ -49,6 +49,22 @@ interface ZoomableCoordinateSystem : CoordinateSystem {
    * This value will be [Size.Zero] if the composable hasn't been measured yet.
    */
   val viewportSize: Size
+
+  /**
+   * Same as [contentBounds].
+   *
+   * @param clipToViewport When `true`, the bounds will be clipped to the visible area within the viewport.
+   * When `false`, the bounds include the entirety of the content, even areas outside the viewport.
+   */
+  fun contentBounds(clipToViewport: Boolean): SpatialRect
+
+  /**
+   * Same as [unscaledContentBounds].
+   *
+   * @param clipToViewport When `true`, the bounds will be clipped to the visible area within the viewport.
+   * When `false`, the bounds include the entirety of the content, even areas outside the viewport.
+   */
+  fun unscaledContentBounds(clipToViewport: Boolean): SpatialRect
 }
 
 /**
