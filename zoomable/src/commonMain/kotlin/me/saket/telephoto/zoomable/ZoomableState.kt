@@ -131,7 +131,7 @@ sealed interface ZoomableState {
    */
   @Deprecated(
     message = "Superseded by coordinateSystem.contentBounds.",
-    replaceWith = ReplaceWith("coordinateSystem.contentBounds"),
+    replaceWith = ReplaceWith("coordinateSystem.contentBounds(clipToViewport = false)"),
   )
   val transformedContentBounds: Rect
 
