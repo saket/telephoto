@@ -2,6 +2,7 @@ package me.saket.telephoto.zoomable
 
 import android.view.ViewConfiguration
 import androidx.compose.animation.core.SnapSpec
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -63,18 +64,21 @@ import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.util.ScreenshotTestActivity
+import me.saket.telephoto.util.assetPainter
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.spatial.SpatialRect
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
 @RunWith(TestParameterInjector::class)
 @OptIn(ExperimentalTelephotoApi::class)
 class ZoomableTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
+  @get:Rule val testName = TestName()
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { _, testName -> testName },
   )
@@ -427,7 +431,7 @@ class ZoomableTest {
   }
 
   @Test fun invalid_zoom_requests_should_not_crash() = runTest {
-    val zoomByRequests = Channel<suspend (ZoomableState) -> Unit>()
+    val zoomRequests = Channel<suspend (ZoomableState) -> Unit>()
 
     rule.setContent {
       val state = rememberZoomableState()
@@ -437,21 +441,84 @@ class ZoomableTest {
           .zoomable(state)
       )
       LaunchedEffect(Unit) {
-        zoomByRequests.consumeAsFlow().collect { it(state) }
+        zoomRequests.consumeAsFlow().collect { it(state) }
       }
     }
 
     for (invalidFactor in listOf(-1f, 0f, Float.MAX_VALUE)) {
       rule.waitForIdle()
-      zoomByRequests.send { state ->
+      zoomRequests.send { state ->
         state.zoomBy(zoomFactor = invalidFactor)
       }
     }
     for (invalidFactor in listOf(-1f, 0f, Float.MAX_VALUE)) {
       rule.waitForIdle()
-      zoomByRequests.send { state ->
+      zoomRequests.send { state ->
         state.zoomTo(zoomFactor = invalidFactor)
       }
+    }
+  }
+
+  @Test fun zoomTo_should_play_pan_animation_even_when_zoom_delta_is_zero(
+    @TestParameter focalPoint: ZoomFocalPointParam
+  ) = runTest {
+    val zoomRequests = Channel<suspend (ZoomableState) -> Unit>()
+
+    rule.setContent {
+      val painter = assetPainter("cat_1920.jpg")
+      val state = rememberZoomableState(ZoomSpec(maxZoomFactor = 4f)).also {
+        it.setContentLocation(
+          @Suppress("DEPRECATION")
+          ZoomableContentLocation.scaledToFitAndCenterAligned(painter.intrinsicSize)
+        )
+      }
+      Image(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(state),
+        painter = painter,
+        contentDescription = null,
+      )
+      LaunchedEffect(Unit) {
+        zoomRequests.consumeAsFlow().collect { it(state) }
+      }
+    }
+
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_before")
+    }
+
+    zoomRequests.send { state ->
+      val contentBoundsInViewport = with(state.coordinateSystem) {
+        contentBounds.rectIn(CoordinateSpace.Viewport)
+      }
+      state.zoomTo(
+        zoomFactor = state.zoomSpec.maximum.factor,
+        focal = focalPoint.create(
+          SpatialOffset(contentBoundsInViewport.topCenter, CoordinateSpace.Viewport)
+        )
+      )
+    }
+
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_first_zoom")
+    }
+
+    // Zoom again with the same zoom factor, but with a different
+    // focal point. This time, the content should pan to the new point.
+    zoomRequests.send { state ->
+      val contentBoundsInViewport = with(state.coordinateSystem) {
+        contentBounds.rectIn(CoordinateSpace.Viewport)
+      }
+      state.zoomTo(
+        zoomFactor = state.zoomSpec.maximum.factor,
+        focal = focalPoint.create(
+          SpatialOffset(contentBoundsInViewport.bottomCenter, CoordinateSpace.Viewport)
+        )
+      )
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_second_zoom")
     }
   }
 
@@ -746,6 +813,12 @@ class ZoomableTest {
     rule.runOnIdle {
       assertThat(hapticFeedback.performedFeedbacks.removeAll()).containsExactly(HapticFeedbackType.Reject)
     }
+  }
+
+  @Suppress("unused")
+  enum class ZoomFocalPointParam(val create: (SpatialOffset) -> ZoomFocalPoint) {
+    ZoomAroundCentroid(create = { centroid -> ZoomFocalPoint.zoomAround(centroid) }),
+    MoveToViewportCenter(create = { viewportCenter -> ZoomFocalPoint.moveToViewportCenter(viewportCenter) }),
   }
 }
 
