@@ -61,7 +61,10 @@ fun interface DoubleClickToZoomListener {
  * See [DoubleClickToZoomListener.cycle].
  */
 @OptIn(ExperimentalTelephotoApi::class)
-private data class CycleZoomOnDoubleClick(private val maxZoomFactor: Float? = null) : DoubleClickToZoomListener {
+private data class CycleZoomOnDoubleClick(
+  private val maxZoomFactor: Float? = null
+) : DoubleClickToZoomListener {
+
   override suspend fun ZoomableCoordinateSystem.onDoubleClick(state: ZoomableState, centroid: SpatialOffset) {
     val transformation = state.contentTransformation.takeIf { it.isSpecified }
     val zoomFraction = state.zoomFraction

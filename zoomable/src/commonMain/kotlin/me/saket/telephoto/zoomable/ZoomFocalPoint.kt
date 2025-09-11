@@ -83,8 +83,9 @@ private data class MoveToCenter(val newCenter: SpatialOffset) : ZoomFocalPoint()
   ): Offset {
     val zoomRatio = targetZoom / currentZoom
     if (abs(zoomRatio - 1f) < ZoomDeltaEpsilon) {
-      // No zoom change, any centroid will work.
-      return target
+      // No zoom change. To have the point moved to target via
+      // panning, zooming should be done "around" the point itself.
+      return point
     }
 
     // Given that I want a point to end up at its target position after zooming by

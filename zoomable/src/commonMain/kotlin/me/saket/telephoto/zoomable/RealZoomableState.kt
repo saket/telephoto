@@ -523,9 +523,18 @@ internal class RealZoomableState internal constructor(
 
     val startZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
     val startOffset = AbsoluteOffset(gestureStateInputs.baseOffset, startGestureState.userOffset)
+
+    val panDelta = if (startZoom.userZoom.value == targetZoom.userZoom.value) {
+      // When zoom doesn't change, calculate the pan needed to center the content around the centroid.
+      gestureStateInputs.viewportSize.center - centroid
+    } else {
+      Offset.Zero
+    }
+
     val targetOffset = startOffset
       .retainCentroidPositionAfterZoom(
         centroid = centroid,
+        panDelta = panDelta,
         oldZoom = startZoom,
         newZoom = targetZoom,
       )
@@ -560,7 +569,7 @@ internal class RealZoomableState internal constructor(
             ) / animatedZoom
           )
         )
-        // Note to self: this can't use transformableState#transformBy() to bypass its offset-locking system.
+        // Note to self: skipping transformableState#transformBy(), since it enforces offset-locking.
         gestureState = GestureStateCalculator {
           startGestureState.copy(
             userOffset = animatedOffsetForUi.userOffset,
