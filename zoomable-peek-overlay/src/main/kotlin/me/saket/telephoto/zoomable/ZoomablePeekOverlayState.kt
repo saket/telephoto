@@ -13,9 +13,11 @@ import androidx.compose.ui.platform.LocalView
 @Composable
 fun rememberZoomablePeekOverlayState(): ZoomablePeekOverlayState {
   val zoomableState = rememberZoomableState(
-    zoomSpec = ZoomSpec(
-      maximum = ZoomLimit(factor = 1f, overzoomEffect = OverzoomEffect.NoLimits),
-      minimum = ZoomLimit(factor = 1f, overzoomEffect = OverzoomEffect.RubberBanding),
+    zoomSpec = DynamicZoomSpec.fixed(
+      ZoomSpec(
+        maximum = ZoomLimit(factor = 1f, overzoomEffect = OverzoomEffect.NoLimits),
+        minimum = ZoomLimit(factor = 1f, overzoomEffect = OverzoomEffect.RubberBanding),
+      )
     ),
     hardwareShortcutsSpec = HardwareShortcutsSpec.Disabled,
   )

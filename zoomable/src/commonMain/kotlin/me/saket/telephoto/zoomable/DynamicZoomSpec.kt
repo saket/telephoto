@@ -18,6 +18,17 @@ fun interface DynamicZoomSpec {
     /** Applies recommended adjustments to [zoomSpec], if necessary. */
     fun recommend(zoomSpec: ZoomSpec): DynamicZoomSpec =
       RecommendedDynamicZoomSpec(zoomSpec)
+
+    /**
+     * Uses [zoomSpec] as-is regardless of the content size.
+     *
+     * The name of this might seem confusing because "fixed" and "dynamic" are conflicting terms,
+     * but this implementation exists as a deliberate specialization of [DynamicZoomSpec]. While its
+     * behavior is unchanging and does not adapt dynamically, structuring it this way ensures
+     * compatibility with the overall system.
+     */
+    fun fixed(zoomSpec: ZoomSpec): DynamicZoomSpec =
+      FixedDynamicZoomSpec(zoomSpec)
   }
 }
 
@@ -59,6 +70,11 @@ private value class RecommendedDynamicZoomSpec(val delegate: ZoomSpec) : Dynamic
       delegate
     }
   }
+}
+
+@JvmInline
+private value class FixedDynamicZoomSpec(val delegate: ZoomSpec) : DynamicZoomSpec {
+  override fun DynamicZoomSpecScope.compute(inputs: DynamicZoomSpecInputs) = delegate
 }
 
 internal data object RealDynamicZoomSpecScope : DynamicZoomSpecScope
