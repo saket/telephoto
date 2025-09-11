@@ -121,6 +121,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.ActivityRecreationTester
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
+import me.saket.telephoto.util.assetPainter
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
@@ -2372,16 +2373,6 @@ private fun TouchInjectionScope.quickZoomOut(byDistance: Float = height / 2f) {
   click(start)
   advanceEventTime(doubleTapMinTimeMillis + 2)
   swipeUp(startY = start.y, endY = endY, durationMillis = 1_000)
-}
-
-@Composable
-private fun assetPainter(assetName: String): Painter {
-  val context = LocalContext.current
-  return remember(assetName) {
-    context.assets.open(assetName).use { stream ->
-      BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
-    }
-  }
 }
 
 @Composable
