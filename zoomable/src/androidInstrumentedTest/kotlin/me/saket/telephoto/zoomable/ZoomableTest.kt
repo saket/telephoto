@@ -63,6 +63,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.assetPainter
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
@@ -79,8 +80,15 @@ import org.junit.runner.RunWith
 class ZoomableTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val testName = TestName()
+
+  private val screenshotValidator = CiScreenshotValidator(
+    context = { rule.activity },
+    tolerancePercentOnLocal = 0f,
+    tolerancePercentOnCi = 0.01f,
+  )
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { _, testName -> testName },
+    resultValidator = screenshotValidator,
   )
 
   @After
