@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.RealZoomableState.OverzoomBoundaryState
 import me.saket.telephoto.zoomable.internal.HardwareShortcutsElement
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
@@ -244,7 +245,7 @@ private class ZoomableNode(
     }
   }
   val onQuickZoomStopped = {
-    if (state.isZoomOutsideRange()) {
+    if (state.overzoomBoundaryState().isWithinBounds) {
       coroutineScope.launch {
         hapticFeedback.performHapticFeedback(HapticFeedbackType.Reject)
         state.animateSettlingOfZoomOnGestureEnd()
@@ -254,11 +255,17 @@ private class ZoomableNode(
   val onTransformStopped: (velocity: Velocity) -> Unit = { velocity ->
     if (state.isReadyForInteraction) {
       coroutineScope.launch {
-        if (state.isZoomOutsideRange()) {
-          hapticFeedback.performHapticFeedback(HapticFeedbackType.Reject)
-          state.animateSettlingOfZoomOnGestureEnd()
-        } else {
+        val boundaryState = state.overzoomBoundaryState()
+        if (boundaryState is OverzoomBoundaryState.WithinBounds) {
           state.fling(velocity = velocity, density = requireDensity())
+        } else {
+          val hapticType = when (boundaryState) {
+            OverzoomBoundaryState.OverZoomed -> state.zoomSpec.maximum.overzoomEffect.hapticFeedbackType()
+            OverzoomBoundaryState.UnderZoomed -> state.zoomSpec.minimum.overzoomEffect.hapticFeedbackType()
+            OverzoomBoundaryState.WithinBounds -> error("unreachable code")
+          }
+          hapticFeedback.performHapticFeedback(hapticType)
+          state.animateSettlingOfZoomOnGestureEnd()
         }
       }
     }
@@ -340,4 +347,11 @@ private class ZoomableNode(
 
 private inline fun Modifier.thenIf(predicate: Boolean, other: () -> Modifier): Modifier {
   return if (predicate) this.then(other()) else this
+}
+
+private fun OverzoomEffect.hapticFeedbackType(): HapticFeedbackType {
+  return when (this) {
+    OverzoomEffect.NoLimits -> HapticFeedbackType.GestureEnd
+    else -> HapticFeedbackType.Reject
+  }
 }

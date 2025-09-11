@@ -10,19 +10,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.doubleClick
@@ -41,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import assertk.assertThat
 import assertk.assertions.contains
+import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
@@ -690,6 +695,56 @@ class ZoomableTest {
       assertThat(
         SpatialRect.Unspecified.rectIn(CoordinateSpace.ZoomableContent)
       ).isEqualTo(Rect.Zero)
+    }
+  }
+
+  @Test fun haptic_feedback() = runTest {
+    lateinit var state: ZoomableState
+    val hapticFeedback = RecordingHapticFeedback()
+
+    rule.setContent {
+      CompositionLocalProvider(LocalHapticFeedback provides hapticFeedback) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+          state = rememberZoomableState()
+          Box(
+            Modifier
+              .size(200.dp)
+              .zoomable(state, clipToBounds = false)
+              .background(Color.Green)
+              .testTag("content")
+          )
+        }
+      }
+    }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      doubleClick()
+    }
+    rule.waitUntil { state.zoomFraction!! == 1f }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      val noUpScope = object : TouchInjectionScope by this {
+        override fun up(pointerId: Int) = Unit
+      }
+      noUpScope.pinchToZoomInBy(IntOffset(2, 2))
+    }
+    rule.runOnIdle {
+      assertThat(hapticFeedback.performedFeedbacks).isEmpty()
+    }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      this.cancel()
+    }
+    rule.waitUntil { state.contentTransformation.scaleMetadata.userZoom == state.zoomSpec.maximum.factor }
+    rule.runOnIdle {
+      assertThat(hapticFeedback.performedFeedbacks.removeAll()).containsExactly(HapticFeedbackType.Reject)
+    }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      pinchToZoomInBy(IntOffset(-10, -10))
+    }
+    rule.runOnIdle {
+      assertThat(hapticFeedback.performedFeedbacks.removeAll()).containsExactly(HapticFeedbackType.Reject)
     }
   }
 }

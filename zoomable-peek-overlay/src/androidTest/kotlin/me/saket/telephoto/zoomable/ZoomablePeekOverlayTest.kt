@@ -30,7 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.AbstractComposeView
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
@@ -48,6 +50,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.viewinterop.AndroidView
 import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
@@ -89,6 +93,7 @@ class ZoomablePeekOverlayTest {
 
   @Test fun zoom_in_and_release() = runTest {
     lateinit var state: ZoomablePeekOverlayState
+
     rule.setContent {
       Box(Modifier.fillMaxSize(), Alignment.Center) {
         state = rememberZoomablePeekOverlayState()
@@ -450,6 +455,51 @@ class ZoomablePeekOverlayTest {
       assertThat(state.zoomableState.contentTransformation.scaleMetadata.userZoom).isEqualTo(1f)
     }
   }
+
+  @Test fun haptic_feedback() = runTest {
+    lateinit var state: ZoomablePeekOverlayState
+    val hapticFeedback = RecordingHapticFeedback()
+
+    rule.setContent {
+      CompositionLocalProvider(LocalHapticFeedback provides hapticFeedback) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+          state = rememberZoomablePeekOverlayState()
+          Box(
+            Modifier
+              .size(200.dp)
+              .zoomablePeekOverlay(state)
+              .background(Color.Green)
+              .testTag("content")
+          )
+        }
+      }
+    }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      val noUpScope = object : TouchInjectionScope by this {
+        override fun up(pointerId: Int) = Unit
+      }
+      noUpScope.pinchToZoomInBy(IntOffset(5, 5))
+    }
+    rule.runOnIdle {
+      assertThat(hapticFeedback.performedFeedbacks).isEmpty()
+    }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      this.cancel()
+    }
+    rule.waitUntil { !state.isZoomedIn }
+    rule.runOnIdle {
+      assertThat(hapticFeedback.performedFeedbacks.removeAll()).containsExactly(HapticFeedbackType.GestureEnd)
+    }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      pinchToZoomInBy(IntOffset(-5, -5))
+    }
+    rule.runOnIdle {
+      assertThat(hapticFeedback.performedFeedbacks.removeAll()).containsExactly(HapticFeedbackType.Reject)
+    }
+  }
 }
 
 @Suppress("DEPRECATION")
@@ -505,4 +555,11 @@ private fun SoftwareAcceleratedLayout(content: @Composable () -> Unit) {
       }
     },
   )
+}
+
+private fun <T> ArrayDeque<T>.removeAll(): List<T> {
+  val source = this
+  val destination = ArrayList(source)
+  source.clear()
+  return destination
 }

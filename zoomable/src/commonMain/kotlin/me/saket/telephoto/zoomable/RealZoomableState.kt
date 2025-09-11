@@ -572,13 +572,26 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  internal fun isZoomOutsideRange(): Boolean {
-    val gestureStateInputs = currentGestureStateInputs ?: return false
+  internal fun overzoomBoundaryState(): OverzoomBoundaryState {
+    val gestureStateInputs = currentGestureStateInputs ?: return OverzoomBoundaryState.WithinBounds
     val gestureState = gestureState.calculate(gestureStateInputs)
 
     val currentZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
     val zoomWithinBounds = currentZoom.coerceUserZoomIn(zoomSpec.range)
-    return abs(currentZoom.userZoom.value - zoomWithinBounds.userZoom.value) > ZoomDeltaEpsilon
+
+    return when {
+      currentZoom.userZoom.value > zoomWithinBounds.userZoom.value -> OverzoomBoundaryState.OverZoomed
+      currentZoom.userZoom.value < zoomWithinBounds.userZoom.value -> OverzoomBoundaryState.UnderZoomed
+      else -> OverzoomBoundaryState.WithinBounds
+    }
+  }
+
+  internal sealed class OverzoomBoundaryState {
+    val isWithinBounds: Boolean get() = this is WithinBounds
+
+    data object OverZoomed : OverzoomBoundaryState()
+    data object UnderZoomed : OverzoomBoundaryState()
+    data object WithinBounds : OverzoomBoundaryState()
   }
 
   internal suspend fun animateSettlingOfZoomOnGestureEnd() {
