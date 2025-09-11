@@ -41,6 +41,8 @@ import me.saket.telephoto.zoomable.spatial.SpatialOffset
  * - Haptic feedback for over/under zoom
  * - Compatibility with nested scrolling
  * - Click listeners
+ * - Keyboard and mouse shortcuts
+ * - State preservation across config changes (including screen rotations)
  *
  * Because `Modifier.zoomable()` consumes all gestures including double-taps, [Modifier.clickable] and
  * [Modifier.combinedClickable] will not work on the composable this `Modifier.zoomable()` is applied to.
