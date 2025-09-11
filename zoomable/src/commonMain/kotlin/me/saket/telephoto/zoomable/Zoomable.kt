@@ -247,7 +247,7 @@ private class ZoomableNode(
     }
   }
   val onQuickZoomStopped = {
-    if (state.overzoomBoundaryState().isWithinBounds) {
+    if (state.overzoomBoundaryState().isUnderOrOverZoomed) {
       coroutineScope.launch {
         hapticFeedback.performHapticFeedback(HapticFeedbackType.Reject)
         state.animateSettlingOfZoomOnGestureEnd()
@@ -264,7 +264,10 @@ private class ZoomableNode(
           val hapticType = when (boundaryState) {
             OverzoomBoundaryState.OverZoomed -> state.zoomSpec.maximum.overzoomEffect.hapticFeedbackType()
             OverzoomBoundaryState.UnderZoomed -> state.zoomSpec.minimum.overzoomEffect.hapticFeedbackType()
-            OverzoomBoundaryState.WithinBounds -> error("unreachable code")
+            OverzoomBoundaryState.WithinBounds -> {
+              // https://kotlinlang.org/docs/whatsnew2220.html#data-flow-based-exhaustiveness-checks-for-when-expressions
+              error("will no longer be needed in a future kotlin release")
+            }
           }
           hapticFeedback.performHapticFeedback(hapticType)
           state.animateSettlingOfZoomOnGestureEnd()

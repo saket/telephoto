@@ -596,7 +596,7 @@ internal class RealZoomableState internal constructor(
   }
 
   internal sealed class OverzoomBoundaryState {
-    val isWithinBounds: Boolean get() = this is WithinBounds
+    val isUnderOrOverZoomed: Boolean get() = this is UnderZoomed || this is OverZoomed
 
     data object OverZoomed : OverzoomBoundaryState()
     data object UnderZoomed : OverzoomBoundaryState()
