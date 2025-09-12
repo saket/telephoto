@@ -1,4 +1,5 @@
 @file:Suppress("NOTHING_TO_INLINE")
+@file:OptIn(ExperimentalTelephotoApi::class)
 
 package me.saket.telephoto.zoomable.internal
 
@@ -14,9 +15,11 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.roundToIntSize
+import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.BaseZoomFactor
 import me.saket.telephoto.zoomable.AbsoluteZoomFactor
 import me.saket.telephoto.zoomable.UserZoomFactor
+import me.saket.telephoto.zoomable.spatial.SpatialScaleFactor
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -47,6 +50,16 @@ internal val ScaleFactor.Companion.Zero
 
 internal fun ScaleFactor.isPositiveAndFinite(): Boolean {
   return scaleX.isPositiveAndFinite() && scaleY.isPositiveAndFinite()
+}
+
+internal fun ScaleFactor.coerceIn(
+  minimumValue: ScaleFactor,
+  maximumValue: ScaleFactor,
+): ScaleFactor {
+  return ScaleFactor(
+    scaleX = scaleX.coerceIn(minimumValue.scaleX, maximumValue.scaleX),
+    scaleY = scaleY.coerceIn(minimumValue.scaleY, maximumValue.scaleY),
+  )
 }
 
 internal fun Offset.isSpecifiedAndFinite(): Boolean {
@@ -85,18 +98,42 @@ internal operator fun Size.times(zoom: AbsoluteZoomFactor): Size =
 internal fun Size.aspectRatio(): Float =
   width / height
 
-internal operator fun UserZoomFactor.times(operand: Float): UserZoomFactor =
-  UserZoomFactor(value.times(operand))
+// todo: should multiplication be allowed before resolving a spatial factor?
+internal operator fun UserZoomFactor.times(operand: Float): UserZoomFactor {
+  return UserZoomFactor(
+    SpatialScaleFactor(
+      scaleFactor = this.value.scaleFactor * operand,
+      space = this.value.space,
+    )
+  )
+}
 
-internal operator fun BaseZoomFactor.times(factor: UserZoomFactor): ScaleFactor =
-  value.times(factor.value)
+// todo: this should be removed.
+internal operator fun BaseZoomFactor.times(factor: UserZoomFactor): ScaleFactor {
+  return ScaleFactor(
+    scaleX = this.value.scaleX * factor.value.scaleFactor,
+    scaleY = this.value.scaleY * factor.value.scaleFactor,
+  )
+}
 
 internal operator fun UserZoomFactor.minus(other: UserZoomFactor): UserZoomFactor {
-  return UserZoomFactor(value = value - other.value)
+  check(this.value.space == other.value.space) { "sanity check" }
+  return UserZoomFactor(
+    SpatialScaleFactor(
+      scaleFactor = this.value.scaleFactor - other.value.scaleFactor,
+      space = this.value.space,
+    )
+  )
 }
 
 internal operator fun UserZoomFactor.div(other: UserZoomFactor): UserZoomFactor {
-  return UserZoomFactor(value = value / other.value)
+  check(this.value.space == other.value.space) { "sanity check" }
+  return UserZoomFactor(
+    SpatialScaleFactor(
+      scaleFactor = this.value.scaleFactor / other.value.scaleFactor,
+      space = this.value.space,
+    )
+  )
 }
 
 /**

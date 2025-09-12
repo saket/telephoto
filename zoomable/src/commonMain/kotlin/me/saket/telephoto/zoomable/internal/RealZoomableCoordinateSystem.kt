@@ -20,6 +20,7 @@ import me.saket.telephoto.zoomable.ZoomableCoordinateSystem
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.spatial.SpatialRect
+import me.saket.telephoto.zoomable.spatial.SpatialScaleFactor
 import me.saket.telephoto.zoomable.spatial.isUnspecified
 
 @Stable
@@ -88,6 +89,28 @@ internal class RealZoomableCoordinateSystem(
       Rect(topLeftInTarget, bottomRightInTarget)
     } else {
       Rect.Zero
+    }
+  }
+
+  override fun SpatialScaleFactor.scaleIn(target: CoordinateSpace): ScaleFactor {
+    val source = this.space
+    val stateInputs = state.currentGestureStateInputs ?: error("todo")
+
+    return when {
+      source == target -> ScaleFactor(this.scaleFactor, this.scaleFactor)
+      source == CoordinateSpace.Viewport && target == CoordinateSpace.ZoomableContent -> {
+        ScaleFactor(
+          scaleX = this.scaleFactor / stateInputs.baseZoom.value.scaleX,
+          scaleY = this.scaleFactor / stateInputs.baseZoom.value.scaleY,
+        )
+      }
+      source == CoordinateSpace.ZoomableContent && target == CoordinateSpace.Viewport -> {
+        ScaleFactor(
+          scaleX = this.scaleFactor * stateInputs.baseZoom.value.scaleX,
+          scaleY = this.scaleFactor * stateInputs.baseZoom.value.scaleY,
+        )
+      }
+      else -> error("Can't convert from $source to $target")
     }
   }
 
@@ -173,6 +196,14 @@ internal class RealZoomableCoordinateSystem(
   }
 }
 
-internal data object ContentCoordinateSpace : CoordinateSpace
+internal data object ContentCoordinateSpace : CoordinateSpace {
+  override fun toString(): String {
+    return "ZoomableContent"
+  }
+}
 
-internal data object ViewportCoordinateSpace : CoordinateSpace
+internal data object ViewportCoordinateSpace : CoordinateSpace {
+  override fun toString(): String {
+    return "Viewport"
+  }
+}

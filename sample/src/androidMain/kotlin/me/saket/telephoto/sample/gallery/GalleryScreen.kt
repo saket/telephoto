@@ -91,7 +91,7 @@ private fun AlbumGrid(
               exit = ExitTransition.None,
             )
             .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) }
-            .zoomablePeekOverlay(rememberZoomablePeekOverlayState()),
+            /*.zoomablePeekOverlay(rememberZoomablePeekOverlayState())*/,
           contentAlignment = Alignment.BottomStart
         ) {
           AsyncImage(

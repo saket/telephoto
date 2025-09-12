@@ -56,19 +56,20 @@ class DynamicZoomSpecInputs internal constructor(
 private value class RecommendedDynamicZoomSpec(val delegate: ZoomSpec) : DynamicZoomSpec {
   override fun DynamicZoomSpecScope.compute(inputs: DynamicZoomSpecInputs): ZoomSpec {
     val initialScale = inputs.scaledContentBounds.size.maxDimension / inputs.unscaledContentSize.maxDimension
-    return if (initialScale > 1f) {
-      // If the content is initially displayed larger than its original size to fill the
-      // viewport (based on its content scale), it might not be zoomable because its initial
-      // scale already exceeds the max zoom. To solve this, shift the max zoom limit by treating
-      // the viewport size as its new relative base. https://github.com/saket/telephoto/issues/45.
-      delegate.copy(
-        maximum = delegate.maximum.copy(
-          factor = delegate.maximum.factor * initialScale,
-        )
-      )
-    } else {
-      delegate
-    }
+//    return if (initialScale > 1f) {
+//      // If the content is initially displayed larger than its original size to fill the
+//      // viewport (based on its content scale), it might not be zoomable because its initial
+//      // scale already exceeds the max zoom. To solve this, shift the max zoom limit by treating
+//      // the viewport size as its new relative base. https://github.com/saket/telephoto/issues/45.
+//      delegate.copy(
+//        maximum = delegate.maximum.copy(
+//          factor = delegate.maximum.factor * initialScale,
+//        )
+//      )
+//    } else {
+//      delegate
+//    }
+    return delegate
   }
 }
 

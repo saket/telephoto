@@ -1,13 +1,13 @@
+@file:OptIn(ExperimentalTelephotoApi::class)
+
 package me.saket.telephoto.zoomable.internal
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ScaleFactor
-import me.saket.telephoto.zoomable.AbsoluteOffset
-import me.saket.telephoto.zoomable.AbsoluteZoomFactor
-import me.saket.telephoto.zoomable.GestureState
-import me.saket.telephoto.zoomable.GestureStateInputs
-import me.saket.telephoto.zoomable.ZoomableContentTransformation
+import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.*
+import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 
 internal data class RealZoomableContentTransformation(
   override val isSpecified: Boolean,
@@ -40,11 +40,14 @@ internal data class RealZoomableContentTransformation(
     fun calculateFrom(
       gestureStateInputs: GestureStateInputs,
       gestureState: GestureState,
+      coordinateSystem: RealZoomableCoordinateSystem,
     ): ZoomableContentTransformation {
-      val absoluteZoom = AbsoluteZoomFactor(
-        baseZoom = gestureStateInputs.baseZoom,
-        userZoom = gestureState.userZoom,
-      )
+      val zoom = with(coordinateSystem) {
+        gestureState.userZoom.value.scaleIn(CoordinateSpace.ZoomableContent)
+      }
+
+      //println("zoom = ${zoom.maxScale} (spatial = ${gestureState.userZoom.value})")
+
       val absoluteOffset = AbsoluteOffset(
         baseOffset = gestureStateInputs.baseOffset,
         userOffset = gestureState.userOffset,
@@ -53,12 +56,15 @@ internal data class RealZoomableContentTransformation(
       return RealZoomableContentTransformation(
         isSpecified = true,
         contentSize = contentSize,
-        scale = absoluteZoom.finalZoom(),
+        scale = zoom,
         scaleMetadata = ScaleMetadata(
           initialScale = gestureStateInputs.baseZoom.value,
-          userZoom = gestureState.userZoom.value,
+          userZoom = with(coordinateSystem) {
+            // todo: is this coordinate space correct?
+            gestureState.userZoom.value.scaleIn(CoordinateSpace.Viewport).maxScale
+          },
         ),
-        offset = (-absoluteOffset.finalOffset() * absoluteZoom.finalZoom()).let {
+        offset = (-absoluteOffset.finalOffset() * zoom).let {
           // Make it easier for consumers to perform `if (offset == zero)` checks.
           if (it == -Offset.Zero) Offset.Zero else it
         },

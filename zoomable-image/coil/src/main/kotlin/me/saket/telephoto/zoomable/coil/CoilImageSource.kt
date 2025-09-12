@@ -189,6 +189,10 @@ internal class Resolver(
 
   @OptIn(ExperimentalCoilApi::class)
   private suspend fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): ImageSourceCreationResult? {
+    if (true) {
+      return null
+    }
+
     val result = this
     val source = if (result is SuccessResult && result.drawable is BitmapDrawable) {
       val preview = (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()

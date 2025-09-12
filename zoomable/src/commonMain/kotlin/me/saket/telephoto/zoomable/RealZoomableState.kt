@@ -1,87 +1,35 @@
+@file:OptIn(ExperimentalTelephotoApi::class)
 @file:Suppress("ConstPropertyName")
 
 package me.saket.telephoto.zoomable
 
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.AnimationState
-import androidx.compose.animation.core.AnimationVector
-import androidx.compose.animation.core.SpringSpec
-import androidx.compose.animation.core.VectorConverter
-import androidx.compose.animation.core.animateDecay
-import androidx.compose.animation.core.animateTo
+import androidx.compose.animation.core.*
 import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.geometry.isFinite
-import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.times
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.roundToIntSize
-import androidx.compose.ui.unit.toOffset
-import androidx.compose.ui.util.lerp
+import androidx.compose.ui.unit.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
+import me.saket.telephoto.zoomable.AbsoluteZoomFactor.Companion.isAtMaxZoom
+import me.saket.telephoto.zoomable.AbsoluteZoomFactor.Companion.isAtMinZoom
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
-import me.saket.telephoto.zoomable.internal.MutatePriorities
-import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
-import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
-import me.saket.telephoto.zoomable.internal.RealZoomableCoordinateSystem
-import me.saket.telephoto.zoomable.internal.SavedGestureState
-import me.saket.telephoto.zoomable.internal.SavedZoomableState
-import me.saket.telephoto.zoomable.internal.TransformScope
-import me.saket.telephoto.zoomable.internal.TransformableState
-import me.saket.telephoto.zoomable.internal.Zero
-import me.saket.telephoto.zoomable.internal.aspectRatio
-import me.saket.telephoto.zoomable.internal.calculateTopLeftToOverlapWith
-import me.saket.telephoto.zoomable.internal.copy
-import me.saket.telephoto.zoomable.internal.div
-import me.saket.telephoto.zoomable.internal.intersect
-import me.saket.telephoto.zoomable.internal.isPositiveAndFinite
-import me.saket.telephoto.zoomable.internal.isSpecifiedAndFinite
-import me.saket.telephoto.zoomable.internal.isUnspecifiedOrEmpty
-import me.saket.telephoto.zoomable.internal.maxScale
-import me.saket.telephoto.zoomable.internal.minScale
-import me.saket.telephoto.zoomable.internal.minus
-import me.saket.telephoto.zoomable.internal.resolve
-import me.saket.telephoto.zoomable.internal.times
-import me.saket.telephoto.zoomable.internal.unaryMinus
-import me.saket.telephoto.zoomable.internal.withOrigin
-import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
-import me.saket.telephoto.zoomable.internal.zipWithPrevious
-import me.saket.telephoto.zoomable.internal.zoomedAndTranslatedBy
-import me.saket.telephoto.zoomable.spatial.CoordinateSpace
-import me.saket.telephoto.zoomable.spatial.SpatialOffset
-import me.saket.telephoto.zoomable.spatial.takeOrElse
+import me.saket.telephoto.zoomable.internal.*
+import me.saket.telephoto.zoomable.spatial.*
 import kotlin.jvm.JvmInline
 import kotlin.math.abs
 
 @Stable
-@OptIn(ExperimentalTelephotoApi::class)
 internal class RealZoomableState internal constructor(
   savedState: SavedZoomableState,
 ) : ZoomableState {
@@ -92,6 +40,7 @@ internal class RealZoomableState internal constructor(
       RealZoomableContentTransformation.calculateFrom(
         gestureStateInputs = gestureStateInputs,
         gestureState = gestureState.calculate(gestureStateInputs),
+        coordinateSystem = coordinateSystem,
       )
     } else {
       RealZoomableContentTransformation.Unspecified
@@ -99,20 +48,21 @@ internal class RealZoomableState internal constructor(
   }
 
   override val zoomFraction: Float? by derivedStateOf {
-    val gestureStateInputs = currentGestureStateInputs
-    if (gestureStateInputs != null) {
-      val gestureState = gestureState.calculate(gestureStateInputs)
-      val baseZoomFactor = gestureStateInputs.baseZoom
-      val min = AbsoluteZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom.value
-      val max = AbsoluteZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom.value
-      val current = gestureState.userZoom.value.coerceIn(min, max)
-      when {
-        current == min && min == max -> 1f  // Content can't zoom.
-        else -> ((current - min) / (max - min)).coerceIn(0f, 1f)
-      }
-    } else {
-      null
-    }
+//    val gestureStateInputs = currentGestureStateInputs
+//    if (gestureStateInputs != null) {
+//      val gestureState = gestureState.calculate(gestureStateInputs)
+//      val baseZoomFactor = gestureStateInputs.baseZoom
+//      val min = AbsoluteZoomFactor.minimum(baseZoomFactor, zoomSpec.range).userZoom.value
+//      val max = AbsoluteZoomFactor.maximum(baseZoomFactor, zoomSpec.range).userZoom.value
+//      val current = gestureState.userZoom.value.coerceIn(min, max)
+//      when {
+//        current == min && min == max -> 1f  // Content can't zoom.
+//        else -> ((current - min) / (max - min)).coerceIn(0f, 1f)
+//      }
+//    } else {
+//      null
+//    }
+    0f
   }
 
   override var autoApplyTransformations: Boolean by mutableStateOf(savedState.autoApplyTransformations)
@@ -259,8 +209,10 @@ internal class RealZoomableState internal constructor(
 
       val isZoomingOut = zoomDelta < 1f
       val isZoomingIn = zoomDelta > 1f
-      val isAtMaxZoom = oldZoom.isAtMaxZoom(zoomSpec.range)
-      val isAtMinZoom = oldZoom.isAtMinZoom(zoomSpec.range)
+      val isAtMaxZoom = oldZoom.userZoom.isAtMaxZoom(coordinateSystem, zoomSpec.range)
+      val isAtMinZoom = oldZoom.userZoom.isAtMinZoom(coordinateSystem, zoomSpec.range)
+
+      println("zoom by = $zoomDelta, is at max? $isAtMaxZoom, is at min? $isAtMinZoom")
 
       // Apply overzoom effect if content is being over/under-zoomed.
       val zoomDelta = when {
@@ -471,11 +423,8 @@ internal class RealZoomableState internal constructor(
     if (zoomFactor <= 0) return
     awaitUntilIsReadyForInteraction()
 
-    val gestureStateInputs = currentGestureStateInputs!!
-    val targetZoom = AbsoluteZoomFactor.forFinalZoom(
-      baseZoom = gestureStateInputs.baseZoom,
-      finalZoom = zoomFactor,
-    ).coerceUserZoomIn(zoomSpec.range)  // Prevent overzooms. This doesn't support OverzoomEffect yet.
+    val targetZoom = SpatialScaleFactor(zoomFactor, CoordinateSpace.ZoomableContent)
+      .coerceUserZoomIn(zoomSpec.range)  // Prevent overzooms. This doesn't support OverzoomEffect yet.
 
     val centroid = focal.computeCentroid(this, zoomFactor)
     val centroidInViewport = with(coordinateSystem) {
@@ -512,7 +461,7 @@ internal class RealZoomableState internal constructor(
   }
 
   private suspend fun animateZoomTo(
-    targetZoom: AbsoluteZoomFactor,
+    targetZoom: SpatialScaleFactor,
     centroid: Offset,
     mutatePriority: MutatePriority,
     animationSpec: AnimationSpec<Float>,
@@ -521,77 +470,94 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = currentGestureStateInputs!!
     val startGestureState = gestureState.calculate(gestureStateInputs)
 
-    val startZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
+//    val startZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
     val startOffset = AbsoluteOffset(gestureStateInputs.baseOffset, startGestureState.userOffset)
 
-    val panDelta = if (startZoom.userZoom.value == targetZoom.userZoom.value) {
-      // When zoom doesn't change, calculate the pan needed to center the content around the centroid.
-      gestureStateInputs.viewportSize.center - centroid
-    } else {
-      Offset.Zero
-    }
+    val startZoom = startGestureState.userZoom.value
+
+//    val panDelta = if (startZoom.userZoom.value == targetZoom.userZoom.value) {
+//      // When zoom doesn't change, calculate the pan needed to center the content around the centroid.
+//      gestureStateInputs.viewportSize.center - centroid
+//    } else {
+//      Offset.Zero
+//    }
 
     val targetOffset = startOffset
-      .retainCentroidPositionAfterZoom(
-        centroid = centroid,
-        panDelta = panDelta,
-        oldZoom = startZoom,
-        newZoom = targetZoom,
-      )
-      .coerceWithinContentBounds(
-        proposedZoom = targetZoom,
-        inputs = gestureStateInputs,
-      )
+//      .retainCentroidPositionAfterZoom(
+//        centroid = centroid,
+//        //panDelta = panDelta,
+//        oldZoom = startZoom,
+//        newZoom = targetZoom,
+//      )
+//      .coerceWithinContentBounds(
+//        proposedZoom = targetZoom,
+//        inputs = gestureStateInputs,
+//      )
 
-    transformableState.animatedTransform(mutatePriority) {
-      AnimationState(initialValue = 0f).animateTo(
-        targetValue = 1f,
-        animationSpec = animationSpec.withMinimalVisibilityThreshold(),
-      ) {
-        val animatedZoom: AbsoluteZoomFactor = startZoom.copy(
-          userZoom = UserZoomFactor(
-            lerp(
-              start = startZoom.userZoom.value,
-              stop = targetZoom.userZoom.value,
-              fraction = value
-            )
-          )
-        )
-        // For animating the offset, it is necessary to interpolate between values that the UI
-        // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
-        // offset is used because the zoom and the offset values animate at different scales.
-        val animatedOffsetForUi = startOffset.copy(
-          userOffset = UserOffset(
-            -lerp(
-              start = (-startGestureState.userOffset.value * startZoom),
-              stop = (-targetOffset.userOffset.value * targetZoom),
-              fraction = value,
-            ) / animatedZoom
-          )
-        )
-        // Note to self: skipping transformableState#transformBy(), since it enforces offset-locking.
-        gestureState = GestureStateCalculator {
-          startGestureState.copy(
-            userOffset = animatedOffsetForUi.userOffset,
-            userZoom = animatedZoom.userZoom,
-            lastCentroid = centroid,
-          )
-        }
-      }
+    val targetZoomInViewport = with(coordinateSystem) {
+      targetZoom.scaleIn(CoordinateSpace.Viewport)
     }
+
+    gestureState = GestureStateCalculator {
+      startGestureState.copy(
+        userOffset = targetOffset.userOffset,
+        userZoom = UserZoomFactor(targetZoomInViewport.maxScale),
+        lastCentroid = centroid,
+      )
+    }
+
+//    transformableState.animatedTransform(mutatePriority) {
+//      AnimationState(initialValue = 0f).animateTo(
+//        targetValue = 1f,
+//        animationSpec = animationSpec.withMinimalVisibilityThreshold(),
+//      ) {
+//        val animatedZoom: AbsoluteZoomFactor = startZoom.copy(
+//          userZoom = UserZoomFactor(
+//            lerp(
+//              start = startZoom.userZoom.value,
+//              stop = targetZoom.userZoom.value,
+//              fraction = value
+//            )
+//          )
+//        )
+//        // For animating the offset, it is necessary to interpolate between values that the UI
+//        // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
+//        // offset is used because the zoom and the offset values animate at different scales.
+//        val animatedOffsetForUi = startOffset.copy(
+//          userOffset = UserOffset(
+//            -lerp(
+//              start = (-startGestureState.userOffset.value * startZoom),
+//              stop = (-targetOffset.userOffset.value * targetZoom),
+//              fraction = value,
+//            ) / animatedZoom
+//          )
+//        )
+//        // Note to self: skipping transformableState#transformBy(), since it enforces offset-locking.
+//        gestureState = GestureStateCalculator {
+//          startGestureState.copy(
+//            userOffset = animatedOffsetForUi.userOffset,
+//            userZoom = animatedZoom.userZoom,
+//            lastCentroid = centroid,
+//          )
+//        }
+//      }
+//    }
   }
 
   internal fun overzoomBoundaryState(): OverzoomBoundaryState {
     val gestureStateInputs = currentGestureStateInputs ?: return OverzoomBoundaryState.WithinBounds
     val gestureState = gestureState.calculate(gestureStateInputs)
 
-    val currentZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
-    val zoomWithinBounds = currentZoom.coerceUserZoomIn(zoomSpec.range)
+    with(coordinateSystem) {
+      val currentZoom = gestureState.userZoom.value.scaleIn(CoordinateSpace.Viewport)
+      val maxZoom = zoomSpec.range.max().scaleIn(CoordinateSpace.Viewport)
+      val minZoom = zoomSpec.range.min().scaleIn(CoordinateSpace.Viewport)
 
-    return when {
-      currentZoom.userZoom.value > zoomWithinBounds.userZoom.value -> OverzoomBoundaryState.OverZoomed
-      currentZoom.userZoom.value < zoomWithinBounds.userZoom.value -> OverzoomBoundaryState.UnderZoomed
-      else -> OverzoomBoundaryState.WithinBounds
+      return when {
+        currentZoom.maxScale > maxZoom.maxScale -> OverzoomBoundaryState.OverZoomed
+        currentZoom.maxScale < minZoom.maxScale -> OverzoomBoundaryState.UnderZoomed
+        else -> OverzoomBoundaryState.WithinBounds
+      }
     }
   }
 
@@ -607,22 +573,27 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = currentGestureStateInputs ?: error("shouldn't have gotten called")
     val gestureState = gestureState.calculate(gestureStateInputs)
 
-    val userZoomWithinBounds = AbsoluteZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
+    val userZoomWithinBounds = gestureState.userZoom.value
       .coerceUserZoomIn(zoomSpec.range)
-      .userZoom
 
-    transformableState.animatedTransform(MutatePriority.Default) {
-      AnimationState(initialValue = gestureState.userZoom.value).animateTo(
-        targetValue = userZoomWithinBounds.value,
-        animationSpec = ZoomableState.DefaultSettleAnimationSpec.withMinimalVisibilityThreshold(),
-      ) {
-        val current = calculateGestureState()!!.userZoom.value
-        transformBy(
-          centroid = gestureState.lastCentroid,
-          zoomChange = if (current == 0f) 1f else value / current,
-        )
-      }
+    this.gestureState = GestureStateCalculator {
+      gestureState.copy(
+        userZoom = UserZoomFactor(userZoomWithinBounds),
+      )
     }
+
+//    transformableState.animatedTransform(MutatePriority.Default) {
+//      AnimationState(initialValue = gestureState.userZoom.value).animateTo(
+//        targetValue = userZoomWithinBounds.value,
+//        animationSpec = ZoomableState.DefaultSettleAnimationSpec.withMinimalVisibilityThreshold(),
+//      ) {
+//        val current = calculateGestureState()!!.userZoom.value
+//        transformBy(
+//          centroid = gestureState.lastCentroid,
+//          zoomChange = if (current == 0f) 1f else value / current,
+//        )
+//      }
+//    }
   }
 
   internal suspend fun fling(velocity: Velocity, density: Density) {
@@ -762,6 +733,26 @@ internal class RealZoomableState internal constructor(
     }
   }
 
+  fun SpatialScaleFactor.coerceUserZoomIn(
+    range: ZoomRange,
+    leewayPercentForMinZoom: Float = 0f,
+    leewayPercentForMaxZoom: Float = leewayPercentForMinZoom,
+  ): SpatialScaleFactor {
+    val space = this.space
+    with(coordinateSystem) {
+      val min = range.min().scaleIn(space)
+      val max = range.max().scaleIn(space)
+      val current = this@coerceUserZoomIn.scaleIn(space)
+      return SpatialScaleFactor(
+        scaleFactor = current.coerceIn(
+          minimumValue = min * (1f - leewayPercentForMinZoom),
+          maximumValue = max * (1f + leewayPercentForMaxZoom),
+        ),
+        space = space,
+      )
+    }
+  }
+
   companion object {
     internal val Saver = Saver(
       save = { state ->
@@ -819,45 +810,83 @@ internal value class BaseZoomFactor(val value: ScaleFactor) {
 /** Zoom applied by the user on top of [BaseZoomFactor]. */
 @JvmInline
 @Immutable
-internal value class UserZoomFactor(val value: Float)
+@Deprecated("replaced with SpatialScaleFactor")
+internal value class UserZoomFactor(val value: SpatialScaleFactor) {
+  constructor(factor: Float) : this(SpatialScaleFactor(factor, CoordinateSpace.Viewport))
+}
 
+@Deprecated("replaced with SpatialScaleFactor")
 internal data class AbsoluteZoomFactor(
   private val baseZoom: BaseZoomFactor,
   val userZoom: UserZoomFactor,
 ) {
   fun finalZoom(): ScaleFactor = baseZoom * userZoom
-  private fun finalMaxScale(): Float = finalZoom().maxScale
+//  private fun finalMaxScale(): Float = finalZoom().maxScale
 
   fun coerceUserZoomIn(
     range: ZoomRange,
     leewayPercentForMinZoom: Float = 0f,
     leewayPercentForMaxZoom: Float = leewayPercentForMinZoom,
   ): AbsoluteZoomFactor {
-    val minUserZoom = minimum(baseZoom, range).userZoom
-    val maxUserZoom = maximum(baseZoom, range).userZoom
-    return copy(
-      userZoom = UserZoomFactor(
-        userZoom.value.coerceIn(
-          minimumValue = minUserZoom.value * (1 - leewayPercentForMinZoom),
-          maximumValue = maxUserZoom.value * (1 + leewayPercentForMaxZoom),
-        )
-      )
-    )
+//    val minUserZoom = minimum(baseZoom, range).userZoom
+//    val maxUserZoom = maximum(baseZoom, range).userZoom
+//    return copy(
+//      userZoom = UserZoomFactor(
+//        userZoom.value.coerceIn(
+//          minimumValue = minUserZoom.value * (1 - leewayPercentForMinZoom),
+//          maximumValue = maxUserZoom.value * (1 + leewayPercentForMaxZoom),
+//        )
+//      )
+//    )
+    return this
   }
 
-  fun isAtMinZoom(range: ZoomRange): Boolean {
-    return (finalMaxScale() - minimum(baseZoom, range).finalMaxScale()) < ZoomDeltaEpsilon
-  }
-
-  fun isAtMaxZoom(range: ZoomRange): Boolean {
-    return (maximum(baseZoom, range).finalMaxScale() - finalMaxScale()) < ZoomDeltaEpsilon
-  }
+//  fun isAtMinZoom(range: ZoomRange): Boolean {
+//    return (finalMaxScale() - minimum(baseZoom, range).finalMaxScale()) < ZoomDeltaEpsilon
+//  }
+//
+//  fun isAtMaxZoom(range: ZoomRange): Boolean {
+//    return (maximum(baseZoom, range).finalMaxScale() - finalMaxScale()) < ZoomDeltaEpsilon
+//  }
 
   companion object {
+
+    fun UserZoomFactor.isAtMinZoom(
+      coordinateSystem: CoordinateSystem,
+      range: ZoomRange,
+    ): Boolean {
+      with(coordinateSystem) {
+        val min = range.min().scaleIn(CoordinateSpace.Viewport)
+        val current = this@isAtMinZoom.value.scaleIn(CoordinateSpace.Viewport)
+        return (current.maxScale - min.maxScale) < ZoomDeltaEpsilon
+      }
+    }
+
+    fun UserZoomFactor.isAtMaxZoom(
+      coordinateSystem: CoordinateSystem,
+      range: ZoomRange,
+    ): Boolean {
+      with(coordinateSystem) {
+        val max = range.max().scaleIn(CoordinateSpace.Viewport)
+        val current = this@isAtMaxZoom.value.scaleIn(CoordinateSpace.Viewport)
+        return (max.maxScale - current.maxScale) < ZoomDeltaEpsilon
+      }
+    }
+
+    // todo: inline
+    fun minimum(range: ZoomRange): SpatialScaleFactor {
+      return range.min()
+    }
+
+    // todo: inline
+    fun maximum(range: ZoomRange): SpatialScaleFactor {
+      return range.max()
+    }
+
     fun minimum(baseZoom: BaseZoomFactor, range: ZoomRange): AbsoluteZoomFactor {
       return AbsoluteZoomFactor(
         baseZoom = baseZoom,
-        userZoom = UserZoomFactor(range.minZoomFactor(baseZoom) / baseZoom.maxScale),
+        userZoom = UserZoomFactor(range.minZoomFactor(baseZoom)),
       )
     }
 
@@ -868,11 +897,15 @@ internal data class AbsoluteZoomFactor(
       )
     }
 
-    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: Float): AbsoluteZoomFactor {
-      return AbsoluteZoomFactor(
-        baseZoom = baseZoom,
-        userZoom = UserZoomFactor(finalZoom / baseZoom.value.maxScale),
+    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: Float): SpatialScaleFactor {
+      return SpatialScaleFactor(
+        scaleFactor = finalZoom,
+        space = CoordinateSpace.ZoomableContent,
       )
+//      return AbsoluteZoomFactor(
+//        baseZoom = baseZoom,
+//        userZoom = UserZoomFactor(finalZoom / baseZoom.value.maxScale),
+//      )
     }
 
     fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: ScaleFactor): AbsoluteZoomFactor {
@@ -939,8 +972,22 @@ internal data class ZoomRange(
   private val maxZoomAsRatioOfSize: Float,
 ) {
 
+  fun min(): SpatialScaleFactor {
+    return SpatialScaleFactor(
+      scaleFactor = minZoomAsRatioOfBaseZoom,
+      space = CoordinateSpace.Viewport,
+    )
+  }
+
+  fun max(): SpatialScaleFactor {
+    return SpatialScaleFactor(
+      scaleFactor = maxZoomAsRatioOfSize,
+      space = CoordinateSpace.ZoomableContent,
+    )
+  }
+
   fun minZoomFactor(baseZoom: BaseZoomFactor): Float {
-    return minZoomAsRatioOfBaseZoom * baseZoom.maxScale
+    return minZoomAsRatioOfBaseZoom
   }
 
   fun maxZoomFactor(baseZoom: BaseZoomFactor): Float {

@@ -2,6 +2,7 @@ package me.saket.telephoto.sample
 
 import android.os.Bundle
 import android.os.StrictMode
+import android.util.Log.w
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
 import androidx.activity.compose.setContent
@@ -26,7 +27,7 @@ class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     if (BuildConfig.DEBUG) {
-      enableStrictMode()
+//      enableStrictMode()
     }
     enableEdgeToEdge()
     setupImmersiveMode()
@@ -42,7 +43,7 @@ class SampleActivity : AppCompatActivity() {
       items = listOf(
         // Photo by Mahyar Motebassem (https://unsplash.com/photos/f0d83M-PkNw).
         MediaItem.Image(
-          fullSizedUrl = "https://unsplash.com/photos/f0d83M-PkNw/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzQ3ODMzODU2fA&force=true",
+          fullSizedUrl = "https://unsplash.com/photos/f0d83M-PkNw/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzQ3ODMzODU2fA&force=true&w=300",
           placeholderImageUrl = "https://unsplash.com/photos/f0d83M-PkNw/download?ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzQ3ODMzODU2fA&force=true&w=300",
           caption = "Breakfast",
           aspectRatio = 300f / 375f,

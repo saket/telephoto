@@ -60,7 +60,7 @@ internal data class SavedGestureState(
 
       return SavedGestureState(
         userOffset = gestureState.userOffset.value.packToLong(),
-        userZoom = gestureState.userZoom.value,
+        userZoom = /*gestureState.userZoom.value*/ 1f,  // todo!
         centroid = gestureState.lastCentroid.packToLong(),
         contentPositionInfo = inputs.viewportSize.let { viewportSize ->
           if (viewportSize.isSpecifiedAndNonEmpty) {

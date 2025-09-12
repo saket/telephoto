@@ -3,6 +3,7 @@ package me.saket.telephoto.zoomable.spatial
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.ScaleFactor
 import me.saket.telephoto.ExperimentalTelephotoApi
 
 /**
@@ -39,4 +40,6 @@ interface CoordinateSystem {
   fun SpatialRect.sizeIn(target: CoordinateSpace): Size {
     return rectIn(target).size
   }
+
+  fun SpatialScaleFactor.scaleIn(target: CoordinateSpace): ScaleFactor
 }
