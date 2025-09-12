@@ -47,54 +47,54 @@ abstract class ZoomFocalPoint internal constructor() {
     state: ZoomableState,
     targetZoomFactor: Float
   ): SpatialOffset
-}
 
-@OptIn(ExperimentalTelephotoApi::class)
-private data class ZoomAroundCentroid(val centroid: SpatialOffset) : ZoomFocalPoint() {
-  override fun computeCentroid(state: ZoomableState, targetZoomFactor: Float) = centroid
-}
-
-@OptIn(ExperimentalTelephotoApi::class)
-private data class MoveToCenter(val newCenter: SpatialOffset) : ZoomFocalPoint() {
-  override fun computeCentroid(state: ZoomableState, targetZoomFactor: Float): SpatialOffset {
-    val transformation = state.contentTransformation
-    check(transformation.isSpecified) { "called before the content is ready?" }
-
-    with(state.coordinateSystem) {
-      val centerInViewport = newCenter.offsetIn(CoordinateSpace.Viewport)
-      val viewportCenter = contentBounds.rectIn(CoordinateSpace.Viewport).center
-
-      val targetCentroid = calculateCentroidToMovePointToTarget(
-        point = centerInViewport,
-        target = viewportCenter,
-        currentZoom = transformation.scale.maxScale,
-        targetZoom = targetZoomFactor,
-      )
-      return SpatialOffset(targetCentroid, CoordinateSpace.Viewport)
-    }
+  @OptIn(ExperimentalTelephotoApi::class)
+  private data class ZoomAroundCentroid(val centroid: SpatialOffset) : ZoomFocalPoint() {
+    override fun computeCentroid(state: ZoomableState, targetZoomFactor: Float) = centroid
   }
 
-  /** Calculates a centroid to make a specific [point] move to the [target] position after zooming. */
-  private fun calculateCentroidToMovePointToTarget(
-    point: Offset,
-    target: Offset,
-    currentZoom: Float,
-    targetZoom: Float,
-  ): Offset {
-    val zoomRatio = targetZoom / currentZoom
-    if (abs(zoomRatio - 1f) < ZoomDeltaEpsilon) {
-      // No zoom change. To have the point moved to target via
-      // panning, zooming should be done "around" the point itself.
-      return point
+  @OptIn(ExperimentalTelephotoApi::class)
+  internal data class MoveToCenter(val newCenter: SpatialOffset) : ZoomFocalPoint() {
+    override fun computeCentroid(state: ZoomableState, targetZoomFactor: Float): SpatialOffset {
+      val transformation = state.contentTransformation
+      check(transformation.isSpecified) { "called before the content is ready?" }
+
+      with(state.coordinateSystem) {
+        val centerInViewport = newCenter.offsetIn(CoordinateSpace.Viewport)
+        val viewportCenter = contentBounds.rectIn(CoordinateSpace.Viewport).center
+
+        val targetCentroid = calculateCentroidToMovePointToTarget(
+          point = centerInViewport,
+          target = viewportCenter,
+          currentZoom = transformation.scale.maxScale,
+          targetZoom = targetZoomFactor,
+        )
+        return SpatialOffset(targetCentroid, CoordinateSpace.Viewport)
+      }
     }
 
-    // Given that I want a point to end up at its target position after zooming by
-    // `zoomRatio`, what centroid should I zoom around? The math:
-    //
-    // - After zoom: point_new = centroid + (point_old - centroid) * zoomRatio
-    // - I want: point_new = target
-    //   - Solving: target = centroid + (point - centroid) * zoomRatio
-    // - Therefore: centroid = (target - point * zoomRatio) / (1 - zoomRatio)
-    return (target - point * zoomRatio) / (1f - zoomRatio)
+    /** Calculates a centroid to make a specific [point] move to the [target] position after zooming. */
+    private fun calculateCentroidToMovePointToTarget(
+      point: Offset,
+      target: Offset,
+      currentZoom: Float,
+      targetZoom: Float,
+    ): Offset {
+      val zoomRatio = targetZoom / currentZoom
+      if (abs(zoomRatio - 1f) < ZoomDeltaEpsilon) {
+        // No zoom change. To have the point moved to target via
+        // panning, zooming should be done "around" the point itself.
+        return point
+      }
+
+      // Given that I want a point to end up at its target position after zooming by
+      // `zoomRatio`, what centroid should I zoom around? The math:
+      //
+      // - After zoom: point_new = centroid + (point_old - centroid) * zoomRatio
+      // - I want: point_new = target
+      //   - Solving: target = centroid + (point - centroid) * zoomRatio
+      // - Therefore: centroid = (target - point * zoomRatio) / (1 - zoomRatio)
+      return (target - point * zoomRatio) / (1f - zoomRatio)
+    }
   }
 }

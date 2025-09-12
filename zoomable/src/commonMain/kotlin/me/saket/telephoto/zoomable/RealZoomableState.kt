@@ -460,6 +460,7 @@ internal class RealZoomableState internal constructor(
       zoomFactor = targetZoom,
       focal = focal,
       animationSpec = animationSpec,
+      animatePanEvenIfZoomDeltaIsZero = false,
     )
   }
 
@@ -468,26 +469,11 @@ internal class RealZoomableState internal constructor(
     focal: ZoomFocalPoint,
     animationSpec: AnimationSpec<Float>,
   ) {
-    if (zoomFactor <= 0) return
-    awaitUntilIsReadyForInteraction()
-
-    val gestureStateInputs = currentGestureStateInputs!!
-    val targetZoom = AbsoluteZoomFactor.forFinalZoom(
-      baseZoom = gestureStateInputs.baseZoom,
-      finalZoom = zoomFactor,
-    ).coerceUserZoomIn(zoomSpec.range)  // Prevent overzooms. This doesn't support OverzoomEffect yet.
-
-    val centroid = focal.computeCentroid(this, zoomFactor)
-    val centroidInViewport = with(coordinateSystem) {
-      centroid
-        .takeOrElse { SpatialOffset(viewportSize.center, CoordinateSpace.Viewport) }
-        .offsetIn(CoordinateSpace.Viewport)
-    }
-    animateZoomTo(
-      targetZoom = targetZoom,
-      centroid = centroidInViewport,
-      mutatePriority = MutatePriority.UserInput,
+    zoomTo(
+      zoomFactor = zoomFactor,
+      focal = focal,
       animationSpec = animationSpec,
+      animatePanEvenIfZoomDeltaIsZero = true,
     )
   }
 
@@ -511,29 +497,46 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  private suspend fun animateZoomTo(
-    targetZoom: AbsoluteZoomFactor,
-    centroid: Offset,
-    mutatePriority: MutatePriority,
+  private suspend fun zoomTo(
+    zoomFactor: Float,
+    focal: ZoomFocalPoint,
     animationSpec: AnimationSpec<Float>,
+    animatePanEvenIfZoomDeltaIsZero: Boolean,
   ) {
+    if (zoomFactor <= 0) return
     awaitUntilIsReadyForInteraction()
-    val gestureStateInputs = currentGestureStateInputs!!
-    val startGestureState = gestureState.calculate(gestureStateInputs)
 
+    val gestureStateInputs = currentGestureStateInputs!!
+    val targetZoom = AbsoluteZoomFactor.forFinalZoom(
+      baseZoom = gestureStateInputs.baseZoom,
+      finalZoom = zoomFactor,
+    ).coerceUserZoomIn(zoomSpec.range)  // Prevent overzooms. This doesn't support OverzoomEffect yet.
+
+    val centroid = focal.computeCentroid(this, zoomFactor)
+    val centroidInViewport = with(coordinateSystem) {
+      centroid
+        .takeOrElse { SpatialOffset(viewportSize.center, CoordinateSpace.Viewport) }
+        .offsetIn(CoordinateSpace.Viewport)
+    }
+
+    val startGestureState = gestureState.calculate(gestureStateInputs)
     val startZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
     val startOffset = AbsoluteOffset(gestureStateInputs.baseOffset, startGestureState.userOffset)
 
-    val panDelta = if (startZoom.userZoom.value == targetZoom.userZoom.value) {
+    val panDelta = if (
+      startZoom.userZoom == targetZoom.userZoom &&
+      animatePanEvenIfZoomDeltaIsZero &&
+      focal is ZoomFocalPoint.MoveToCenter
+    ) {
       // When zoom doesn't change, calculate the pan needed to center the content around the centroid.
-      gestureStateInputs.viewportSize.center - centroid
+      gestureStateInputs.viewportSize.center - centroidInViewport
     } else {
       Offset.Zero
     }
 
     val targetOffset = startOffset
       .retainCentroidPositionAfterZoom(
-        centroid = centroid,
+        centroid = centroidInViewport,
         panDelta = panDelta,
         oldZoom = startZoom,
         newZoom = targetZoom,
@@ -543,7 +546,7 @@ internal class RealZoomableState internal constructor(
         inputs = gestureStateInputs,
       )
 
-    transformableState.animatedTransform(mutatePriority) {
+    transformableState.animatedTransform(MutatePriority.UserInput) {
       AnimationState(initialValue = 0f).animateTo(
         targetValue = 1f,
         animationSpec = animationSpec.withMinimalVisibilityThreshold(),
@@ -574,7 +577,7 @@ internal class RealZoomableState internal constructor(
           startGestureState.copy(
             userOffset = animatedOffsetForUi.userOffset,
             userZoom = animatedZoom.userZoom,
-            lastCentroid = centroid,
+            lastCentroid = centroidInViewport,
           )
         }
       }

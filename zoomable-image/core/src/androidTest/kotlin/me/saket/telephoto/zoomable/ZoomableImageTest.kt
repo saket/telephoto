@@ -1267,7 +1267,10 @@ class ZoomableImageTest {
       rule.onNodeWithTag("image").performMultiModalInput {
         key {
           withKeyDown(Key.AltLeft) {
-            mouse { scroll(delta = -1f) }
+            mouse {
+              moveTo((center + topCenter) / 2f)
+              scroll(delta = -1f)
+            }
           }
         }
       }
@@ -1285,7 +1288,10 @@ class ZoomableImageTest {
     rule.onNodeWithTag("image").performMultiModalInput {
       key {
         withKeyDown(Key.AltLeft) {
-          mouse { scroll(3f) }
+          mouse {
+            moveTo(center)
+            scroll(3f)
+          }
         }
       }
     }
