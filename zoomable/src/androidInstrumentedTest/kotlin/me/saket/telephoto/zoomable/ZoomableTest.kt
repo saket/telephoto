@@ -705,7 +705,13 @@ class ZoomableTest {
         Modifier
           .size(200.dp, 300.dp)
           .testTag("content")
-          .zoomable(state, gestures = EnabledZoomGestures(quickZoom = false))
+          .zoomable(
+            state = state,
+            onClick = null,
+            onLongClick = null,
+            onDoubleClick = null,
+            gestures = EnabledZoomGestures.NoQuickZoom,
+          )
           .clickable { onClickCalled = true }
       )
     }

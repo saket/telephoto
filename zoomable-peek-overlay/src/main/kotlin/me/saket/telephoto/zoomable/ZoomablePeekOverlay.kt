@@ -56,10 +56,7 @@ fun Modifier.zoomablePeekOverlay(
       onClick = null,
       onLongClick = null,
       onDoubleClick = null,
-      gestures = EnabledZoomGestures(
-        pinchToZoom = true,
-        quickZoom = false,
-      ),
+      gestures = EnabledZoomGestures.NoQuickZoom,
     )
 }
 

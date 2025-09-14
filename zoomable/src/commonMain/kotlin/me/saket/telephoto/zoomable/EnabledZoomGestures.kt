@@ -17,6 +17,15 @@ import kotlin.jvm.JvmInline
  * - [EnabledZoomGestures.ZoomOnly]
  * - [EnabledZoomGestures.PanOnly]
  * - [EnabledZoomGestures.None]
+ *
+ * Usage:
+ *
+ * ```
+ * EnabledZoomGestures(
+ *   zoom = true,
+ *   pan = true,
+ * )
+ * ```
  */
 @Immutable
 @JvmInline
@@ -79,3 +88,6 @@ value class EnabledZoomGestures private constructor(
     const val Pan = 1 shl 2
   }
 }
+
+internal val EnabledZoomGestures.Companion.NoQuickZoom: EnabledZoomGestures
+  get() = EnabledZoomGestures(pinchToZoom = true, quickZoom = false, pan = true)
