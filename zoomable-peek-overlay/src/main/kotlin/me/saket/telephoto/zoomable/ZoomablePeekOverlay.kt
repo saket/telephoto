@@ -56,7 +56,7 @@ fun Modifier.zoomablePeekOverlay(
       onClick = null,
       onLongClick = null,
       onDoubleClick = null,
-      interactions = ZoomInteractions(
+      gestures = EnabledZoomGestures(
         pinchToZoom = true,
         quickZoom = false,
       ),

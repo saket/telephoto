@@ -53,7 +53,7 @@ import me.saket.telephoto.zoomable.spatial.SpatialOffset
  * */
 fun Modifier.zoomable(
   state: ZoomableState,
-  interactions: ZoomInteractions,
+  gestures: EnabledZoomGestures,
   onClick: ((clickedAt: Offset) -> Unit)? = null,
   onLongClick: ((clickedAt: Offset) -> Unit)? = null,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
@@ -62,7 +62,7 @@ fun Modifier.zoomable(
   @OptIn(ExperimentalTelephotoApi::class)
   return this.zoomableInternal(
     state = state,
-    interactions = interactions,
+    gestures = gestures,
     onClick = onClick?.let {
       { clickedAt: SpatialOffset ->
         val viewportOffset = with(state.coordinateSystem) {
@@ -93,7 +93,7 @@ fun Modifier.zoomable(
 ): Modifier {
   return this.zoomable(
     state = state,
-    interactions = ZoomInteractions.ZoomAndPan,
+    gestures = EnabledZoomGestures.ZoomAndPan,
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
@@ -102,9 +102,9 @@ fun Modifier.zoomable(
 }
 
 @Deprecated(
-  "Use the 'interactions' parameter instead. " +
-    "Replace `enabled = true` with `interactions = ZoomInteractions.ZoomAndPan`, " +
-    "or `enabled = false` with `interactions = ZoomInteractions.None`.",
+  "Use the 'gestures' parameter instead. " +
+    "Replace `enabled = true` with `gestures = ZoomInteractions.ZoomAndPan`, " +
+    "or `enabled = false` with `gestures = ZoomInteractions.None`.",
 )
 fun Modifier.zoomable(
   state: ZoomableState,
@@ -116,7 +116,7 @@ fun Modifier.zoomable(
 ): Modifier {
   return this.zoomable(
     state = state,
-    interactions = if (enabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (enabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
@@ -127,13 +127,13 @@ fun Modifier.zoomable(
 @OptIn(ExperimentalTelephotoApi::class)
 private fun Modifier.zoomableInternal(
   state: ZoomableState,
-  interactions: ZoomInteractions,
+  gestures: EnabledZoomGestures,
   onClick: (CoordinateSystem.(SpatialOffset) -> Unit)? = null,
   onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
 ): Modifier {
-  if (interactions.pinchToZoom && !interactions.quickZoom) {
+  if (gestures.pinchToZoom && !gestures.quickZoom) {
     // Note to self: this function isn't public because it feels weird to
     // have click listeners that will only work when quick zoom is enabled.
     check(onClick == null)
@@ -149,7 +149,7 @@ private fun Modifier.zoomableInternal(
     .then(
       ZoomableElement(
         state = state,
-        interactions = interactions,
+        gestures = gestures,
         onClick = onClick,
         onLongClick = onLongClick,
         onDoubleClick = onDoubleClick,
@@ -175,7 +175,7 @@ fun Modifier.zoomable(
 ): Modifier {
   return this.zoomable(
     state = state,
-    interactions = if (enabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (enabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
@@ -186,7 +186,7 @@ fun Modifier.zoomable(
 @OptIn(ExperimentalTelephotoApi::class)
 private data class ZoomableElement(
   private val state: RealZoomableState,
-  private val interactions: ZoomInteractions,
+  private val gestures: EnabledZoomGestures,
   private val onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   private val onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   private val onDoubleClick: DoubleClickToZoomListener?,
@@ -194,7 +194,7 @@ private data class ZoomableElement(
 
   override fun create(): ZoomableNode = ZoomableNode(
     state = state,
-    interactions = interactions,
+    gestures = gestures,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -203,7 +203,7 @@ private data class ZoomableElement(
   override fun update(node: ZoomableNode) {
     node.update(
       state = state,
-      interactions = interactions,
+      gestures = gestures,
       onClick = onClick,
       onLongClick = onLongClick,
       onDoubleClick = onDoubleClick,
@@ -213,7 +213,7 @@ private data class ZoomableElement(
   override fun InspectorInfo.inspectableProperties() {
     name = "zoomable"
     properties["state"] = state
-    properties["interactions"] = interactions
+    properties["gestures"] = gestures
     properties["onClick"] = onClick
     properties["onLongClick"] = onLongClick
     properties["onDoubleClick"] = onDoubleClick
@@ -223,7 +223,7 @@ private data class ZoomableElement(
 @OptIn(ExperimentalFoundationApi::class, ExperimentalTelephotoApi::class)
 private class ZoomableNode(
   private var state: RealZoomableState,
-  interactions: ZoomInteractions,
+  gestures: EnabledZoomGestures,
   onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   onDoubleClick: DoubleClickToZoomListener?,
@@ -268,7 +268,7 @@ private class ZoomableNode(
   }
 
   private val tappableAndQuickZoomableNode = TappableAndQuickZoomableElement(
-    quickZoomEnabled = interactions.quickZoom,
+    quickZoomEnabled = gestures.quickZoom,
     transformableState = state.transformableState,
     onPress = onPress,
     onTap = onClick?.withCoordinateSystem(),
@@ -279,8 +279,8 @@ private class ZoomableNode(
 
   private val transformableNode = TransformableElement(
     state = state.transformableState,
-    canPan = { interactions.pan && state.canConsumePanChange(it) },
-    enabled = interactions.pinchToZoom,
+    canPan = { gestures.pan && state.canConsumePanChange(it) },
+    enabled = gestures.pinchToZoom,
     onTransformStopped = onTransformStopped,
     lockRotationOnZoomPan = false,
   ).create()
@@ -293,7 +293,7 @@ private class ZoomableNode(
 
   fun update(
     state: RealZoomableState,
-    interactions: ZoomInteractions,
+    gestures: EnabledZoomGestures,
     onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
     onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
     onDoubleClick: DoubleClickToZoomListener?,
@@ -305,9 +305,9 @@ private class ZoomableNode(
     }
     transformableNode.update(
       state = state.transformableState,
-      canPan = { interactions.pan && state.canConsumePanChange(it) },
+      canPan = { gestures.pan && state.canConsumePanChange(it) },
       lockRotationOnZoomPan = false,
-      enabled = interactions.pinchToZoom,
+      enabled = gestures.pinchToZoom,
       onTransformStopped = onTransformStopped,
     )
     tappableAndQuickZoomableNode.update(
@@ -317,7 +317,7 @@ private class ZoomableNode(
       onDoubleTap = onDoubleClick?.withCoroutineScope(),
       onQuickZoomStopped = onQuickZoomStopped,
       transformableState = state.transformableState,
-      quickZoomEnabled = interactions.quickZoom,
+      quickZoomEnabled = gestures.quickZoom,
     )
   }
 

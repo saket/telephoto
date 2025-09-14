@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
-import me.saket.telephoto.zoomable.ZoomInteractions
+import me.saket.telephoto.zoomable.EnabledZoomGestures
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
@@ -57,7 +57,7 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 fun ZoomableGlideImage(
   model: Any?,
   contentDescription: String?,
-  interactions: ZoomInteractions,
+  gestures: EnabledZoomGestures,
   modifier: Modifier = Modifier,
   state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
   alpha: Float = DefaultAlpha,
@@ -80,7 +80,7 @@ fun ZoomableGlideImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = interactions,
+    gestures = gestures,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -116,7 +116,7 @@ fun ZoomableGlideImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = ZoomInteractions.ZoomAndPan,
+    gestures = EnabledZoomGestures.ZoomAndPan,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -127,9 +127,9 @@ fun ZoomableGlideImage(
 }
 
 @Deprecated(
-  "Use the 'interactions' parameter instead. " +
-    "Replace `gesturesEnabled = true` with `interactions = ZoomInteractions.ZoomAndPan`, " +
-    "or `gesturesEnabled = false` with `interactions = ZoomInteractions.None`.",
+  "Use the 'gestures' parameter instead. " +
+    "Replace `gesturesEnabled = true` with `gestures = ZoomInteractions.ZoomAndPan`, " +
+    "or `gesturesEnabled = false` with `gestures = ZoomInteractions.None`.",
 )
 @Composable
 @NonRestartableComposable
@@ -159,7 +159,7 @@ fun ZoomableGlideImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -242,7 +242,7 @@ fun ZoomableGlideImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
@@ -280,7 +280,7 @@ fun ZoomableGlideImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = DoubleClickToZoomListener.cycle(),

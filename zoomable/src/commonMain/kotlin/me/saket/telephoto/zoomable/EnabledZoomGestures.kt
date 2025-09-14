@@ -6,25 +6,28 @@ import androidx.compose.runtime.Immutable
 import kotlin.jvm.JvmInline
 
 /**
- * Gesture interactions that can be enabled for [Modifier.zoomable][zoomable].
+ * Gestures that [Modifier.zoomable][zoomable] will observe and respond to.
+ *
+ * This acts as a simple toggle bag for different gesture types. To control _how_ [Modifier.zoomable][zoomable]
+ * responds to them, use the params defined in [rememberZoomableState].
  *
  * Presets:
  *
- * - [ZoomInteractions.ZoomAndPan]
- * - [ZoomInteractions.ZoomOnly]
- * - [ZoomInteractions.PanOnly]
- * - [ZoomInteractions.None]
- * */
+ * - [EnabledZoomGestures.ZoomAndPan]
+ * - [EnabledZoomGestures.ZoomOnly]
+ * - [EnabledZoomGestures.PanOnly]
+ * - [EnabledZoomGestures.None]
+ */
 @Immutable
 @JvmInline
-value class ZoomInteractions private constructor(
+value class EnabledZoomGestures private constructor(
   private val flags: Int
 ) {
   companion object {
-    val ZoomAndPan = ZoomInteractions(Flag.PinchToZoom or Flag.QuickZoom or Flag.Pan)
-    val ZoomOnly = ZoomInteractions(Flag.PinchToZoom or Flag.QuickZoom)
-    val PanOnly = ZoomInteractions(Flag.Pan)
-    val None = ZoomInteractions(0)
+    val ZoomAndPan = EnabledZoomGestures(Flag.PinchToZoom or Flag.QuickZoom or Flag.Pan)
+    val ZoomOnly = EnabledZoomGestures(Flag.PinchToZoom or Flag.QuickZoom)
+    val PanOnly = EnabledZoomGestures(Flag.Pan)
+    val None = EnabledZoomGestures(0)
   }
 
   val zoom: Boolean
@@ -61,13 +64,13 @@ value class ZoomInteractions private constructor(
   fun copy(
     zoom: Boolean = this.zoom,
     pan: Boolean = this.pan,
-  ) = ZoomInteractions(
+  ) = EnabledZoomGestures(
     zoom = zoom,
     pan = pan,
   )
 
   override fun toString(): String {
-    return "ZoomInteractions(zoom=$zoom, pan=$pan)"
+    return "EnabledZoomGestures(zoom=$zoom, pan=$pan)"
   }
 
   private object Flag {

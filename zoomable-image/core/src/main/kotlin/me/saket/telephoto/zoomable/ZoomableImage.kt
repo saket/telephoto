@@ -64,7 +64,7 @@ import me.saket.telephoto.zoomable.internal.receiveFocusFrom
 fun ZoomableImage(
   image: ZoomableImageSource,
   contentDescription: String?,
-  interactions: ZoomInteractions,
+  gestures: EnabledZoomGestures,
   modifier: Modifier = Modifier,
   state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
   alpha: Float = DefaultAlpha,
@@ -186,7 +186,7 @@ fun ZoomableImage(
       .receiveFocusFrom(focusForwarder)
       .zoomable(
         state = state.zoomableState,
-        interactions = if (state.isPlaceholderDisplayed) ZoomInteractions.None else interactions,
+        gestures = if (state.isPlaceholderDisplayed) EnabledZoomGestures.None else gestures,
         onClick = onClick,
         onLongClick = onLongClick,
         onDoubleClick = onDoubleClick,
@@ -265,7 +265,7 @@ fun ZoomableImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = ZoomInteractions.ZoomAndPan,
+    gestures = EnabledZoomGestures.ZoomAndPan,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -275,9 +275,9 @@ fun ZoomableImage(
 }
 
 @Deprecated(
-  "Use the 'interactions' parameter instead. " +
-    "Replace `gesturesEnabled = true` with `interactions = ZoomInteractions.ZoomAndPan`, " +
-    "or `gesturesEnabled = false` with `interactions = ZoomInteractions.None`.",
+  "Use the 'gestures' parameter instead. " +
+    "Replace `gesturesEnabled = true` with `gestures = ZoomInteractions.ZoomAndPan`, " +
+    "or `gesturesEnabled = false` with `gestures = ZoomInteractions.None`.",
 )
 @Composable
 fun ZoomableImage(
@@ -305,7 +305,7 @@ fun ZoomableImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -354,7 +354,7 @@ fun ZoomableImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -387,7 +387,7 @@ fun ZoomableImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = DoubleClickToZoomListener.cycle(),
