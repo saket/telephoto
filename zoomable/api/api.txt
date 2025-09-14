@@ -22,6 +22,7 @@ package me.saket.telephoto.zoomable {
   }
 
   public static final class DynamicZoomSpec.Companion {
+    method public me.saket.telephoto.zoomable.DynamicZoomSpec fixed(me.saket.telephoto.zoomable.ZoomSpec zoomSpec);
     method public me.saket.telephoto.zoomable.DynamicZoomSpec recommend(me.saket.telephoto.zoomable.ZoomSpec zoomSpec);
   }
 
@@ -126,6 +127,27 @@ package me.saket.telephoto.zoomable {
     method public me.saket.telephoto.zoomable.ZoomFocalPoint zoomAround(me.saket.telephoto.zoomable.spatial.SpatialOffset centroid);
   }
 
+  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class ZoomInteractions {
+    ctor public ZoomInteractions(optional boolean zoom, optional boolean pan);
+    method public int copy(optional boolean zoom, optional boolean pan);
+    method public boolean getPan();
+    method public boolean getZoom();
+    property public final boolean pan;
+    property public final boolean zoom;
+    field public static final me.saket.telephoto.zoomable.ZoomInteractions.Companion Companion;
+  }
+
+  public static final class ZoomInteractions.Companion {
+    method public int getNone();
+    method public int getPanOnly();
+    method public int getZoomAndPan();
+    method public int getZoomOnly();
+    property public final int None;
+    property public final int PanOnly;
+    property public final int ZoomAndPan;
+    property public final int ZoomOnly;
+  }
+
   @androidx.compose.runtime.Immutable @dev.drewhamilton.poko.Poko public final class ZoomLimit {
     ctor public ZoomLimit(float factor, optional me.saket.telephoto.zoomable.OverzoomEffect overzoomEffect);
     method public float getFactor();
@@ -220,7 +242,9 @@ package me.saket.telephoto.zoomable {
 
   public final class ZoomableKt {
     method @Deprecated public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds);
-    method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds, optional me.saket.telephoto.zoomable.DoubleClickToZoomListener? onDoubleClick);
+    method @Deprecated public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional boolean enabled, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds, optional me.saket.telephoto.zoomable.DoubleClickToZoomListener? onDoubleClick);
+    method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, int interactions, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional me.saket.telephoto.zoomable.DoubleClickToZoomListener? onDoubleClick, optional boolean clipToBounds);
+    method public static androidx.compose.ui.Modifier zoomable(androidx.compose.ui.Modifier, me.saket.telephoto.zoomable.ZoomableState state, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onClick, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.geometry.Offset,kotlin.Unit>? onLongClick, optional boolean clipToBounds, optional me.saket.telephoto.zoomable.DoubleClickToZoomListener? onDoubleClick);
   }
 
   @androidx.compose.runtime.Stable public sealed interface ZoomableState {

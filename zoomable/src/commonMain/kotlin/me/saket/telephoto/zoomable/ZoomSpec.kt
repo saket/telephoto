@@ -93,7 +93,7 @@ class ZoomLimit(
  */
 @Immutable
 class OverzoomEffect internal constructor(
-  @Suppress("unused") private val value: Int
+  private val value: Int
 ) {
   companion object {
     /**

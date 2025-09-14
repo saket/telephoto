@@ -50,9 +50,16 @@ fun Modifier.zoomablePeekOverlay(
       }
     }
     .onPlaced { state.coordinates = it }
-    .pinchToZoomable(
+    .zoomable(
       state = state.zoomableState,
       clipToBounds = false,
+      onClick = null,
+      onLongClick = null,
+      onDoubleClick = null,
+      interactions = ZoomInteractions(
+        pinchToZoom = true,
+        quickZoom = false,
+      ),
     )
 }
 

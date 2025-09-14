@@ -705,7 +705,7 @@ class ZoomableTest {
         Modifier
           .size(200.dp, 300.dp)
           .testTag("content")
-          .pinchToZoomable(state)
+          .zoomable(state, interactions = ZoomInteractions(quickZoom = false))
           .clickable { onClickCalled = true }
       )
     }

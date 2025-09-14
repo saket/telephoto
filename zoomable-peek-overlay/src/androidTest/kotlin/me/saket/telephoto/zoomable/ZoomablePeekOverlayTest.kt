@@ -207,7 +207,7 @@ class ZoomablePeekOverlayTest {
   }
 
   @OptIn(ExperimentalFoundationApi::class)
-  @Test fun content_does_not_intercept_click_events() {
+  @Test fun clickable_modifier_works_after_overlay_modifier() {
     var onClickCount = 0
     var onLongClickCount = 0
     var onDoubleClickCount = 0
@@ -224,6 +224,44 @@ class ZoomablePeekOverlayTest {
               onLongClick = { onLongClickCount++ },
               onDoubleClick = { onDoubleClickCount++ },
             )
+            .testTag("content")
+        )
+      }
+    }
+
+    rule.onNodeWithTag("content").run {
+      performClick()
+      rule.mainClock.advanceTimeBy(ViewConfiguration.getDoubleTapTimeout().toLong())
+
+      performTouchInput { longClick() }
+      performTouchInput { doubleClick() }
+    }
+
+    rule.runOnIdle {
+      assertThat(onClickCount).isEqualTo(1)
+      assertThat(onDoubleClickCount).isEqualTo(1)
+      assertThat(onDoubleClickCount).isEqualTo(1)
+    }
+  }
+
+  @OptIn(ExperimentalFoundationApi::class)
+  @Test fun clickable_modifier_works_before_overlay_modifier() {
+    var onClickCount = 0
+    var onLongClickCount = 0
+    var onDoubleClickCount = 0
+
+    rule.setContent {
+      Box(Modifier.fillMaxSize(), Alignment.Center) {
+        Box(
+          Modifier
+            .size(200.dp)
+            .combinedClickable(
+              onClick = { onClickCount++ },
+              onLongClick = { onLongClickCount++ },
+              onDoubleClick = { onDoubleClickCount++ },
+            )
+            .zoomablePeekOverlay(rememberZoomablePeekOverlayState())
+            .background(Color.Yellow)
             .testTag("content")
         )
       }
