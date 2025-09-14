@@ -57,8 +57,6 @@ import me.saket.telephoto.zoomable.internal.receiveFocusFrom
  * and [Modifier.combinedClickable] will not work on this composable. As an alternative, [onClick]
  * and [onLongClick] parameters can be used instead.
  *
- * @param gesturesEnabled whether or not gestures are enabled.
- *
  * @param clipToBounds defaults to true to act as a reminder that this layout should probably fill all
  * available space. Otherwise, gestures made outside the composable's layout bounds will not be registered.
  */
@@ -66,17 +64,17 @@ import me.saket.telephoto.zoomable.internal.receiveFocusFrom
 fun ZoomableImage(
   image: ZoomableImageSource,
   contentDescription: String?,
+  interactions: ZoomInteractions,
   modifier: Modifier = Modifier,
   state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
   alignment: Alignment = Alignment.Center,
   contentScale: ContentScale = ContentScale.Fit,
-  gesturesEnabled: Boolean = true,
   onClick: ((Offset) -> Unit)? = null,
   onLongClick: ((Offset) -> Unit)? = null,
-  clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  clipToBounds: Boolean = true,
   contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
   state.zoomableState.also {
@@ -188,7 +186,7 @@ fun ZoomableImage(
       .receiveFocusFrom(focusForwarder)
       .zoomable(
         state = state.zoomableState,
-        enabled = gesturesEnabled && !state.isPlaceholderDisplayed,
+        interactions = if (state.isPlaceholderDisplayed) ZoomInteractions.None else interactions,
         onClick = onClick,
         onLongClick = onLongClick,
         onDoubleClick = onDoubleClick,
@@ -242,6 +240,80 @@ fun ZoomableImage(
   }
 }
 
+@Composable
+fun ZoomableImage(
+  image: ZoomableImageSource,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableImage(
+    image = image,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    interactions = ZoomInteractions.ZoomAndPan,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+  )
+}
+
+@Deprecated(
+  "Use the 'interactions' parameter instead. " +
+    "Replace `gesturesEnabled = true` with `interactions = ZoomInteractions.ZoomAndPan`, " +
+    "or `gesturesEnabled = false` with `interactions = ZoomInteractions.None`.",
+)
+@Composable
+fun ZoomableImage(
+  image: ZoomableImageSource,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableImage(
+    image = image,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+  )
+}
+
 private fun Modifier.contentDescriptionIfImageIsEmpty(
   imageState: ZoomableImageState,
   contentDescription: String?
@@ -282,11 +354,11 @@ fun ZoomableImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    gesturesEnabled = gesturesEnabled,
+    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
     onClick = onClick,
     onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
-    onDoubleClick = onDoubleClick
   )
 }
 
@@ -315,11 +387,11 @@ fun ZoomableImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    gesturesEnabled = gesturesEnabled,
+    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
     onClick = onClick,
     onLongClick = onLongClick,
-    clipToBounds = clipToBounds,
     onDoubleClick = DoubleClickToZoomListener.cycle(),
+    clipToBounds = clipToBounds,
   )
 }
 
