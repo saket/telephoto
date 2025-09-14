@@ -239,7 +239,7 @@ class ZoomableTest {
 
   @Test fun double_tap_still_works_when_gestures_are_toggled() {
     lateinit var state: ZoomableState
-    var gesturesEnabled by mutableStateOf(false)
+    val enabledGestures = mutableStateOf(EnabledZoomGestures.None)
 
     rule.setContent {
       state = rememberZoomableState(
@@ -248,7 +248,7 @@ class ZoomableTest {
       Box(
         Modifier
           .fillMaxSize()
-          .zoomable(state, enabled = gesturesEnabled)
+          .zoomable(state, gestures = enabledGestures.value)
           .testTag("content")
       )
     }
@@ -262,13 +262,13 @@ class ZoomableTest {
       assertThat(state.zoomFraction!!).isEqualTo(0f)
     }
 
-    gesturesEnabled = true
+    enabledGestures.value = EnabledZoomGestures.ZoomAndPan
     rule.onNodeWithTag("content").performTouchInput { doubleClick() }
     rule.runOnIdle {
       assertThat(state.zoomFraction!!).isEqualTo(1f)
     }
 
-    gesturesEnabled = false
+    enabledGestures.value = EnabledZoomGestures.None
     rule.onNodeWithTag("content").performTouchInput { doubleClick() }
     rule.runOnIdle {
       assertThat(state.zoomFraction!!).isEqualTo(1f)
@@ -705,7 +705,7 @@ class ZoomableTest {
         Modifier
           .size(200.dp, 300.dp)
           .testTag("content")
-          .zoomable(state, interactions = ZoomInteractions(quickZoom = false))
+          .zoomable(state, gestures = EnabledZoomGestures(quickZoom = false))
           .clickable { onClickCalled = true }
       )
     }

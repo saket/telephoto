@@ -1036,7 +1036,7 @@ class ZoomableImageTest {
           rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 5f))
         ).also { state = it },
         contentDescription = null,
-        gesturesEnabled = false,
+        gestures = EnabledZoomGestures.None,
         onClick = { onClickCalled = true },
         onLongClick = { onLongClickCalled = true },
         onDoubleClick = { _, _ -> onDoubleClickCalled = true },
