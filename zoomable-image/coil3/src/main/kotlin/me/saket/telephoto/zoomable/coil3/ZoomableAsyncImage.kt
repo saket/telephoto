@@ -23,6 +23,7 @@ import coil3.compose.LocalAsyncImageModelEqualityDelegate
 import coil3.imageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
+import me.saket.telephoto.zoomable.ZoomInteractions
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
@@ -55,6 +56,85 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 fun ZoomableAsyncImage(
   model: Any?,
   contentDescription: String?,
+  interactions: ZoomInteractions,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  clipToBounds: Boolean = true,
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableImage(
+    image = ZoomableImageSource.coil(model, imageLoader),
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    interactions = interactions,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+  )
+}
+
+@Composable
+@NonRestartableComposable
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableAsyncImage(
+    model = model,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    imageLoader = imageLoader,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    interactions = ZoomInteractions.ZoomAndPan,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+  )
+}
+
+@Deprecated(
+  "Use the 'interactions' parameter instead. " +
+    "Replace `gesturesEnabled = true` with `interactions = ZoomInteractions.ZoomAndPan`, " +
+    "or `gesturesEnabled = false` with `interactions = ZoomInteractions.None`.",
+)
+@Composable
+@NonRestartableComposable
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
   modifier: Modifier = Modifier,
   state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
   imageLoader: ImageLoader = LocalContext.current.imageLoader,
@@ -69,16 +149,17 @@ fun ZoomableAsyncImage(
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-  ZoomableImage(
-    image = ZoomableImageSource.coil(model, imageLoader),
+  ZoomableAsyncImage(
+    model = model,
     contentDescription = contentDescription,
     modifier = modifier,
     state = state,
+    imageLoader = imageLoader,
     alpha = alpha,
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    gesturesEnabled = gesturesEnabled,
+    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
@@ -156,11 +237,11 @@ fun ZoomableAsyncImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
-    gesturesEnabled = gesturesEnabled,
+    interactions = if (gesturesEnabled) ZoomInteractions.ZoomAndPan else ZoomInteractions.None,
     onClick = onClick,
     onLongClick = onLongClick,
-    clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
     contentPadding = PaddingValues(0.dp),
   )
 }
