@@ -22,7 +22,7 @@ import kotlin.time.Duration
 fun rememberFlickToDismissState(
   dismissThresholdRatio: Float = 0.2f,
   rotateOnDrag: Boolean = true,
-  rubberBandingSpec: RubberBandingSpec = RubberBandingSpec.Disabled,
+  rubberBandingSpec: RubberBandingSpec = RubberBandingSpec(resistanceFactor = 2f),
 ): FlickToDismissState {
   check(dismissThresholdRatio > 0f) {
     "The dismiss threshold ratio must be a non-zero value."
