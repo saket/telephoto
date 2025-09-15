@@ -281,7 +281,7 @@ class ZoomableImageTest {
   }
 
   @Ignore("https://github.com/saket/telephoto/issues/128")
-  @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
+    @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
     var assetName by mutableStateOf("fox_1000.jpg")
     lateinit var state: ZoomableImageState
 
@@ -1079,6 +1079,57 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun toggle_pan() {
+    val enabledZoomGestures = mutableStateOf(EnabledZoomGestures.ZoomOnly)
+    lateinit var zoomableState: ZoomableState
+
+    rule.setContent {
+      zoomableState = rememberZoomableState()
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState, gestures = enabledZoomGestures.value)
+          .testTag("image"),
+        image = ZoomableImageSource.asset("mels_drive_in.jpg", subSample = true),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        state = rememberZoomableImageState(zoomableState),
+        gestures = enabledZoomGestures.value,
+      )
+    }
+
+    rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+    rule.waitUntil { zoomableState.zoomFraction!! == 1f }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_in")
+    }
+
+    rule.onNodeWithTag("image").performTouchInput {
+      swipeDown(startY = centerX, endY = bottom)
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_first_pan_while_disabled")
+    }
+
+    enabledZoomGestures.value = EnabledZoomGestures.ZoomAndPan
+    rule.waitForIdle()
+    rule.onNodeWithTag("image").performTouchInput {
+      swipeDown(startY = centerX, endY = bottom)
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_second_pan_while_enabled")
+    }
+
+    enabledZoomGestures.value = EnabledZoomGestures.None
+    rule.waitForIdle()
+    rule.onNodeWithTag("image").performTouchInput {
+      swipeLeft(startX = right, endX = centerX)
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_third_pan_while_disabled")
+    }
+  }
+
   @Test fun zoom_gestures_are_swallowed_on_a_placeholder_image() {
     lateinit var imageState: ZoomableImageState
 
@@ -1170,7 +1221,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-  @Test fun pan_and_zoom_using_hardware_shortcuts() {
+    @Test fun pan_and_zoom_using_hardware_shortcuts() {
     lateinit var state: ZoomableImageState
     val maxZoomFactor = 5f
 
@@ -1301,7 +1352,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-  @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
+    @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
     lateinit var state: ZoomableImageState
     val focusRequester = FocusRequester()
 
