@@ -3,6 +3,7 @@ package me.saket.telephoto.zoomable
 import androidx.compose.runtime.Immutable
 import dev.drewhamilton.poko.Poko
 
+/** Also see: [DynamicZoomSpec]. */
 @Poko
 @Immutable
 class ZoomSpec(

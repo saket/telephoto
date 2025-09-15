@@ -51,6 +51,12 @@ value class EnabledZoomGestures private constructor(
   internal val quickZoom: Boolean
     get() = flags and Flag.QuickZoom != 0
 
+  /**
+   * @param zoom whether to allow pinch-to-zoom and quick-zoom gestures.
+   *
+   * @param pan whether to allow panning with a single finger. When false, panning
+   * with two fingers while zooming is still allowed.
+   */
   constructor(
     zoom: Boolean = true,
     pan: Boolean = true,
