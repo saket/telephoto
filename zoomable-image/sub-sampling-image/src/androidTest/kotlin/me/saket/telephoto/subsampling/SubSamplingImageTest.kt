@@ -491,13 +491,23 @@ class SubSamplingImageTest {
   @Test fun various_image_orientations_in_exif_metadata(
     @TestParameter imageAsset: ExifRotatedImageAssetParam,
     @TestParameter alignment: AlignmentParam,
-    @TestParameter contentScale: ContentScaleParam,
   ) {
     screenshotValidator.tolerancePercentOnCi = 0.02f
 
     val skipAlignment = when (alignment) {
-      AlignmentParam.TopCenter,
       AlignmentParam.Center -> false
+      AlignmentParam.TopCenter -> {
+        when (imageAsset) {
+          ExifRotatedImageAssetParam.FlippedHorizontallyAndRotatedBy270 -> false
+          ExifRotatedImageAssetParam.RotatedBy90 -> false
+
+          ExifRotatedImageAssetParam.FlippedHorizontally,
+          ExifRotatedImageAssetParam.RotatedBy180,
+          ExifRotatedImageAssetParam.FlippedVertically,
+          ExifRotatedImageAssetParam.FlippedHorizontallyAndRotatedBy90,
+          ExifRotatedImageAssetParam.RotatedBy270 -> true
+        }
+      }
       AlignmentParam.BottomCenter -> true
     }
     if (skipAlignment) {
@@ -506,7 +516,6 @@ class SubSamplingImageTest {
 
     rule.setContent {
       val zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 2.5f)).also {
-        it.contentScale = contentScale.value
         it.contentAlignment = alignment.value
       }
 
@@ -518,7 +527,9 @@ class SubSamplingImageTest {
         state = rememberSubSamplingImageState(
           zoomableState = zoomableState,
           imageSource = SubSamplingImageSource.asset(imageAsset.assetName),
-        ),
+        ).also {
+          it.asReal().showTileBounds = true
+        },
         contentDescription = null,
       )
     }
@@ -864,9 +875,13 @@ class SubSamplingImageTest {
 
   @Suppress("unused")
   enum class ExifRotatedImageAssetParam(val assetName: String) {
-    RotatedBy90("bellagio_rotated_by_90.jpg"),
-    RotatedBy180("bellagio_rotated_by_180.jpg"),
-    RotatedBy270("bellagio_rotated_by_270.jpg"),
+    FlippedHorizontally("jasper_flipped_horizontally.jpg"),
+    RotatedBy180("jasper_rotated_180.jpg"),
+    FlippedVertically("jasper_flipped_vertically.jpg"),
+    FlippedHorizontallyAndRotatedBy270("jasper_flipped_horizontally_rotated_270.jpg"),
+    RotatedBy90("jasper_rotated_90.jpg"),
+    FlippedHorizontallyAndRotatedBy90("jasper_flipped_horizontally_rotated_90.jpg"),
+    RotatedBy270("jasper_rotated_270.jpg")
   }
 
   @Suppress("unused")

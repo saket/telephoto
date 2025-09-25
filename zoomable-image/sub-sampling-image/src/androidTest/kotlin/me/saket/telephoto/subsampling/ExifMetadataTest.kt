@@ -32,7 +32,7 @@ class ExifMetadataTest {
     assertThat(
       ExifMetadata.read(
         context = context,
-        source = SubSamplingImageSource.asset("bellagio_rotated_by_90.jpg")
+        source = SubSamplingImageSource.asset("jasper_rotated_90.jpg")
       )
     ).isEqualTo(
       ExifMetadata(orientation = Orientation90)
@@ -41,7 +41,7 @@ class ExifMetadataTest {
     assertThat(
       ExifMetadata.read(
         context = context,
-        source = SubSamplingImageSource.asset("bellagio_rotated_by_270.jpg")
+        source = SubSamplingImageSource.asset("jasper_rotated_270.jpg")
       )
     ).isEqualTo(
       ExifMetadata(orientation = Orientation270)
