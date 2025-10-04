@@ -17,7 +17,7 @@ Designing a cohesive media experience for Android can be a lot of work. Telephot
 _Drop-in_ replacement for `Image()` composables featuring support for pan & zoom gestures and automatic sub&#8209;sampling of large images that'd otherwise not fit into memory.
 
 ### [Modifier.zoomable()](zoomable/index.md)
-`ZoomableImage`'s gesture detector, packaged as a standalone `Modifier` that can be used with non-image composables.
+`ZoomableImage`'s gesture detector, packaged as a standalone `Modifier` that can be used with videos and other non-image composables.
 
 ### [Zoomable Peek Overlay](zoomable-peek-overlay/index.md)
 Transient, overlaid zoom effect inspired by Instagram.
