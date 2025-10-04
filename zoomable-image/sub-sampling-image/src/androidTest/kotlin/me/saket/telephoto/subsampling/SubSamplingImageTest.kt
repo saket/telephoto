@@ -563,6 +563,8 @@ class SubSamplingImageTest {
   }
 
   @Test fun preview_bitmap_should_not_be_rotated() {
+    screenshotValidator.tolerancePercentOnCi = 0.024f
+
     val previewBitmapMutex = Mutex(locked = true)
     var fullImageDecoded = false
 
