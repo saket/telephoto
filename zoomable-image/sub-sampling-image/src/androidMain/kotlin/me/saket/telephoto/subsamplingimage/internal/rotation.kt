@@ -12,10 +12,10 @@ import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientatio
 import kotlin.LazyThreadSafetyMode.NONE
 
 /**
- * Calculate the position of this rectangle inside [unRotatedParent]
- * after its parent is rotated clockwise by [degrees].
+ * Calculate the position of this rectangle inside [parent]
+ * after the parent is rotated clockwise by [degrees].
  */
-internal fun IntRect.rotateBy(degrees: Int, unRotatedParent: IntRect): IntRect {
+internal fun IntRect.rotateRegionBy(degrees: Int, parent: IntRect): IntRect {
   if (degrees == 0) {
     return this
   }
@@ -24,22 +24,22 @@ internal fun IntRect.rotateBy(degrees: Int, unRotatedParent: IntRect): IntRect {
   // rotation, but I'm brute forcing my way through this by manually mapping points.
   val newTopLeft = when (degrees) {
     -270, 90 -> {
-      val offsetFromBottomLeft = unRotatedParent.bottomLeft - bottomLeft
+      val offsetFromBottomLeft = parent.bottomLeft - bottomLeft
       IntOffset(
-        x = offsetFromBottomLeft.flip().x,
-        y = -offsetFromBottomLeft.flip().y,
+        x = offsetFromBottomLeft.swap().x,
+        y = -offsetFromBottomLeft.swap().y,
       )
     }
 
     -180, 180 -> {
-      unRotatedParent.bottomRight - bottomRight
+      parent.bottomRight - bottomRight
     }
 
     -90, 270 -> {
-      val offsetFromTopRight = unRotatedParent.topRight - topRight
+      val offsetFromTopRight = parent.topRight - topRight
       IntOffset(
-        x = -offsetFromTopRight.flip().x,
-        y = offsetFromTopRight.flip().y,
+        x = -offsetFromTopRight.swap().x,
+        y = offsetFromTopRight.swap().y,
       )
     }
 
@@ -50,12 +50,29 @@ internal fun IntRect.rotateBy(degrees: Int, unRotatedParent: IntRect): IntRect {
   return IntRect(
     offset = newTopLeft,
     size = when (degrees) {
-      -270, 90 -> size.flip()
+      -270, 90 -> size.swap()
       -180, 180 -> size
-      -90, 270 -> size.flip()
+      -90, 270 -> size.swap()
       0, 360 -> size
       else -> error("unsupported orientation = $degrees")
     },
+  )
+}
+
+/**
+ * Calculate the position of this rectangle inside [parent]
+ * after the parent is flipped horizontally.
+ */
+internal fun IntRect.flipRegionHorizontally(parent: IntRect): IntRect {
+  return IntRect(
+    topLeft = IntOffset(
+      x = parent.width - bottomRight.x,
+      y = topLeft.y,
+    ),
+    bottomRight = IntOffset(
+      x = parent.width - topLeft.x,
+      y = bottomRight.y,
+    )
   )
 }
 
@@ -71,12 +88,12 @@ private val matrix by lazy(NONE) { Matrix() }
  */
 internal inline fun createRotationMatrix(
   bitmapSize: Size,
-  orientation: ImageOrientation,
+  exif: ExifMetadata,
   bounds: Size,
 ): Matrix {
   matrix.reset()
 
-  val rotationDegrees = when (orientation) {
+  val rotationDegrees = when (exif.orientation) {
     ImageOrientation.None -> 0f
     ImageOrientation.Orientation90 -> 90f
     ImageOrientation.Orientation180 -> 180f
@@ -93,14 +110,18 @@ internal inline fun createRotationMatrix(
   // 1. Translate to the center of the destination bounds
   // 2. Scale to fill bounds
   // 3. Rotate by required degrees
-  // 4. Translate to origin for centering
-  matrix.postTranslate(-bitmapCenter.x, -bitmapCenter.y)        // 4.
+  // 4. Flip horizontally if needed
+  // 5. Translate to origin for centering
+  matrix.postTranslate(-bitmapCenter.x, -bitmapCenter.y)        // 5.
+  if (exif.flippedHorizontally) {
+    matrix.postScale(-1f, 1f)                                   // 4.
+  }
   matrix.postRotate(rotationDegrees)                            // 3.
 
   // Calculate scale to fill bounds completely (based on rotated dimensions).
   // This scale happens from (0,0). This ensures a uniform scaling before any
   // translations that could affect the scale ratios.
-  val rotatedSize = if (rotationDegrees % 180 == 0f) bitmapSize else bitmapSize.flip()
+  val rotatedSize = if (rotationDegrees % 180 == 0f) bitmapSize else bitmapSize.swap()
   matrix.postScale(                                             // 2.
     bounds.width / rotatedSize.width,
     bounds.height / rotatedSize.height
@@ -117,6 +138,6 @@ internal inline fun createRotationMatrix(
   return matrix
 }
 
-private fun IntOffset.flip(): IntOffset = IntOffset(x = y, y = x)
-private fun IntSize.flip(): IntSize = IntSize(width = height, height = width)
-private fun Size.flip(): Size = Size(width = height, height = width)
+private fun IntOffset.swap(): IntOffset = IntOffset(x = y, y = x)
+private fun IntSize.swap(): IntSize = IntSize(width = height, height = width)
+private fun Size.swap(): Size = Size(width = height, height = width)

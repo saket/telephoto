@@ -11,6 +11,7 @@ import java.io.InputStream
 /** Properties read from an image's EXIF header. */
 internal data class ExifMetadata(
   val orientation: ImageOrientation,
+  val flippedHorizontally: Boolean,
 ) {
   enum class ImageOrientation(val degrees: Int) {
     None(0),
@@ -22,7 +23,7 @@ internal data class ExifMetadata(
   companion object {
     suspend fun read(context: Context, source: SubSamplingImageSource): ExifMetadata {
       if (source !is BufferedSubSamplingImageSource) {
-        return ExifMetadata(ImageOrientation.None)
+        return ExifMetadata(ImageOrientation.None, flippedHorizontally = false)
       }
       return withContext(Dispatchers.Default) {
         source.peek(context).inputStream().use { inputStream ->
@@ -36,7 +37,8 @@ internal data class ExifMetadata(
               180 -> ImageOrientation.Orientation180
               270 -> ImageOrientation.Orientation270
               else -> error("Invalid image orientation at ${exif.rotationDegrees}°")
-            }
+            },
+            flippedHorizontally = exif.isFlipped,
           )
         }
       }

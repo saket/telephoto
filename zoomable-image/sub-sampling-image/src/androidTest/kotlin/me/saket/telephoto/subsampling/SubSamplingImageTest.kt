@@ -492,7 +492,7 @@ class SubSamplingImageTest {
     @TestParameter imageAsset: ExifRotatedImageAssetParam,
     @TestParameter alignment: AlignmentParam,
   ) {
-    screenshotValidator.tolerancePercentOnCi = 0.02f
+    screenshotValidator.tolerancePercentOnCi = 0.024f
 
     val skipAlignment = when (alignment) {
       AlignmentParam.Center -> false

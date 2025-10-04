@@ -11,9 +11,9 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
 
 @Immutable
-internal data class RotatedBitmapPainter(
+internal data class ExifAwareBitmapPainter(
   private val image: Bitmap,
-  private val orientation: ExifMetadata.ImageOrientation,
+  private val exif: ExifMetadata,
 ) : Painter() {
   override val intrinsicSize: Size
     get() = Size(image.width.toFloat(), image.height.toFloat())
@@ -35,7 +35,7 @@ internal data class RotatedBitmapPainter(
   override fun DrawScope.onDraw() {
     val rotationMatrix = createRotationMatrix(
       bitmapSize = intrinsicSize,
-      orientation = orientation,
+      exif = exif,
       bounds = size,
     )
     drawIntoCanvas {
