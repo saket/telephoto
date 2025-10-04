@@ -570,7 +570,7 @@ class SubSamplingImageTest {
       rule.activity.assets.open("smol.jpg")
     ).asImageBitmap()
 
-    val imageSource = SubSamplingImageSource.asset("bellagio_rotated_by_90.jpg", preview = previewBitmap)
+    val imageSource = SubSamplingImageSource.asset("jasper_rotated_90.jpg", preview = previewBitmap)
       .withDecodeInterceptor { _, _, continueDecoding ->
         previewBitmapMutex.withLock {
           continueDecoding()
