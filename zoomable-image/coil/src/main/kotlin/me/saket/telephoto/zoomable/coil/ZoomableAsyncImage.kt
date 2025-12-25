@@ -2,6 +2,7 @@
 
 package me.saket.telephoto.zoomable.coil
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
@@ -68,6 +69,7 @@ fun ZoomableAsyncImage(
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   clipToBounds: Boolean = true,
   contentPadding: PaddingValues = PaddingValues(0.dp),
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableImage(
     image = ZoomableImageSource.coil(model, imageLoader),
@@ -84,6 +86,7 @@ fun ZoomableAsyncImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
+    interactionSource = interactionSource,
   )
 }
 
@@ -278,5 +281,45 @@ fun ZoomableAsyncImage(
     onDoubleClick = DoubleClickToZoomListener.cycle(),
     clipToBounds = clipToBounds,
     contentPadding = PaddingValues(0.dp),
+  )
+}
+
+@Composable
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  gestures: EnabledZoomGestures,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  clipToBounds: Boolean = true,
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableAsyncImage(
+    model = model,
+    contentDescription = contentDescription,
+    gestures = gestures,
+    modifier = modifier,
+    state = state,
+    imageLoader = imageLoader,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    interactionSource = null,
   )
 }

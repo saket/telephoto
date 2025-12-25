@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -58,6 +59,7 @@ fun Modifier.zoomable(
   onLongClick: ((clickedAt: Offset) -> Unit)? = null,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
   clipToBounds: Boolean = true,
+  interactionSource: MutableInteractionSource? = null,
 ): Modifier {
   @OptIn(ExperimentalTelephotoApi::class)
   return this.zoomableInternal(
@@ -81,6 +83,7 @@ fun Modifier.zoomable(
     },
     clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
+    interactionSource = interactionSource,
   )
 }
 
@@ -97,7 +100,7 @@ fun Modifier.zoomable(
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
-    onDoubleClick = onDoubleClick
+    onDoubleClick = onDoubleClick,
   )
 }
 
@@ -120,7 +123,7 @@ fun Modifier.zoomable(
     onClick = onClick,
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
-    onDoubleClick = onDoubleClick
+    onDoubleClick = onDoubleClick,
   )
 }
 
@@ -132,6 +135,7 @@ private fun Modifier.zoomableInternal(
   onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+  interactionSource: MutableInteractionSource? = null,
 ): Modifier {
   if (gestures.pinchToZoom && !gestures.quickZoom) {
     // Note to self: this function isn't public because it feels weird to
@@ -153,6 +157,7 @@ private fun Modifier.zoomableInternal(
         onClick = onClick,
         onLongClick = onLongClick,
         onDoubleClick = onDoubleClick,
+        interactionSource = interactionSource,
       )
     )
     .thenIf(state.hardwareShortcutsSpec.enabled) {
@@ -183,6 +188,26 @@ fun Modifier.zoomable(
   )
 }
 
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun Modifier.zoomable(
+  state: ZoomableState,
+  gestures: EnabledZoomGestures,
+  onClick: ((clickedAt: Offset) -> Unit)? = null,
+  onLongClick: ((clickedAt: Offset) -> Unit)? = null,
+  onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+  clipToBounds: Boolean = true,
+): Modifier {
+  return this.zoomable(
+    state = state,
+    gestures = gestures,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    interactionSource = null,
+  )
+}
+
 @OptIn(ExperimentalTelephotoApi::class)
 private data class ZoomableElement(
   private val state: RealZoomableState,
@@ -190,6 +215,7 @@ private data class ZoomableElement(
   private val onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   private val onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   private val onDoubleClick: DoubleClickToZoomListener?,
+  private val interactionSource: MutableInteractionSource?,
 ) : ModifierNodeElement<ZoomableNode>() {
 
   override fun create(): ZoomableNode = ZoomableNode(
@@ -198,6 +224,7 @@ private data class ZoomableElement(
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
+    interactionSource = interactionSource,
   )
 
   override fun update(node: ZoomableNode) {
@@ -207,6 +234,7 @@ private data class ZoomableElement(
       onClick = onClick,
       onLongClick = onLongClick,
       onDoubleClick = onDoubleClick,
+      interactionSource = interactionSource,
     )
   }
 
@@ -217,6 +245,7 @@ private data class ZoomableElement(
     properties["onClick"] = onClick
     properties["onLongClick"] = onLongClick
     properties["onDoubleClick"] = onDoubleClick
+    properties["interactionSource"] = interactionSource
   }
 }
 
@@ -227,6 +256,7 @@ private class ZoomableNode(
   onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
   onDoubleClick: DoubleClickToZoomListener?,
+  interactionSource: MutableInteractionSource?,
 ) : DelegatingNode(), CompositionLocalConsumerModifierNode {
 
   private val hapticFeedback: HapticFeedback
@@ -297,6 +327,7 @@ private class ZoomableNode(
     onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
     onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
     onDoubleClick: DoubleClickToZoomListener?,
+    interactionSource: MutableInteractionSource?,
   ) {
     if (this.state != state) {
       // Note to self: when the state is updated, the delegated

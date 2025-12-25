@@ -3,6 +3,7 @@ package me.saket.telephoto.zoomable.glide
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.TypedValue
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
@@ -70,6 +71,7 @@ fun ZoomableGlideImage(
   clipToBounds: Boolean = true,
   contentPadding: PaddingValues = PaddingValues(0.dp),
   requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableImage(
     image = ZoomableImageSource.glide(model, requestBuilderTransform),
@@ -86,6 +88,7 @@ fun ZoomableGlideImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
+    interactionSource = interactionSource,
   )
 }
 
@@ -287,6 +290,46 @@ fun ZoomableGlideImage(
     clipToBounds = clipToBounds,
     contentPadding = PaddingValues(0.dp),
     requestBuilderTransform = requestBuilderTransform,
+  )
+}
+
+@Composable
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableGlideImage(
+  model: Any?,
+  contentDescription: String?,
+  gestures: EnabledZoomGestures,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  clipToBounds: Boolean = true,
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+) {
+  ZoomableGlideImage(
+    model = model,
+    contentDescription = contentDescription,
+    gestures = gestures,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    requestBuilderTransform = requestBuilderTransform,
+    interactionSource = null,
   )
 }
 

@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
@@ -76,6 +77,7 @@ fun ZoomableImage(
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   clipToBounds: Boolean = true,
   contentPadding: PaddingValues = PaddingValues(0.dp),
+  interactionSource: MutableInteractionSource? = null,
 ) {
   state.zoomableState.also {
     it.contentAlignment = alignment
@@ -191,6 +193,7 @@ fun ZoomableImage(
         onLongClick = onLongClick,
         onDoubleClick = onDoubleClick,
         clipToBounds = clipToBounds,
+        interactionSource = interactionSource,
       )
 
     when (val delegate = resolved.delegate) {
@@ -392,6 +395,43 @@ fun ZoomableImage(
     onLongClick = onLongClick,
     onDoubleClick = DoubleClickToZoomListener.cycle(),
     clipToBounds = clipToBounds,
+  )
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableImage(
+  image: ZoomableImageSource,
+  contentDescription: String?,
+  gestures: EnabledZoomGestures,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  clipToBounds: Boolean = true,
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableImage(
+    image = image,
+    contentDescription = contentDescription,
+    gestures = gestures,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    interactionSource = null,
   )
 }
 
