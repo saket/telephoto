@@ -1740,7 +1740,7 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun uses_updated_async_placeholder_size_when_available() = runTest {
+  @Test fun uses_updated_async_placeholder_size_when_available() {
     lateinit var state: ZoomableImageState
 
     val asyncPlaceholderPainter = PainterStub(initialSize = Size.Unspecified)

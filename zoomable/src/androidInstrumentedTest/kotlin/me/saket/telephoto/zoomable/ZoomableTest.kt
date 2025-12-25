@@ -530,7 +530,7 @@ class ZoomableTest {
     }
   }
 
-  @Test fun correctly_calculate_isAnimationRunning() = runTest {
+  @Test fun correctly_calculate_isAnimationRunning() {
     lateinit var state: ZoomableState
     val animatedZoomTriggers = Channel<Float>(capacity = 5)
     val recordedValues = ArrayDeque<Boolean>()
@@ -779,7 +779,7 @@ class ZoomableTest {
     }
   }
 
-  @Test fun haptic_feedback() = runTest {
+  @Test fun haptic_feedback() {
     lateinit var state: ZoomableState
     val hapticFeedback = RecordingHapticFeedback()
 
