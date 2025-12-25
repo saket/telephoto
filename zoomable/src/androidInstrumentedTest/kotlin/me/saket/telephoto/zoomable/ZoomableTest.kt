@@ -5,6 +5,8 @@ import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,6 +32,7 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -39,6 +42,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
@@ -66,6 +70,8 @@ import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.assetPainter
+import me.saket.telephoto.util.foo
+import me.saket.telephoto.util.quickZoomIn
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.spatial.SpatialRect
@@ -826,6 +832,171 @@ class ZoomableTest {
     }
     rule.runOnIdle {
       assertThat(hapticFeedback.performedFeedbacks.removeAll()).containsExactly(HapticFeedbackType.Reject)
+    }
+  }
+
+  @Test fun interaction_source_emits_press_and_release() = runTest {
+    val interactionSource = MutableInteractionSource()
+    val isPressedHistory = ArrayDeque<Boolean>()
+
+    rule.setContent {
+      val isPressed by interactionSource.collectIsPressedAsState()
+      LaunchedEffect(isPressed) {
+        isPressedHistory.addLast(isPressed)
+      }
+
+      Box(
+        Modifier
+          .size(200.dp, 300.dp)
+          .testTag("content")
+          .zoomable(
+            state = rememberZoomableState(),
+            interactionSource = interactionSource,
+            gestures = EnabledZoomGestures.ZoomAndPan,
+          )
+      )
+    }
+
+    // Initial value.
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(false)
+    }
+
+    // Single tap.
+    rule.onNodeWithTag("content").performClick()
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getDoubleTapTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false)
+    }
+
+    // Long press.
+    rule.onNodeWithTag("content").performTouchInput {
+      longClick(center)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false)
+    }
+
+    // Double tap to zoom.
+    rule.onNodeWithTag("content").performTouchInput {
+      doubleClick(center)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false, true, false)
+    }
+
+    // Quick zoom (double-tap and hold).
+    rule.onNodeWithTag("content").performTouchInput {
+      val noUpScope = object : TouchInjectionScope by this {
+        override fun up(pointerId: Int) = Unit
+      }
+      noUpScope.quickZoomIn()
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false, true)
+    }
+    rule.onNodeWithTag("content").performTouchInput {
+      up(pointerId = 0)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(false)
+    }
+
+    // Pinch to zoom.
+    rule.onNodeWithTag("content").performTouchInput {
+      val noUpScope = object : TouchInjectionScope by this {
+        override fun up(pointerId: Int) = Unit
+      }
+      noUpScope.pinchToZoomInBy(IntOffset(20, 20))
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true)
+    }
+    rule.onNodeWithTag("content").performTouchInput {
+      up(pointerId = 0)
+      up(pointerId = 1)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(false)
+    }
+
+    // Pans.
+    rule.onNodeWithTag("content").performTouchInput { doubleClick() }
+    rule.runOnIdle { isPressedHistory.clear() }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      val noUpScope = object : TouchInjectionScope by this {
+        override fun up(pointerId: Int) = Unit
+      }
+      noUpScope.swipeLeft(startX = center.x, endX = centerLeft.x)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true)
+    }
+    rule.onNodeWithTag("content").performTouchInput {
+      up(pointerId = 0)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(false)
+    }
+  }
+
+  @Test fun interaction_source_works_with_click_listeners() {
+    val interactionSource = MutableInteractionSource()
+    val isPressedHistory = ArrayDeque<Boolean>()
+    var clickCount = 0
+    var longClickCount = 0
+    var doubleClickCount = 0
+
+    rule.setContent {
+      val isPressed by interactionSource.collectIsPressedAsState()
+      LaunchedEffect(isPressed) {
+        isPressedHistory.addLast(isPressed)
+      }
+
+      Box(
+        Modifier
+          .size(200.dp, 300.dp)
+          .testTag("content")
+          .zoomable(
+            state = rememberZoomableState(),
+            interactionSource = interactionSource,
+            onClick = { clickCount++ },
+            onLongClick = { longClickCount++ },
+            onDoubleClick = DoubleClickToZoomListener { _, _ -> doubleClickCount++ },
+            gestures = EnabledZoomGestures.ZoomAndPan,
+          )
+      )
+    }
+
+    rule.runOnIdle {
+      isPressedHistory.clear() // Clear initial false.
+    }
+
+    // Single tap should emit press/release AND trigger onClick.
+    rule.onNodeWithTag("content").performClick()
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getDoubleTapTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false)
+      assertThat(clickCount).isEqualTo(1)
+    }
+
+    // Long press should emit press/release AND trigger onLongClick.
+    rule.onNodeWithTag("content").performTouchInput {
+      longClick(center)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false)
+      assertThat(longClickCount).isEqualTo(1)
+    }
+
+    // Double tap should emit press/release for both taps AND trigger onDoubleClick.
+    rule.onNodeWithTag("content").performTouchInput {
+      doubleClick(center)
+    }
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false, true, false)
+      assertThat(doubleClickCount).isEqualTo(1)
     }
   }
 

@@ -12,6 +12,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -95,6 +97,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.device.action.ScreenOrientation
 import assertk.all
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
@@ -114,7 +117,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -122,6 +124,8 @@ import me.saket.telephoto.util.ActivityRecreationTester
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.assetPainter
+import me.saket.telephoto.util.quickZoomIn
+import me.saket.telephoto.util.quickZoomOut
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
@@ -281,7 +285,7 @@ class ZoomableImageTest {
   }
 
   @Ignore("https://github.com/saket/telephoto/issues/128")
-    @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
+  @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
     var assetName by mutableStateOf("fox_1000.jpg")
     lateinit var state: ZoomableImageState
 
@@ -1221,7 +1225,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-    @Test fun pan_and_zoom_using_hardware_shortcuts() {
+  @Test fun pan_and_zoom_using_hardware_shortcuts() {
     lateinit var state: ZoomableImageState
     val maxZoomFactor = 5f
 
@@ -1352,7 +1356,7 @@ class ZoomableImageTest {
   }
 
   @OptIn(ExperimentalTestApi::class)
-    @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
+  @Test fun hardware_shortcuts_are_ignored_when_shortcuts_are_disabled() {
     lateinit var state: ZoomableImageState
     val focusRequester = FocusRequester()
 
@@ -2270,6 +2274,42 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun canary_test_for_interaction_source() {
+    val interactionSource = MutableInteractionSource()
+    val isPressedHistory = ArrayDeque<Boolean>()
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      val isPressed by interactionSource.collectIsPressedAsState()
+      LaunchedEffect(isPressed) {
+        isPressedHistory.addLast(isPressed)
+      }
+
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        contentDescription = null,
+        state = rememberZoomableImageState().also { imageState = it },
+        interactionSource = interactionSource,
+        gestures = EnabledZoomGestures.ZoomAndPan,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayed }
+    rule.runOnIdle {
+      isPressedHistory.clear() // Clear initial false
+    }
+
+    // Single tap should emit press then release.
+    rule.onNodeWithTag("image").performClick()
+    rule.mainClock.advanceTimeBy(ViewConfiguration.getDoubleTapTimeout().toLong())
+    rule.runOnIdle {
+      assertThat(isPressedHistory.removeAll()).containsExactly(true, false)
+    }
+  }
+
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false
@@ -2410,28 +2450,6 @@ internal fun TouchInjectionScope.pinchToZoomInBy(by: IntOffset) {
   )
 }
 
-private fun TouchInjectionScope.quickZoomIn(byDistance: Float = height / 2f) {
-  val doubleTapMinTimeMillis = 40L // From LocalViewConfiguration.current.doubleTapMinTimeMillis.
-
-  val start = center
-  val endY = start.y + byDistance
-
-  click(start)
-  advanceEventTime(eventPeriodMillis + doubleTapMinTimeMillis)
-  swipeDown(startY = start.y, endY = endY, durationMillis = 1_000)
-}
-
-private fun TouchInjectionScope.quickZoomOut(byDistance: Float = height / 2f) {
-  val doubleTapMinTimeMillis = 40L // From LocalViewConfiguration.current.doubleTapMinTimeMillis.
-
-  val start = bottomCenter
-  val endY = start.y - byDistance
-
-  click(start)
-  advanceEventTime(doubleTapMinTimeMillis + 2)
-  swipeUp(startY = start.y, endY = endY, durationMillis = 1_000)
-}
-
 @Composable
 internal fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Boolean): ZoomableImageSource {
   return remember(assetName) {
@@ -2551,4 +2569,11 @@ private fun wasStateRestored(): Boolean {
 
 private fun ZoomableState.asReal(): RealZoomableState {
   return this as RealZoomableState  // Safe because ZoomableState is a sealed type.
+}
+
+private fun <T> ArrayDeque<T>.removeAll(): List<T> {
+  val source = this
+  val destination = ArrayList(source)
+  source.clear()
+  return destination
 }
