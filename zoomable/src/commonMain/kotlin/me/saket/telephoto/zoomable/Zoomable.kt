@@ -25,6 +25,7 @@ import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.RealZoomableState.OverzoomBoundaryState
 import me.saket.telephoto.zoomable.internal.HardwareShortcutsElement
 import me.saket.telephoto.zoomable.internal.MutatePriorities
+import me.saket.telephoto.zoomable.internal.PressInteractionElement
 import me.saket.telephoto.zoomable.internal.TappableAndQuickZoomableElement
 import me.saket.telephoto.zoomable.internal.TransformableElement
 import me.saket.telephoto.zoomable.internal.stopTransformation
@@ -315,10 +316,15 @@ private class ZoomableNode(
     lockRotationOnZoomPan = false,
   ).create()
 
+  private val pressInteractionNode = PressInteractionElement(
+    interactionSource = interactionSource,
+  ).create()
+
   init {
     // Note to self: the order in which these nodes are delegated is important.
     delegate(tappableAndQuickZoomableNode)
     delegate(transformableNode)
+    delegate(pressInteractionNode)
   }
 
   fun update(
@@ -349,6 +355,9 @@ private class ZoomableNode(
       onQuickZoomStopped = onQuickZoomStopped,
       transformableState = state.transformableState,
       quickZoomEnabled = gestures.quickZoom,
+    )
+    pressInteractionNode.update(
+      interactionSource = interactionSource,
     )
   }
 

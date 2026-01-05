@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,7 +43,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
-import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
@@ -70,8 +70,6 @@ import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.assetPainter
-import me.saket.telephoto.util.foo
-import me.saket.telephoto.util.quickZoomIn
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import me.saket.telephoto.zoomable.spatial.SpatialRect
@@ -837,12 +835,14 @@ class ZoomableTest {
 
   @Test fun interaction_source_emits_press_and_release() = runTest {
     val interactionSource = MutableInteractionSource()
-    val isPressedHistory = ArrayDeque<Boolean>()
+    val interactions = ArrayDeque<PressInteraction>()
 
     rule.setContent {
-      val isPressed by interactionSource.collectIsPressedAsState()
-      LaunchedEffect(isPressed) {
-        isPressedHistory.addLast(isPressed)
+      LaunchedEffect(Unit) {
+        interactionSource.interactions.collect {
+          check(it is PressInteraction)
+          interactions.addLast(it)
+        }
       }
 
       Box(
@@ -857,16 +857,13 @@ class ZoomableTest {
       )
     }
 
-    // Initial value.
-    rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(false)
-    }
+    fun List<PressInteraction>.mapToNames(): List<String> = map { it::class.simpleName!! }
 
     // Single tap.
     rule.onNodeWithTag("content").performClick()
     rule.mainClock.advanceTimeBy(ViewConfiguration.getDoubleTapTimeout().toLong())
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(true, false)
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Press", "Release")
     }
 
     // Long press.
@@ -874,70 +871,77 @@ class ZoomableTest {
       longClick(center)
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(true, false)
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Press", "Release")
     }
 
-    // Double tap to zoom.
+    // Double tap to zoom in.
     rule.onNodeWithTag("content").performTouchInput {
       doubleClick(center)
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(true, false, true, false)
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Press", "Release", "Press", "Release")
     }
 
-    // Quick zoom (double-tap and hold).
+    // Quick zoom out (double-tap and drag up).
     rule.onNodeWithTag("content").performTouchInput {
-      val noUpScope = object : TouchInjectionScope by this {
-        override fun up(pointerId: Int) = Unit
-      }
-      noUpScope.quickZoomIn()
+      click(center)
+      advanceEventTime(eventPeriodMillis + viewConfiguration.doubleTapMinTimeMillis)
+      down(center)
+      // Don't move yet.
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(true, false, true)
+      // First tap released, second tap still pressed (finger still down, hasn't moved yet).
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Press", "Release", "Press")
     }
     rule.onNodeWithTag("content").performTouchInput {
+      // Drag up to zoom out.
+      moveTo(Offset(center.x, center.y - (height / 2f)))
       up(pointerId = 0)
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(false)
+      // The second press becomes a drag, so it's cancelled.
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Cancel")
     }
 
-    // Pinch to zoom.
+    // Pinch to zoom in.
     rule.onNodeWithTag("content").performTouchInput {
-      val noUpScope = object : TouchInjectionScope by this {
-        override fun up(pointerId: Int) = Unit
-      }
-      noUpScope.pinchToZoomInBy(IntOffset(20, 20))
+      down(0, center + Offset(-10f, 0f))
+      down(1, center + Offset(10f, 0f))
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(true)
+      // Both fingers down, still pressed.
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Press")
     }
     rule.onNodeWithTag("content").performTouchInput {
-      up(pointerId = 0)
-      up(pointerId = 1)
+      // Move fingers apart to zoom in.
+      moveBy(0, Offset(-30f, 0f))
+      moveBy(1, Offset(30f, 0f))
+      up(0)
+      up(1)
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(false)
+      // Cancelled because position change is consumed by the transform gesture.
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Cancel")
     }
 
-    // Pans.
-    rule.onNodeWithTag("content").performTouchInput { doubleClick() }
-    rule.runOnIdle { isPressedHistory.clear() }
-
+    // Pan.
     rule.onNodeWithTag("content").performTouchInput {
-      val noUpScope = object : TouchInjectionScope by this {
-        override fun up(pointerId: Int) = Unit
-      }
-      noUpScope.swipeLeft(startX = center.x, endX = centerLeft.x)
+      down(center)
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(true)
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Press")
     }
     rule.onNodeWithTag("content").performTouchInput {
-      up(pointerId = 0)
+      moveTo(centerLeft)
     }
     rule.runOnIdle {
-      assertThat(isPressedHistory.removeAll()).containsExactly(false)
+      assertThat(interactions.removeAll().mapToNames()).isEmpty()
+    }
+    rule.onNodeWithTag("content").performTouchInput {
+      up(0)
+    }
+    rule.runOnIdle {
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Release")
     }
   }
 

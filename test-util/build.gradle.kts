@@ -15,7 +15,6 @@ dependencies {
     exclude(group = "androidx.test")
   }
   implementation(libs.dropboxDiffer)
-  implementation(libs.compose.foundation)
   implementation(libs.compose.ui.test.junit)
   implementation(libs.androidx.test.runner) // Needed for Screenshot.capture().
   implementation(libs.assertk)
