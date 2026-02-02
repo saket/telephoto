@@ -25,10 +25,15 @@ suspend fun SubSamplingImageSource.canBeSubSampled(context: Context): Boolean {
   }
 
   return withContext(Dispatchers.IO) {
-    peek(context).use {
-      // Check for GIFs as well because Android's ImageDecoder
-      // can return a Bitmap for single-frame GIFs.
-      !isSvg(it) && !isGif(it) && !isAvif(it)
+    try {
+      peek(context).use {
+        // Check for GIFs as well because Android's ImageDecoder
+        // can return a Bitmap for single-frame GIFs.
+        !isSvg(it) && !isGif(it) && !isAvif(it)
+      }
+    } catch (_: okio.FileNotFoundException) {
+      // The file may have been deleted by the cache before it could be read.
+      false
     }
   }
 }
