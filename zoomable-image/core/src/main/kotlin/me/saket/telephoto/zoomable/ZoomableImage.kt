@@ -258,6 +258,7 @@ fun ZoomableImage(
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableImage(
     image = image,
@@ -274,6 +275,7 @@ fun ZoomableImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
+    interactionSource = interactionSource,
   )
 }
 
@@ -298,6 +300,7 @@ fun ZoomableImage(
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableImage(
     image = image,
@@ -314,6 +317,7 @@ fun ZoomableImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
+    interactionSource = interactionSource,
   )
 }
 
@@ -420,6 +424,78 @@ fun ZoomableImage(
     image = image,
     contentDescription = contentDescription,
     gestures = gestures,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    interactionSource = null,
+  )
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableImage(
+  image: ZoomableImageSource,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableImage(
+    image = image,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    interactionSource = null,
+  )
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableImage(
+  image: ZoomableImageSource,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableImage(
+    image = image,
+    contentDescription = contentDescription,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     modifier = modifier,
     state = state,
     alpha = alpha,

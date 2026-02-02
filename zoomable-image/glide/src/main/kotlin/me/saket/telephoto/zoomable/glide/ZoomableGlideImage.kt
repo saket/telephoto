@@ -109,6 +109,7 @@ fun ZoomableGlideImage(
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
   requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableGlideImage(
     model = model,
@@ -126,6 +127,7 @@ fun ZoomableGlideImage(
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
     requestBuilderTransform = requestBuilderTransform,
+    interactionSource = interactionSource,
   )
 }
 
@@ -152,6 +154,7 @@ fun ZoomableGlideImage(
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
   requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableGlideImage(
     model = model,
@@ -169,6 +172,7 @@ fun ZoomableGlideImage(
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
     requestBuilderTransform = requestBuilderTransform,
+    interactionSource = interactionSource,
   )
 }
 
@@ -323,6 +327,85 @@ fun ZoomableGlideImage(
     colorFilter = colorFilter,
     alignment = alignment,
     contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    requestBuilderTransform = requestBuilderTransform,
+    interactionSource = null,
+  )
+}
+
+@Composable
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableGlideImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+) {
+  ZoomableGlideImage(
+    model = model,
+    contentDescription = contentDescription,
+    gestures = EnabledZoomGestures.ZoomAndPan,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    requestBuilderTransform = requestBuilderTransform,
+    interactionSource = null,
+  )
+}
+
+@Composable
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableGlideImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
+) {
+  ZoomableGlideImage(
+    model = model,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
