@@ -94,6 +94,7 @@ fun Modifier.zoomable(
   onLongClick: ((clickedAt: Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+  interactionSource: MutableInteractionSource? = null,
 ): Modifier {
   return this.zoomable(
     state = state,
@@ -102,6 +103,7 @@ fun Modifier.zoomable(
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
+    interactionSource = interactionSource,
   )
 }
 
@@ -117,6 +119,7 @@ fun Modifier.zoomable(
   onLongClick: ((clickedAt: Offset) -> Unit)? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+  interactionSource: MutableInteractionSource? = null,
 ): Modifier {
   return this.zoomable(
     state = state,
@@ -125,6 +128,27 @@ fun Modifier.zoomable(
     onLongClick = onLongClick,
     clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
+    interactionSource = interactionSource,
+  )
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun Modifier.zoomable(
+  state: ZoomableState,
+  enabled: Boolean = true,
+  onClick: ((clickedAt: Offset) -> Unit)? = null,
+  onLongClick: ((clickedAt: Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+): Modifier {
+  return this.zoomable(
+    state = state,
+    gestures = if (enabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = onDoubleClick,
+    interactionSource = null,
   )
 }
 
@@ -205,6 +229,24 @@ fun Modifier.zoomable(
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
+    interactionSource = null,
+  )
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun Modifier.zoomable(
+  state: ZoomableState,
+  onClick: ((clickedAt: Offset) -> Unit)? = null,
+  onLongClick: ((clickedAt: Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+): Modifier {
+  return this.zoomable(
+    state = state,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    clipToBounds = clipToBounds,
+    onDoubleClick = onDoubleClick,
     interactionSource = null,
   )
 }

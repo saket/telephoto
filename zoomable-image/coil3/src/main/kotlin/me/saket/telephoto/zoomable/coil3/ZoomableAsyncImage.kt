@@ -108,6 +108,7 @@ fun ZoomableAsyncImage(
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableAsyncImage(
     model = model,
@@ -125,6 +126,7 @@ fun ZoomableAsyncImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
+    interactionSource = interactionSource,
   )
 }
 
@@ -151,6 +153,7 @@ fun ZoomableAsyncImage(
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
+  interactionSource: MutableInteractionSource? = null,
 ) {
   ZoomableAsyncImage(
     model = model,
@@ -168,6 +171,7 @@ fun ZoomableAsyncImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
+    interactionSource = interactionSource,
   )
 }
 
@@ -285,6 +289,122 @@ fun ZoomableAsyncImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
+    interactionSource = null,
+  )
+}
+
+@Composable
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableAsyncImage(
+    model = model,
+    contentDescription = contentDescription,
+    modifier = modifier,
+    state = state,
+    imageLoader = imageLoader,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    interactionSource = null,
+  )
+}
+
+@Composable
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+  onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+  ZoomableAsyncImage(
+    model = model,
+    contentDescription = contentDescription,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
+    modifier = modifier,
+    state = state,
+    imageLoader = imageLoader,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
+    contentPadding = contentPadding,
+    interactionSource = null,
+  )
+}
+
+@Composable
+@NonRestartableComposable
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun ZoomableAsyncImage(
+  model: Any?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier,
+  state: ZoomableImageState = rememberZoomableImageState(rememberZoomableState()),
+  imageLoader: ImageLoader = LocalContext.current.imageLoader,
+  alpha: Float = DefaultAlpha,
+  colorFilter: ColorFilter? = null,
+  alignment: Alignment = Alignment.Center,
+  contentScale: ContentScale = ContentScale.Fit,
+  gesturesEnabled: Boolean = true,
+  onClick: ((Offset) -> Unit)? = null,
+  onLongClick: ((Offset) -> Unit)? = null,
+  clipToBounds: Boolean = true,
+) {
+  ZoomableAsyncImage(
+    model = model,
+    contentDescription = contentDescription,
+    gestures = if (gesturesEnabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
+    modifier = modifier,
+    state = state,
+    imageLoader = imageLoader,
+    alpha = alpha,
+    colorFilter = colorFilter,
+    alignment = alignment,
+    contentScale = contentScale,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onDoubleClick = DoubleClickToZoomListener.cycle(),
+    clipToBounds = clipToBounds,
+    contentPadding = PaddingValues(0.dp),
     interactionSource = null,
   )
 }

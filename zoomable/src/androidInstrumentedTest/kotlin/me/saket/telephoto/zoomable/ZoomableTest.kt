@@ -852,7 +852,6 @@ class ZoomableTest {
           .zoomable(
             state = rememberZoomableState(),
             interactionSource = interactionSource,
-            gestures = EnabledZoomGestures.ZoomAndPan,
           )
       )
     }
@@ -935,13 +934,15 @@ class ZoomableTest {
       moveTo(centerLeft)
     }
     rule.runOnIdle {
-      assertThat(interactions.removeAll().mapToNames()).isEmpty()
+      // Cancelled because position change is consumed by the pan gesture.
+      assertThat(interactions.removeAll().mapToNames()).containsExactly("Cancel")
     }
     rule.onNodeWithTag("content").performTouchInput {
       up(0)
     }
     rule.runOnIdle {
-      assertThat(interactions.removeAll().mapToNames()).containsExactly("Release")
+      // No new interactions after lifting - Cancel already emitted.
+      assertThat(interactions.removeAll().mapToNames()).isEmpty()
     }
   }
 
@@ -968,7 +969,6 @@ class ZoomableTest {
             onClick = { clickCount++ },
             onLongClick = { longClickCount++ },
             onDoubleClick = DoubleClickToZoomListener { _, _ -> doubleClickCount++ },
-            gestures = EnabledZoomGestures.ZoomAndPan,
           )
       )
     }
