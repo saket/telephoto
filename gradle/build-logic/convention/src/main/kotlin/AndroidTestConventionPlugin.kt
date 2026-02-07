@@ -58,7 +58,7 @@ class AndroidTestConventionPlugin : Plugin<Project> {
       devices.set(
         listOf(
           mapOf(
-            "model" to if (usesPixelCopy) "Pixel7" else "Pixel7Atd",
+            "model" to if (usesPixelCopy) "Pixel7" else "Pixel7Atd",  // PixelCopy is unsupported on ATD devices.
             "version" to 34,
             "gpu" to "software",  // Disable GPU acceleration to prevent screenshot differences.
           )

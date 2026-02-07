@@ -558,6 +558,8 @@ private fun TouchInjectionScope.pinchToZoomInBy(by: IntOffset) {
   )
 }
 
+// Note to self: Modifier.zoomablePeekOverlay() uses PixelCopy because Screenshot.capture()
+// doesn't support HW-accelerated content (which is needed for GraphicsLayer()).
 private fun Activity.takePixelCopyScreenshot(): Bitmap {
   val latch = CountDownLatch(1)
   var bitmap: Bitmap? = null
