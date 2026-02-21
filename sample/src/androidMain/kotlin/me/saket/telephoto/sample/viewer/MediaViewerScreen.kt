@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,7 +97,7 @@ internal fun MediaViewerScreen(
           .padding(contentPadding)
           .fillMaxSize(),
         state = pagerState,
-        beyondViewportPageCount = 1,
+        beyondViewportPageCount = 0,  // todo: undo
       ) { pageNum ->
         MediaPage(
           modifier = Modifier.fillMaxSize(),
@@ -195,6 +196,11 @@ private fun SharedElementTransitionScope.MediaPage(
   ) {
     when (model) {
       is MediaItem.Image -> {
+        val imageUrl by produceState(initialValue = model.placeholderImageUrl) {
+          delay(2_000)
+          this.value = model.fullSizedUrl
+        }
+
         // TODO: handle errors here.
         val imageState = rememberZoomableImageState(zoomableState)
         ZoomableAsyncImage(
@@ -214,8 +220,8 @@ private fun SharedElementTransitionScope.MediaPage(
             .focusRequester(focusRequester),
           state = imageState,
           model = ImageRequest.Builder(LocalContext.current)
-            .data(model.fullSizedUrl)
-            .placeholderMemoryCacheKey(model.placeholderImageUrl)
+            .data(imageUrl)
+//            .placeholderMemoryCacheKey(model.placeholderImageUrl)
             .crossfade(300)
             .build(),
           contentDescription = model.caption,

@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
+import me.saket.telephoto.zoomable.internal.ContentSizeAdjuster
 import me.saket.telephoto.zoomable.internal.MutatePriorities
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
@@ -140,7 +141,13 @@ internal class RealZoomableState internal constructor(
   internal var dynamicZoomSpec: DynamicZoomSpec by mutableStateOf(DynamicZoomSpec.recommend(ZoomSpec()))
   override val zoomSpec: ZoomSpec get() = currentGestureStateInputs?.zoomSpec ?: ZoomSpec()
 
-  internal var gestureState: GestureStateCalculator by mutableStateOf(
+  // Track previous content size and state for synchronous pan retention.
+  private var previousContentSize: Size? = null
+  private var previousFinalZoom: ScaleFactor? = null
+  private var previousFinalOffset: Offset? = null
+
+  // Inner calculator that can be swapped out during gestures/animations
+  private var innerGestureStateCalculator: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
       savedState.gestureState?.restore(
         inputs = inputs,
@@ -155,6 +162,62 @@ internal class RealZoomableState internal constructor(
         )
     }
   )
+
+  /**
+   * The outer calculator that intercepts all calculations and applies content size tracking.
+   * Derived from innerGestureStateCalculator so changes to it trigger recomposition.
+   */
+  internal val gestureState: GestureStateCalculator by derivedStateOf {
+    GestureStateCalculator { inputs ->
+      val state = innerGestureStateCalculator.calculate(inputs)
+
+      // Check if content size changed and adjust if needed.
+      val currentContentSize = inputs.unscaledContentBounds.size
+      val shouldAdjustForContentSizeChange = previousContentSize != null
+        && previousContentSize != currentContentSize
+        && abs(currentContentSize.aspectRatio() - previousContentSize!!.aspectRatio()) < ZoomDeltaEpsilon
+
+      val adjustedState = if (shouldAdjustForContentSizeChange) {
+        // Use the PREVIOUS zoom and offset (before content size changed) to calculate anchor
+        val oldFinalZoom = previousFinalZoom!!
+        val oldFinalOffset = previousFinalOffset!!
+
+        // Calculate content offset at viewport center (anchor point) using OLD state
+        val contentOffsetAtViewportCenter = inputs.viewportSize.center / oldFinalZoom + oldFinalOffset
+
+        val adjuster = ContentSizeAdjuster(
+          oldContentSize = previousContentSize!!,
+          oldFinalZoom = oldFinalZoom,
+          oldContentOffsetAtViewportCenter = contentOffsetAtViewportCenter,
+        )
+
+        adjuster.adjustForNewContentSize(
+          inputs = inputs,
+          coerceWithinBounds = { contentOffset, contentZoom ->
+            contentOffset.coerceWithinContentBounds(contentZoom, inputs)
+          }
+        )
+      } else {
+        state
+      }
+
+      // Update tracked state for next calculation
+      val currentFinalZoom = AbsoluteZoomFactor(
+        baseZoom = inputs.baseZoom,
+        userZoom = adjustedState.userZoom,
+      ).finalZoom()
+      val currentFinalOffset = AbsoluteOffset(
+        baseOffset = inputs.baseOffset,
+        userOffset = adjustedState.userOffset,
+      ).finalOffset()
+
+      previousContentSize = currentContentSize
+      previousFinalZoom = currentFinalZoom
+      previousFinalOffset = currentFinalOffset
+
+      adjustedState
+    }
+  }
 
   private val gestureStateInputsCalculator: GestureStateInputsCalculator by derivedStateOf {
     GestureStateInputsCalculator { viewportSize ->
@@ -248,7 +311,7 @@ internal class RealZoomableState internal constructor(
     }
 
     val lastGestureState = calculateGestureState() ?: return@TransformableState
-    gestureState = GestureStateCalculator { inputs ->
+    innerGestureStateCalculator = GestureStateCalculator { inputs ->
       val oldZoom = AbsoluteZoomFactor(
         baseZoom = inputs.baseZoom,
         userZoom = lastGestureState.userZoom,
@@ -573,7 +636,7 @@ internal class RealZoomableState internal constructor(
           )
         )
         // Note to self: skipping transformableState#transformBy(), since it enforces offset-locking.
-        gestureState = GestureStateCalculator {
+        innerGestureStateCalculator = GestureStateCalculator {
           startGestureState.copy(
             userOffset = animatedOffsetForUi.userOffset,
             userZoom = animatedZoom.userZoom,
@@ -676,7 +739,7 @@ internal class RealZoomableState internal constructor(
             // to support updating the offset without interrupting animations in the future.
             val currentGestureState = calculateGestureState()!!
             transformableState.transform(MutatePriority.PreventUserInput) {
-              gestureState = GestureStateCalculator {
+              innerGestureStateCalculator = GestureStateCalculator {
                 currentGestureState.copy(
                   userOffset = currentGestureState.userOffset * scale
                 )
