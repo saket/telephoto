@@ -70,8 +70,8 @@ fun ZoomableGlideImage(
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   clipToBounds: Boolean = true,
   contentPadding: PaddingValues = PaddingValues(0.dp),
-  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
   interactionSource: MutableInteractionSource? = null,
+  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
 ) {
   ZoomableImage(
     image = ZoomableImageSource.glide(model, requestBuilderTransform),
@@ -87,8 +87,8 @@ fun ZoomableGlideImage(
     onLongClick = onLongClick,
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
-    contentPadding = contentPadding,
     interactionSource = interactionSource,
+    contentPadding = contentPadding,
   )
 }
 
@@ -108,8 +108,8 @@ fun ZoomableGlideImage(
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener = DoubleClickToZoomListener.cycle(),
   contentPadding: PaddingValues = PaddingValues(0.dp),
-  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
   interactionSource: MutableInteractionSource? = null,
+  requestBuilderTransform: (RequestBuilder<Drawable>) -> RequestBuilder<Drawable> = { it },
 ) {
   ZoomableGlideImage(
     model = model,
@@ -126,8 +126,8 @@ fun ZoomableGlideImage(
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     contentPadding = contentPadding,
-    requestBuilderTransform = requestBuilderTransform,
     interactionSource = interactionSource,
+    requestBuilderTransform = requestBuilderTransform,
   )
 }
 
