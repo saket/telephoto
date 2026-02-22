@@ -5,11 +5,11 @@ mdx_truly_sane_lists==1.3
 mkdocs-material==9.6.14
 
 # Force use newer versions of these dependencies. Their older versions had security vulnerabilities.
-# https://github.com/saket/telephoto/security/dependabot/1
-pymdown-extensions>=10.0
+# https://github.com/saket/telephoto/security/dependabot/23
+pymdown-extensions>=10.16.1
 
-# https://github.com/saket/telephoto/security/dependabot/2
-requests>=2.31.0
+# https://github.com/saket/telephoto/security/dependabot/17
+requests>=2.32.4
 
 # https://github.com/saket/telephoto/security/dependabot/8
 idna>=3.7
@@ -17,11 +17,8 @@ idna>=3.7
 # https://github.com/saket/telephoto/security/dependabot/9
 jinja2>=3.1.4
 
-# https://github.com/saket/telephoto/security/dependabot/11
-urllib3>=2.2.2
+# https://github.com/saket/telephoto/security/dependabot/24
+urllib3>=2.6.3
 
 # https://github.com/saket/telephoto/security/dependabot/12
 certifi>=2024.07.04
-
-# https://github.com/saket/telephoto/security/dependabot/10
-requests>=2.32.0

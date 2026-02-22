@@ -82,7 +82,7 @@ platformdirs==4.3.8
     # via mkdocs-get-deps
 pygments==2.19.1
     # via mkdocs-material
-pymdown-extensions==10.15
+pymdown-extensions==10.16.1
     # via
     #   -r mkdocs_requirements.in
     #   mkdocs-material
@@ -99,7 +99,7 @@ pyyaml==6.0.2
     #   pyyaml-env-tag
 pyyaml-env-tag==1.1
     # via mkdocs
-requests==2.32.3
+requests==2.32.4
     # via
     #   -r mkdocs_requirements.in
     #   mkdocs-material
@@ -109,7 +109,7 @@ super-collections==0.5.3
     # via mkdocs-macros-plugin
 termcolor==3.1.0
     # via mkdocs-macros-plugin
-urllib3==2.4.0
+urllib3==2.6.3
     # via
     #   -r mkdocs_requirements.in
     #   requests
