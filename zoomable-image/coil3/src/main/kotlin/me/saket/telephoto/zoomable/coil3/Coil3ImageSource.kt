@@ -41,8 +41,6 @@ import me.saket.telephoto.subsamplingimage.util.canBeSubSampled
 import me.saket.telephoto.subsamplingimage.util.exists
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
-import me.saket.telephoto.zoomable.coil3.Resolver.ImageSourceCreationResult.EligibleForSubSampling
-import me.saket.telephoto.zoomable.coil3.Resolver.ImageSourceCreationResult.ImageDeletedOnlyFromDiskCache
 import me.saket.telephoto.zoomable.copy
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import java.io.File
@@ -97,12 +95,12 @@ internal class Resolver(
       work(
         request = request,
         imageLoader = imageLoader,
-        skipMemoryCache = false,
+        retryAttempts = 0,
       )
     }
   }
 
-  private suspend fun work(request: ImageRequest, imageLoader: ImageLoader, skipMemoryCache: Boolean) {
+  private suspend fun work(request: ImageRequest, imageLoader: ImageLoader, retryAttempts: Int) {
     val result = imageLoader.execute(
       request.newBuilder()
         .size(request.defined.sizeResolver ?: sizeResolver)
@@ -117,7 +115,7 @@ internal class Resolver(
           }
         )
         .memoryCachePolicy(
-          if (skipMemoryCache) CachePolicy.WRITE_ONLY else request.memoryCachePolicy
+          if (retryAttempts > 0) CachePolicy.WRITE_ONLY else request.memoryCachePolicy
         )
         // This will unfortunately replace any existing target, but it is also the only
         // way to read placeholder images set using ImageRequest#placeholderMemoryCacheKey.
@@ -144,19 +142,14 @@ internal class Resolver(
         .build()
     )
 
-    val imageSource = when (val it = result.toSubSamplingImageSource(imageLoader)) {
-      null -> null
-      is EligibleForSubSampling -> it.source
-      is ImageDeletedOnlyFromDiskCache -> {
-        if (skipMemoryCache) {
-          error("Coil returned an image that is missing from both its memory and disk caches")
-        } else {
-          // The app's disk cache was possibly deleted, but the image is
-          // still cached in memory. Reload the image from the network.
-          work(request, imageLoader, skipMemoryCache = true)
-        }
-        return
-      }
+    val imageSource = result.toSubSamplingImageSource(imageLoader)
+    if (imageSource == null && retryAttempts < 1 && result is SuccessResult && result.image is BitmapImage) {
+      // Sub-sampling isn't available. This can happen if:
+      // - The image was served from memory cache, but the disk cache was cleared.
+      // - The disk cache entry was evicted between Coil writing it and telephoto reading it.
+      // Retry once to re-populate it before falling back to a non-sub-sampled image.
+      work(request, imageLoader, retryAttempts = retryAttempts + 1)
+      return
     }
 
     resolved = resolved.copy(
@@ -174,16 +167,7 @@ internal class Resolver(
     )
   }
 
-  private sealed interface ImageSourceCreationResult {
-    data class EligibleForSubSampling(
-      val source: SubSamplingImageSource
-    ) : ImageSourceCreationResult
-
-    /** Image was deleted from the disk cache, but is still present in the memory cache. */
-    data object ImageDeletedOnlyFromDiskCache : ImageSourceCreationResult
-  }
-
-  private suspend fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): ImageSourceCreationResult? {
+  private suspend fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): SubSamplingImageSource? {
     val result = this
     val resultImage = (result as? SuccessResult)?.image
     val source = if (result is SuccessResult && resultImage is BitmapImage) {
@@ -197,12 +181,10 @@ internal class Resolver(
             diskCache.openSnapshot(result.diskCacheKey!!)
           }
           if (snapshot == null) {
-            return when (result.dataSource) {
-              DataSource.MEMORY_CACHE -> ImageDeletedOnlyFromDiskCache
-              else -> error("Coil returned an image that is missing from its disk cache")
-            }
+            null
+          } else {
+            SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)
           }
-          SubSamplingImageSource.file(snapshot.data, preview, onClose = snapshot::close)
         }
 
         result.dataSource.let { it == DataSource.DISK || it == DataSource.MEMORY_CACHE } -> {
@@ -211,10 +193,8 @@ internal class Resolver(
           // - Remote image that wasn't saved to disk because of a "no-store" HTTP header.
           result.request.mapRequestDataToUriOrNull(imageLoader)
             ?.let { uri -> SubSamplingImageSource.contentUriOrNull(uri, preview) }
-            ?.also {
-              if (result.dataSource == DataSource.MEMORY_CACHE && !it.exists(request.context)) {
-                return ImageDeletedOnlyFromDiskCache
-              }
+            ?.takeIf {
+              result.dataSource != DataSource.MEMORY_CACHE || it.exists(request.context)
             }
         }
 
@@ -228,11 +208,7 @@ internal class Resolver(
     } else {
       return null
     }
-    return if (source?.canBeSubSampled(request.context) == true) {
-      EligibleForSubSampling(source)
-    } else {
-      null
-    }
+    return source?.takeIf { it.canBeSubSampled(request.context) }
   }
 
   private fun ImageResult.crossfadeDuration(): Duration {

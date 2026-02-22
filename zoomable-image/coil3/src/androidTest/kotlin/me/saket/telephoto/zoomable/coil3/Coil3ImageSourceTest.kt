@@ -38,6 +38,7 @@ import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
 import coil3.asImage
+import coil3.decode.DataSource
 import coil3.gif.AnimatedImageDecoder
 import coil3.imageLoader
 import coil3.memory.MemoryCache
@@ -550,6 +551,39 @@ class Coil3ImageSourceTest {
     resolve { imageUrl }.test {
       skipItems(1) // Default item.
       assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.SubSamplingDelegate::class.java)
+    }
+  }
+
+  // Regression test for https://github.com/saket/telephoto/issues/106.
+  @Test fun fallback_to_non_sub_sampled_image_if_disk_cache_entry_is_evicted_after_load() = runTest {
+    val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+    var loadAttempts = 0
+
+    // Return a fake result with a diskCacheKey that doesn't map to any real
+    // file on disk, simulating the disk cache entry being evicted between
+    // Coil writing it and telephoto trying to read it.
+    SingletonImageLoader.setUnsafe(buildImageLoader {
+      components {
+        add(buildFakeImageEngine {
+          addInterceptor {
+            loadAttempts++
+            SuccessResult(
+              image = bitmap.asImage(),
+              request = it.request,
+              dataSource = DataSource.NETWORK,
+              diskCacheKey = "fake_disk_cache_key_that_doesn't_actually_exist",
+            )
+          }
+        })
+      }
+    })
+
+    resolve {
+      serverRule.server.url("full_image.png").toString()
+    }.test {
+      skipItems(1) // Default item.
+      assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.PainterDelegate::class.java)
+      assertThat(loadAttempts).isEqualTo(2) // 1 initial + 1 retry.
     }
   }
 
