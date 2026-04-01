@@ -1,15 +1,10 @@
 package me.saket.telephoto.zoomable
 
-import android.app.Activity
 import android.view.ViewConfiguration
 import android.widget.Scroller
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.ComposeView
-import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -20,11 +15,9 @@ import androidx.test.uiautomator.Until
 import assertk.assertThat
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotEqualTo
-import kotlinx.coroutines.flow.Flow
 import leakcanary.LeakAssertions
-import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.util.RequiresHwAcceleration
 import me.saket.telephoto.util.ScreenshotTestActivity
-import me.saket.telephoto.util.assetPainter
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -34,6 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
+@RequiresHwAcceleration // Software GPU rendering causes janky animations.
 class AnimatedZoomableImageTest {
   // Uses [ActivityScenarioRule] because UiAutomator gesture tests need real-time animations. [createAndroidComposeRule]
   // replaces the frame clock, preventing UiAutomator-triggered animations from running.
@@ -214,13 +208,6 @@ private class DeviceRobot(imageContentDescription: String) {
   }
 }
 
-// Gross, but works.
-private fun <A : Activity> ActivityScenario<A>.activity(): A {
-  var activity: A? = null
-  onActivity { activity = it }
-  return activity!!
-}
-
 private fun waitUntil(timeout: Duration = 1.seconds, condition: () -> Boolean) {
   val mark = TimeSource.Monotonic.markNow()
   while (!condition()) {
@@ -229,21 +216,4 @@ private fun waitUntil(timeout: Duration = 1.seconds, condition: () -> Boolean) {
   }
 }
 
-@Composable
-private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Boolean): ZoomableImageSource {
-  return remember(assetName) {
-    object : ZoomableImageSource {
-      @Composable
-      override fun resolve(canvasSize: Flow<Size>): ZoomableImageSource.ResolveResult {
-        return ZoomableImageSource.ResolveResult(
-          delegate = if (subSample) {
-            ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset(assetName))
-          } else {
-            ZoomableImageSource.PainterDelegate(assetPainter(assetName))
-          }
-        )
-      }
-    }
-  }
-}
 

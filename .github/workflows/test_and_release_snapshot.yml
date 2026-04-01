@@ -43,7 +43,7 @@ jobs:
         env:
           # https://docs.emulator.wtf/github/tokenless
           EW_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew testDebugWithEmulatorWtf
+        run: ./gradlew testWithEmulatorWtf
 
       - name: (Fail-only) Bundle instrumented test reports
         if: failure()

@@ -7,7 +7,10 @@ import org.gradle.kotlin.dsl.closureOf
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.exclude
+import org.jetbrains.kotlin.gradle.internal.builtins.StandardNames.FqNames.annotation
+import wtf.emulator.DeviceModel
 import wtf.emulator.EwExtension
+import wtf.emulator.GpuMode
 import java.time.Duration
 import com.android.build.api.dsl.LibraryExtension as AndroidLibraryExtension
 import com.android.build.gradle.BaseExtension as BaseAndroidExtension
@@ -52,27 +55,50 @@ class AndroidTestConventionPlugin : Plugin<Project> {
     }
 
     emulatorwtf {
-      val requiresPixelCopy = project.path == ":zoomable-peek-overlay"  // PixelCopy is unsupported on ATD devices.
-      val requiresHwAcceleration = project.path == ":zoomable-image:interaction-tests"  // Software GPU results in janky animations.
-      val requiresNonAtdDevice = requiresPixelCopy || requiresHwAcceleration
+      val sdkVersion = 34
+      val nonAtdAnnotation = "me.saket.telephoto.util.RequiresNonAtdDevice"
+      val hwAccelAnnotation = "me.saket.telephoto.util.RequiresHwAcceleration"
 
       version.set(versionCatalog.findVersion("emulatorWtfCli").get().toString())
-      devices.set(
-        listOf(
-          mapOf(
-            "model" to if (requiresNonAtdDevice) "Pixel7" else "Pixel7Atd",
-            "gpu" to if (requiresHwAcceleration) "auto" else "software",
-            "version" to 34,
-          )
-        )
-      )
-      @Suppress("SdCardPath")
       directoriesToPull.set(listOf("/sdcard/Download/"))
       numShards.set(5)
       numFlakyTestAttempts.set(2) // 3 runs in total.
       fileCacheTtl.set(Duration.ofDays(30))
       timeout.set(Duration.ofMinutes(15)) // Note to self: this is per shard and not per test.
       printOutput.set(true) // Print report URL even for successful test runs.
+
+      device {
+        model.set(DeviceModel.PIXEL_7_ATD)
+        version.set(sdkVersion)
+        gpu.set(GpuMode.SOFTWARE)
+      }
+      targets {
+        // Tests that need a non-ATD device or hw acceleration are run separately below.
+        excludeAnnotation(nonAtdAnnotation)
+        excludeAnnotation(hwAccelAnnotation)
+      }
+      configurations {
+        create("nonAtd") {
+          device {
+            model.set(DeviceModel.PIXEL_7)
+            version.set(sdkVersion)
+            gpu.set(GpuMode.SOFTWARE)
+          }
+          targets {
+            annotation(nonAtdAnnotation)
+          }
+        }
+        create("hwAccelerated") {
+          device {
+            model.set(DeviceModel.PIXEL_7)
+            version.set(sdkVersion)
+            gpu.set(GpuMode.AUTO)
+          }
+          targets {
+            annotation(hwAccelAnnotation)
+          }
+        }
+      }
     }
   }
 }

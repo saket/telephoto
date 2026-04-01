@@ -63,6 +63,7 @@ import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.util.ActivityRecreationTester
 import me.saket.telephoto.util.CiScreenshotValidator
+import me.saket.telephoto.util.RequiresNonAtdDevice
 import me.saket.telephoto.util.ScreenshotTestActivity
 import org.junit.After
 import org.junit.Rule
@@ -72,6 +73,7 @@ import org.junit.rules.Timeout
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 
+@RequiresNonAtdDevice // PixelCopy is unsupported on ATD images.
 class ZoomablePeekOverlayTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val timeout = Timeout.seconds(30)!!
