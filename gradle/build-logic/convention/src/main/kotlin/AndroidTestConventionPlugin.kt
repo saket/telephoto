@@ -7,7 +7,6 @@ import org.gradle.kotlin.dsl.closureOf
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.exclude
-import org.jetbrains.kotlin.gradle.internal.builtins.StandardNames.FqNames.annotation
 import wtf.emulator.DeviceModel
 import wtf.emulator.EwExtension
 import wtf.emulator.GpuMode
@@ -78,24 +77,30 @@ class AndroidTestConventionPlugin : Plugin<Project> {
         excludeAnnotation(hwAccelAnnotation)
       }
       configurations {
-        create("nonAtd") {
-          device {
-            model.set(DeviceModel.PIXEL_7)
-            version.set(sdkVersion)
-            gpu.set(GpuMode.SOFTWARE)
-          }
-          targets {
-            annotation(nonAtdAnnotation)
+        // TODO: emulator.wtf currently fails when a module has zero tests.
+        //  Remove these path checks once that's fixed.
+        if (project.path == ":zoomable-peek-overlay") {
+          create("nonAtd") {
+            device {
+              model.set(DeviceModel.PIXEL_7)
+              version.set(sdkVersion)
+              gpu.set(GpuMode.SOFTWARE)
+            }
+            targets {
+              annotation(nonAtdAnnotation)
+            }
           }
         }
-        create("hwAccelerated") {
-          device {
-            model.set(DeviceModel.PIXEL_7)
-            version.set(sdkVersion)
-            gpu.set(GpuMode.AUTO)
-          }
-          targets {
-            annotation(hwAccelAnnotation)
+        if (project.path == ":zoomable-image:core") {
+          create("hwAccelerated") {
+            device {
+              model.set(DeviceModel.PIXEL_7)
+              version.set(sdkVersion)
+              gpu.set(GpuMode.AUTO)
+            }
+            targets {
+              annotation(hwAccelAnnotation)
+            }
           }
         }
       }
