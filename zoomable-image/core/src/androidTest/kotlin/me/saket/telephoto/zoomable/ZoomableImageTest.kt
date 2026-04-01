@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -2310,6 +2311,54 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun placeholder_crossfade_animation_plays_when_image_loads() {
+    val crossfadeDuration = 1.seconds
+    lateinit var imageState: ZoomableImageState
+    var imageLoaded by mutableStateOf(false)
+
+    rule.mainClock.autoAdvance = false
+
+    rule.setContent {
+      imageState = rememberZoomableImageState(rememberZoomableState())
+      ZoomableImage(
+        modifier = Modifier.fillMaxSize(),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false)
+          .withPlaceholder(
+            placeholder = assetPainter("fox_25.png"),
+            crossfadeDuration = crossfadeDuration,
+            isImageLoaded = imageLoaded,
+          ),
+        contentDescription = null,
+        state = imageState,
+      )
+    }
+
+    // Advance until the placeholder is displayed.
+    rule.mainClock.advanceTimeUntil { imageState.isPlaceholderDisplayed }
+    assertThat(imageState.isImageDisplayed).isFalse()
+    dropshots.assertSnapshot(rule.activity, testName.methodName + "_placeholder")
+
+    // Trigger image load — this starts the crossfade animation.
+    imageLoaded = true
+    rule.mainClock.advanceTimeUntil { imageState.isImageDisplayed }
+
+    // Advance to the early stage of the crossfade.
+    rule.mainClock.advanceTimeBy(crossfadeDuration.inWholeMilliseconds / 4)
+    rule.waitForIdle()
+
+    // The placeholder should still be visible mid-crossfade.
+    assertThat(imageState.isPlaceholderDisplayed).isTrue()
+    dropshots.assertSnapshot(rule.activity, testName.methodName + "_mid_crossfade")
+
+    // Advance past the crossfade.
+    rule.mainClock.advanceTimeBy(crossfadeDuration.inWholeMilliseconds)
+    rule.waitForIdle()
+
+    assertThat(imageState.isPlaceholderDisplayed).isFalse()
+    assertThat(imageState.isImageDisplayed).isTrue()
+    dropshots.assertSnapshot(rule.activity, testName.methodName + "_full_image")
+  }
+
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false
@@ -2523,6 +2572,29 @@ private fun ZoomableImageSource.withPlaceholder(
           showPlaceholder -> ResolveResult(delegate = null, placeholder = placeholder)
           else -> delegate.resolve(canvasSize).copy(placeholder = placeholder)
         }
+      }
+    }
+  }
+}
+
+@Composable
+@Suppress("NAME_SHADOWING")
+private fun ZoomableImageSource.withPlaceholder(
+  placeholder: Painter,
+  crossfadeDuration: Duration,
+  isImageLoaded: Boolean,
+): ZoomableImageSource {
+  val delegate = this
+  val isImageLoaded by rememberUpdatedState(isImageLoaded)
+  return remember(delegate, crossfadeDuration) {
+    object : ZoomableImageSource {
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        return ResolveResult(
+          delegate = if (isImageLoaded) delegate.resolve(canvasSize).delegate else null,
+          crossfadeDuration = crossfadeDuration,
+          placeholder = placeholder,
+        )
       }
     }
   }

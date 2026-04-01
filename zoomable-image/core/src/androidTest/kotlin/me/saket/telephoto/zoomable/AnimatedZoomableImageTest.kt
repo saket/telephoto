@@ -4,15 +4,7 @@ import android.app.Activity
 import android.view.ViewConfiguration
 import android.widget.Scroller
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.ComposeView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -23,37 +15,23 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import assertk.assertThat
-import assertk.assertions.isFalse
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotEqualTo
-import assertk.assertions.isTrue
-import com.dropbox.dropshots.Dropshots
-import kotlinx.coroutines.flow.Flow
 import leakcanary.LeakAssertions
-import me.saket.telephoto.util.CiScreenshotValidator
 import me.saket.telephoto.util.ScreenshotTestActivity
-import me.saket.telephoto.util.assetPainter
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestName
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 class AnimatedZoomableImageTest {
+  // Uses [ActivityScenarioRule] because UiAutomator gesture tests need real-time animations. [createAndroidComposeRule]
+  // replaces the frame clock, preventing UiAutomator-triggered animations from running.
   @get:Rule val scenarioRule = ActivityScenarioRule(ScreenshotTestActivity::class.java)
   private val scenario get() = scenarioRule.scenario
-  @get:Rule val testName = TestName()
-  @get:Rule val dropshots = Dropshots(
-    filenameFunc = { _, testName -> testName },
-    resultValidator = CiScreenshotValidator(
-      context = { scenario.activity() },
-      tolerancePercentOnLocal = 0f,
-      tolerancePercentOnCi = 0.01f,
-    ),
-  )
 
   @After
   fun tearDown() {
@@ -151,59 +129,8 @@ class AnimatedZoomableImageTest {
     // Zoom should NOT have reached max — it was interrupted.
     assertThat(state.zoomFraction!!).isLessThan(1f)
   }
-
-  @Test fun placeholder_crossfade_animation_plays_when_image_loads() {
-    val crossfadeDuration = 2.seconds
-    lateinit var imageState: ZoomableImageState
-    var imageLoaded by mutableStateOf(false)
-
-    scenario.onActivity { activity ->
-      activity.setContentView(ComposeView(activity).apply {
-        setContent {
-          imageState = rememberZoomableImageState(rememberZoomableState())
-          ZoomableImage(
-            modifier = Modifier.fillMaxSize(),
-            image = crossfadeImageSource(
-              placeholder = assetPainter("fox_25.png"),
-              fullImage = assetPainter("fox_1500.jpg"),
-              crossfadeDuration = crossfadeDuration,
-              imageLoaded = imageLoaded,
-            ),
-            contentDescription = null,
-            state = imageState,
-          )
-        }
-      })
-    }
-
-    // Wait for placeholder to be displayed.
-    waitUntil(5.seconds) { imageState.isPlaceholderDisplayed }
-    assertThat(imageState.isImageDisplayed).isFalse()
-    scenario.onActivity { activity ->
-      dropshots.assertSnapshot(activity, testName.methodName + "_placeholder")
-    }
-
-    // Trigger image load — this starts the crossfade animation.
-    imageLoaded = true
-    waitUntil(5.seconds) { imageState.isImageDisplayed }
-
-    // Let the crossfade progress to a visible midpoint.
-    Thread.sleep(crossfadeDuration.inWholeMilliseconds / 4)
-
-    // The placeholder should still be visible mid-crossfade.
-    assertThat(imageState.isPlaceholderDisplayed).isTrue()
-    scenario.onActivity { activity ->
-      dropshots.assertSnapshot(activity, testName.methodName + "_mid_crossfade")
-    }
-
-    // Wait for crossfade to complete.
-    waitUntil(5.seconds) { !imageState.isPlaceholderDisplayed }
-    assertThat(imageState.isImageDisplayed).isTrue()
-    scenario.onActivity { activity ->
-      dropshots.assertSnapshot(activity, testName.methodName + "_full_image")
-    }
-  }
 }
+
 
 private class DeviceRobot(imageContentDescription: String) {
   val device: UiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
@@ -288,21 +215,3 @@ private fun waitUntil(timeout: Duration = 1.seconds, condition: () -> Boolean) {
   }
 }
 
-@Composable
-private fun crossfadeImageSource(
-  placeholder: Painter,
-  fullImage: Painter,
-  crossfadeDuration: Duration,
-  imageLoaded: Boolean,
-): ZoomableImageSource {
-  return object : ZoomableImageSource {
-    @Composable
-    override fun resolve(canvasSize: Flow<Size>): ZoomableImageSource.ResolveResult {
-      return ZoomableImageSource.ResolveResult(
-        delegate = if (imageLoaded) ZoomableImageSource.PainterDelegate(fullImage) else null,
-        crossfadeDuration = crossfadeDuration,
-        placeholder = placeholder,
-      )
-    }
-  }
-}
