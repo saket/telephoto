@@ -1,8 +1,6 @@
 # Release checklist
 
 - [ ] Check that tests have passed on CI.
-- [ ] Run manual test cases that are difficult to automate:
-  - [ ] Images that use a placeholder play a cross-fade animation when the image is loaded.
 - [ ] Change version name from SNAPSHOT to an actual name.
 - [ ] Update project website with:
     - [ ] new version’s maven address
