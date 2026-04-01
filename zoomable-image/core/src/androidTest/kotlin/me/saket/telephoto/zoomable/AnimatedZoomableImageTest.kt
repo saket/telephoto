@@ -34,16 +34,14 @@ class AnimatedZoomableImageTest {
   @get:Rule val scenarioRule = ActivityScenarioRule(ScreenshotTestActivity::class.java)
   private val scenario get() = scenarioRule.scenario
 
-  @Before fun enableAnimations() {
-    val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
-    uiAutomation.executeShellCommand("settings put global animator_duration_scale 1")
-    uiAutomation.executeShellCommand("settings put global window_animation_scale 1")
-    uiAutomation.executeShellCommand("settings put global transition_animation_scale 1")
+  @Before fun setup() {
+    // emulator.wtf disables animations by default.
+    DeviceRobot.setAnimationsEnabled(true)
   }
 
-  @After
-  fun tearDown() {
+  @After fun tearDown() {
     LeakAssertions.assertNoLeaks()
+    DeviceRobot.setAnimationsEnabled(false)
   }
 
   @Test fun fling_animation_can_be_interrupted_by_pressing() {
@@ -205,6 +203,16 @@ private class DeviceRobot(imageContentDescription: String) {
   fun swipe(direction: Direction) {
     image.setGestureMargin(device.displayWidth / 5)
     image.swipe(direction, /* percent = */ 0.5f)
+  }
+
+  companion object {
+    fun setAnimationsEnabled(enabled: Boolean) {
+      val settingValue = if (enabled) "1" else "0"
+      val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
+      uiAutomation.executeShellCommand("settings put global animator_duration_scale $settingValue")
+      uiAutomation.executeShellCommand("settings put global window_animation_scale $settingValue")
+      uiAutomation.executeShellCommand("settings put global transition_animation_scale $settingValue")
+    }
   }
 }
 
