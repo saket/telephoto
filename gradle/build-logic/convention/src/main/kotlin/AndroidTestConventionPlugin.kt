@@ -52,15 +52,17 @@ class AndroidTestConventionPlugin : Plugin<Project> {
     }
 
     emulatorwtf {
-      val usesPixelCopy = project.name == "zoomable-peek-overlay"
+      val requiresPixelCopy = project.path == ":zoomable-peek-overlay"  // PixelCopy is unsupported on ATD devices.
+      val requiresHwAcceleration = project.path == ":zoomable-image:interaction-tests"  // Software GPU results in janky animations.
+      val requiresNonAtdDevice = requiresPixelCopy || requiresHwAcceleration
 
       version.set(versionCatalog.findVersion("emulatorWtfCli").get().toString())
       devices.set(
         listOf(
           mapOf(
-            "model" to if (usesPixelCopy) "Pixel7" else "Pixel7Atd",  // PixelCopy is unsupported on ATD devices.
+            "model" to if (requiresNonAtdDevice) "Pixel7" else "Pixel7Atd",
+            "gpu" to if (requiresHwAcceleration) "auto" else "software",
             "version" to 34,
-            "gpu" to "software",  // Disable GPU acceleration to prevent screenshot differences.
           )
         )
       )

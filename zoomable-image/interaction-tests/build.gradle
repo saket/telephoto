@@ -1,0 +1,16 @@
+plugins {
+  id("me.saket.android.library")
+  id("me.saket.kotlin.android")
+  id("me.saket.compose")
+  id("me.saket.android.test")
+}
+
+android {
+  namespace "me.saket.telephoto.zoomable.image.interactiontests"
+}
+
+dependencies {
+  androidTestImplementation(projects.testUtil)
+  androidTestImplementation(projects.zoomableImage.core)
+  androidTestImplementation(libs.androidx.test.uiautomator)
+}

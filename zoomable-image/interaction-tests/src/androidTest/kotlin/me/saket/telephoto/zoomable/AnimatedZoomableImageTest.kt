@@ -4,7 +4,10 @@ import android.app.Activity
 import android.view.ViewConfiguration
 import android.widget.Scroller
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.ComposeView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -17,9 +20,13 @@ import androidx.test.uiautomator.Until
 import assertk.assertThat
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotEqualTo
+import kotlinx.coroutines.flow.Flow
 import leakcanary.LeakAssertions
+import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.ScreenshotTestActivity
+import me.saket.telephoto.util.assetPainter
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import kotlin.time.Duration
@@ -32,6 +39,13 @@ class AnimatedZoomableImageTest {
   // replaces the frame clock, preventing UiAutomator-triggered animations from running.
   @get:Rule val scenarioRule = ActivityScenarioRule(ScreenshotTestActivity::class.java)
   private val scenario get() = scenarioRule.scenario
+
+  @Before fun enableAnimations() {
+    val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
+    uiAutomation.executeShellCommand("settings put global animator_duration_scale 1")
+    uiAutomation.executeShellCommand("settings put global window_animation_scale 1")
+    uiAutomation.executeShellCommand("settings put global transition_animation_scale 1")
+  }
 
   @After
   fun tearDown() {
@@ -212,6 +226,24 @@ private fun waitUntil(timeout: Duration = 1.seconds, condition: () -> Boolean) {
   while (!condition()) {
     check(mark.elapsedNow() < timeout) { "Timed out waiting for condition" }
     Thread.sleep(50)
+  }
+}
+
+@Composable
+private fun ZoomableImageSource.Companion.asset(assetName: String, subSample: Boolean): ZoomableImageSource {
+  return remember(assetName) {
+    object : ZoomableImageSource {
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ZoomableImageSource.ResolveResult {
+        return ZoomableImageSource.ResolveResult(
+          delegate = if (subSample) {
+            ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset(assetName))
+          } else {
+            ZoomableImageSource.PainterDelegate(assetPainter(assetName))
+          }
+        )
+      }
+    }
   }
 }
 
