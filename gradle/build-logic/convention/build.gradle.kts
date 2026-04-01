@@ -10,7 +10,10 @@ dependencies {
   compileOnly(libs.plugin.dokka)
   compileOnly(libs.plugin.mavenPublish)
   compileOnly(libs.plugin.dropshots)
-  compileOnly(libs.plugin.emulatorWtf)
+  compileOnly(libs.plugin.emulatorWtf) {
+    // Compiled with a newer Kotlin version than what this project uses.
+    exclude(group = "wtf.emulator", module = "kotlin-extensions")
+  }
   compileOnly(libs.plugin.metalava)
   compileOnly(libs.plugin.poko)
 }
