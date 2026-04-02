@@ -4,6 +4,7 @@
 - [Observing pan & zoom](../zoomable/recipes.md#observing-pan-zoom)
 - [Controlling pan & zoom](../zoomable/recipes.md#controlling-pan-zoom)
 - [Resetting zoom](../zoomable/recipes.md#resetting-zoom)
+- [Observing press gestures](../zoomable/recipes.md#observing-press-gestures)
 
 ### Setting zoom limits
 

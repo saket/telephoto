@@ -68,3 +68,25 @@ HorizontalPager(
 
 !!! warning
     A bug in `Pager()` previously caused `settledPage` to reset to `0` upon state restoration. This issue has been resolved in `androidx.compose.foundation:foundation:1.5.0-alpha02`.
+
+### Observing press gestures
+
+`Modifier.zoomable()` can emit press interactions to a `MutableInteractionSource`, useful for responding to hold gestures. For example, switching between two images for comparison on long press, or increasing video playback speed while pressed.
+
+```kotlin
+val interactionSource = remember { MutableInteractionSource() }
+val isPressed by interactionSource.collectIsPressedAsState()
+
+Box(
+  Modifier.zoomable(
+    state = rememberZoomableState(),
+    interactionSource = interactionSource,
+  )
+) {
+  if (isPressed) {
+    // Show alternate content while pressed. For example,
+    // display a "before" image for comparison or increase
+    // video playback speed.
+  }
+}
+```
