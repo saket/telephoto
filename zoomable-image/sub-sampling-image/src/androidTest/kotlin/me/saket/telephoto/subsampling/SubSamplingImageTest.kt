@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -38,6 +39,7 @@ import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -566,7 +568,6 @@ class SubSamplingImageTest {
     screenshotValidator.tolerancePercentOnCi = 0.024f
 
     val previewBitmapMutex = Mutex(locked = true)
-    var fullImageDecoded = false
 
     val previewBitmap = BitmapFactory.decodeStream(
       rule.activity.assets.open("smol.jpg")
@@ -576,8 +577,6 @@ class SubSamplingImageTest {
       .withDecodeInterceptor { _, _, continueDecoding ->
         previewBitmapMutex.withLock {
           continueDecoding()
-        }.also {
-          fullImageDecoded = true
         }
       }
 
@@ -604,10 +603,56 @@ class SubSamplingImageTest {
     }
 
     previewBitmapMutex.unlock()
+  }
 
-    rule.waitUntil { fullImageDecoded }
+  @Test fun do_not_reload_base_tile_if_preview_image_is_already_present() {
+    val decodedRegionCount = AtomicInteger(0)
+    val decoderCreated = AtomicBoolean(false)
+
+    val imageSource = object : SubSamplingImageSource {
+      override val preview = ImageBitmap(width = 100, height = 75)
+
+      override suspend fun decoder(): ImageRegionDecoder.Factory {
+        return ImageRegionDecoder.Factory {
+          decoderCreated.set(true)
+          object : ImageRegionDecoder {
+            override val imageSize = IntSize(width = 4_000, height = 3_000)
+            override suspend fun decodeRegion(region: IntRect, sampleSize: Int): ImageRegionDecoder.DecodeResult {
+              decodedRegionCount.incrementAndGet()
+              return ImageRegionDecoder.DecodeResult(
+                painter = ColorPainter(Color.Yellow),
+                hasUltraHdrContent = false,
+              )
+            }
+          }
+        }
+      }
+    }
+
+    var imageState: SubSamplingImageState? = null
+    rule.setContent {
+      val zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 1f))
+      val state = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = imageSource,
+      )
+      imageState = state
+      SubSamplingImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState),
+        state = state,
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil {
+      // Wait until subsampling has started so decodedRegionCount == 0 proves
+      // the base tile was skipped, not that the decoder was never created.
+      decoderCreated.get() && imageState?.isImageDisplayed == true
+    }
     rule.runOnIdle {
-      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_full_quality")
+      assertThat(decodedRegionCount.get()).isEqualTo(0)
     }
   }
 

@@ -51,7 +51,6 @@ internal class RealSubSamplingImageState(
   override val imageSize: IntSize?
     get() = imageRegionDecoder?.imageSize
 
-  // todo: it isn't great that the preview image remains in memory even after the full image is loaded.
   private val imagePreview: Painter? =
     imageSource.preview?.let(::BitmapPainter)
 
@@ -183,7 +182,9 @@ internal class RealSubSamplingImageState(
     LaunchedEffect(imageCache) {
       snapshotFlow { viewportTiles }.collect { tiles ->
         imageCache.loadOrUnloadForTiles(
-          regions = tiles.fastMapNotNull { if (it.isVisible) it.region else null }
+          regions = tiles.fastMapNotNull {
+            if (it.canLoadImageRegion()) it.region else null
+          }
         )
       }
     }
@@ -192,6 +193,16 @@ internal class RealSubSamplingImageState(
         loadedImages = it
       }
     }
+  }
+
+  /**
+   * Visible foreground tiles should always be decoded. The low-res base tile only needs to be
+   * decoded when there is no preview bitmap, because a preview can already act as the base layer.
+   * Skipping that decode avoids asking BitmapRegionDecoder for a large full-image region while the
+   * user is still at the initial fitted scale.
+   */
+  private fun ViewportTile.canLoadImageRegion(): Boolean {
+    return isVisible && (!isBase || imageSource.preview == null)
   }
 }
 
