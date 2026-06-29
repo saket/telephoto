@@ -43,3 +43,5 @@ site/
 .codex
 .claude
 thoughts/
+
+sample/src/androidMain/assets/issue165/*.jpg

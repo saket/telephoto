@@ -23,6 +23,7 @@ kotlin {
 
     androidMain.dependencies {
       implementation(projects.zoomableImage.coil)
+      implementation(projects.zoomableImage.coil3)
       implementation(projects.zoomableImage.glide)
       implementation(projects.zoomablePeekOverlay)
 
