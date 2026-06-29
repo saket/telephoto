@@ -21,7 +21,6 @@ import coil3.request.ImageRequest
 import coil3.request.ImageResult
 import coil3.request.Options
 import coil3.request.SuccessResult
-import coil3.request.maxBitmapSize
 import coil3.request.transitionFactory
 import coil3.size.Dimension
 import coil3.size.Precision
@@ -135,10 +134,6 @@ internal class Resolver(
             else -> Precision.INEXACT
           }
         )
-        // While telephoto will take care of loading the full-sized image, let Coil downsize
-        // this image since there is still a possibility that the image may not be saved to
-        // disk if (e.g., if Cache-Control HTTP headers prevent disk caching).
-        .maxBitmapSize(CoilSize.ORIGINAL)
         .build()
     )
 

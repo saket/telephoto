@@ -234,6 +234,32 @@ class Coil3ImageSourceTest {
     }
   }
 
+
+  @Test fun keep_coil3_default_max_bitmap_size() = runTest {
+    val requests = MutableStateFlow<ImageRequest?>(null)
+
+    SingletonImageLoader.setUnsafe(buildImageLoader {
+      components {
+        add(buildFakeImageEngine {
+          addInterceptor {
+            requests.value = it.request
+            null
+          }
+        })
+      }
+    })
+
+    resolve {
+      ImageRequest.Builder(context)
+        .data(serverRule.server.url("full_image.png").toString())
+        .build()
+    }.test {
+      skipItems(1) // Default item.
+      assertThat(awaitItem().delegate).isNotNull()
+      assertThat(requests.value!!.maxBitmapSize).isEqualTo(CoilSize(4_096, 4_096))
+    }
+  }
+
   @Test fun correctly_read_crossfade_duration_from_image_loader() = runTest {
     val currentLoader = SingletonImageLoader.get(context)
     SingletonImageLoader.setUnsafe {
