@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ScaleFactor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.TouchInjectionScope
@@ -174,6 +176,41 @@ class ZoomableTest {
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
       assertThat(state.contentTransformation.scaleMetadata.userZoom).isEqualTo(2f)
+    }
+  }
+
+  @Test fun content_padding_can_be_half_the_content_size() {
+    rule.setContent {
+      val contentSize = Size(1080f, 2400f)
+      val contentWidth = with(LocalDensity.current) { contentSize.width.toDp() }
+      val contentHeight = with(LocalDensity.current) { contentSize.height.toDp() }
+      val zoomableState = rememberZoomableState().also {
+        it.setContentLocation(ZoomableContentLocation.unscaledAndTopLeftAligned(contentSize))
+        it.contentPadding = PaddingValues(
+          horizontal = contentWidth / 2f,
+          vertical = contentHeight / 2f,
+        )
+      }
+
+      Box(
+        Modifier
+          .size(width = contentWidth, height = contentHeight)
+          .zoomable(zoomableState)
+          .background(
+            Brush.linearGradient(
+              colors = listOf(
+                Color(0xFF504E9A),
+                Color(0xFF772E6A),
+                Color(0xFF79192C),
+                Color(0xFF560D1A),
+              ),
+            )
+          )
+      )
+    }
+
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 
