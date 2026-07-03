@@ -66,7 +66,7 @@ import me.saket.telephoto.zoomable.internal.isSpecifiedAndFinite
 import me.saket.telephoto.zoomable.internal.isUnspecifiedOrEmpty
 import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.minScale
-import me.saket.telephoto.zoomable.internal.minus
+import me.saket.telephoto.zoomable.internal.padded
 import me.saket.telephoto.zoomable.internal.resolve
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.unaryMinus
@@ -173,14 +173,10 @@ internal class RealZoomableState internal constructor(
         return@GestureStateInputsCalculator null
       }
 
-      val paddedViewportBounds = Rect(
-        offset = contentPadding.topLeft,
-        size = viewportSize - contentPadding.size,
-      )
-
+      val paddedViewportBounds = Rect(Offset.Zero, viewportSize).padded(contentPadding)
       val baseZoomFactor = contentScale.computeScaleFactor(
         srcSize = unscaledContentBounds.size,
-        dstSize = paddedViewportBounds.size,
+        dstSize = paddedViewportBounds.size.positiveAxesOr(viewportSize),
       )
       check(baseZoomFactor != ScaleFactor.Zero) {
         "Base zoom shouldn't be zero. content bounds = $unscaledContentBounds, viewport size = $viewportSize"
@@ -450,6 +446,13 @@ internal class RealZoomableState internal constructor(
     } else {
       Rect(topLeft, Size(Float.MAX_VALUE, Float.MAX_VALUE)).also {}
     }
+  }
+
+  private fun Size.positiveAxesOr(fallback: Size): Size {
+    return Size(
+      width = if (width > 0f) width else fallback.width,
+      height = if (height > 0f) height else fallback.height,
+    )
   }
 
   override fun setContentLocation(location: ZoomableContentLocation) {
