@@ -51,6 +51,7 @@ import coil3.request.bitmapConfig
 import coil3.request.colorSpace
 import coil3.request.crossfade
 import coil3.request.error
+import coil3.request.maxBitmapSize
 import coil3.serviceLoaderEnabled
 import coil3.size.Dimension
 import coil3.svg.SvgDecoder
