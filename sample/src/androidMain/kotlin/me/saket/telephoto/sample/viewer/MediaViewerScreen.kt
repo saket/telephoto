@@ -44,9 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.request.ImageRequest as Coil2ImageRequest
-import coil3.request.ImageRequest as Coil3ImageRequest
-import coil3.request.crossfade
+import coil.request.ImageRequest
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.sharedelements.SharedElementTransitionScope
 import kotlinx.coroutines.NonCancellable
@@ -58,14 +56,12 @@ import me.saket.telephoto.flick.FlickToDismissState
 import me.saket.telephoto.flick.FlickToDismissState.RubberBandingSpec
 import me.saket.telephoto.flick.rememberFlickToDismissState
 import me.saket.telephoto.sample.CropImageScreenKey
-import me.saket.telephoto.sample.ImageLoaderVariant
 import me.saket.telephoto.sample.MediaViewerScreenKey
 import me.saket.telephoto.sample.gallery.MediaItem
 import me.saket.telephoto.sample.gallery.sharedElementTransitionSpring
+import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
-import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage as Coil2ZoomableAsyncImage
-import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage as Coil3ZoomableAsyncImage
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -105,7 +101,6 @@ internal fun MediaViewerScreen(
         MediaPage(
           modifier = Modifier.fillMaxSize(),
           model = key.album.items[pageNum],
-          imageLoader = key.imageLoader,
           isActivePage = pagerState.settledPage == pageNum,
         )
       }
@@ -182,7 +177,6 @@ private fun titleBarIconButtonColors() = IconButtonDefaults.iconButtonColors(
 @OptIn(ExperimentalTelephotoApi::class, ExperimentalSharedTransitionApi::class)
 private fun SharedElementTransitionScope.MediaPage(
   model: MediaItem,
-  imageLoader: ImageLoaderVariant,
   isActivePage: Boolean,
   modifier: Modifier = Modifier,
 ) {
@@ -203,47 +197,29 @@ private fun SharedElementTransitionScope.MediaPage(
       is MediaItem.Image -> {
         // TODO: handle errors here.
         val imageState = rememberZoomableImageState(zoomableState)
-        val imageModifier = Modifier
-          .then(
-            if (isActivePage) {
-              Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(model.placeholderImageUrl),
-                animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
-                boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
-              )
-            } else {
-              Modifier
-            }
-          )
-          .fillMaxSize()
-          .focusRequester(focusRequester)
-        val context = LocalContext.current
-        when (imageLoader) {
-          ImageLoaderVariant.Coil2 -> {
-            Coil2ZoomableAsyncImage(
-              modifier = imageModifier,
-              state = imageState,
-              model = Coil2ImageRequest.Builder(context)
-                .data(model.fullSizedUrl)
-                .placeholderMemoryCacheKey(model.placeholderImageUrl)
-                .crossfade(300)
-                .build(),
-              contentDescription = model.caption,
+        ZoomableAsyncImage(
+          modifier = Modifier
+            .then(
+              if (isActivePage) {
+                Modifier.sharedBounds(
+                  sharedContentState = rememberSharedContentState(model.placeholderImageUrl),
+                  animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+                  boundsTransform = { _, _ -> sharedElementTransitionSpring<Rect>() },
+                )
+              } else {
+                Modifier
+              }
             )
-          }
-          ImageLoaderVariant.Coil3 -> {
-            Coil3ZoomableAsyncImage(
-              modifier = imageModifier,
-              state = imageState,
-              model = Coil3ImageRequest.Builder(context)
-                .data(model.fullSizedUrl)
-                .placeholderMemoryCacheKey(model.placeholderImageUrl)
-                .crossfade(300)
-                .build(),
-              contentDescription = model.caption,
-            )
-          }
-        }
+            .fillMaxSize()
+            .focusRequester(focusRequester),
+          state = imageState,
+          model = ImageRequest.Builder(LocalContext.current)
+            .data(model.fullSizedUrl)
+            .placeholderMemoryCacheKey(model.placeholderImageUrl)
+            .crossfade(300)
+            .build(),
+          contentDescription = model.caption,
+        )
 
         // Focus the image so that it can receive keyboard and mouse shortcut events.
         if (isActivePage) {

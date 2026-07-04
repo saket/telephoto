@@ -92,13 +92,7 @@ data class GalleryScreenKey(
 data class MediaViewerScreenKey(
   val album: MediaAlbum,
   val initialIndex: Int,
-  val imageLoader: ImageLoaderVariant = ImageLoaderVariant.Coil2,
 ) : ScreenKey
-
-enum class ImageLoaderVariant {
-  Coil2,
-  Coil3,
-}
 
 @Parcelize
 data class CropImageScreenKey(
