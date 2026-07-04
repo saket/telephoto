@@ -148,11 +148,7 @@ internal class RealZoomableState internal constructor(
           contentOffset.coerceWithinContentBounds(contentZoom, inputs)
         }
       )
-        ?: GestureState(
-          userZoom = UserZoomFactor(1f),
-          userOffset = UserOffset(Offset.Zero),
-          lastCentroid = inputs.viewportSize.center,
-        )
+        ?: initialGestureState(inputs)
     }
   )
 
@@ -308,6 +304,30 @@ internal class RealZoomableState internal constructor(
         lastCentroid = centroid,
       )
     }
+  }
+
+  private fun initialGestureState(inputs: GestureStateInputs): GestureState {
+    val initialZoom = AbsoluteZoomFactor(
+      baseZoom = inputs.baseZoom,
+      userZoom = UserZoomFactor(1f),
+    ).coerceUserZoomIn(inputs.zoomSpec.range)
+
+    // If the initial zoom is clamped away from 1x, the zero user offset may no longer
+    // keep the content within its bounds. Run it through the same bounds correction used
+    // after gestures so the initial placement matches the resolved zoom.
+    val initialOffset = AbsoluteOffset(
+      baseOffset = inputs.baseOffset,
+      userOffset = UserOffset(Offset.Zero),
+    ).coerceWithinContentBounds(
+      proposedZoom = initialZoom,
+      inputs = inputs,
+    )
+
+    return GestureState(
+      userZoom = initialZoom.userZoom,
+      userOffset = initialOffset.userOffset,
+      lastCentroid = inputs.viewportSize.center,
+    )
   }
 
   private suspend fun awaitUntilIsReadyForInteraction() {
