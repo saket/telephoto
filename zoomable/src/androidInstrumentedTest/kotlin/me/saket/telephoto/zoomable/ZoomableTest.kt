@@ -4,6 +4,7 @@ import android.view.ViewConfiguration
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -23,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -121,6 +123,57 @@ class ZoomableTest {
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
+    }
+  }
+
+  @Test fun initial_zoom_respects_zoom_spec_constraints() {
+    lateinit var state: ZoomableState
+    val contentSize = 120.dp
+
+    rule.setContent {
+      Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // The ruler marks how large the child should render when initial zoom constraints are respected.
+        Box(
+          Modifier
+            .size(contentSize * 2f)
+            .background(Color(0x1A504E9A))
+            .drawBehind {
+              val gridColor = Color(0x66B9B6FF)
+              drawLine(
+                color = gridColor,
+                start = Offset(size.width / 2f, 0f),
+                end = Offset(size.width / 2f, size.height),
+              )
+              drawLine(
+                color = gridColor,
+                start = Offset(0f, size.height / 2f),
+                end = Offset(size.width, size.height / 2f),
+              )
+            }
+            .border(2.dp, Color(0xFFB9B6FF))
+        ) {
+          state = rememberZoomableState(
+            zoomSpec = ZoomSpec(
+              minZoomFactor = 2f,
+              maxZoomFactor = 3f,
+            )
+          )
+          Box(
+            Modifier
+              .size(contentSize)
+              .zoomable(state, clipToBounds = false)
+              .background(Color(0xFF504E9A))
+          )
+        }
+      }
+    }
+
+    rule.waitUntil {
+      state.contentTransformation.isSpecified
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
+      assertThat(state.contentTransformation.scaleMetadata.userZoom).isEqualTo(2f)
     }
   }
 
