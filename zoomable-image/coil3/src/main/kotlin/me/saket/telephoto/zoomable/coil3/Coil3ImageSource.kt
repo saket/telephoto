@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import coil3.BitmapImage
 import coil3.ImageLoader
+import coil3.annotation.ExperimentalCoilApi
+import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.asPainter
 import coil3.decode.DataSource
 import coil3.request.CachePolicy
@@ -39,19 +41,23 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.util.canBeSubSampled
 import me.saket.telephoto.subsamplingimage.util.exists
 import me.saket.telephoto.zoomable.ZoomableImageSource
+import me.saket.telephoto.zoomable.ZoomableImageSource.PainterDelegate
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.copy
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import java.io.File
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import coil3.size.Size as CoilSize
 
 @Immutable
+@OptIn(ExperimentalCoilApi::class)
 internal data class Coil3ImageSource(
   private val models: Flow<Any?>,
   private val imageLoaders: Flow<ImageLoader>,
+  private val previewHandler: AsyncImagePreviewHandler?,
 ) : ZoomableImageSource {
 
   @Composable
@@ -64,11 +70,19 @@ internal data class Coil3ImageSource(
             .data(model)
             .build()
       }
-      Resolver(
-        requests = requests,
-        imageLoaders = imageLoaders,
-        sizeResolver = { canvasSize.first().toCoilSize() },
-      )
+      if (previewHandler != null) {
+        PreviewResolver(
+          requests = requests,
+          imageLoaders = imageLoaders,
+          previewHandler = previewHandler,
+        )
+      } else {
+        RealResolver(
+          requests = requests,
+          imageLoaders = imageLoaders,
+          sizeResolver = { canvasSize.first().toCoilSize() },
+        )
+      }
     }
     return resolver.resolved
   }
@@ -79,13 +93,17 @@ internal data class Coil3ImageSource(
   )
 }
 
-internal class Resolver(
+private abstract class AbstractImageResolver : RememberWorker() {
+  abstract var resolved: ResolveResult
+}
+
+private class RealResolver(
   private val requests: Flow<ImageRequest>,
   private val imageLoaders: Flow<ImageLoader>,
   private val sizeResolver: SizeResolver,
-) : RememberWorker() {
+) : AbstractImageResolver() {
 
-  internal var resolved: ResolveResult by mutableStateOf(
+  override var resolved: ResolveResult by mutableStateOf(
     ResolveResult(delegate = null)
   )
 
@@ -225,6 +243,29 @@ internal class Resolver(
       is File -> Uri.parse(mapped.path)
       is coil3.Uri -> mapped.toAndroidUri()
       else -> null
+    }
+  }
+}
+
+@OptIn(ExperimentalCoilApi::class)
+private class PreviewResolver(
+  private val requests: Flow<ImageRequest>,
+  private val imageLoaders: Flow<ImageLoader>,
+  private val previewHandler: AsyncImagePreviewHandler,
+) : AbstractImageResolver() {
+  override var resolved: ResolveResult by mutableStateOf(
+    ResolveResult(delegate = null)
+  )
+
+  override suspend fun work() {
+    combine(requests, imageLoaders, ::Pair).collectLatest { (request, imageLoader) ->
+      val preview = previewHandler.handle(
+        imageLoader = imageLoader,
+        request = request.newBuilder()
+          .coroutineContext(EmptyCoroutineContext)
+          .build()
+      ).painter
+      resolved = ResolveResult(PainterDelegate(preview))
     }
   }
 }

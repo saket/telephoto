@@ -4,6 +4,7 @@ plugins {
   id("me.saket.kotlin.android")
   id("me.saket.compose")
   id("me.saket.android.test")
+  alias(libs.plugins.paparazzi)
 }
 
 android {
@@ -15,6 +16,9 @@ dependencies {
   api(libs.coil3.compose)
 
   implementation(projects.zoomableImage.subSamplingImage)
+
+  testImplementation(libs.junit)
+  testImplementation(libs.coil3.test)
 
   androidTestImplementation(projects.testUtil)
   androidTestImplementation(libs.turbine)

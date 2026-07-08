@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.LocalAsyncImageModelEqualityDelegate
+import coil3.compose.LocalAsyncImagePreviewHandler
 import coil3.imageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
@@ -206,10 +207,12 @@ fun ZoomableImageSource.Companion.coil(
   val model by rememberUpdatedState(model)
   val imageLoader by rememberUpdatedState(imageLoader)
   val equalityDelegate = LocalAsyncImageModelEqualityDelegate.current
+  val previewHandler = if (isInScreenshotTest()) LocalAsyncImagePreviewHandler.current else null
   return remember {
     Coil3ImageSource(
       models = snapshotFlow { model }.distinctUntilChanged(equalityDelegate::equals),
       imageLoaders = snapshotFlow { imageLoader },
+      previewHandler = previewHandler,
     )
   }
 }
