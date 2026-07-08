@@ -4,6 +4,7 @@ plugins {
   id("me.saket.kotlin.android")
   id("me.saket.compose")
   id("me.saket.android.test")
+  alias(libs.plugins.paparazzi)
 }
 
 android {
@@ -16,6 +17,9 @@ dependencies {
 
   api(libs.coil.compose)
   implementation(libs.accompanist.drawablePainter)
+
+  testImplementation(libs.junit)
+  testImplementation(libs.coil.test)
 
   androidTestImplementation(projects.testUtil)
   androidTestImplementation(libs.turbine)

@@ -1,4 +1,4 @@
-@file:Suppress("NAME_SHADOWING")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "NAME_SHADOWING")
 
 package me.saket.telephoto.zoomable.coil
 
@@ -27,6 +27,7 @@ import me.saket.telephoto.zoomable.EnabledZoomGestures
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
+import me.saket.telephoto.zoomable.isInScreenshotTest
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 
@@ -203,10 +204,12 @@ fun ZoomableImageSource.Companion.coil(
 ): ZoomableImageSource {
   val model by rememberUpdatedState(model)
   val imageLoader by rememberUpdatedState(imageLoader)
+  val isInScreenshotTest = isInScreenshotTest()
   return remember {
     CoilImageSource(
       models = snapshotFlow { model }.distinctUntilChanged(DefaultModelEqualityDelegate::equals),
       imageLoaders = snapshotFlow { imageLoader },
+      isInScreenshotTest = isInScreenshotTest,
     )
   }
 }

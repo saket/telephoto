@@ -53,6 +53,7 @@ import coil.size.Size as CoilSize
 internal class CoilImageSource(
   private val models: Flow<Any?>,
   private val imageLoaders: Flow<ImageLoader>,
+  private val isInScreenshotTest: Boolean,
 ) : ZoomableImageSource {
 
   @Composable
@@ -65,11 +66,18 @@ internal class CoilImageSource(
             .data(model)
             .build()
       }
-      Resolver(
-        requests = requests,
-        imageLoaders = imageLoaders,
-        sizeResolver = { canvasSize.first().toCoilSize() },
-      )
+      if (isInScreenshotTest) {
+        PreviewResolver(
+          requests = requests,
+          imageLoaders = imageLoaders,
+        )
+      } else {
+        RealResolver(
+          requests = requests,
+          imageLoaders = imageLoaders,
+          sizeResolver = { canvasSize.first().toCoilSize() },
+        )
+      }
     }
     return resolver.resolved
   }
@@ -80,13 +88,17 @@ internal class CoilImageSource(
   )
 }
 
-internal class Resolver(
+private abstract class AbstractImageResolver : RememberWorker() {
+  abstract var resolved: ResolveResult
+}
+
+private class RealResolver(
   private val requests: Flow<ImageRequest>,
   private val imageLoaders: Flow<ImageLoader>,
   private val sizeResolver: SizeResolver,
-) : RememberWorker() {
+) : AbstractImageResolver() {
 
-  internal var resolved: ResolveResult by mutableStateOf(
+  override var resolved: ResolveResult by mutableStateOf(
     ResolveResult(delegate = null)
   )
 
@@ -237,8 +249,29 @@ internal class Resolver(
       else -> null
     }
   }
+}
 
-  private fun Drawable.asPainter(): Painter {
-    return DrawablePainter(mutate())
+private class PreviewResolver(
+  private val requests: Flow<ImageRequest>,
+  private val imageLoaders: Flow<ImageLoader>,
+) : AbstractImageResolver() {
+
+  override var resolved: ResolveResult by mutableStateOf(
+    ResolveResult(delegate = null)
+  )
+
+  override suspend fun work() {
+    combine(requests, imageLoaders, ::Pair).collectLatest { (request, imageLoader) ->
+      val result = imageLoader.execute(request)
+      resolved = ResolveResult(
+        delegate = ZoomableImageSource.PainterDelegate(
+          painter = result.drawable?.asPainter()
+        )
+      )
+    }
   }
+}
+
+private fun Drawable.asPainter(): Painter {
+  return DrawablePainter(mutate())
 }

@@ -1,4 +1,4 @@
-package me.saket.telephoto.zoomable.coil3
+package me.saket.telephoto.zoomable
 
 import android.os.Build
 import androidx.compose.runtime.Composable
