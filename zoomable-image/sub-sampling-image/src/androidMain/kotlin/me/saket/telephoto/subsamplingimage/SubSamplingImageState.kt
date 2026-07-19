@@ -1,4 +1,4 @@
-@file:Suppress("NAME_SHADOWING")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "NAME_SHADOWING")
 
 package me.saket.telephoto.subsamplingimage
 
@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageDecoderFactoryParams
@@ -20,6 +19,7 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.zoomable.ZoomableContentLocation
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableState
+import me.saket.telephoto.zoomable.isInScreenshotTest
 import java.io.IOException
 
 /**
@@ -104,7 +104,7 @@ private fun createImageRegionDecoder(
   val errorReporter by rememberUpdatedState(errorReporter)
   var decoder by remember(imageSource) { mutableStateOf<ImageRegionDecoder?>(null) }
 
-  if (!LocalInspectionMode.current) {
+  if (!isInScreenshotTest()) {
     val context = LocalContext.current
     LaunchedEffect(imageSource) {
       try {
