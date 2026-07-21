@@ -5,17 +5,22 @@ package me.saket.telephoto.zoomable.coil3
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.annotation.ExperimentalCoilApi
+import coil3.compose.AsyncImageModelEqualityDelegate
 import coil3.compose.AsyncImagePreviewHandler
+import coil3.compose.LocalAsyncImageModelEqualityDelegate
+import coil3.compose.LocalAsyncImagePreviewHandler
 import coil3.compose.asPainter
 import coil3.decode.DataSource
 import coil3.request.CachePolicy
@@ -33,8 +38,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -45,6 +52,7 @@ import me.saket.telephoto.zoomable.ZoomableImageSource.PainterDelegate
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.copy
 import me.saket.telephoto.zoomable.internal.RememberWorker
+import me.saket.telephoto.zoomable.isInScreenshotTest
 import java.io.File
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.roundToInt
@@ -55,31 +63,43 @@ import coil3.size.Size as CoilSize
 @Immutable
 @OptIn(ExperimentalCoilApi::class)
 internal data class Coil3ImageSource(
-  private val models: Flow<Any?>,
-  private val imageLoaders: Flow<ImageLoader>,
-  private val previewHandler: AsyncImagePreviewHandler?,
+  private val model: State<Any?>,
+  private val imageLoader: State<ImageLoader>,
 ) : ZoomableImageSource {
 
   @Composable
   override fun resolve(canvasSize: Flow<Size>): ResolveResult {
     val context = LocalContext.current
-    val resolver = remember(this) {
-      val requests = models.map { model ->
-        model as? ImageRequest
+    val modelEqualityDelegate = LocalAsyncImageModelEqualityDelegate.current
+    val previewHandler = if (isInScreenshotTest()) LocalAsyncImagePreviewHandler.current else null
+
+    val resolver = if (previewHandler != null) {
+      val model = model.value
+      val imageLoader = imageLoader.value
+      remember(ModelEqualityKey(model, modelEqualityDelegate), imageLoader) {
+        val request = model as? ImageRequest
           ?: ImageRequest.Builder(context)
             .data(model)
             .build()
-      }
-      if (previewHandler != null) {
         PreviewResolver(
-          requests = requests,
-          imageLoaders = imageLoaders,
+          request = request,
+          imageLoader = imageLoader,
           previewHandler = previewHandler,
         )
-      } else {
+      }
+    } else {
+      remember(this) {
+        val requests = snapshotFlow { model.value }
+          .distinctUntilChanged(modelEqualityDelegate::equals)
+          .map { model ->
+            model as? ImageRequest
+              ?: ImageRequest.Builder(context)
+                .data(model)
+                .build()
+          }
         RealResolver(
           requests = requests,
-          imageLoaders = imageLoaders,
+          imageLoaders = snapshotFlow { imageLoader.value },
           sizeResolver = { canvasSize.first().toCoilSize() },
         )
       }
@@ -93,15 +113,15 @@ internal data class Coil3ImageSource(
   )
 }
 
-private abstract class AbstractImageResolver : RememberWorker() {
-  abstract var resolved: ResolveResult
+private interface AbstractImageResolver {
+  val resolved: ResolveResult
 }
 
 private class RealResolver(
   private val requests: Flow<ImageRequest>,
   private val imageLoaders: Flow<ImageLoader>,
   private val sizeResolver: SizeResolver,
-) : AbstractImageResolver() {
+) : RememberWorker(), AbstractImageResolver {
 
   override var resolved: ResolveResult by mutableStateOf(
     ResolveResult(delegate = null)
@@ -249,23 +269,35 @@ private class RealResolver(
 
 @OptIn(ExperimentalCoilApi::class)
 private class PreviewResolver(
-  private val requests: Flow<ImageRequest>,
-  private val imageLoaders: Flow<ImageLoader>,
-  private val previewHandler: AsyncImagePreviewHandler,
-) : AbstractImageResolver() {
-  override var resolved: ResolveResult by mutableStateOf(
-    ResolveResult(delegate = null)
-  )
+  request: ImageRequest,
+  imageLoader: ImageLoader,
+  previewHandler: AsyncImagePreviewHandler,
+) : AbstractImageResolver {
 
-  override suspend fun work() {
-    combine(requests, imageLoaders, ::Pair).collectLatest { (request, imageLoader) ->
-      val preview = previewHandler.handle(
-        imageLoader = imageLoader,
-        request = request.newBuilder()
-          .coroutineContext(EmptyCoroutineContext)
-          .build()
-      ).painter
-      resolved = ResolveResult(PainterDelegate(preview))
-    }
+  override val resolved: ResolveResult = runBlocking {
+    val preview = previewHandler.handle(
+      imageLoader = imageLoader,
+      request = request.newBuilder()
+        .coroutineContext(EmptyCoroutineContext)
+        .build()
+    ).painter
+    ResolveResult(PainterDelegate(preview))
+  }
+}
+
+// todo: can this be replaced by a SnapshotMutationPolicy?
+@OptIn(ExperimentalCoilApi::class)
+private class ModelEqualityKey(
+  private val model: Any?,
+  private val delegate: AsyncImageModelEqualityDelegate,
+) {
+  override fun equals(other: Any?): Boolean {
+    return other is ModelEqualityKey &&
+      delegate == other.delegate &&
+      delegate.equals(model, other.model)
+  }
+
+  override fun hashCode(): Int {
+    return 31 * delegate.hashCode() + delegate.hashCode(model)
   }
 }
