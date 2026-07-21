@@ -19,6 +19,8 @@ dependencies {
 
   testImplementation(libs.junit)
   testImplementation(libs.coil3.test)
+  testImplementation(libs.compose.ui.material3)
+  testImplementation(libs.testParamInjector)
 
   androidTestImplementation(projects.testUtil)
   androidTestImplementation(libs.turbine)
