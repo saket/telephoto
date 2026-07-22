@@ -16,6 +16,10 @@ import coil.annotation.ExperimentalCoilApi
 import coil.test.FakeImageLoaderEngine
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +43,7 @@ class ZoomableAsyncImagePreviewTest {
       .build()
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Test fun `supports fake image loaders`(
     @TestParameter compositionTiming: CompositionTiming,
   ) {
@@ -55,13 +60,18 @@ class ZoomableAsyncImagePreviewTest {
       )
     }
 
-    paparazzi.snapshot {
-      when (compositionTiming) {
-        CompositionTiming.DirectComposition -> PreviewImage()
-        CompositionTiming.DelayedComposition -> Scaffold { contentPadding ->
-          PreviewImage(Modifier.padding(contentPadding))
+    Dispatchers.setMain(Dispatchers.Unconfined)
+    try {
+      paparazzi.snapshot {
+        when (compositionTiming) {
+          CompositionTiming.DirectComposition -> PreviewImage()
+          CompositionTiming.DelayedComposition -> Scaffold { contentPadding ->
+            PreviewImage(Modifier.padding(contentPadding))
+          }
         }
       }
+    } finally {
+      Dispatchers.resetMain()
     }
   }
 

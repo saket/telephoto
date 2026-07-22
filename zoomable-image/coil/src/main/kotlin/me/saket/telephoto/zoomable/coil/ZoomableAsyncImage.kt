@@ -6,10 +6,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -19,15 +17,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.ImageLoader
-import coil.compose.DefaultModelEqualityDelegate
 import coil.imageLoader
-import kotlinx.coroutines.flow.distinctUntilChanged
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.EnabledZoomGestures
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageState
-import me.saket.telephoto.zoomable.isInScreenshotTest
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 
@@ -202,14 +197,12 @@ fun ZoomableImageSource.Companion.coil(
   model: Any?,
   imageLoader: ImageLoader = LocalContext.current.imageLoader
 ): ZoomableImageSource {
-  val model by rememberUpdatedState(model)
-  val imageLoader by rememberUpdatedState(imageLoader)
-  val isInScreenshotTest = isInScreenshotTest()
+  val model = rememberUpdatedState(model)
+  val imageLoader = rememberUpdatedState(imageLoader)
   return remember {
     CoilImageSource(
-      models = snapshotFlow { model }.distinctUntilChanged(DefaultModelEqualityDelegate::equals),
-      imageLoaders = snapshotFlow { imageLoader },
-      isInScreenshotTest = isInScreenshotTest,
+      model = model,
+      imageLoader = imageLoader,
     )
   }
 }

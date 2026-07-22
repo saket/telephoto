@@ -7,16 +7,19 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
+import coil.compose.DefaultModelEqualityDelegate
 import coil.decode.DataSource
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -32,8 +35,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -43,6 +48,7 @@ import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.copy
 import me.saket.telephoto.zoomable.internal.RememberWorker
+import me.saket.telephoto.zoomable.isInScreenshotTest
 import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -51,30 +57,39 @@ import coil.size.Size as CoilSize
 
 @Stable
 internal class CoilImageSource(
-  private val models: Flow<Any?>,
-  private val imageLoaders: Flow<ImageLoader>,
-  private val isInScreenshotTest: Boolean,
+  private val model: State<Any?>,
+  private val imageLoader: State<ImageLoader>,
 ) : ZoomableImageSource {
 
   @Composable
   override fun resolve(canvasSize: Flow<Size>): ResolveResult {
     val context = LocalContext.current
-    val resolver = remember(this) {
-      val requests = models.map { model ->
-        model as? ImageRequest
+    val resolver = if (isInScreenshotTest()) {
+      val model = model.value
+      val imageLoader = imageLoader.value
+      remember(ModelEqualityKey(model), imageLoader) {
+        val request = model as? ImageRequest
           ?: ImageRequest.Builder(context)
             .data(model)
             .build()
-      }
-      if (isInScreenshotTest) {
         PreviewResolver(
-          requests = requests,
-          imageLoaders = imageLoaders,
+          request = request,
+          imageLoader = imageLoader,
         )
-      } else {
+      }
+    } else {
+      remember(this) {
+        val requests = snapshotFlow { model.value }
+          .distinctUntilChanged(DefaultModelEqualityDelegate::equals)
+          .map { model ->
+            model as? ImageRequest
+              ?: ImageRequest.Builder(context)
+                .data(model)
+                .build()
+          }
         RealResolver(
           requests = requests,
-          imageLoaders = imageLoaders,
+          imageLoaders = snapshotFlow { imageLoader.value },
           sizeResolver = { canvasSize.first().toCoilSize() },
         )
       }
@@ -88,15 +103,23 @@ internal class CoilImageSource(
   )
 }
 
-private abstract class AbstractImageResolver : RememberWorker() {
-  abstract var resolved: ResolveResult
+private class ModelEqualityKey(private val model: Any?) {
+  override fun equals(other: Any?): Boolean {
+    return other is ModelEqualityKey && DefaultModelEqualityDelegate.equals(model, other.model)
+  }
+
+  override fun hashCode(): Int = DefaultModelEqualityDelegate.hashCode(model)
+}
+
+private interface AbstractImageResolver {
+  val resolved: ResolveResult
 }
 
 private class RealResolver(
   private val requests: Flow<ImageRequest>,
   private val imageLoaders: Flow<ImageLoader>,
   private val sizeResolver: SizeResolver,
-) : AbstractImageResolver() {
+) : RememberWorker(), AbstractImageResolver {
 
   override var resolved: ResolveResult by mutableStateOf(
     ResolveResult(delegate = null)
@@ -252,23 +275,17 @@ private class RealResolver(
 }
 
 private class PreviewResolver(
-  private val requests: Flow<ImageRequest>,
-  private val imageLoaders: Flow<ImageLoader>,
-) : AbstractImageResolver() {
+  request: ImageRequest,
+  imageLoader: ImageLoader,
+) : AbstractImageResolver {
 
-  override var resolved: ResolveResult by mutableStateOf(
-    ResolveResult(delegate = null)
-  )
-
-  override suspend fun work() {
-    combine(requests, imageLoaders, ::Pair).collectLatest { (request, imageLoader) ->
-      val result = imageLoader.execute(request)
-      resolved = ResolveResult(
-        delegate = ZoomableImageSource.PainterDelegate(
-          painter = result.drawable?.asPainter()
-        )
+  override val resolved: ResolveResult = runBlocking {
+    val result = imageLoader.execute(request)
+    ResolveResult(
+      delegate = ZoomableImageSource.PainterDelegate(
+        painter = result.drawable?.asPainter()
       )
-    }
+    )
   }
 }
 
