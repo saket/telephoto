@@ -280,7 +280,7 @@ private class PreviewResolver(
 ) : AbstractImageResolver {
 
   override val resolved: ResolveResult = runBlocking {
-    val result = imageLoader.execute(request)
+    val result = imageLoader.executeMain(request)
     ResolveResult(
       delegate = ZoomableImageSource.PainterDelegate(
         painter = result.drawable?.asPainter()
