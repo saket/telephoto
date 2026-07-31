@@ -22,6 +22,7 @@ import me.saket.telephoto.zoomable.ZoomDeltaEpsilon
 import me.saket.telephoto.zoomable.ZoomableContent
 import me.saket.telephoto.zoomable.spatial.CoordinateSpace
 import me.saket.telephoto.zoomable.spatial.SpatialOffset
+import kotlin.math.abs
 
 @AndroidParcelize
 internal data class SavedZoomableState(
@@ -35,6 +36,12 @@ internal data class SavedGestureState(
   private val userZoom: Float,
   private val centroid: Long,
   private val contentPositionInfo: ContentPositionInfo?,
+  // The content size that userOffset and contentPositionInfo are denominated
+  // in. The content may resolve at a different size after restoration - for
+  // example, a preview is displayed first while its full quality version
+  // loads - in which case the saved values must be re-expressed in the new
+  // size's pixel grid before use.
+  private val contentSize: Long? = null,
 ) : AndroidParcelable {
 
   @AndroidParcelize
@@ -62,6 +69,7 @@ internal data class SavedGestureState(
         userOffset = gestureState.userOffset.value.packToLong(),
         userZoom = gestureState.userZoom.value,
         centroid = gestureState.lastCentroid.packToLong(),
+        contentSize = inputs.unscaledContentBounds.size.packToLong(),
         contentPositionInfo = inputs.viewportSize.let { viewportSize ->
           if (viewportSize.isSpecifiedAndNonEmpty) {
             ContentPositionInfo(
@@ -90,7 +98,30 @@ internal data class SavedGestureState(
     inputs: GestureStateInputs,
     coerceOffsetWithinBounds: (AbsoluteOffset, AbsoluteZoomFactor) -> AbsoluteOffset,
   ): GestureState {
-    val restoredUserOffset = userOffset.unpackAsOffset()
+    // Saved values are denominated in the content size present at save time.
+    // If the content is currently resolved at a different size of the same
+    // aspect ratio, re-express them in the current pixel grid. The user zoom
+    // needs no adjustment: it is relative to the base (fit) zoom, which
+    // already accounts for the content's size.
+    val savedContentSize = contentSize?.unpackAsSize()
+    val currentContentSize = inputs.unscaledContentBounds.size
+    val denominationScale: ScaleFactor? = if (
+      savedContentSize != null &&
+      savedContentSize.isSpecifiedAndNonEmpty &&
+      savedContentSize != currentContentSize &&
+      abs(savedContentSize.aspectRatio() - currentContentSize.aspectRatio()) < ZoomDeltaEpsilon
+    ) {
+      ScaleFactor(
+        scaleX = currentContentSize.width / savedContentSize.width,
+        scaleY = currentContentSize.height / savedContentSize.height,
+      )
+    } else {
+      null
+    }
+
+    val restoredUserOffset = userOffset.unpackAsOffset().let {
+      if (denominationScale != null) it * denominationScale else it
+    }
     val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
     if (
       wasGestureStateEmpty
@@ -106,10 +137,18 @@ internal data class SavedGestureState(
     // If the viewport size changes after state restoration (likely due to orientation change or
     // window resize), the content's _visual_ anchor needs to be restored to its original position.
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
-    // to maintain the anchor's position in the new viewport.
+    // to maintain the anchor's position in the new viewport. The anchor lives in the content's
+    // coordinate space and the final zoom maps content pixels to viewport pixels, so both must
+    // also be re-expressed when the content's size has changed.
     val stateAdjuster = GestureStateAdjuster(
-      oldFinalZoom = contentPositionInfo.finalZoomFactor.unpackAsScaleFactor(),
-      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
+      oldFinalZoom = contentPositionInfo.finalZoomFactor.unpackAsScaleFactor().let {
+        if (denominationScale != null) {
+          ScaleFactor(it.scaleX / denominationScale.scaleX, it.scaleY / denominationScale.scaleY)
+        } else it
+      },
+      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter.unpackAsOffset().let {
+        if (denominationScale != null) it * denominationScale else it
+      },
     )
     return stateAdjuster.adjustForNewViewportSize(
       inputs = inputs,
