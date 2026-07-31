@@ -137,7 +137,6 @@ import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import org.junit.After
 import org.junit.AssumptionViolatedException
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -285,7 +284,6 @@ class ZoomableImageTest {
     }
   }
 
-  @Ignore("https://github.com/saket/telephoto/issues/128")
   @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
     var assetName by mutableStateOf("fox_1000.jpg")
     lateinit var state: ZoomableImageState
