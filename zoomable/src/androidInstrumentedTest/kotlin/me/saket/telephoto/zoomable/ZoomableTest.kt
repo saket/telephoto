@@ -36,15 +36,20 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
@@ -1091,6 +1096,82 @@ class ZoomableTest {
     rule.runOnIdle {
       assertThat(isPressedHistory.removeAll()).containsExactly(true, false, true, false)
       assertThat(doubleClickCount).isEqualTo(1)
+    }
+  }
+
+  @Test fun click_and_long_click_expose_semantics_actions_and_labels() {
+    var clickCount = 0
+    var longClickCount = 0
+
+    rule.setContent {
+      Box(
+        Modifier
+          .size(200.dp, 300.dp)
+          .testTag("content")
+          .zoomable(
+            state = rememberZoomableState(),
+            gestures = EnabledZoomGestures.ZoomAndPan,
+            onClick = { clickCount++ },
+            onClickLabel = "Custom Click",
+            onLongClick = { longClickCount++ },
+            onLongClickLabel = "Custom Long Click",
+          )
+      )
+    }
+
+    val semantics = rule.onNodeWithTag("content")
+      .assert(hasClickAction())
+      .fetchSemanticsNode()
+
+    val onClickAction = semantics.config.getOrNull(SemanticsActions.OnClick)
+    assertThat(onClickAction?.label).isEqualTo("Custom Click")
+
+    rule.onNodeWithTag("content").performSemanticsAction(SemanticsActions.OnClick)
+    rule.runOnIdle {
+      assertThat(clickCount).isEqualTo(1)
+    }
+
+    val onLongClickAction = semantics.config.getOrNull(SemanticsActions.OnLongClick)
+    assertThat(onLongClickAction?.label).isEqualTo("Custom Long Click")
+
+    rule.onNodeWithTag("content").performSemanticsAction(SemanticsActions.OnLongClick)
+    rule.runOnIdle {
+      assertThat(longClickCount).isEqualTo(1)
+    }
+  }
+
+  @Test fun zoomable_click_labels_decorator() {
+    var clickCount = 0
+
+    rule.setContent {
+      Box(
+        Modifier
+          .size(200.dp, 300.dp)
+          .testTag("content")
+          .zoomable(
+            state = rememberZoomableState(),
+            onClick = { clickCount++ },
+          )
+          .zoomableClickLabels(
+            onClick = "Decorator Click",
+            onLongClick = "Decorator Long Click",
+          )
+      )
+    }
+
+    val semantics = rule.onNodeWithTag("content")
+      .assert(hasClickAction())
+      .fetchSemanticsNode()
+
+    val onClickAction = semantics.config.getOrNull(SemanticsActions.OnClick)
+    assertThat(onClickAction?.label).isEqualTo("Decorator Click")
+
+    val onLongClickAction = semantics.config.getOrNull(SemanticsActions.OnLongClick)
+    assertThat(onLongClickAction?.label).isEqualTo("Decorator Long Click")
+
+    rule.onNodeWithTag("content").performSemanticsAction(SemanticsActions.OnClick)
+    rule.runOnIdle {
+      assertThat(clickCount).isEqualTo(1)
     }
   }
 

@@ -8,16 +8,24 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.SemanticsModifierNode
 import androidx.compose.ui.node.currentValueOf
+import androidx.compose.ui.node.invalidateSemantics
 import androidx.compose.ui.node.requireDensity
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
@@ -57,7 +65,9 @@ fun Modifier.zoomable(
   state: ZoomableState,
   gestures: EnabledZoomGestures,
   onClick: ((clickedAt: Offset) -> Unit)? = null,
+  onClickLabel: String? = null,
   onLongClick: ((clickedAt: Offset) -> Unit)? = null,
+  onLongClickLabel: String? = null,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
   clipToBounds: Boolean = true,
   interactionSource: MutableInteractionSource? = null,
@@ -74,6 +84,7 @@ fun Modifier.zoomable(
         onClick(viewportOffset)
       }
     },
+    onClickLabel = onClickLabel,
     onLongClick = onLongClick?.let {
       { clickedAt: SpatialOffset ->
         val viewportOffset = with(state.coordinateSystem) {
@@ -82,6 +93,7 @@ fun Modifier.zoomable(
         onLongClick(viewportOffset)
       }
     },
+    onLongClickLabel = onLongClickLabel,
     clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
     interactionSource = interactionSource,
@@ -100,12 +112,50 @@ fun Modifier.zoomable(
     state = state,
     gestures = EnabledZoomGestures.ZoomAndPan,
     onClick = onClick,
+    onClickLabel = null,
     onLongClick = onLongClick,
-    clipToBounds = clipToBounds,
+    onLongClickLabel = null,
     onDoubleClick = onDoubleClick,
+    clipToBounds = clipToBounds,
     interactionSource = interactionSource,
   )
 }
+
+/**
+ * Customize accessibility labels announced by assistive technologies (such as TalkBack)
+ * for click and long click gestures on zoomable content.
+ *
+ * This modifier can be applied to `ZoomableImage`, `ZoomableAsyncImage`, or any composable
+ * using [Modifier.zoomable].
+ */
+fun Modifier.zoomableClickLabels(
+  onClick: String? = null,
+  onLongClick: String? = null,
+): Modifier = semantics {
+  onClick?.let { this.onClick(label = it, action = null) }
+  onLongClick?.let { this.onLongClick(label = it, action = null) }
+}
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+fun Modifier.zoomable(
+  state: ZoomableState,
+  gestures: EnabledZoomGestures,
+  onClick: ((clickedAt: Offset) -> Unit)? = null,
+  onLongClick: ((clickedAt: Offset) -> Unit)? = null,
+  onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
+  clipToBounds: Boolean = true,
+  interactionSource: MutableInteractionSource? = null,
+): Modifier = zoomable(
+  state = state,
+  gestures = gestures,
+  onClick = onClick,
+  onClickLabel = null,
+  onLongClick = onLongClick,
+  onLongClickLabel = null,
+  onDoubleClick = onDoubleClick,
+  clipToBounds = clipToBounds,
+  interactionSource = interactionSource,
+)
 
 @Deprecated(
   "Use the 'gestures' parameter instead. " +
@@ -125,7 +175,9 @@ fun Modifier.zoomable(
     state = state,
     gestures = if (enabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
+    onClickLabel = null,
     onLongClick = onLongClick,
+    onLongClickLabel = null,
     clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
     interactionSource = interactionSource,
@@ -145,7 +197,9 @@ fun Modifier.zoomable(
     state = state,
     gestures = if (enabled) EnabledZoomGestures.ZoomAndPan else EnabledZoomGestures.None,
     onClick = onClick,
+    onClickLabel = null,
     onLongClick = onLongClick,
+    onLongClickLabel = null,
     clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
     interactionSource = null,
@@ -157,7 +211,9 @@ private fun Modifier.zoomableInternal(
   state: ZoomableState,
   gestures: EnabledZoomGestures,
   onClick: (CoordinateSystem.(SpatialOffset) -> Unit)? = null,
+  onClickLabel: String? = null,
   onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)? = null,
+  onLongClickLabel: String? = null,
   clipToBounds: Boolean = true,
   onDoubleClick: DoubleClickToZoomListener? = DoubleClickToZoomListener.cycle(),
   interactionSource: MutableInteractionSource? = null,
@@ -180,7 +236,9 @@ private fun Modifier.zoomableInternal(
         state = state,
         gestures = gestures,
         onClick = onClick,
+        onClickLabel = onClickLabel,
         onLongClick = onLongClick,
+        onLongClickLabel = onLongClickLabel,
         onDoubleClick = onDoubleClick,
         interactionSource = interactionSource,
       )
@@ -226,7 +284,9 @@ fun Modifier.zoomable(
     state = state,
     gestures = gestures,
     onClick = onClick,
+    onClickLabel = null,
     onLongClick = onLongClick,
+    onLongClickLabel = null,
     onDoubleClick = onDoubleClick,
     clipToBounds = clipToBounds,
     interactionSource = null,
@@ -243,8 +303,11 @@ fun Modifier.zoomable(
 ): Modifier {
   return this.zoomable(
     state = state,
+    gestures = EnabledZoomGestures.ZoomAndPan,
     onClick = onClick,
+    onClickLabel = null,
     onLongClick = onLongClick,
+    onLongClickLabel = null,
     clipToBounds = clipToBounds,
     onDoubleClick = onDoubleClick,
     interactionSource = null,
@@ -256,7 +319,9 @@ private data class ZoomableElement(
   private val state: RealZoomableState,
   private val gestures: EnabledZoomGestures,
   private val onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  private val onClickLabel: String?,
   private val onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  private val onLongClickLabel: String?,
   private val onDoubleClick: DoubleClickToZoomListener?,
   private val interactionSource: MutableInteractionSource?,
 ) : ModifierNodeElement<ZoomableNode>() {
@@ -265,7 +330,9 @@ private data class ZoomableElement(
     state = state,
     gestures = gestures,
     onClick = onClick,
+    onClickLabel = onClickLabel,
     onLongClick = onLongClick,
+    onLongClickLabel = onLongClickLabel,
     onDoubleClick = onDoubleClick,
     interactionSource = interactionSource,
   )
@@ -275,7 +342,9 @@ private data class ZoomableElement(
       state = state,
       gestures = gestures,
       onClick = onClick,
+      onClickLabel = onClickLabel,
       onLongClick = onLongClick,
+      onLongClickLabel = onLongClickLabel,
       onDoubleClick = onDoubleClick,
       interactionSource = interactionSource,
     )
@@ -286,7 +355,9 @@ private data class ZoomableElement(
     properties["state"] = state
     properties["gestures"] = gestures
     properties["onClick"] = onClick
+    properties["onClickLabel"] = onClickLabel
     properties["onLongClick"] = onLongClick
+    properties["onLongClickLabel"] = onLongClickLabel
     properties["onDoubleClick"] = onDoubleClick
     properties["interactionSource"] = interactionSource
   }
@@ -296,11 +367,38 @@ private data class ZoomableElement(
 private class ZoomableNode(
   private var state: RealZoomableState,
   gestures: EnabledZoomGestures,
-  onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
-  onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  private var onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  private var onClickLabel: String?,
+  private var onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+  private var onLongClickLabel: String?,
   onDoubleClick: DoubleClickToZoomListener?,
   interactionSource: MutableInteractionSource?,
-) : DelegatingNode(), CompositionLocalConsumerModifierNode {
+) : DelegatingNode(), CompositionLocalConsumerModifierNode, SemanticsModifierNode {
+
+  override fun SemanticsPropertyReceiver.applySemantics() {
+    if (onClick != null) {
+      onClick(label = onClickLabel) {
+        val center = state.transformedContentBounds.center.takeOrElse {
+          state.viewportSize.center.takeOrElse { Offset.Zero }
+        }
+        with(state.coordinateSystem) {
+          onClick?.invoke(this, SpatialOffset(center, CoordinateSpace.Viewport))
+        }
+        true
+      }
+    }
+    if (onLongClick != null) {
+      onLongClick(label = onLongClickLabel) {
+        val center = state.transformedContentBounds.center.takeOrElse {
+          state.viewportSize.center.takeOrElse { Offset.Zero }
+        }
+        with(state.coordinateSystem) {
+          onLongClick?.invoke(this, SpatialOffset(center, CoordinateSpace.Viewport))
+        }
+        true
+      }
+    }
+  }
 
   private val hapticFeedback: HapticFeedback
     get() = currentValueOf(LocalHapticFeedback)
@@ -373,7 +471,9 @@ private class ZoomableNode(
     state: RealZoomableState,
     gestures: EnabledZoomGestures,
     onClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+    onClickLabel: String?,
     onLongClick: (CoordinateSystem.(SpatialOffset) -> Unit)?,
+    onLongClickLabel: String?,
     onDoubleClick: DoubleClickToZoomListener?,
     interactionSource: MutableInteractionSource?,
   ) {
@@ -382,6 +482,20 @@ private class ZoomableNode(
       // nodes are implicitly reset in the following update() calls.
       this.state = state
     }
+    val semanticsChanged = this.onClick != onClick ||
+      this.onClickLabel != onClickLabel ||
+      this.onLongClick != onLongClick ||
+      this.onLongClickLabel != onLongClickLabel
+
+    this.onClick = onClick
+    this.onClickLabel = onClickLabel
+    this.onLongClick = onLongClick
+    this.onLongClickLabel = onLongClickLabel
+
+    if (semanticsChanged) {
+      invalidateSemantics()
+    }
+
     transformableNode.update(
       state = state.transformableState,
       canPan = { gestures.pan && state.canConsumePanChange(it) },
