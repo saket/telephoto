@@ -13,19 +13,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import coil3.BitmapImage
 import coil3.ImageLoader
 import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImageModelEqualityDelegate
+import coil3.compose.AsyncImagePainter
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImageModelEqualityDelegate
 import coil3.compose.LocalAsyncImagePreviewHandler
 import coil3.compose.asPainter
 import coil3.decode.DataSource
 import coil3.request.CachePolicy
+import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.ImageResult
+import coil3.request.NullRequestDataException
 import coil3.request.Options
 import coil3.request.SuccessResult
 import coil3.request.transitionFactory
@@ -65,6 +69,9 @@ import coil3.size.Size as CoilSize
 internal data class Coil3ImageSource(
   private val model: State<Any?>,
   private val imageLoader: State<ImageLoader>,
+  private val placeholder: State<Painter?>,
+  private val error: State<Painter?>,
+  private val fallback: State<Painter?>,
 ) : ZoomableImageSource {
 
   @Composable
@@ -76,7 +83,10 @@ internal data class Coil3ImageSource(
     val resolver = if (previewHandler != null) {
       val model = model.value
       val imageLoader = imageLoader.value
-      remember(ModelEqualityKey(model, modelEqualityDelegate), imageLoader) {
+      val placeholder = placeholder.value
+      val error = error.value
+      val fallback = fallback.value
+      remember(ModelEqualityKey(model, modelEqualityDelegate), imageLoader, placeholder, error, fallback) {
         val request = model as? ImageRequest
           ?: ImageRequest.Builder(context)
             .data(model)
@@ -85,6 +95,9 @@ internal data class Coil3ImageSource(
           request = request,
           imageLoader = imageLoader,
           previewHandler = previewHandler,
+          placeholder = placeholder,
+          error = error,
+          fallback = fallback,
         )
       }
     } else {
@@ -101,6 +114,9 @@ internal data class Coil3ImageSource(
           requests = requests,
           imageLoaders = snapshotFlow { imageLoader.value },
           sizeResolver = { canvasSize.first().toCoilSize() },
+          placeholder = placeholder,
+          error = error,
+          fallback = fallback,
         )
       }
     }
@@ -121,10 +137,16 @@ private class RealResolver(
   private val requests: Flow<ImageRequest>,
   private val imageLoaders: Flow<ImageLoader>,
   private val sizeResolver: SizeResolver,
+  private val placeholder: State<Painter?>,
+  private val error: State<Painter?>,
+  private val fallback: State<Painter?>,
 ) : RememberWorker(), AbstractImageResolver {
 
   override var resolved: ResolveResult by mutableStateOf(
-    ResolveResult(delegate = null)
+    ResolveResult(
+      delegate = null,
+      placeholder = placeholder.value,
+    )
   )
 
   override suspend fun work() {
@@ -138,6 +160,10 @@ private class RealResolver(
   }
 
   private suspend fun work(request: ImageRequest, imageLoader: ImageLoader, retryAttempts: Int) {
+    if (retryAttempts == 0 && resolved.delegate == null) {
+      resolved = resolved.copy(placeholder = placeholder.value ?: resolved.placeholder)
+    }
+
     val result = imageLoader.execute(
       request.newBuilder()
         .size(request.defined.sizeResolver ?: sizeResolver)
@@ -160,7 +186,7 @@ private class RealResolver(
         .target(
           onStart = {
             resolved = resolved.copy(
-              placeholder = it?.asPainter(request.context),
+              placeholder = placeholder.value ?: it?.asPainter(request.context),
             )
           }
         )
@@ -185,19 +211,32 @@ private class RealResolver(
       return
     }
 
-    resolved = resolved.copy(
-      crossfadeDuration = result.crossfadeDuration(),
-      delegate = if (result is SuccessResult && imageSource != null) {
-        ZoomableImageSource.SubSamplingDelegate(
-          source = imageSource,
-          imageOptions = ImageBitmapOptions(from = (result.image as BitmapImage).bitmap)
-        )
+    if (result is SuccessResult) {
+      resolved = resolved.copy(
+        crossfadeDuration = result.crossfadeDuration(),
+        delegate = if (imageSource != null) {
+          ZoomableImageSource.SubSamplingDelegate(
+            source = imageSource,
+            imageOptions = ImageBitmapOptions(from = (result.image as BitmapImage).bitmap)
+          )
+        } else {
+          ZoomableImageSource.PainterDelegate(
+            painter = result.image.asPainter(request.context)
+          )
+        },
+      )
+    } else {
+      val errorPainter = if (result is ErrorResult && result.throwable is NullRequestDataException) {
+        fallback.value ?: error.value ?: result.image?.asPainter(request.context)
       } else {
-        ZoomableImageSource.PainterDelegate(
-          painter = result.image?.asPainter(request.context)
-        )
-      },
-    )
+        error.value ?: fallback.value ?: result.image?.asPainter(request.context)
+      }
+      resolved = resolved.copy(
+        crossfadeDuration = Duration.ZERO,
+        placeholder = null,
+        delegate = ZoomableImageSource.PainterDelegate(errorPainter),
+      )
+    }
   }
 
   private suspend fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): SubSamplingImageSource? {
@@ -272,16 +311,34 @@ private class PreviewResolver(
   request: ImageRequest,
   imageLoader: ImageLoader,
   previewHandler: AsyncImagePreviewHandler,
+  placeholder: Painter?,
+  error: Painter?,
+  fallback: Painter?,
 ) : AbstractImageResolver {
 
   override val resolved: ResolveResult = runBlocking {
-    val preview = previewHandler.handle(
+    val state = previewHandler.handle(
       imageLoader = imageLoader,
       request = request.newBuilder()
         .coroutineContext(EmptyCoroutineContext)
         .build()
-    ).painter
-    ResolveResult(PainterDelegate(preview))
+    )
+    val painter = when (state) {
+      is AsyncImagePainter.State.Loading -> placeholder ?: state.painter
+      is AsyncImagePainter.State.Error -> {
+        if (state.result.throwable is NullRequestDataException) {
+          fallback ?: error ?: state.painter
+        } else {
+          error ?: fallback ?: state.painter
+        }
+      }
+      is AsyncImagePainter.State.Success -> state.painter
+      is AsyncImagePainter.State.Empty -> null
+    }
+    ResolveResult(
+      delegate = PainterDelegate(painter),
+      placeholder = placeholder,
+    )
   }
 }
 

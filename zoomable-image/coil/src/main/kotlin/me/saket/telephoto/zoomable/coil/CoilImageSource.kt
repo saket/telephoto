@@ -22,8 +22,10 @@ import coil.annotation.ExperimentalCoilApi
 import coil.compose.DefaultModelEqualityDelegate
 import coil.decode.DataSource
 import coil.request.CachePolicy
+import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.ImageResult
+import coil.request.NullRequestDataException
 import coil.request.Options
 import coil.request.SuccessResult
 import coil.size.Dimension
@@ -59,6 +61,9 @@ import coil.size.Size as CoilSize
 internal class CoilImageSource(
   private val model: State<Any?>,
   private val imageLoader: State<ImageLoader>,
+  private val placeholder: State<Painter?>,
+  private val error: State<Painter?>,
+  private val fallback: State<Painter?>,
 ) : ZoomableImageSource {
 
   @Composable
@@ -67,7 +72,10 @@ internal class CoilImageSource(
     val resolver = if (isInScreenshotTest()) {
       val model = model.value
       val imageLoader = imageLoader.value
-      remember(ModelEqualityKey(model), imageLoader) {
+      val placeholder = placeholder.value
+      val error = error.value
+      val fallback = fallback.value
+      remember(ModelEqualityKey(model), imageLoader, placeholder, error, fallback) {
         val request = model as? ImageRequest
           ?: ImageRequest.Builder(context)
             .data(model)
@@ -75,6 +83,9 @@ internal class CoilImageSource(
         PreviewResolver(
           request = request,
           imageLoader = imageLoader,
+          placeholder = placeholder,
+          error = error,
+          fallback = fallback,
         )
       }
     } else {
@@ -91,6 +102,9 @@ internal class CoilImageSource(
           requests = requests,
           imageLoaders = snapshotFlow { imageLoader.value },
           sizeResolver = { canvasSize.first().toCoilSize() },
+          placeholder = placeholder,
+          error = error,
+          fallback = fallback,
         )
       }
     }
@@ -119,10 +133,16 @@ private class RealResolver(
   private val requests: Flow<ImageRequest>,
   private val imageLoaders: Flow<ImageLoader>,
   private val sizeResolver: SizeResolver,
+  private val placeholder: State<Painter?>,
+  private val error: State<Painter?>,
+  private val fallback: State<Painter?>,
 ) : RememberWorker(), AbstractImageResolver {
 
   override var resolved: ResolveResult by mutableStateOf(
-    ResolveResult(delegate = null)
+    ResolveResult(
+      delegate = null,
+      placeholder = placeholder.value,
+    )
   )
 
   override suspend fun work() {
@@ -136,6 +156,10 @@ private class RealResolver(
   }
 
   private suspend fun work(request: ImageRequest, imageLoader: ImageLoader, retryAttempts: Int) {
+    if (retryAttempts == 0 && resolved.delegate == null) {
+      resolved = resolved.copy(placeholder = placeholder.value ?: resolved.placeholder)
+    }
+
     @Suppress("NAME_SHADOWING")
     val imageLoader = imageLoader
       .newBuilder()
@@ -168,7 +192,7 @@ private class RealResolver(
         .target(
           onStart = {
             resolved = resolved.copy(
-              placeholder = it?.asPainter(),
+              placeholder = placeholder.value ?: it?.asPainter(),
             )
           }
         )
@@ -193,19 +217,32 @@ private class RealResolver(
       return
     }
 
-    resolved = resolved.copy(
-      crossfadeDuration = result.crossfadeDuration(),
-      delegate = if (result is SuccessResult && imageSource != null) {
-        ZoomableImageSource.SubSamplingDelegate(
-          source = imageSource,
-          imageOptions = ImageBitmapOptions(from = (result.drawable as BitmapDrawable).bitmap)
-        )
+    if (result is SuccessResult) {
+      resolved = resolved.copy(
+        crossfadeDuration = result.crossfadeDuration(),
+        delegate = if (imageSource != null) {
+          ZoomableImageSource.SubSamplingDelegate(
+            source = imageSource,
+            imageOptions = ImageBitmapOptions(from = (result.drawable as BitmapDrawable).bitmap)
+          )
+        } else {
+          ZoomableImageSource.PainterDelegate(
+            painter = result.drawable.asPainter()
+          )
+        },
+      )
+    } else {
+      val errorPainter = if (result is ErrorResult && result.throwable is NullRequestDataException) {
+        fallback.value ?: error.value ?: result.drawable?.asPainter()
       } else {
-        ZoomableImageSource.PainterDelegate(
-          painter = result.drawable?.asPainter()
-        )
-      },
-    )
+        error.value ?: fallback.value ?: result.drawable?.asPainter()
+      }
+      resolved = resolved.copy(
+        crossfadeDuration = Duration.ZERO,
+        placeholder = null,
+        delegate = ZoomableImageSource.PainterDelegate(errorPainter),
+      )
+    }
   }
 
   @OptIn(ExperimentalCoilApi::class)
@@ -277,14 +314,26 @@ private class RealResolver(
 private class PreviewResolver(
   request: ImageRequest,
   imageLoader: ImageLoader,
+  placeholder: Painter?,
+  error: Painter?,
+  fallback: Painter?,
 ) : AbstractImageResolver {
 
   override val resolved: ResolveResult = runBlocking {
     val result = imageLoader.executeMain(request)
+    val painter = when (result) {
+      is SuccessResult -> result.drawable.asPainter()
+      is ErrorResult -> {
+        if (result.throwable is NullRequestDataException) {
+          fallback ?: error ?: result.drawable?.asPainter()
+        } else {
+          error ?: fallback ?: result.drawable?.asPainter()
+        }
+      }
+    }
     ResolveResult(
-      delegate = ZoomableImageSource.PainterDelegate(
-        painter = result.drawable?.asPainter()
-      )
+      delegate = ZoomableImageSource.PainterDelegate(painter),
+      placeholder = placeholder,
     )
   }
 }

@@ -20,8 +20,11 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -34,6 +37,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotInstanceOf
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import coil.Coil
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
@@ -131,6 +135,7 @@ class CoilImageSourceTest {
           "/animated_image.gif" -> assetAsResponse("animated_image.gif", delay = 300.milliseconds)
           "/single_frame_gif.gif" -> assetAsResponse("single_frame_gif.gif", delay = 300.milliseconds)
           "/emoji.svg" -> assetAsResponse("emoji.svg")
+          "/error.png" -> MockResponse().setResponseCode(404)
           else -> error("unknown path = ${request.path}")
         }
       }
@@ -639,14 +644,118 @@ class CoilImageSourceTest {
     assertThat(loadCount).isEqualTo(1)
   }
 
+  @Test fun placeholder_is_emitted_during_image_loading() = runTest {
+    val placeholder = ColorPainter(Color.Yellow)
+    resolve(
+      placeholder = placeholder,
+    ) {
+      serverRule.server.url("full_image.png").toString()
+    }.test {
+      val loadingItem = awaitItem()
+      assertThat(loadingItem.placeholder).isEqualTo(placeholder)
+      assertThat(loadingItem.delegate).isNull()
+
+      val loadedItem = awaitItem()
+      assertThat(loadedItem.placeholder).isEqualTo(placeholder)
+      assertThat(loadedItem.delegate).isNotNull()
+    }
+  }
+
+  @Test fun error_is_emitted_when_request_fails() = runTest {
+    val placeholderPainter = ColorPainter(Color.Yellow)
+    val errorPainter = ColorPainter(Color.Red)
+    resolve(
+      placeholder = placeholderPainter,
+      error = errorPainter,
+    ) {
+      serverRule.server.url("error.png").toString()
+    }.test {
+      val loadingItem = awaitItem()
+      assertThat(loadingItem.placeholder).isEqualTo(placeholderPainter)
+      assertThat(loadingItem.delegate).isNull()
+
+      val failedItem = awaitItem()
+      assertThat(failedItem.delegate).isNotNull()
+      assertThat(failedItem.delegate!!).isInstanceOf(ZoomableImageSource.PainterDelegate::class.java)
+      val painterDelegate = failedItem.delegate as ZoomableImageSource.PainterDelegate
+      assertThat(painterDelegate.painter).isEqualTo(errorPainter)
+      assertThat(failedItem.placeholder).isNull()
+    }
+  }
+
+  @Test fun fallback_is_emitted_when_model_is_null() = runTest {
+    val fallbackPainter = ColorPainter(Color.Yellow)
+    val errorPainter = ColorPainter(Color.Red)
+    resolve(
+      error = errorPainter,
+      fallback = fallbackPainter,
+    ) {
+      ImageRequest.Builder(context)
+        .data(null)
+        .build()
+    }.test {
+      skipItems(1) // Default item.
+      val item = awaitItem()
+      assertThat(item.delegate).isNotNull()
+      assertThat(item.delegate!!).isInstanceOf(ZoomableImageSource.PainterDelegate::class.java)
+      val painterDelegate = item.delegate as ZoomableImageSource.PainterDelegate
+      assertThat(painterDelegate.painter).isEqualTo(fallbackPainter)
+      assertThat(item.placeholder).isNull()
+    }
+  }
+
+  @Test fun error_is_used_as_fallback_when_fallback_is_omitted_and_model_is_null() = runTest {
+    val errorPainter = ColorPainter(Color.Red)
+    resolve(
+      error = errorPainter,
+    ) {
+      ImageRequest.Builder(context)
+        .data(null)
+        .build()
+    }.test {
+      skipItems(1) // Default item.
+      val item = awaitItem()
+      assertThat(item.delegate).isNotNull()
+      assertThat(item.delegate!!).isInstanceOf(ZoomableImageSource.PainterDelegate::class.java)
+      val painterDelegate = item.delegate as ZoomableImageSource.PainterDelegate
+      assertThat(painterDelegate.painter).isEqualTo(errorPainter)
+      assertThat(item.placeholder).isNull()
+    }
+  }
+
+  @Test fun placeholder_is_cleared_when_request_fails_without_error_painter() = runTest {
+    val placeholder = ColorPainter(Color.Yellow)
+    resolve(
+      placeholder = placeholder,
+    ) {
+      serverRule.server.url("error.png").toString()
+    }.test {
+      val firstItem = awaitItem()
+      assertThat(firstItem.placeholder).isEqualTo(placeholder)
+      assertThat(firstItem.delegate).isNull()
+
+      val failedItem = awaitItem()
+      assertThat(failedItem.delegate).isNull()
+      assertThat(failedItem.placeholder).isNull()
+    }
+  }
+
   context(TestScope)
   private fun resolve(
     canvasSize: Size = Size(1080f, 1920f),
-    imageRequest: @Composable () -> Any
+    placeholder: Painter? = null,
+    error: Painter? = null,
+    fallback: Painter? = error,
+    imageRequest: @Composable () -> Any?
   ): StateFlow<ResolveResult> {
     return backgroundScope.launchMolecule(mode = RecompositionMode.Immediate) {
       compositionLocalProviderReturnable(LocalContext provides context) {
-        val source = ZoomableImageSource.coil(imageRequest())
+        val source = ZoomableImageSource.coil(
+          model = imageRequest(),
+          placeholder = placeholder,
+          error = error,
+          fallback = fallback,
+        )
         source.resolve(flowOf(canvasSize))
       }
     }
