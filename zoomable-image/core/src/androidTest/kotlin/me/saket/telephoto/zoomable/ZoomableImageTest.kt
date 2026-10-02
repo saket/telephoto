@@ -137,13 +137,13 @@ import me.saket.telephoto.zoomable.spatial.SpatialOffset
 import org.junit.After
 import org.junit.AssumptionViolatedException
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import java.io.InputStream
+import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -285,7 +285,6 @@ class ZoomableImageTest {
     }
   }
 
-  @Ignore("https://github.com/saket/telephoto/issues/128")
   @Test fun retain_transformations_across_image_changes_with_the_same_aspect_ratio() {
     var assetName by mutableStateOf("fox_1000.jpg")
     lateinit var state: ZoomableImageState
@@ -315,10 +314,12 @@ class ZoomableImageTest {
 
     assetName = "fox_1500.jpg"
     rule.waitUntil {
+      // The unscaled bounds are measured in the viewport, so converting them to the content's
+      // space divides by the user zoom as well. Multiply it back to get the image's own size.
       val imageSize = with(state.zoomableState.coordinateSystem) {
         unscaledContentBounds.sizeIn(CoordinateSpace.ZoomableContent)
-      }
-      imageSize == Size(1500f, 1000f)
+      } * state.zoomableState.contentTransformation.scaleMetadata.userZoom
+      abs(imageSize.width - 1500f) < 1f && abs(imageSize.height - 1000f) < 1f
     }
     // This does not use runOnIdle() because the image's
     // centroid should be retained immediately on the next frame.

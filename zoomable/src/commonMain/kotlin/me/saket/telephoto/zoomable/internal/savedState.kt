@@ -35,6 +35,11 @@ internal data class SavedGestureState(
   private val userZoom: Float,
   private val centroid: Long,
   private val contentPositionInfo: ContentPositionInfo?,
+  // userOffset and contentPositionInfo are measured in the content's pixels at save time.
+  // After restoration the content may resolve at a different resolution, e.g. a preview
+  // is shown first while its full quality version loads.
+  private val contentSize: Long? = null,
+  private val contentTopLeft: Long? = null,
 ) : AndroidParcelable {
 
   @AndroidParcelize
@@ -62,6 +67,8 @@ internal data class SavedGestureState(
         userOffset = gestureState.userOffset.value.packToLong(),
         userZoom = gestureState.userZoom.value,
         centroid = gestureState.lastCentroid.packToLong(),
+        contentSize = inputs.unscaledContentBounds.size.packToLong(),
+        contentTopLeft = inputs.unscaledContentBounds.topLeft.packToLong(),
         contentPositionInfo = inputs.viewportSize.let { viewportSize ->
           if (viewportSize.isSpecifiedAndNonEmpty) {
             ContentPositionInfo(
@@ -90,7 +97,20 @@ internal data class SavedGestureState(
     inputs: GestureStateInputs,
     coerceOffsetWithinBounds: (AbsoluteOffset, AbsoluteZoomFactor) -> AbsoluteOffset,
   ): GestureState {
-    val restoredUserOffset = userOffset.unpackAsOffset()
+    // Convert saved values to the content's current resolution. The user zoom needs no
+    // conversion because it is relative to the base zoom, which accounts for the content's size.
+    val resolutionScale: ScaleFactor? = contentSize?.let {
+      contentResolutionChange(
+        previousSize = it.unpackAsSize(),
+        location = inputs.contentLocation,
+        layoutSize = contentPositionInfo?.viewportSize?.unpackAsSize() ?: inputs.viewportSize,
+        layoutDirection = inputs.layoutDirection,
+      )
+    }
+
+    val restoredUserOffset = userOffset.unpackAsOffset().let {
+      if (resolutionScale != null) it * resolutionScale else it
+    }
     val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && (userZoom - 1f) < ZoomDeltaEpsilon
     if (
       wasGestureStateEmpty
@@ -106,10 +126,28 @@ internal data class SavedGestureState(
     // If the viewport size changes after state restoration (likely due to orientation change or
     // window resize), the content's _visual_ anchor needs to be restored to its original position.
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
-    // to maintain the anchor's position in the new viewport.
+    // to maintain the anchor's position in the new viewport. Both the anchor and the final zoom
+    // depend on the content's resolution, so they are converted too.
     val stateAdjuster = GestureStateAdjuster(
-      oldFinalZoom = contentPositionInfo.finalZoomFactor.unpackAsScaleFactor(),
-      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
+      oldFinalZoom = contentPositionInfo.finalZoomFactor.unpackAsScaleFactor().let {
+        if (resolutionScale != null) {
+          ScaleFactor(it.scaleX / resolutionScale.scaleX, it.scaleY / resolutionScale.scaleY)
+        } else it
+      },
+      oldContentOffsetAtViewportCenter = contentPositionInfo.contentOffsetAtViewportCenter.unpackAsOffset().let {
+        if (resolutionScale != null && contentSize != null) {
+          // The anchor is relative to the layout's origin, so only its position within the content
+          // scales. Use the content's actual change in bounds: unlike resolutionScale, it includes
+          // any re-layout for the new viewport.
+          val savedTopLeft = contentTopLeft?.unpackAsOffset() ?: Offset.Zero
+          val savedSize = contentSize.unpackAsSize()
+          val bounds = inputs.unscaledContentBounds
+          bounds.topLeft + (it - savedTopLeft) * ScaleFactor(
+            scaleX = bounds.width / savedSize.width,
+            scaleY = bounds.height / savedSize.height,
+          )
+        } else it
+      },
     )
     return stateAdjuster.adjustForNewViewportSize(
       inputs = inputs,
