@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
@@ -172,11 +173,16 @@ internal class RealSubSamplingImageState(
   }
 
   @Composable
-  fun LoadImageTilesEffect() {
+  fun LoadImageTilesEffect(errorReporter: SubSamplingImageErrorReporter) {
     val imageRegionDecoder = imageRegionDecoder ?: return
+    val latestErrorReporter = rememberUpdatedState(errorReporter)
     val scope = rememberCoroutineScope()
     val imageCache = remember(this, imageRegionDecoder) {
-      ImageCache(scope, imageRegionDecoder)
+      ImageCache(
+        scope = scope,
+        decoder = imageRegionDecoder,
+        onDecodeFailed = { e -> latestErrorReporter.value.onImageLoadingFailed(e, imageSource) },
+      )
     }
 
     LaunchedEffect(imageCache) {

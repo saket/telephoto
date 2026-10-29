@@ -4,7 +4,12 @@ import java.io.IOException
 
 interface SubSamplingImageErrorReporter {
 
-  /** Called when loading of an [imageSource] fails. */
+  /**
+   * Called when loading of an [imageSource] fails. This can happen when a decoder can't be
+   * created for the image, or when one of its regions can't be decoded. In the latter case,
+   * this is called once per image and the failed regions are left blank (or covered by the
+   * image's preview or low-res base tile, if available).
+   */
   fun onImageLoadingFailed(e: IOException, imageSource: SubSamplingImageSource) = Unit
 
   companion object {

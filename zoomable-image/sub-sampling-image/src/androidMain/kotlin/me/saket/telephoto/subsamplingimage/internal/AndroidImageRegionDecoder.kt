@@ -17,6 +17,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder.DecodeResult
 import me.saket.telephoto.subsamplingimage.toAndroidConfig
+import java.io.IOException
 
 /** Bitmap decoder backed by Android's [BitmapRegionDecoder]. */
 internal class AndroidImageRegionDecoder private constructor(
@@ -46,7 +47,7 @@ internal class AndroidImageRegionDecoder private constructor(
 
     val bitmap = withContext(dispatcher) {
       trace("decodeRegion") {
-        decoder.decodeRegion(region.toAndroidRect(), options).also {
+        decoder.decodeRegion(region.toAndroidRect(), options)?.also {
           // https://developer.android.com/develop/ui/compose/graphics/images/optimization#preparetodraw
           it.prepareToDraw()
         }
@@ -58,7 +59,11 @@ internal class AndroidImageRegionDecoder private constructor(
         hasUltraHdrContent = if (SDK_INT >= 34) bitmap.hasGainmap() else false,
       )
     } else {
-      error("BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource.")
+      // BitmapRegionDecoder#decodeRegion() returns null when the platform's codec fails to decode
+      // the region (seen with large single-frame HEIC images on some devices). Treat this as an
+      // I/O failure so that it can be reported through SubSamplingImageErrorReporter instead of
+      // crashing the app.
+      throw IOException("BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource.")
     }
   }
 

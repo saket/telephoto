@@ -86,7 +86,7 @@ internal fun rememberSubSamplingImageState(
     it.imageRegionDecoder = createImageRegionDecoder(imageSource, imageOptions, errorReporter)
   }
 
-  state.LoadImageTilesEffect()
+  state.LoadImageTilesEffect(errorReporter)
   DisposableEffect(imageSource) {
     onDispose {
       imageSource.close()

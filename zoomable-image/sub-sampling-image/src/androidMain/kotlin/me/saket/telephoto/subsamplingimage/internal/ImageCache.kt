@@ -9,6 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.conflate
@@ -19,8 +20,11 @@ import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import me.saket.telephoto.subsamplingimage.internal.ImageCache.LoadingState.Failed
 import me.saket.telephoto.subsamplingimage.internal.ImageCache.LoadingState.InFlight
 import me.saket.telephoto.subsamplingimage.internal.ImageCache.LoadingState.Loaded
+import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -28,13 +32,22 @@ internal class ImageCache(
   scope: CoroutineScope,
   private val decoder: ImageRegionDecoder,
   private val throttleEvery: Duration = 100.milliseconds,
+  private val onDecodeFailed: (IOException) -> Unit = {},
 ) {
   private val visibleRegions = Channel<List<ImageRegionTile>>(capacity = 10)
   private val cachedImages = MutableStateFlow(emptyMap<ImageRegionTile, LoadingState>())
+  private val isDecodeFailureReported = AtomicBoolean(false)
 
   private sealed interface LoadingState {
     data class Loaded(val painter: ImageRegionDecoder.DecodeResult) : LoadingState
     data class InFlight(val job: Job) : LoadingState
+
+    /**
+     * Decoding of a tile failed. The tile is kept in the cache so that it isn't retried for
+     * as long as it stays visible. It will be unloaded like any other tile when it goes out
+     * of the viewport and retried if it becomes visible again.
+     */
+    data object Failed : LoadingState
   }
 
   init {
@@ -54,9 +67,21 @@ internal class ImageCache(
                 check(tile !in it)
                 it + (tile to InFlight(currentCoroutineContext().job))
               }
-              val painter = decoder.decodeRegion(tile.bounds, tile.sampleSize.size)
+              val result = try {
+                Loaded(decoder.decodeRegion(tile.bounds, tile.sampleSize.size))
+              } catch (e: IOException) {
+                // Make sure that a decoder's I/O error isn't mistaken for a failure
+                // if this job was cancelled while the region was being decoded.
+                currentCoroutineContext().ensureActive()
+                // Only the first failure is reported. A broken image will fail for all of
+                // its tiles, and the reporter's callback is meant to be per image, not per tile.
+                if (isDecodeFailureReported.compareAndSet(false, true)) {
+                  onDecodeFailed(e)
+                }
+                Failed
+              }
               cachedImages.update {
-                it + (tile to Loaded(painter))
+                it + (tile to result)
               }
             }
           }

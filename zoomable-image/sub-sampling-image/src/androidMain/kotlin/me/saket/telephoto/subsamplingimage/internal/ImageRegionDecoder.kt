@@ -28,6 +28,11 @@ interface ImageRegionDecoder {
    *
    * This is designed to be called concurrently for all visible regions of the image.
    * Implementations must handle synchronization if needed.
+   *
+   * Implementations should throw an [IOException][java.io.IOException] if the region can't be
+   * decoded. The failure is reported through
+   * [SubSamplingImageErrorReporter][me.saket.telephoto.subsamplingimage.SubSamplingImageErrorReporter]
+   * instead of crashing the app.
    */
   suspend fun decodeRegion(region: IntRect, sampleSize: Int): DecodeResult
 
