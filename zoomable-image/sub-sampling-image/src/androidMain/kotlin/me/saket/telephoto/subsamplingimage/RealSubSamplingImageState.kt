@@ -18,11 +18,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toImmutableList
 import me.saket.telephoto.subsamplingimage.internal.ImageCache
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
@@ -98,7 +93,7 @@ internal class RealSubSamplingImageState(
    * versions, layout changes caused image flickering because tile updates were asynchronous
    * and lagged by one frame.
    */
-  private var loadedImages: ImmutableMap<ImageRegionTile, ImageDecodeResult> by mutableStateOf(persistentMapOf())
+  private var loadedImages: Map<ImageRegionTile, ImageDecodeResult> by mutableStateOf(emptyMap())
 
   /**
    * Whether the image contains [ultra HDR content](https://developer.android.com/media/grow/ultra-hdr/display).
@@ -123,8 +118,8 @@ internal class RealSubSamplingImageState(
     } else null
   }
 
-  private val viewportTiles: ImmutableList<ViewportTile> by derivedStateOf {
-    val tileGrid = tileGrid ?: return@derivedStateOf persistentListOf()
+  private val viewportTiles: List<ViewportTile> by derivedStateOf {
+    val tileGrid = tileGrid ?: return@derivedStateOf emptyList()
     val transformation = contentTransformation()
     val baseSampleSize = tileGrid.base.sampleSize
 
@@ -147,10 +142,9 @@ internal class RealSubSamplingImageState(
           isVisible = drawBounds.overlaps(tileGrid.viewportSize),
         )
       }
-      .toImmutableList()
   }
 
-  internal val viewportImageTiles: ImmutableList<ViewportImageTile> by derivedStateOf {
+  internal val viewportImageTiles: List<ViewportImageTile> by derivedStateOf {
     // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
     // a fallback. The base tile will hide again when all bitmaps have been loaded.
     //
@@ -168,7 +162,7 @@ internal class RealSubSamplingImageState(
           painter = loadedImages[tile.region]?.painter ?: if (tile.isBase) imagePreview else null,
         )
       } else null
-    }.toImmutableList()
+    }
   }
 
   @Composable

@@ -14,6 +14,7 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
       apply("org.jetbrains.kotlin.plugin.compose")
       apply("org.jetbrains.compose")
     }
+    configureComposeCompiler()
 
     extensions.configure<KotlinMultiplatformExtension> {
       @OptIn(ExperimentalKotlinGradlePluginApi::class)

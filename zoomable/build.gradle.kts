@@ -27,7 +27,6 @@ kotlin {
         implementation(projects.testUtil)
         implementation(libs.androidx.test.uiautomator)
         implementation(libs.espresso.device)
-        implementation(libs.kotlinx.immutableCollections)
       }
     }
   }

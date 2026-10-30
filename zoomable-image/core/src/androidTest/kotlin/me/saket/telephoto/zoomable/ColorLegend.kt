@@ -15,11 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 internal fun ColorLegend(
-  colorsToNames: ImmutableList<Pair<Color, String>>,
+  colorsToNames: List<Pair<Color, String>>,
   modifier: Modifier = Modifier,
 ) {
   Column(modifier) {
