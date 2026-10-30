@@ -19,7 +19,6 @@ kotlin {
       api(libs.okio.core)
       api(compose.foundation)
       implementation(compose.uiUtil)
-      implementation(libs.kotlinx.immutableCollections)
     }
     commonTest.dependencies {
       implementation(kotlin("test"))

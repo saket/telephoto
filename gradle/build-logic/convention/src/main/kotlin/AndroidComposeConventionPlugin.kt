@@ -10,6 +10,7 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
     plugins.run {
       apply("org.jetbrains.kotlin.plugin.compose")
     }
+    configureComposeCompiler()
 
     extensions.configure<BaseAndroidExtension> {
       buildFeatures.apply {

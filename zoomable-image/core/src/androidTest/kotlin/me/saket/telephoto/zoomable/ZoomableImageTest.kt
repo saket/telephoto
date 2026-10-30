@@ -108,7 +108,6 @@ import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -1606,7 +1605,7 @@ class ZoomableImageTest {
       modifier = Modifier
         .align(Alignment.BottomStart)
         .padding(16.dp),
-      colorsToNames = persistentListOf(
+      colorsToNames = listOf(
         Color.Blue to "unscaledContentBounds",
         Color.Magenta to "transformedContentBounds",
         Color.Yellow to "contentBounds",
