@@ -11,11 +11,13 @@ import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.MutatorMutex
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
@@ -38,7 +40,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.util.lerp
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import me.saket.telephoto.ExperimentalTelephotoApi
 import me.saket.telephoto.zoomable.ZoomableContentLocation.SameAsLayoutBounds
 import me.saket.telephoto.zoomable.internal.MutatePriorities
@@ -62,6 +69,7 @@ import me.saket.telephoto.zoomable.internal.maxScale
 import me.saket.telephoto.zoomable.internal.minScale
 import me.saket.telephoto.zoomable.internal.padded
 import me.saket.telephoto.zoomable.internal.resolve
+import me.saket.telephoto.zoomable.internal.stopTransformation
 import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.unaryMinus
 import me.saket.telephoto.zoomable.internal.withOrigin
@@ -112,10 +120,21 @@ internal class RealZoomableState internal constructor(
   override var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
   override var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
   override var contentPadding: PaddingValues by mutableStateOf(PaddingValues(0.dp))
-  override var isAnimationRunning: Boolean by mutableStateOf(false)
+  override val isAnimationRunning: Boolean
+    get() = runningAnimationCount > 0
   override val coordinateSystem = RealZoomableCoordinateSystem(this)
 
   internal var hardwareShortcutsSpec by mutableStateOf(HardwareShortcutsSpec())
+
+  /** Zoom animations can overlap with flings, so a boolean can't track [isAnimationRunning]. */
+  private var runningAnimationCount by mutableIntStateOf(0)
+
+  /** Held by zoom animations. See [zoomTo]. */
+  private val zoomAnimationMutex = MutatorMutex()
+  private var zoomAnimationJob: Job? = null
+
+  /** Where the running zoom animation, if any, will end up. See [canConsumePanChange]. */
+  private var zoomAnimationTarget: GestureState? = null
   internal var layoutDirection: LayoutDirection by mutableStateOf(LayoutDirection.Ltr)
   internal var density: Density? by mutableStateOf(null)
 
@@ -232,6 +251,11 @@ internal class RealZoomableState internal constructor(
       "Can't transform with zoomDelta=$zoomDelta, panDelta=$panDelta, centroid=$centroid. ${collectDebugInfo()}"
     }
 
+    // Pans and flings are allowed to run alongside zoom animations, but two zooms can't.
+    if (zoomDelta != 1f) {
+      zoomAnimationJob?.cancel()
+    }
+
     val inputsWhenGestureBegan = currentGestureStateInputs ?: return@TransformableState
     val lastGestureState = gestureState.calculate(inputsWhenGestureBegan)
     gestureState = GestureStateCalculator { inputs ->
@@ -335,6 +359,18 @@ internal class RealZoomableState internal constructor(
     val gestureStateInputs = currentGestureStateInputs ?: return false // Content isn't ready yet.
     val current = gestureState.calculate(gestureStateInputs)
 
+    // While a zoom animation is running, also look at where it is headed. Zooming in from fit
+    // otherwise leaves the content unpannable for the first few frames, and a pan started then
+    // would be handed to a parent (e.g. a pager) instead of moving the content.
+    return canConsumePanChange(panDelta, current, gestureStateInputs)
+      || zoomAnimationTarget?.let { canConsumePanChange(panDelta, it, gestureStateInputs) } == true
+  }
+
+  private fun canConsumePanChange(
+    panDelta: Offset,
+    current: GestureState,
+    gestureStateInputs: GestureStateInputs,
+  ): Boolean {
     val currentZoom = AbsoluteZoomFactor(gestureStateInputs.baseZoom, current.userZoom)
     val panDeltaWithZoom = panDelta / currentZoom
     val targetOffset = AbsoluteOffset(
@@ -568,43 +604,118 @@ internal class RealZoomableState internal constructor(
         inputs = gestureStateInputs,
       )
 
-    transformableState.animatedTransform(MutatePriority.UserInput) {
-      AnimationState(initialValue = 0f).animateTo(
-        targetValue = 1f,
-        animationSpec = animationSpec.withMinimalVisibilityThreshold(),
-      ) {
-        val animatedZoom: AbsoluteZoomFactor = startZoom.copy(
-          userZoom = UserZoomFactor(
-            lerp(
-              start = startZoom.userZoom.value,
-              stop = targetZoom.userZoom.value,
-              fraction = value
-            )
-          )
+    // Settling and fling animations would fight over the zoom and offset, so they're stopped like
+    // before. A gesture that is already underway outranks this and is left alone.
+    try {
+      transformableState.stopTransformation(MutatePriority.Default)
+    } catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive()
+    }
+
+    // Pan gestures and flings started while this animation is running are allowed to run
+    // alongside it, so it runs under its own mutex instead of transformableState's. The pan they
+    // apply is carried over on top of the animated offset on every frame. Zoom gestures cancel
+    // this animation through zoomAnimationJob.
+    zoomAnimationMutex.mutate(MutatePriority.UserInput) {
+      val zoomAnimationJob = currentCoroutineContext().job
+      this.zoomAnimationJob = zoomAnimationJob
+      zoomAnimationTarget = startGestureState.copy(
+        userOffset = targetOffset.userOffset,
+        userZoom = targetZoom.userZoom,
+      )
+      runningAnimationCount++
+      try {
+        animateZoomTo(
+          startGestureState = startGestureState,
+          startZoom = startZoom,
+          targetZoom = targetZoom,
+          targetOffset = targetOffset,
+          centroidInViewport = centroidInViewport,
+          gestureStateInputs = gestureStateInputs,
+          animationSpec = animationSpec,
         )
-        // For animating the offset, it is necessary to interpolate between values that the UI
-        // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
-        // offset is used because the zoom and the offset values animate at different scales.
-        val animatedOffsetForUi = startOffset.copy(
-          userOffset = UserOffset(
-            -lerp(
-              start = (-startGestureState.userOffset.value * startZoom),
-              stop = (-targetOffset.userOffset.value * targetZoom),
-              fraction = value,
-            ) / animatedZoom
-          )
-        )
-        // Note to self: skipping transformableState#transformBy(), since it enforces offset-locking.
-        gestureState = GestureStateCalculator { inputs ->
-          startGestureState.copy(
-            userOffset = animatedOffsetForUi.userOffset,
-            userZoom = animatedZoom.userZoom,
-            lastCentroid = centroidInViewport,
-          ).retainPanAcrossContentSizeChange(
-            from = gestureStateInputs,
-            to = inputs,
-          )
+      } finally {
+        runningAnimationCount--
+        if (this.zoomAnimationJob === zoomAnimationJob) {
+          this.zoomAnimationJob = null
+          zoomAnimationTarget = null
         }
+      }
+    }
+  }
+
+  private suspend fun animateZoomTo(
+    startGestureState: GestureState,
+    startZoom: AbsoluteZoomFactor,
+    targetZoom: AbsoluteZoomFactor,
+    targetOffset: AbsoluteOffset,
+    centroidInViewport: Offset,
+    gestureStateInputs: GestureStateInputs,
+    animationSpec: AnimationSpec<Float>,
+  ) {
+    val startOffset = AbsoluteOffset(gestureStateInputs.baseOffset, startGestureState.userOffset)
+
+    // Pan applied by gestures running alongside this animation, scaled by the zoom it was applied
+    // at so that it stays the same distance on screen as the zoom changes.
+    var concurrentPanForUi = Offset.Zero
+    var lastWrittenState = startGestureState
+
+    AnimationState(initialValue = 0f).animateTo(
+      targetValue = 1f,
+      animationSpec = animationSpec.withMinimalVisibilityThreshold(),
+    ) {
+      val animatedZoom: AbsoluteZoomFactor = startZoom.copy(
+        userZoom = UserZoomFactor(
+          lerp(
+            start = startZoom.userZoom.value,
+            stop = targetZoom.userZoom.value,
+            fraction = value
+          )
+        )
+      )
+      // For animating the offset, it is necessary to interpolate between values that the UI
+      // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
+      // offset is used because the zoom and the offset values animate at different scales.
+      val animatedOffsetForUi = startOffset.copy(
+        userOffset = UserOffset(
+          -lerp(
+            start = (-startGestureState.userOffset.value * startZoom),
+            stop = (-targetOffset.userOffset.value * targetZoom),
+            fraction = value,
+          ) / animatedZoom
+        )
+      )
+      // Anything that moved the content since the last frame was a pan gesture or a fling,
+      // because zoom gestures cancel this animation.
+      val currentState = gestureState.calculate(gestureStateInputs)
+      val lastWrittenZoom = startZoom.copy(userZoom = lastWrittenState.userZoom)
+      concurrentPanForUi += (currentState.userOffset.value - lastWrittenState.userOffset.value) * lastWrittenZoom
+
+      val frameUserOffset = if (concurrentPanForUi == Offset.Zero) {
+        animatedOffsetForUi.userOffset
+      } else {
+        val offsetWithPan = animatedOffsetForUi
+          .copy(userOffset = UserOffset(animatedOffsetForUi.userOffset.value + concurrentPanForUi / animatedZoom))
+          .coerceWithinContentBounds(proposedZoom = animatedZoom, inputs = gestureStateInputs)
+          .userOffset
+        // Forget whatever part of the pan was clamped away so it doesn't creep back in later.
+        concurrentPanForUi = (offsetWithPan.value - animatedOffsetForUi.userOffset.value) * animatedZoom
+        offsetWithPan
+      }
+
+      val frameState = startGestureState.copy(
+        userOffset = frameUserOffset,
+        userZoom = animatedZoom.userZoom,
+        lastCentroid = centroidInViewport,
+      )
+      lastWrittenState = frameState
+
+      // Note to self: skipping transformableState#transformBy(), since it enforces offset-locking.
+      gestureState = GestureStateCalculator { inputs ->
+        frameState.retainPanAcrossContentSizeChange(
+          from = gestureStateInputs,
+          to = inputs,
+        )
       }
     }
   }
@@ -692,10 +803,10 @@ internal class RealZoomableState internal constructor(
   ) {
     transform(transformPriority) {
       try {
-        isAnimationRunning = true
+        runningAnimationCount++
         block()
       } finally {
-        isAnimationRunning = false
+        runningAnimationCount--
       }
     }
   }
