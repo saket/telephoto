@@ -15,10 +15,6 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
       apply("org.jetbrains.compose")
     }
 
-    // Apple and web targets can only be built on a macOS host. Setting this to false leaves an
-    // Android + desktop build that works anywhere, which is what CI services like JitPack need.
-    val appleAndWebTargets = (findProperty("telephoto.appleAndWebTargets") as String?)?.toBoolean() ?: true
-
     extensions.configure<KotlinMultiplatformExtension> {
       @OptIn(ExperimentalKotlinGradlePluginApi::class)
       applyDefaultHierarchyTemplate {
@@ -32,18 +28,16 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
 
       jvm("desktop")
 
-      if (appleAndWebTargets) {
-        iosArm64()
-        iosX64()
-        iosSimulatorArm64()
+      iosArm64()
+      iosX64()
+      iosSimulatorArm64()
 
-        @OptIn(ExperimentalWasmDsl::class)
-        wasmJs {
-          browser()
-        }
-        js(IR) {
-          browser {}
-        }
+      @OptIn(ExperimentalWasmDsl::class)
+      wasmJs {
+        browser()
+      }
+      js(IR) {
+        browser {}
       }
 
       if (pluginManager.hasPlugin("com.android.library")) {
