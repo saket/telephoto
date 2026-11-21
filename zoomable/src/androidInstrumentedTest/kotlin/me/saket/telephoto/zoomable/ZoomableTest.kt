@@ -1,7 +1,9 @@
 package me.saket.telephoto.zoomable
 
 import android.view.ViewConfiguration
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.SnapSpec
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -52,10 +55,12 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
+import androidx.compose.ui.unit.toSize
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
+import assertk.assertions.isCloseTo
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
@@ -66,6 +71,7 @@ import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.test.runTest
@@ -677,6 +683,165 @@ class ZoomableTest {
     }
     rule.runOnIdle {
       assertThat(recordedValues.removeAll()).containsOnly(true, false)
+    }
+  }
+
+  @Test fun panning_during_a_zoom_animation_does_not_cancel_it() {
+    lateinit var state: ZoomableState
+    val zoomRequests = Channel<Unit>(capacity = 1)
+    var isZoomComplete = false
+
+    rule.setContent {
+      state = rememberZoomableState(ZoomSpec(maxZoomFactor = 4f))
+      Box(
+        Modifier
+          .fillMaxSize()
+          .zoomable(state)
+          .testTag("content")
+      )
+
+      LaunchedEffect(Unit) {
+        zoomRequests.receive()
+        state.zoomTo(
+          zoomFactor = 4f,
+          animationSpec = tween(durationMillis = 3_000, easing = LinearEasing),
+        )
+        isZoomComplete = true
+      }
+    }
+
+    rule.waitUntil { state.contentTransformation.isSpecified }
+    val viewportSize = rule.onNodeWithTag("content").fetchSemanticsNode().size.toSize()
+
+    rule.mainClock.autoAdvance = false
+    zoomRequests.trySend(Unit)
+    rule.mainClock.advanceTimeBy(1_000)
+    rule.runOnIdle {
+      assertThat(state.contentTransformation.scaleMetadata.userZoom).isGreaterThan(1f)
+      assertThat(state.contentTransformation.scaleMetadata.userZoom).isLessThan(4f)
+    }
+
+    rule.onNodeWithTag("content").performTouchInput {
+      swipeLeft(startX = center.x, endX = center.x - 300f, durationMillis = 200)
+    }
+    rule.mainClock.advanceTimeBy(5_000)
+
+    rule.runOnIdle {
+      assertThat(isZoomComplete).isTrue()
+      assertThat(state.contentTransformation.scaleMetadata.userZoom).isEqualTo(4f)
+
+      // Without the pan, zooming around the center would've ended at -1.5x the viewport size.
+      val offset = state.contentTransformation.offset
+      assertThat(offset.x).isLessThan(-viewportSize.width * 1.5f - 100f)
+      assertThat(offset.y).isCloseTo(-viewportSize.height * 1.5f, delta = 1f)
+    }
+  }
+
+  @Test fun pans_started_before_a_zoom_animation_has_zoomed_in_are_not_given_to_the_pager() {
+    lateinit var state: ZoomableState
+    lateinit var pagerState: PagerState
+    val zoomRequests = Channel<Unit>(capacity = 1)
+    var isZoomComplete = false
+
+    rule.setContent {
+      pagerState = rememberPagerState(pageCount = { 2 })
+      HorizontalPager(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("pager"),
+        state = pagerState,
+      ) { page ->
+        val zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 4f))
+        if (page == 0) {
+          state = zoomableState
+        }
+        Box(
+          Modifier
+            .fillMaxSize()
+            .zoomable(zoomableState)
+        )
+      }
+
+      LaunchedEffect(Unit) {
+        zoomRequests.receive()
+        state.zoomTo(
+          zoomFactor = 4f,
+          // The delay keeps the content at its fit zoom, and thus unpannable,
+          // while the animation is running.
+          animationSpec = tween(durationMillis = 1_000, delayMillis = 1_000, easing = LinearEasing),
+        )
+        isZoomComplete = true
+      }
+    }
+
+    rule.waitUntil { state.contentTransformation.isSpecified }
+
+    rule.mainClock.autoAdvance = false
+    zoomRequests.trySend(Unit)
+    rule.waitForIdle()
+
+    rule.onNodeWithTag("pager").performTouchInput {
+      swipeLeft(startX = center.x, endX = center.x - 600f, durationMillis = 200)
+    }
+    rule.runOnIdle {
+      assertThat(state.contentTransformation.scaleMetadata.userZoom).isEqualTo(1f)
+    }
+    rule.mainClock.advanceTimeBy(5_000)
+
+    rule.runOnIdle {
+      assertThat(pagerState.currentPage).isEqualTo(0)
+      assertThat(pagerState.currentPageOffsetFraction).isEqualTo(0f)
+      assertThat(isZoomComplete).isTrue()
+      assertThat(state.contentTransformation.scaleMetadata.userZoom).isEqualTo(4f)
+    }
+  }
+
+  @Test fun pinching_during_a_zoom_animation_cancels_it() {
+    lateinit var state: ZoomableState
+    val zoomRequests = Channel<Unit>(capacity = 1)
+    var wasZoomCancelled = false
+
+    rule.setContent {
+      state = rememberZoomableState(ZoomSpec(maxZoomFactor = 4f))
+      Box(
+        Modifier
+          .fillMaxSize()
+          .zoomable(state)
+          .testTag("content")
+      )
+
+      LaunchedEffect(Unit) {
+        zoomRequests.receive()
+        try {
+          state.zoomTo(
+            zoomFactor = 4f,
+            animationSpec = tween(durationMillis = 3_000, easing = LinearEasing),
+          )
+        } catch (e: CancellationException) {
+          wasZoomCancelled = true
+        }
+      }
+    }
+
+    rule.waitUntil { state.contentTransformation.isSpecified }
+
+    rule.mainClock.autoAdvance = false
+    zoomRequests.trySend(Unit)
+    rule.mainClock.advanceTimeBy(1_000)
+
+    rule.onNodeWithTag("content").performTouchInput {
+      pinch(
+        start0 = center - Offset(50f, 0f),
+        start1 = center + Offset(50f, 0f),
+        end0 = center - Offset(200f, 0f),
+        end1 = center + Offset(200f, 0f),
+        durationMillis = 200,
+      )
+    }
+    rule.mainClock.advanceTimeBy(5_000)
+
+    rule.runOnIdle {
+      assertThat(wasZoomCancelled).isTrue()
     }
   }
 
