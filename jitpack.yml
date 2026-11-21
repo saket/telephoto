@@ -1,9 +1,0 @@
-# JitPack runs on Linux, so Apple and web targets are switched off and only the modules an
-# Android consumer needs get published. GROUP has to be com.github.<user>.<repo> for JitPack
-# to find the artifacts, VERSION_NAME has to match the tag being built, and signing is off
-# because there are no keys on the builder.
-jdk:
-  - openjdk17
-
-install:
-  - ./gradlew :annotations:publishToMavenLocal :zoomable:publishToMavenLocal :zoomable-image:sub-sampling-image:publishToMavenLocal :zoomable-image:core:publishToMavenLocal :zoomable-image:coil:publishToMavenLocal :zoomable-image:coil3:publishToMavenLocal -PGROUP=com.github.uragiristereo.saket-telephoto -PVERSION_NAME=$VERSION -PsignAllPublications=false -Ptelephoto.appleAndWebTargets=false --no-configuration-cache --no-daemon
