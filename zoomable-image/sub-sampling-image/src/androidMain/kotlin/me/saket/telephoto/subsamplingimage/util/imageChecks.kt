@@ -45,7 +45,9 @@ suspend fun SubSamplingImageSource.exists(context: Context): Boolean {
   }
   return withContext(Dispatchers.IO) {
     try {
-      peek(context).read(Buffer(), byteCount = 1) != -1L
+      peek(context).use {
+        it.read(Buffer(), byteCount = 1) != -1L
+      }
     } catch (_: okio.FileNotFoundException) {
       // This catch block currently makes an assumption that files are only read
       // using okio, which is true for SubSamplingImageSource.file(), but might
