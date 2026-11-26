@@ -4,16 +4,17 @@ package me.saket.telephoto.subsamplingimage
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
+import kotlinx.coroutines.launch
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageDecoderFactoryParams
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.zoomable.ZoomableContentLocation
@@ -87,11 +88,6 @@ internal fun rememberSubSamplingImageState(
   }
 
   state.LoadImageTilesEffect()
-  DisposableEffect(imageSource) {
-    onDispose {
-      imageSource.close()
-    }
-  }
   return state
 }
 
@@ -106,22 +102,34 @@ private fun createImageRegionDecoder(
 
   if (!isInScreenshotTest()) {
     val context = LocalContext.current
-    LaunchedEffect(imageSource) {
-      try {
-        decoder = imageSource.decoder().create(
-          AndroidImageDecoderFactoryParams(
-            context = context,
-            imageOptions = imageOptions,
-          )
-        )
-      } catch (e: IOException) {
-        errorReporter.onImageLoadingFailed(e, imageSource)
-      }
-    }
+    val scope = rememberCoroutineScope()
     DisposableEffect(imageSource) {
+      val job = scope.launch {
+        try {
+          decoder = imageSource.decoder().create(
+            AndroidImageDecoderFactoryParams(
+              context = context,
+              imageOptions = imageOptions,
+            )
+          )
+        } catch (e: IOException) {
+          errorReporter.onImageLoadingFailed(e, imageSource)
+        }
+      }
       onDispose {
+        job.cancel()
         decoder?.close()
         decoder = null
+        // Wait for any in-flight EXIF/decoder read to finish before closing the source.
+        job.invokeOnCompletion {
+          imageSource.close()
+        }
+      }
+    }
+  } else {
+    DisposableEffect(imageSource) {
+      onDispose {
+        imageSource.close()
       }
     }
   }
