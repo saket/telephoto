@@ -488,6 +488,30 @@ class CoilImageSourceTest {
     }
   }
 
+  // Regression test for https://github.com/saket/telephoto/issues/181.
+  @Test fun close_disk_cache_snapshot_if_image_cannot_be_sub_sampled() = runTest {
+    serverRule.server.dispatcher = object : Dispatcher() {
+      override fun dispatch(request: RecordedRequest): MockResponse {
+        check(request.path!!.endsWith(".avif"))
+        return assetAsResponse("full_image.avif")
+      }
+    }
+
+    val imageUrl = serverRule.server.url("full_image.avif").toString()
+    resolve { imageUrl }.test {
+      skipItems(1) // Default item.
+      assertThat(awaitItem().delegate!!).isInstanceOf(ZoomableImageSource.PainterDelegate::class.java)
+    }
+
+    val diskCache = context.imageLoader.diskCache!!
+    val editor = diskCache.openEditor(imageUrl)
+    try {
+      assertThat(editor).isNotNull()
+    } finally {
+      editor?.abort()
+    }
+  }
+
   // Regression test for https://github.com/saket/telephoto/issues/37.
   @Test fun reload_image_if_its_evicted_from_the_disk_cache_but_is_still_present_in_the_memory_cache() = runTest {
     val memoryCache = context.imageLoader.memoryCache!!

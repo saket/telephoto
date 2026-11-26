@@ -249,7 +249,20 @@ private class RealResolver(
     } else {
       return null
     }
-    return source?.takeIf { it.canBeSubSampled(request.context) }
+    return source?.let {
+      val canBeSubSampled = try {
+        it.canBeSubSampled(request.context)
+      } catch (e: Throwable) {
+        it.close()
+        throw e
+      }
+      if (canBeSubSampled) {
+        it
+      } else {
+        it.close()
+        null
+      }
+    }
   }
 
   private fun ImageResult.crossfadeDuration(): Duration {
