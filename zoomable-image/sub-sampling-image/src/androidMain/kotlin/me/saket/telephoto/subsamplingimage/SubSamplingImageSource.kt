@@ -22,7 +22,6 @@ import okio.Source
 import okio.buffer
 import okio.source
 import java.io.InputStream
-import kotlin.LazyThreadSafetyMode.NONE
 
 /**
  * Image to display with [SubSamplingImage]. Can be one of:
@@ -265,12 +264,12 @@ internal data class RawImageSource(
   private val onClose: Closeable?
 ) : BufferedSubSamplingImageSource {
 
-  private val bufferedSource: BufferedSource by lazy(NONE) {
+  private val bufferedSource = lazy {
     source().buffer()
   }
 
   override fun peek(context: Context): BufferedSource {
-    return bufferedSource.peek()
+    return bufferedSource.value.peek()
   }
 
   override suspend fun decoder(): ImageRegionDecoder.Factory {
@@ -286,7 +285,9 @@ internal data class RawImageSource(
   }
 
   override fun close() {
-    bufferedSource.close()
+    if (bufferedSource.isInitialized()) {
+      bufferedSource.value.close()
+    }
     onClose?.close()
   }
 }
